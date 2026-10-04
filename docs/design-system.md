@@ -71,7 +71,7 @@ states, legal and proposal terms, dense forms.
 
 ## Implementation decisions
 
-Status: **Proposed.**
+Status: **Approved** (2026-10-04).
 
 1. **Tokens in one place.** Colors and fonts are declared once in
    `resources/css/app.css` as Tailwind theme tokens. No hex values in templates.

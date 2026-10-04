@@ -13,3 +13,5 @@
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance
+{{-- Backoffice has a light theme only, so pin Flux to it instead of following the system setting. --}}
+<script>window.Flux.applyAppearance('light')</script>

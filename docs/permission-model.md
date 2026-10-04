@@ -1,6 +1,6 @@
 # Permission Model
 
-Status: **Proposed** (2026-10-04). The role list and matrix need owner confirmation.
+Status: **Approved** (2026-10-04). Roles and matrix confirmed by the owner.
 
 ## The idea in plain English
 
@@ -101,7 +101,7 @@ job costs, approve commissions, edit leads) are added when the feature is built.
 | Role | Company Overview | Marketing | Sales | Production | Finance | Color Studio | Settings |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | Owner | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
-| Leadership | Yes | Yes | Yes | Yes | **Open** | Yes | No |
+| Leadership | Yes | Yes | Yes | Yes | No | Yes | No |
 | Finance | No | No | No | No | Yes | No | No |
 | Location Manager | No | Yes | Yes | Yes | No | Yes | No |
 | Call Center Agent | No | Yes | No | No | No | No | No |
@@ -116,9 +116,10 @@ Notes:
   location does not open it.
 - Call Center Agent is normally granted at all locations and still has no finance,
   payroll or settings access.
-- **Open:** whether Leadership includes Finance. Proposed default: no. A leader who
-  needs finance is given a separate Finance grant, so finance access is always a
-  deliberate choice.
+- Leadership does not include Finance. A leader who needs finance is given a
+  separate Finance grant, so finance access is always a deliberate choice.
+- The structure is extensible: a new role or permission is one new entry in code
+  plus its line in this matrix.
 
 ## Where the rules are enforced
 

@@ -1,7 +1,7 @@
 # Navigation Map
 
-Status: **Proposed** (structure from the owner's brief; IDs, states and permissions
-proposed 2026-10-04).
+Status: **Approved** (structure from the owner's brief; IDs, states and permissions
+approved 2026-10-04).
 
 ## How navigation works
 

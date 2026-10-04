@@ -3,7 +3,7 @@
 Each entry records a decision, why it was made, and what it rules out. Entries are
 added, not rewritten. A reversed decision gets a new entry that refers to the old one.
 
-Status of entries 1–10: **Proposed** (2026-10-04), awaiting owner approval.
+Status of entries 1–10: **Approved** (2026-10-04).
 
 ## 1. Keep the installed stack
 

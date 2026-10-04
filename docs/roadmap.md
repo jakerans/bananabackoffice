@@ -24,8 +24,8 @@
 
 ## Checkpoint A plan
 
-Status: **Proposed.** Each step is one small reviewable change with its own tests,
-and each stops for owner review.
+Status: **Approved** (2026-10-04). Each step is one small reviewable change with its
+own tests and its own commit on the `checkpoint-a` branch.
 
 ### A0 — Housekeeping
 
