@@ -70,6 +70,18 @@ test('leadership is forbidden from the finance center', function () {
     $this->actingAs($leader)->get(route('finance.home'))->assertForbidden();
 });
 
+test('a forbidden page says not authorized rather than coming soon', function () {
+    Location::factory()->create();
+
+    $leader = User::factory()->withRoleEverywhere(Role::Leadership)->create();
+
+    $this->actingAs($leader)
+        ->get(route('finance.home'))
+        ->assertForbidden()
+        ->assertSee('Not authorized')
+        ->assertDontSee('Coming soon');
+});
+
 test('leadership granted at a single location is forbidden from company overview', function () {
     $location = Location::factory()->create();
 

@@ -138,6 +138,29 @@ Notes:
 - Other staff are invited by someone with `settings.users.manage`.
 - Accounts are deactivated, not deleted, so history stays attributable.
 
+### Invitations
+
+- An invited account is created with a long random password that nobody is shown.
+  Administrators never create, see or send a password.
+- The staff member receives an email link and chooses their own password.
+- The link works once, expires after 72 hours, and is stored only in hashed form.
+- Sending a new invitation cancels the previous link. Deactivating the account
+  cancels it too.
+- Accepting the invitation also confirms the email address.
+- A new account has no access until a role is granted. It can sign in and sees
+  "No access assigned yet".
+
+### Safeguards
+
+- There is always at least one active Owner. The last one cannot be deactivated or
+  lose the Owner role.
+- Nobody can deactivate their own account.
+- A deactivated person cannot sign in, and is signed out on their next action.
+  Their grants are kept, so reactivating restores the access they had.
+- Each grant records who granted it.
+- Only the Owner role contains `settings.users.manage` today. If another role is
+  ever given it, add a rule that only an Owner may grant or remove the Owner role.
+
 ## Homeowners
 
 Homeowners will never be rows in the staff `users` table and will never sign in

@@ -97,6 +97,54 @@ or invented numbers.
 Why: the shell can show the whole intended system honestly, and a feature moves
 from "coming soon" to "live" by changing one entry.
 
+## 11. Invitations use Laravel's password-reset machinery with their own table
+
+Made while building Checkpoint A (2026-10-04).
+
+Staff invitations use a second "password broker" named `invitations`, backed by its
+own `staff_invitation_tokens` table, with a 72-hour lifetime.
+
+Why: Laravel's broker already provides hashed, single-use, expiring tokens, so no
+new security code had to be written. A separate table means an invitation link can
+never be used on the ordinary password reset form, and a "forgot password" request
+never cancels a pending invitation.
+
+Considered: signed links. Not chosen because a signed link stays valid until it
+expires, where a broker token is destroyed the moment it is used.
+
+## 12. Deactivated staff are stopped in two places
+
+Made while building Checkpoint A (2026-10-04).
+
+Sign-in refuses a deactivated account, and a check on every web request signs out
+anyone who is deactivated while signed in. The second check also covers passkey
+sign-in and "remember me", which do not pass through the password check.
+
+The "this account is deactivated" message appears only after the correct password
+is given, so it cannot be used to discover which accounts exist.
+
+## 13. Application code beyond Laravel's standard folders lives in `app/Support`
+
+Made while building Checkpoint A (2026-10-04).
+
+`app/Support/Access` holds the current-location resolver and `app/Support/Navigation`
+holds the navigation registry. Staff operations are action classes in
+`app/Actions/Staff`, next to the starter kit's `app/Actions/Fortify`.
+
+Why: these are neither models, controllers nor Livewire pages, and Laravel has no
+standard home for them. One clearly named folder is easier to find than several.
+
+## 14. Personal account pages stay at `/settings/profile` and `/settings/security`
+
+Made while building Checkpoint A (2026-10-04).
+
+The starter kit's profile, password, two-factor and passkey pages were left where
+they were and relabelled "My account". The company Settings center shares the
+`/settings` address prefix.
+
+Why: moving them would have touched working sign-in security code for a cosmetic
+gain. Route names hide the addresses, so they can be moved later in one place.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

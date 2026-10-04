@@ -50,8 +50,15 @@ built it receives its own specific permission, recorded in
 - Header: brand at left, then the center switcher, then on the right the location
   switcher and the user menu.
 - Center navigation: horizontal. The current item is heavier with a small Yellow marker.
-- Sub-navigation: a third row, shown only for items with children.
-- On small screens the center navigation collapses into a slide-out menu.
+- Each center menu starts with "Overview" (the landing page), then built sections
+  as links, then unbuilt sections muted behind one "Coming soon" label.
+- Sub-navigation: a third row for items with children. It is not drawn yet because
+  no built section has sub-sections; the registry already holds them.
+- On small screens the center menu scrolls sideways.
+- Company Overview and Settings are company-level: they do not change with the
+  selected location. Every other center follows the selected location.
+- Settings opens for anyone who may manage locations or manage users. Its unbuilt
+  pages borrow both of those permissions.
 
 ## Centers
 

@@ -86,11 +86,20 @@ Status: **Approved** (2026-10-04).
    from this application. No new package.
 6. **Tabular numerals** on every money, quantity and date column.
 7. **Status colors.** The guide names five colors and asks for semantic chips but
-   does not define success, warning or danger hues. Proposed: muted green, amber
-   and red, always with a text label, used only for status.
-8. **Header is the starter kit's header layout**, restyled. The sidebar layout is
-   retired.
-9. **Tables use the free Flux table.** Nothing in this plan needs Flux Pro.
+   does not define success, warning or danger hues. In use: green for active, amber
+   for invited or pending, grey for inactive, always with a text label and an icon,
+   and only for status.
+8. **The shell is one layout**, `resources/views/layouts/app.blade.php`, with its
+   parts in `resources/views/components/shell/`. The starter kit's sidebar and
+   header layouts are retired.
+9. **Tables use the free Flux table.** Nothing built so far needs Flux Pro.
+10. **The Ink header is the only dark region.** It carries a `dark` class so Flux
+    draws its controls for a dark surface there; the rest of the interface is light.
+11. **Display type appears in two places only so far:** the center landing page
+    titles and the home page greeting. Everything operational is Outfit or Poppins.
+12. **The wordmark is text**, a Yellow block reading BANANA beside BACKOFFICE, as
+    drawn in the guide. The favicon and sign-in mark are the banana icon from the
+    brand files, resized.
 
 ## Assets noted on inspection
 
