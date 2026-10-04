@@ -9,6 +9,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,6 +31,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property bool $is_active
+ * @property Carbon|null $invited_at
+ * @property Carbon|null $invitation_accepted_at
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
@@ -65,6 +68,8 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'invited_at' => 'datetime',
+            'invitation_accepted_at' => 'datetime',
         ];
     }
 
@@ -76,9 +81,39 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return $this->hasMany(AccessGrant::class);
     }
 
+    /**
+     * Limit the query to staff who have not been deactivated.
+     *
+     * @param  Builder<User>  $query
+     */
+    #[Scope]
+    protected function active(Builder $query): void
+    {
+        $query->where('is_active', true);
+    }
+
+    /**
+     * Limit the query to staff who hold the Owner role.
+     *
+     * @param  Builder<User>  $query
+     */
+    #[Scope]
+    protected function owners(Builder $query): void
+    {
+        $query->whereRelation('accessGrants', 'role', Role::Owner);
+    }
+
     public function isActive(): bool
     {
         return $this->is_active;
+    }
+
+    /**
+     * Determine whether the staff member was invited and has not yet chosen a password.
+     */
+    public function invitationIsPending(): bool
+    {
+        return $this->invited_at !== null && $this->invitation_accepted_at === null;
     }
 
     public function holdsRole(Role $role): bool

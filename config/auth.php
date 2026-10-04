@@ -99,6 +99,15 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+
+        // Staff invitations reuse Laravel's hashed, single-use token machinery
+        // but keep their own table and a longer lifetime (72 hours).
+        'invitations' => [
+            'provider' => 'users',
+            'table' => 'staff_invitation_tokens',
+            'expire' => 4320,
+            'throttle' => 0,
+        ],
     ],
 
     /*

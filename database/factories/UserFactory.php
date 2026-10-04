@@ -61,6 +61,18 @@ class UserFactory extends Factory
     }
 
     /**
+     * Indicate that the staff member has been invited and has not yet chosen a password.
+     */
+    public function invited(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'email_verified_at' => null,
+            'invited_at' => now(),
+            'invitation_accepted_at' => null,
+        ]);
+    }
+
+    /**
      * Give the staff member a role at a single location.
      */
     public function withRoleAt(Role $role, Location $location): static

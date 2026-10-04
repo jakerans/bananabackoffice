@@ -1,10 +1,19 @@
 <?php
 
 use App\Http\Controllers\CenterController;
+use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\SwitchLocationController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', 'dashboard')->name('home');
+
+Route::middleware('guest')->group(function () {
+    Route::get('invitation/{token}', [InvitationAcceptanceController::class, 'create'])->name('invitation.accept');
+
+    Route::post('invitation', [InvitationAcceptanceController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('invitation.store');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');

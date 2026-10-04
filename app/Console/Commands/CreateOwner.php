@@ -5,8 +5,7 @@ namespace App\Console\Commands;
 use App\Actions\Staff\CreateOwner as CreateOwnerAction;
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
-use App\Enums\Role;
-use App\Models\AccessGrant;
+use App\Models\User;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -26,7 +25,7 @@ class CreateOwner extends Command
      */
     public function handle(CreateOwnerAction $createOwner): int
     {
-        if (! $this->option('force') && $this->activeOwnerExists()) {
+        if (! $this->option('force') && User::query()->active()->owners()->exists()) {
             $this->components->error('An active Owner already exists. Invite other staff from Settings > Users and Access, or pass --force to add another Owner.');
 
             return self::FAILURE;
@@ -58,13 +57,5 @@ class CreateOwner extends Command
         $this->components->info("Owner account created for {$owner->email}. Sign in at ".route('login'));
 
         return self::SUCCESS;
-    }
-
-    private function activeOwnerExists(): bool
-    {
-        return AccessGrant::query()
-            ->where('role', Role::Owner)
-            ->whereRelation('user', 'is_active', true)
-            ->exists();
     }
 }
