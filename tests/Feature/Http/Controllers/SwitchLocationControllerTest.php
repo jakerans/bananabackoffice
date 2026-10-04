@@ -84,6 +84,47 @@ test('a staff member with a company-wide grant can switch to all locations', fun
         ->assertSessionHas(CurrentLocation::SESSION_KEY, CurrentLocation::ALL_LOCATIONS);
 });
 
+test('switching location keeps the staff member in a center they can still open', function () {
+    $lakeview = Location::factory()->create(['name' => 'Lakeview']);
+    $riverside = Location::factory()->create(['name' => 'Riverside']);
+
+    $user = User::factory()
+        ->withRoleAt(Role::SalesConsultant, $lakeview)
+        ->withRoleAt(Role::SalesConsultant, $riverside)
+        ->create();
+
+    $this->actingAs($user)
+        ->from(route('sales.home'))
+        ->post(route('location.switch'), ['location' => (string) $riverside->id])
+        ->assertRedirect(route('sales.home'));
+});
+
+test('switching location returns home when the center is not available in the new location', function () {
+    $lakeview = Location::factory()->create(['name' => 'Lakeview']);
+    $riverside = Location::factory()->create(['name' => 'Riverside']);
+
+    $user = User::factory()
+        ->withRoleAt(Role::SalesConsultant, $lakeview)
+        ->withRoleAt(Role::ProductionManager, $riverside)
+        ->create();
+
+    $this->actingAs($user)
+        ->from(route('sales.home'))
+        ->post(route('location.switch'), ['location' => (string) $riverside->id])
+        ->assertRedirect(route('dashboard'));
+});
+
+test('switching location never redirects to an address outside the application', function () {
+    $location = Location::factory()->create();
+
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    $this->actingAs($owner)
+        ->from('https://example.com/phishing')
+        ->post(route('location.switch'), ['location' => (string) $location->id])
+        ->assertRedirect(route('dashboard'));
+});
+
 test('a location value that is not a location or all is rejected', function (mixed $value) {
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
 

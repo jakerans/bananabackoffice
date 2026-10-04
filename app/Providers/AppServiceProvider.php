@@ -6,6 +6,7 @@ use App\Enums\Permission;
 use App\Models\Location;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
+use App\Support\Navigation\Navigation;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(Navigation::class);
     }
 
     /**
