@@ -1,17 +1,6 @@
-@props([
-    'sidebar' => false,
-])
-
-@if($sidebar)
-    <flux:sidebar.brand :name="config('app.name', 'Laravel')" {{ $attributes }}>
-        <x-slot name="logo" class="flex aspect-square size-8 items-center justify-center rounded-md bg-accent-content text-accent-foreground">
-            <x-app-logo-icon class="size-5 fill-current text-white dark:text-black" />
-        </x-slot>
-    </flux:sidebar.brand>
-@else
-    <flux:brand :name="config('app.name', 'Laravel')" {{ $attributes }}>
-        <x-slot name="logo" class="flex aspect-square size-8 items-center justify-center rounded-md bg-accent-content text-accent-foreground">
-            <x-app-logo-icon class="size-5 fill-current text-white dark:text-black" />
-        </x-slot>
-    </flux:brand>
-@endif
+{{-- The wordmark treatment drawn in the Backoffice design system: a Yellow block reading BANANA. --}}
+<a {{ $attributes->class('flex shrink-0 items-center gap-2.5') }}>
+    <span class="rounded-sm bg-banana px-2 py-1 font-nav text-sm leading-none font-extrabold tracking-wide text-ink">BANANA</span>
+    <span class="font-nav text-xs leading-none font-semibold tracking-[0.2em]">BACKOFFICE</span>
+    <span class="sr-only">{{ config('app.name') }}</span>
+</a>

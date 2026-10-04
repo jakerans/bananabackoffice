@@ -82,8 +82,8 @@ Status: **Approved** (2026-10-04).
    The starter kit's dark mode and Appearance page are removed rather than left
    half-styled. A dark theme can be designed later.
 5. **Fonts load through the font loader already in the starter kit.** All four
-   typefaces are free and open-licensed. No new package. Availability of each
-   typeface through that loader is to be confirmed in step A1.
+   typefaces are free and open-licensed, are downloaded at build time and served
+   from this application. No new package.
 6. **Tabular numerals** on every money, quantity and date column.
 7. **Status colors.** The guide names five colors and asks for semantic chips but
    does not define success, warning or danger hues. Proposed: muted green, amber
@@ -100,5 +100,5 @@ Status: **Approved** (2026-10-04).
 - Until standalone Backoffice logo files are supplied, the header uses the wordmark
   treatment drawn in the design guide (a Yellow block reading BANANA in Ink), which
   needs no image file.
-- Brand files used by the application are copied into `resources/` at the size
+- Brand files used by the application are copied into `public/` at the size
   needed. Nothing is served from `docs/reference/`.
