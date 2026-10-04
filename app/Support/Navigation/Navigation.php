@@ -256,7 +256,13 @@ class Navigation
             description: 'Locations, staff access and company configuration.',
             children: [
                 new NavigationItem('settings.company', 'Company', $permissions),
-                new NavigationItem('settings.locations', 'Locations', $permissions),
+                new NavigationItem(
+                    id: 'settings.locations',
+                    label: 'Locations',
+                    permissions: [Permission::ManageLocations],
+                    state: NavigationState::Live,
+                    route: 'settings.locations',
+                ),
                 new NavigationItem('settings.users', 'Users and Access', $permissions),
                 new NavigationItem('settings.service_areas', 'Service Areas', $permissions),
                 new NavigationItem('settings.services', 'Services and Products', $permissions),

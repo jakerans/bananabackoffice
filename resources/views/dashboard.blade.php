@@ -27,8 +27,8 @@
                         {{ __('Marketing, Sales, Production, Finance and Color Studio open once at least one operating location exists.') }}
                     </flux:callout.text>
                     <x-slot name="actions">
-                        <flux:button :href="route('settings.home')" variant="primary" size="sm" wire:navigate>
-                            {{ __('Open Settings') }}
+                        <flux:button :href="route('settings.locations')" variant="primary" size="sm" wire:navigate>
+                            {{ __('Add a location') }}
                         </flux:button>
                     </x-slot>
                 </flux:callout>

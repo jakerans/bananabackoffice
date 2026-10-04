@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Permission;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
@@ -12,6 +13,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'password.confirm',
         ])
         ->name('security.edit');
+
+    Route::livewire('settings/locations', 'pages::settings.locations')
+        ->can(Permission::ManageLocations)
+        ->name('settings.locations');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {
