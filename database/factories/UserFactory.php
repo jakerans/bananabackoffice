@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\Role;
+use App\Models\AccessGrant;
+use App\Models\Location;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -29,6 +32,7 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'is_active' => true,
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
@@ -44,6 +48,32 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * Indicate that the staff member has been deactivated.
+     */
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
+        ]);
+    }
+
+    /**
+     * Give the staff member a role at a single location.
+     */
+    public function withRoleAt(Role $role, Location $location): static
+    {
+        return $this->has(AccessGrant::factory()->role($role)->at($location));
+    }
+
+    /**
+     * Give the staff member a role across all locations.
+     */
+    public function withRoleEverywhere(Role $role): static
+    {
+        return $this->has(AccessGrant::factory()->role($role)->everywhere());
     }
 
     /**

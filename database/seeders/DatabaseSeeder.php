@@ -2,24 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
+     *
+     * Only local development receives data, and all of it is fictitious. Real
+     * environments start empty; create the first Owner with backoffice:create-owner.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        if (! app()->environment('local')) {
+            return;
+        }
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $this->call(LocalDemoSeeder::class);
     }
 }
