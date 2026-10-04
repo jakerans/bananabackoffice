@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\Permission;
+use App\Enums\Role;
+use App\Support\Access\LocationContext;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -70,6 +74,83 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function accessGrants(): HasMany
     {
         return $this->hasMany(AccessGrant::class);
+    }
+
+    public function isActive(): bool
+    {
+        return $this->is_active;
+    }
+
+    public function holdsRole(Role $role): bool
+    {
+        return $this->accessGrants->contains(fn (AccessGrant $grant): bool => $grant->role === $role);
+    }
+
+    /**
+     * Determine whether the staff member may use a permission at one location.
+     */
+    public function hasPermissionAt(Permission $permission, Location $location): bool
+    {
+        if ($permission->isCompanyLevel()) {
+            return $this->hasPermissionAcrossAllLocations($permission);
+        }
+
+        return $this->isActive()
+            && $location->is_active
+            && $this->accessGrants->contains(
+                fn (AccessGrant $grant): bool => $grant->allows($permission) && $grant->covers($location),
+            );
+    }
+
+    /**
+     * Determine whether the staff member holds a permission through an all-locations grant.
+     */
+    public function hasPermissionAcrossAllLocations(Permission $permission): bool
+    {
+        return $this->isActive()
+            && $this->accessGrants->contains(
+                fn (AccessGrant $grant): bool => $grant->isCompanyWide() && $grant->allows($permission),
+            );
+    }
+
+    /**
+     * Determine whether the staff member may use a permission in the given location context.
+     */
+    public function hasPermissionIn(Permission $permission, LocationContext $context): bool
+    {
+        return $context->isAllLocations || $context->location === null
+            ? $this->hasPermissionAcrossAllLocations($permission)
+            : $this->hasPermissionAt($permission, $context->location);
+    }
+
+    /**
+     * The "All Locations" view requires at least one explicit all-locations grant.
+     */
+    public function canViewAllLocations(): bool
+    {
+        return $this->isActive()
+            && $this->accessGrants->contains(fn (AccessGrant $grant): bool => $grant->isCompanyWide());
+    }
+
+    /**
+     * Get the active locations covered by the staff member's access grants.
+     *
+     * @return Collection<int, Location>
+     */
+    public function authorizedLocations(): Collection
+    {
+        if (! $this->isActive()) {
+            return new Collection;
+        }
+
+        return Location::query()
+            ->active()
+            ->unless(
+                $this->canViewAllLocations(),
+                fn (Builder $query) => $query->whereKey($this->accessGrants->pluck('location_id')->filter()->unique()->all()),
+            )
+            ->orderBy('name')
+            ->get();
     }
 
     /**

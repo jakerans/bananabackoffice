@@ -3,11 +3,15 @@
 namespace App\Providers;
 
 use App\Actions\Fortify\ResetUserPassword;
+use App\Models\User;
+use Illuminate\Auth\SessionGuard;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -36,6 +40,39 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureActions(): void
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
+
+        Fortify::authenticateUsing(fn (Request $request): ?User => $this->authenticateActiveStaff($request));
+    }
+
+    /**
+     * Check the credentials as Laravel normally would, then refuse deactivated staff.
+     *
+     * The deactivation message is only shown once the password is known to be
+     * correct, so it cannot be used to discover which accounts exist.
+     *
+     * @throws ValidationException
+     */
+    private function authenticateActiveStaff(Request $request): ?User
+    {
+        $guard = Auth::guard(config('fortify.guard'));
+
+        if (! $guard instanceof SessionGuard || ! $guard->validate($request->only(Fortify::username(), 'password'))) {
+            return null;
+        }
+
+        $user = $guard->getLastAttempted();
+
+        if (! $user instanceof User) {
+            return null;
+        }
+
+        if (! $user->isActive()) {
+            throw ValidationException::withMessages([
+                Fortify::username() => __('This account has been deactivated. Please contact an administrator.'),
+            ]);
+        }
+
+        return $user;
     }
 
     /**
