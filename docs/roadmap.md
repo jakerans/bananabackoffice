@@ -2,14 +2,14 @@
 
 ## Where we are
 
-**Current checkpoint: A — Secure branded foundation.**
-**State: built on the `checkpoint-a` branch (2026-10-04), awaiting owner review.**
-Checkpoint B has not been started and needs the decisions listed at the end of
-this document first.
+**Checkpoint A — Secure branded foundation — is approved and merged into `main`
+(2026-10-04).**
+**Next: Checkpoint B.** It has not been started and needs the decisions listed at
+the end of this document first.
 
 | Checkpoint | Scope | State |
 | --- | --- | --- |
-| A | Secure branded foundation | Built, awaiting owner review |
+| A | Secure branded foundation | Approved and merged (2026-10-04) |
 | B | Core CRM records (customers, properties, projects, photos, notes, timeline) | Not started |
 | C | First Color Studio workflow | Not started |
 | Later | Estimating and proposals, homeowner portal, production, finance, reporting | Not started |
@@ -17,7 +17,7 @@ this document first.
 ## Starting point (verified 2026-10-04)
 
 - Laravel 13.34, Livewire 4.4, Flux UI free 2.20, Fortify 1.40, Tailwind 4.3,
-  Pest 5.3, PHP 8.4, SQLite.
+  Pest 5.3, PHP 8.4, SQLite locally. Staging and production use MySQL 8.4.
 - Sign-in, password reset, email verification, two-factor and passkeys are installed.
 - Public registration is already off: there is no `/register` route.
 - The starter kit's 32 tests pass.
@@ -25,8 +25,9 @@ this document first.
 
 ## Checkpoint A plan
 
-Status: **Approved** (2026-10-04) and **built**. Each step is one commit on the
-`checkpoint-a` branch, named A0 to A7, with its own tests.
+Status: **Approved, built and merged** (2026-10-04). Each step is one commit, named
+A0 to A7, with its own tests. They were made on the `checkpoint-a` branch and are
+preserved individually in `main`.
 
 ### What changed from the plan while building
 
@@ -191,6 +192,19 @@ branch and the rest are recorded, with what each needs, in
 real staff use the system on a server: "forgot password" reveals which addresses
 have accounts, and a deactivated person can complete a passkey sign-in before
 being signed out again.
+
+## Staging and the production database (2026-10-04)
+
+The first deployment to the Forge staging server failed while applying a database
+change on MySQL 8.4. The cause and the fix are recorded in decisions.md, 21. No
+data was involved: the staging database was new and empty.
+
+Production runs **MySQL 8.4**. Local development and the automated tests run on
+SQLite, which does not enforce all of MySQL's rules.
+
+- Open: add a MySQL 8.4 run to the automated checks on GitHub, so a database
+  change is tested on the production engine before it is deployed. The full suite
+  has been run on MySQL 8.4 once by hand and passed.
 
 ## Known limits of Checkpoint A
 

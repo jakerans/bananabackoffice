@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    private const string ORIGINAL_INDEX = 'access_grants_user_id_role_scope_location_id_unique';
+
+    private const string REPLACEMENT_INDEX = 'access_grants_user_id_role_location_key_unique';
+
     /**
      * Run the migrations.
      *
@@ -16,25 +20,37 @@ return new class extends Migration
      * location_key is calculated by the database: the location's ID, or 0 for an
      * all-locations grant. A person can then hold a role once per location and
      * once company-wide, and those remain separate grants.
+     *
+     * The new rule is put in place before the old one is removed, so duplicates
+     * are prevented throughout. Each step checks whether it is still needed,
+     * because MySQL cannot undo a half-finished schema change: if a step ever
+     * fails, running the migration again continues from where it stopped.
      */
     public function up(): void
     {
-        Schema::table('access_grants', function (Blueprint $table) {
-            $table->dropUnique(['user_id', 'role', 'scope', 'location_id']);
-        });
+        if (! Schema::hasColumn('access_grants', 'location_key')) {
+            Schema::table('access_grants', function (Blueprint $table) {
+                // SQLite can only add a calculated column in its virtual form; the others store it.
+                $column = $table->unsignedBigInteger('location_key');
 
-        Schema::table('access_grants', function (Blueprint $table) {
-            // SQLite can only add a calculated column in its virtual form; the others store it.
-            $column = $table->unsignedBigInteger('location_key');
+                Schema::getConnection()->getDriverName() === 'sqlite'
+                    ? $column->virtualAs('coalesce(location_id, 0)')
+                    : $column->storedAs('coalesce(location_id, 0)');
+            });
+        }
 
-            Schema::getConnection()->getDriverName() === 'sqlite'
-                ? $column->virtualAs('coalesce(location_id, 0)')
-                : $column->storedAs('coalesce(location_id, 0)');
-        });
+        if (! Schema::hasIndex('access_grants', self::REPLACEMENT_INDEX)) {
+            Schema::table('access_grants', function (Blueprint $table) {
+                $table->unique(['user_id', 'role', 'location_key'], self::REPLACEMENT_INDEX);
+            });
+        }
 
-        Schema::table('access_grants', function (Blueprint $table) {
-            $table->unique(['user_id', 'role', 'location_key']);
-        });
+        // Safe on MySQL because user_id has its own index; see add_staff_member_index_to_access_grants.
+        if (Schema::hasIndex('access_grants', self::ORIGINAL_INDEX)) {
+            Schema::table('access_grants', function (Blueprint $table) {
+                $table->dropUnique(self::ORIGINAL_INDEX);
+            });
+        }
     }
 
     /**
@@ -42,16 +58,22 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('access_grants', function (Blueprint $table) {
-            $table->dropUnique(['user_id', 'role', 'location_key']);
-        });
+        if (! Schema::hasIndex('access_grants', self::ORIGINAL_INDEX)) {
+            Schema::table('access_grants', function (Blueprint $table) {
+                $table->unique(['user_id', 'role', 'scope', 'location_id'], self::ORIGINAL_INDEX);
+            });
+        }
 
-        Schema::table('access_grants', function (Blueprint $table) {
-            $table->dropColumn('location_key');
-        });
+        if (Schema::hasIndex('access_grants', self::REPLACEMENT_INDEX)) {
+            Schema::table('access_grants', function (Blueprint $table) {
+                $table->dropUnique(self::REPLACEMENT_INDEX);
+            });
+        }
 
-        Schema::table('access_grants', function (Blueprint $table) {
-            $table->unique(['user_id', 'role', 'scope', 'location_id']);
-        });
+        if (Schema::hasColumn('access_grants', 'location_key')) {
+            Schema::table('access_grants', function (Blueprint $table) {
+                $table->dropColumn('location_key');
+            });
+        }
     }
 };

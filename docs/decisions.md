@@ -260,6 +260,36 @@ remain separate grants. The permission model is unchanged.
 Considered: an index that applies only to all-locations rows. Not chosen because
 not every database engine supports it, and the production engine is not yet chosen.
 
+## 21. Every foreign key gets an index of its own; schema changes are checked on MySQL
+
+Made after the first staging deployment failed on MySQL 8.4 (2026-10-04).
+
+What happened: MySQL requires each foreign key to be backed by an index that
+starts with the key's column. `access_grants` was created with a unique index
+beginning with `user_id`, so MySQL used that index for the `user_id` foreign key
+and kept no separate one. Replacing the unique index (decision 20) then failed
+with MySQL error 1553, "needed in a foreign key constraint". SQLite, which local
+development and the tests use, has no such rule, so nothing caught it.
+
+Decision:
+
+- A foreign key column is given an explicit index of its own, so that no
+  uniqueness rule is ever the only index holding a foreign key in place.
+  `access_grants.user_id` now has one.
+- A migration that swaps one rule for another adds the new rule before removing
+  the old, and checks before each step whether it is still needed. MySQL cannot
+  undo a half-finished schema change, so a migration must be safe to run again.
+- Production runs MySQL 8.4. A schema change is not finished until it has been
+  run on MySQL, not only on SQLite.
+
+How it was verified: on a temporary MySQL 8.4.6 server the original failure was
+reproduced exactly, then the corrected migrations were run from the state staging
+was in, on an empty database, rolled back and re-applied, and resumed from two
+half-finished states. The whole test suite was also run on MySQL and passed.
+
+Still open: the automated checks on GitHub run on SQLite only. Adding a MySQL 8.4
+run there would catch this class of problem before a deployment does. See roadmap.md.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

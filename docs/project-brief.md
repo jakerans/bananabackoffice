@@ -11,7 +11,7 @@ locations, used by staff. It is not software sold to other companies.
 
 Laravel 13, Livewire 4 (single-file components), Blade, Tailwind 4, Flux UI (free
 edition), Laravel Fortify authentication, Pest, Laravel Boost, Herd for local
-development. SQLite locally.
+development. SQLite locally; MySQL 8.4 on staging and production.
 
 Not allowed without owner approval: React, Inertia, Supabase, microservices, a
 separate frontend, an admin-panel framework, paid UI components or services, new
