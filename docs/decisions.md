@@ -327,12 +327,13 @@ settings, and Laravel supports it natively.
 
 ## 23. Database backups use Forge's built-in backups, to a bucket of their own
 
-Decided by the owner (2026-10-04). Agreed, not yet configured.
+Decided by the owner (2026-10-04). Configured on staging, with a first successful
+backup, on 2026-10-05 UTC. Current state is in roadmap.md, "Backups".
 
 - **Method:** Forge's native database backups, which Forge schedules, prunes and
   can restore from its dashboard.
-- **Staging:** the `banana_backoffice` database, daily, keeping the 7 most recent,
-  with failure notifications on.
+- **Staging:** the `banana_backoffice` database, daily at 08:00 UTC, keeping the 7
+  most recent, with failure notifications on.
 - **Destination:** DigitalOcean Spaces, in a bucket used only for Backoffice
   staging backups (`banana-backoffice-staging`), reached with an access key that
   can use only that bucket. The organization's existing Spaces destination belongs

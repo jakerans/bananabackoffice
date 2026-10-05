@@ -230,21 +230,36 @@ empty, so no data was involved.
 
 ### Database backups
 
-State: **agreed, not yet configured** (2026-10-04). Nothing is being backed up yet.
+State: **staging is configured and its first backup succeeded** (2026-10-05 UTC).
+A restore has not been tested yet. Production is not set up.
 
-Agreed target for staging:
+Staging configuration:
 
 | | |
 | --- | --- |
 | Method | Forge's built-in database backups |
-| What | The `banana_backoffice` MySQL database |
-| Destination | DigitalOcean Spaces, in a bucket used only for this: `banana-backoffice-staging` |
-| Frequency | Daily |
+| Forge | server "BackOffice", backup configuration "Banana Backoffice Staging - daily" |
+| What | The `banana_backoffice` MySQL database only |
+| Destination | DigitalOcean Spaces, in a private bucket used only for this: `banana-backoffice-staging`, through the Forge storage provider "Banana Backoffice Staging" |
+| Frequency | Daily at 08:00 UTC |
 | Retention | The 7 most recent backups |
-| Failure notifications | On |
+| Failure notifications | Emailed to the owner |
 
-Waiting on: the bucket and a storage destination being created in DigitalOcean and
-Forge by the owner. See decisions.md, 23.
+The bucket and its access key were created by the owner in DigitalOcean and entered
+directly in Forge. The key exists only there. See decisions.md, 23.
+
+What was verified on the first backup:
+
+- Forge reported it complete and not partial, at about 4 KB.
+- A full dump of all 13 tables, measured on the server at the same time, compressed
+  to almost exactly that size, so the backup is the whole database and not an
+  empty file.
+- The bucket refuses requests made without credentials.
+- Not verified directly: the file sitting in the bucket. That needs the storage
+  credentials, which were deliberately not used. Forge's own report is the evidence.
+
+Next: a restore test into a temporary database, never into the live one. Until that
+is done, the backups are unproven.
 
 Production will get its own, stricter configuration when it is set up: more
 frequent backups, longer retention, its own bucket and its own access key.
@@ -253,7 +268,6 @@ Known gaps to close for production:
 
 - A restore goes back to the last backup and no further, because MySQL's change
   log is switched off. Point-in-time recovery would need it switched on.
-- A restore has never been tested. One should be done on staging once backups run.
 
 ### Uploaded files are NOT covered
 
