@@ -35,29 +35,53 @@ test unless it says otherwise.
 | 7 | The database could not stop two identical all-locations grants. | A database-calculated column and unique index now do. See decisions.md, 20. |
 | 10 | Someone invited who used "forgot password" stayed marked "Invited" with a live invitation link. | Resetting a password now accepts the invitation and retires its link. |
 
-### Fixed before Checkpoint B (2026-10-04)
+### Resolved before Checkpoint B (2026-10-04)
 
-Both were found in the review above and deferred at the time. Each fix has tests
-that were also run against the old code to confirm they fail without it.
+Findings 8 and 9 are **resolved**: fixed, approved by the owner, merged into `main`
+and deployed to staging. Both were found in the review above and deferred at the
+time. Each fix has tests that were also run against the old code to confirm they
+fail without it.
 
-**8. "Forgot password" revealed whether an email address has an account, and was not
-rate-limited per visitor.**
+**8. Resolved. "Forgot password" revealed whether an email address has an account,
+and was not rate-limited per visitor.**
 An unknown address got "We can't find a user with that email address"; a known one
 got "We have emailed your password reset link".
 Fixed: every well-formed request now gets the same answer, including when a link
 was sent moments ago and when the email fails to send. The work happens after the
 answer has been sent, so the time taken does not give it away either. Requests are
 limited to 6 a minute per visitor. See decisions.md, 24.
-Still to check: that the time taken really is the same on the server. It depends
-on how the server runs PHP and can only be measured once this is deployed.
+Checked on staging after deployment:
 
-**9. A deactivated person could complete a passkey sign-in, or a two-factor step
-that was already in progress.**
+- An existing account and a made-up address got the same redirect, the same
+  message and the same page (the pages matched in full apart from per-visit
+  values).
+- A reset link was created for the existing account only, nothing was recorded
+  for the made-up addresses, and no email error was logged, so Resend accepted
+  the email.
+- Response times showed no meaningful difference. Over 12 paired requests the
+  server took about 380 to 545 ms for the existing account and about 400 to 450 ms
+  for made-up addresses, and the requests that really sent an email were no slower
+  than the rest. The slowest request was whichever came first after a pause,
+  whatever address it used. Without the fix, a request that sends an email would
+  take several hundred milliseconds longer. No further timing defence was added.
+- The seventh request inside a minute was refused for both kinds of address.
+- The limit is counted against the visitor's own network address, not the proxy
+  in front of the site: the server is set up to pass the real address through.
+
+Not checked by the developer: the reset email arriving in the inbox, which only
+the account's owner can see.
+
+**9. Resolved. A deactivated person could complete a passkey sign-in, or a
+two-factor step that was already in progress.**
 They received a signed-in session and were signed out on their very next request.
 Fixed: a deactivated account is now refused before it is signed in, at the
 two-factor challenge (code or recovery code) and at passkey sign-in. No session is
 created, no "signed in" event is recorded, and a recovery code is not used up. The
 check at ordinary sign-in and the check on every request both remain.
+Verified by automated tests only. It was not exercised by hand on staging, because
+that would mean deactivating the only account there. The passkey tests replace the
+passkey's own cryptographic check with one that accepts it, and test everything
+the application decides after that.
 
 ### Open: must be handled before real staff use the system
 
