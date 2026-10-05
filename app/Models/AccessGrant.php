@@ -98,6 +98,24 @@ class AccessGrant extends Model
     }
 
     /**
+     * Describe the grant for the audit history: which role, and where.
+     *
+     * The location's name is copied so the record still reads correctly if the
+     * location is renamed later.
+     *
+     * @return array{role: string, scope: string, location_id: int|null, location: string|null}
+     */
+    public function auditSummary(): array
+    {
+        return [
+            'role' => $this->role->value,
+            'scope' => $this->scope->value,
+            'location_id' => $this->location_id,
+            'location' => $this->location?->name,
+        ];
+    }
+
+    /**
      * Determine whether this grant applies at the given location.
      */
     public function covers(Location $location): bool

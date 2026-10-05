@@ -531,6 +531,40 @@ Why: leaving production to the end would put the first real customer data into a
 environment nobody had time to check. Authorization, data integrity, tests and
 auditability are not traded for the date.
 
+## 38. How audit events are recorded (step B1)
+
+Built in step B1 (2026-10-05).
+
+- **Saved together with the change.** The change and its audit event are written in
+  one database transaction. If either cannot be saved, neither is. Tests make the
+  audit event fail on purpose and check the change is not kept.
+- **Explicit, not automatic.** Each action that makes an important change asks for
+  its event to be recorded. Nothing is recorded behind the scenes whenever a row
+  changes, so the list of what is audited is the list in checkpoint-b.md, and a
+  change that did nothing (renaming to the same name, deactivating someone already
+  inactive) records nothing.
+- **Who acted.** The signed-in person, unless another is named. Accepting an
+  invitation is recorded as done by the person accepting. A change from the command
+  line, such as creating the first Owner, has no actor.
+- **Readable later.** The actor's name is copied onto the event, and so is a
+  location's name inside the values, because both can change afterwards.
+- **Before and after are stored separately,** each holding only the fields that
+  matter for that change.
+- **Append-only in the application.** An event refuses to be changed or deleted
+  through the application. Someone with direct access to the database could still
+  alter it; preventing that is part of giving production a least-privilege
+  database account.
+- **Records are named, not addressed by class.** An event points at "user 5" or
+  "location 2", using a short fixed name for each kind of record. Every kind of
+  record that can be pointed at must be given a name first; an unnamed one is
+  refused. This also applies to Livewire pages that hold a record.
+- **Not recorded, deliberately:** resending an invitation, profile and password
+  changes, sign-ins, and anything viewed or searched.
+
+Also in B1: the GitHub checks now run on `checkpoint-` branches as well as `main`,
+so each step's database changes are run on MySQL 8.4 before review, not only when
+merged.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

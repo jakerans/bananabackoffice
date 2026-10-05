@@ -2,6 +2,8 @@
 
 namespace App\Actions\Staff;
 
+use App\Actions\Audit\RecordAuditEvent;
+use App\Enums\AuditAction;
 use App\Exceptions\InvitationNotSent;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -9,7 +11,10 @@ use Illuminate\Support\Str;
 
 class InviteStaffMember
 {
-    public function __construct(private SendStaffInvitation $sendInvitation) {}
+    public function __construct(
+        private SendStaffInvitation $sendInvitation,
+        private RecordAuditEvent $recordAuditEvent,
+    ) {}
 
     /**
      * Create a staff account and email its owner a link to choose a password.
@@ -30,6 +35,12 @@ class InviteStaffMember
             ]);
 
             $this->sendInvitation->handle($user);
+
+            $this->recordAuditEvent->handle(
+                AuditAction::StaffInvited,
+                $user,
+                after: ['name' => $user->name, 'email' => $user->email],
+            );
 
             return $user;
         });

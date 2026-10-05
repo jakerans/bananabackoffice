@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Support\Access\CurrentLocation;
 use App\Support\Navigation\Navigation;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -30,7 +31,23 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureRecordNames();
         $this->configureAuthorization();
+    }
+
+    /**
+     * Give each kind of record a short, fixed name for wherever one record points at "any kind of record".
+     *
+     * Audit events store these names, not PHP class names, so they stay
+     * readable if a class is ever moved or renamed. Every kind of record that
+     * can be pointed at this way must be listed here; an unlisted one is refused.
+     */
+    protected function configureRecordNames(): void
+    {
+        Relation::enforceMorphMap([
+            'user' => User::class,
+            'location' => Location::class,
+        ]);
     }
 
     /**

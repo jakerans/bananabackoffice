@@ -1,8 +1,11 @@
 <?php
 
+use App\Actions\Audit\RecordAuditEvent;
+use App\Enums\AuditAction;
 use App\Models\Location;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -37,7 +40,7 @@ new #[Title('Locations')] class extends Component {
     /**
      * Add a new operating location.
      */
-    public function create(): void
+    public function create(RecordAuditEvent $recordAuditEvent): void
     {
         $this->authorize('create', Location::class);
 
@@ -45,7 +48,16 @@ new #[Title('Locations')] class extends Component {
 
         $this->validate(['name' => $this->nameRules()]);
 
-        Location::query()->create(['name' => $this->name]);
+        DB::transaction(function () use ($recordAuditEvent): void {
+            $location = Location::query()->create(['name' => $this->name]);
+
+            $recordAuditEvent->handle(
+                AuditAction::LocationCreated,
+                $location,
+                after: ['name' => $location->name],
+                location: $location,
+            );
+        });
 
         $this->reset('name');
 
@@ -72,7 +84,7 @@ new #[Title('Locations')] class extends Component {
     /**
      * Rename the location being edited.
      */
-    public function rename(): void
+    public function rename(RecordAuditEvent $recordAuditEvent): void
     {
         $location = Location::query()->findOrFail($this->editingId);
 
@@ -85,7 +97,21 @@ new #[Title('Locations')] class extends Component {
             attributes: ['editingName' => 'name'],
         );
 
-        $location->update(['name' => $this->editingName]);
+        DB::transaction(function () use ($location, $recordAuditEvent): void {
+            $previousName = $location->name;
+
+            $location->update(['name' => $this->editingName]);
+
+            if ($location->wasChanged('name')) {
+                $recordAuditEvent->handle(
+                    AuditAction::LocationRenamed,
+                    $location,
+                    before: ['name' => $previousName],
+                    after: ['name' => $location->name],
+                    location: $location,
+                );
+            }
+        });
 
         $this->reset('editingId', 'editingName');
 
@@ -96,9 +122,9 @@ new #[Title('Locations')] class extends Component {
     /**
      * Stop a location operating. Its history is kept and no grant covers it while inactive.
      */
-    public function deactivate(int $locationId): void
+    public function deactivate(int $locationId, RecordAuditEvent $recordAuditEvent): void
     {
-        $this->setActive($locationId, false);
+        $this->setActive($locationId, false, $recordAuditEvent);
 
         Flux::toast(variant: 'success', text: __('Location deactivated.'));
     }
@@ -106,20 +132,30 @@ new #[Title('Locations')] class extends Component {
     /**
      * Bring a deactivated location back into operation.
      */
-    public function reactivate(int $locationId): void
+    public function reactivate(int $locationId, RecordAuditEvent $recordAuditEvent): void
     {
-        $this->setActive($locationId, true);
+        $this->setActive($locationId, true, $recordAuditEvent);
 
         Flux::toast(variant: 'success', text: __('Location reactivated.'));
     }
 
-    private function setActive(int $locationId, bool $isActive): void
+    private function setActive(int $locationId, bool $isActive, RecordAuditEvent $recordAuditEvent): void
     {
         $location = Location::query()->findOrFail($locationId);
 
         $this->authorize('update', $location);
 
-        $location->update(['is_active' => $isActive]);
+        DB::transaction(function () use ($location, $isActive, $recordAuditEvent): void {
+            $location->update(['is_active' => $isActive]);
+
+            if ($location->wasChanged('is_active')) {
+                $recordAuditEvent->handle(
+                    $isActive ? AuditAction::LocationReactivated : AuditAction::LocationDeactivated,
+                    $location,
+                    location: $location,
+                );
+            }
+        });
     }
 
     /**

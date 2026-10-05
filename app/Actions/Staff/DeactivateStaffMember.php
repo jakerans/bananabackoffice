@@ -2,6 +2,8 @@
 
 namespace App\Actions\Staff;
 
+use App\Actions\Audit\RecordAuditEvent;
+use App\Enums\AuditAction;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
@@ -10,6 +12,8 @@ use Illuminate\Validation\ValidationException;
 
 class DeactivateStaffMember
 {
+    public function __construct(private RecordAuditEvent $recordAuditEvent) {}
+
     /**
      * Stop a staff member signing in, and end every sign-in they already have.
      *
@@ -27,15 +31,23 @@ class DeactivateStaffMember
             ]);
         }
 
-        $staff->forceFill([
-            'is_active' => false,
-            // A new token makes every "remember me" cookie already issued worthless.
-            'remember_token' => Str::random(60),
-        ])->save();
+        DB::transaction(function () use ($staff): void {
+            $wasActive = $staff->isActive();
 
-        Password::broker('invitations')->deleteToken($staff);
+            $staff->forceFill([
+                'is_active' => false,
+                // A new token makes every "remember me" cookie already issued worthless.
+                'remember_token' => Str::random(60),
+            ])->save();
 
-        $this->endSessions($staff);
+            if ($wasActive) {
+                $this->recordAuditEvent->handle(AuditAction::StaffDeactivated, $staff);
+            }
+
+            Password::broker('invitations')->deleteToken($staff);
+
+            $this->endSessions($staff);
+        });
     }
 
     /**

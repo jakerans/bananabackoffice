@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+      # Checkpoint work is reviewed step by step before it is merged, and each step
+      # can change the database, so these branches get the same checks as main.
+      - 'checkpoint-*'
   pull_request:
 
 permissions:

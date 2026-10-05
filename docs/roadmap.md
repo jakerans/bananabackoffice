@@ -324,7 +324,8 @@ in B10, before the first real file is stored.
 
 ## Automated checks on GitHub
 
-Every push to `main` and every pull request runs two jobs:
+Every push to `main`, every push to a `checkpoint-` branch, and every pull request
+runs two jobs:
 
 | Job | Database | What it runs |
 | --- | --- | --- |
@@ -342,8 +343,9 @@ PHP 8.4.
 ## Known limits of Checkpoint A
 
 - Location names are compared exactly, so "Northside" and "northside" count as different.
-- Changes to access are stamped with who granted them, but there is no audit log
-  screen and removed grants leave no history.
+- Changes to staff, access and locations are recorded as audit events from step B1
+  onwards. Changes made before B1 have no history, and there is no screen for
+  reading the events yet (step B11).
 - Invitation emails are sent immediately rather than queued, so a slow mail server
   slows that one click.
 - Application email is sent through Resend from `mail.bananapainting.com`
@@ -369,7 +371,7 @@ outcome, because Backoffice is to be the system of record from launch.
 | Step | Delivers | State |
 | --- | --- | --- |
 | B0 | The plan and updated documents | Complete |
-| B1 | Audit event recording, including Checkpoint A's staff and access changes | Not started |
+| B1 | Audit event recording, including Checkpoint A's staff and access changes | Built (2026-10-05); awaiting the owner's review |
 | B2 | Attribution and managed lists: the Lead & Sales Lists page | Not started |
 | B3 | Lead capture with attribution; the shared Leads page | Not started |
 | B4 | Lead routing and assignment | Not started |
