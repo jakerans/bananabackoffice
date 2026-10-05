@@ -32,9 +32,8 @@ Status: **Approved** (2026-10-04) and **built**. Each step is one commit on the
 
 - **Small screens.** The center menu scrolls sideways instead of collapsing into a
   slide-out menu. It is simpler and works without extra code.
-- **Coming Soon in the center menu.** Unbuilt sections are grouped behind a single
-  "Coming soon" label instead of each carrying its own, which kept the menu readable.
-  Each one is labelled individually on the center landing page.
+- **Coming Soon in the center menu.** Corrected after the owner's review; see
+  "Changes after the owner's visual review" below.
 - **No third menu row yet.** No built section has sub-sections, so the sub-navigation
   row is not drawn. The registry already holds the sub-sections.
 - **Settings has no single permission.** It opens for anyone who may manage
@@ -43,6 +42,24 @@ Status: **Approved** (2026-10-04) and **built**. Each step is one commit on the
   never be used on the password reset form. See decisions.md, decision 11.
 - **Company Overview and Settings do not depend on the selected location.** They
   are company-level and behave the same whichever location is selected.
+
+### Changes after the owner's visual review (2026-10-04)
+
+The owner reviewed the shell in a browser and asked for the navigation hierarchy to
+be corrected. Authorization, locations, roles and route protection were not changed.
+
+- **Center "Overview" pages removed.** A center has no page of its own. Choosing a
+  center opens its primary section directly; see navigation-map.md.
+- **Second row simplified.** It lists only the sections of the selected center. The
+  "Overview" item and the standalone "Coming soon" item are gone.
+- **"Coming soon" is a state of each section.** An unbuilt section is muted and not
+  clickable; "Coming soon" shows on hover and is read out by screen readers.
+- **Primary sections have a page even before they are built**, so that a center
+  has somewhere to open. That page states it is not built and shows nothing else.
+- **Open: the header logo.** The owner asked for the real Banana Backoffice
+  horizontal logo in place of the text wordmark. No Backoffice logo file exists in
+  the project (see design-system.md, "Assets noted on inspection"), so the header
+  brand was left unchanged until the file is supplied.
 
 ### A0 — Housekeeping
 
@@ -78,7 +95,7 @@ Status: **Approved** (2026-10-04) and **built**. Each step is one commit on the
 - The central navigation definition.
 - Header with brand, center switcher, authorized location switcher, user menu.
 - Horizontal center navigation with Coming Soon items.
-- A landing page for each center and for Settings.
+- Each center opens directly on its primary section (changed after review; originally a landing page per center).
 - Friendly "no access assigned yet" page.
 
 ### A5 — Settings: Locations
@@ -101,7 +118,7 @@ Status: **Approved** (2026-10-04) and **built**. Each step is one commit on the
 2. Personal profile and security settings.
 3. First-owner creation from the command line.
 4. The application shell: header, center switcher, location switcher, navigation.
-5. A landing page for each center the person is authorized for.
+5. Every authorized center opens directly on its primary section, with that center's sections in the second row.
 6. Settings: Locations.
 7. Settings: Users and Access.
 8. "No access assigned yet" and "not authorized" pages.

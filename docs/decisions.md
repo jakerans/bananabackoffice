@@ -145,6 +145,26 @@ they were and relabelled "My account". The company Settings center shares the
 Why: moving them would have touched working sign-in security code for a cosmetic
 gain. Route names hide the addresses, so they can be moved later in one place.
 
+## 15. A center has no page of its own
+
+Made after the owner's visual review (2026-10-04). Replaces the center landing
+pages built in step A4.
+
+Choosing a center opens its primary section directly. The second row lists only
+that center's sections. There is no "Overview" page or item, and "Coming soon" is
+a state of an individual section, never a navigation item.
+
+Why: a landing page put an extra level between choosing a center and working in
+it. Three levels are enough: header, sections of the center, the section's page.
+
+Consequence: a center's primary section must have a page even before it is built,
+or the center would have nowhere to open. That page says the section is not built
+and shows nothing else. Every other unbuilt section still has no route at all.
+
+Each center's address (for example `/sales`) is kept as a shortcut that checks
+authorization and then forwards to the primary section, so links and bookmarks to
+a center keep working as sections are built.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

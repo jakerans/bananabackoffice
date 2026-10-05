@@ -19,13 +19,21 @@ test('guests are redirected to the login page from every center', function (stri
     $this->get(route($route))->assertRedirect(route('login'));
 })->with('center routes');
 
-test('an owner can open every center', function (string $route) {
+test('a center opens directly on its primary section', function (string $center, string $primary) {
     Location::factory()->create();
 
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
 
-    $this->actingAs($owner)->get(route($route))->assertOk();
-})->with('center routes');
+    $this->actingAs($owner)->get(route($center))->assertRedirect(route($primary));
+})->with([
+    'company overview' => ['company.home', 'company.performance'],
+    'marketing' => ['marketing.home', 'marketing.performance'],
+    'sales' => ['sales.home', 'sales.performance'],
+    'production' => ['production.home', 'production.performance'],
+    'finance' => ['finance.home', 'finance.performance'],
+    'color studio' => ['color_studio.home', 'color_studio.projects'],
+    'settings' => ['settings.home', 'settings.locations'],
+]);
 
 test('a staff member with no grants is forbidden from every center', function (string $route) {
     Location::factory()->create();
@@ -50,16 +58,14 @@ test('a call center agent is forbidden from centers outside marketing', function
     'settings' => ['settings.home'],
 ]);
 
-test('a call center agent can open the marketing center', function () {
-    Location::factory()->create(['name' => 'Lakeview']);
+test('a call center agent is taken to the marketing performance board', function () {
+    Location::factory()->create();
 
     $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
 
     $this->actingAs($agent)
         ->get(route('marketing.home'))
-        ->assertOk()
-        ->assertSee('Marketing Center')
-        ->assertSee('Working in Lakeview');
+        ->assertRedirect(route('marketing.performance'));
 });
 
 test('leadership is forbidden from the finance center', function () {
@@ -102,35 +108,9 @@ test('a center is forbidden in a location where the staff member lacks its permi
     $this->actingAs($user)
         ->withSession([CurrentLocation::SESSION_KEY => $lakeview->id])
         ->get(route('sales.home'))
-        ->assertOk();
+        ->assertRedirect(route('sales.performance'));
 
     $this->withSession([CurrentLocation::SESSION_KEY => $riverside->id])
         ->get(route('sales.home'))
         ->assertForbidden();
-});
-
-test('a center landing page lists unbuilt sections as coming soon without linking to them', function () {
-    Location::factory()->create();
-
-    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
-
-    $this->actingAs($owner)
-        ->get(route('sales.home'))
-        ->assertOk()
-        ->assertSee('Coming soon')
-        ->assertSee('Estimates')
-        ->assertDontSee('/sales/estimates');
-});
-
-test('the center switcher does not offer centers the staff member cannot open', function () {
-    Location::factory()->create();
-
-    $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
-
-    $this->actingAs($agent)
-        ->get(route('marketing.home'))
-        ->assertOk()
-        ->assertDontSee('Finance Center')
-        ->assertDontSee('Sales Center')
-        ->assertDontSee('Settings');
 });

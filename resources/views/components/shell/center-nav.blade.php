@@ -4,50 +4,36 @@
 ])
 
 @php
-    $linkClasses = 'flex h-11 shrink-0 items-center border-b-2 px-3 font-nav text-sm whitespace-nowrap';
+    $itemClasses = 'flex h-11 shrink-0 items-center border-b-2 px-3 font-nav text-sm whitespace-nowrap';
     $currentClasses = 'border-banana font-bold text-ink';
     $idleClasses = 'border-transparent font-semibold text-zinc-600 hover:text-ink';
-
-    $onLanding = request()->routeIs($center->route);
-    $comingSoon = $center->comingSoonChildren();
+    $unbuiltClasses = 'cursor-not-allowed border-transparent font-medium text-zinc-400';
 @endphp
 
+{{-- The sections of the current center, and nothing else. --}}
 <nav aria-label="{{ $center->label }}" class="border-b border-zinc-200 bg-card">
     <div class="flex items-center gap-1 overflow-x-auto px-4 lg:px-8">
-        <a
-            href="{{ route($center->route) }}"
-            wire:navigate
-            @if ($onLanding) aria-current="page" @endif
-            class="{{ $linkClasses }} {{ $onLanding ? $currentClasses : $idleClasses }}"
-        >
-            {{ __('Overview') }}
-        </a>
+        @foreach ($center->children as $section)
+            @continue(! $shell->user()->canAny($section->permissions))
 
-        @foreach ($center->liveChildren() as $item)
-            @if ($shell->user()->canAny($item->permissions))
+            @if ($section->isReachable())
                 <a
-                    href="{{ route($item->route) }}"
+                    href="{{ route($section->route) }}"
                     wire:navigate
-                    @if ($shell->isCurrent($item)) aria-current="page" @endif
-                    class="{{ $linkClasses }} {{ $shell->isCurrent($item) ? $currentClasses : $idleClasses }}"
+                    @if ($shell->isCurrent($section)) aria-current="page" @endif
+                    class="{{ $itemClasses }} {{ $shell->isCurrent($section) ? $currentClasses : $idleClasses }}"
                 >
-                    {{ $item->label }}
+                    {{ $section->label }}
                 </a>
+            @else
+                {{-- Authorized but not built yet: visible, muted and never a link. --}}
+                <flux:tooltip :content="__('Coming soon')" position="bottom">
+                    <span aria-disabled="true" class="{{ $itemClasses }} {{ $unbuiltClasses }}">
+                        {{ $section->label }}
+                        <span class="sr-only">({{ __('coming soon') }})</span>
+                    </span>
+                </flux:tooltip>
             @endif
         @endforeach
-
-        {{-- Not built yet: shown muted, labelled once, and never a link. --}}
-        @if (count($comingSoon) > 0)
-            <span class="ms-3 flex h-11 shrink-0 items-center gap-1.5 border-s border-zinc-200 ps-4 text-xs font-semibold tracking-wide whitespace-nowrap text-zinc-500 uppercase">
-                <flux:icon.lock-closed variant="micro" />
-                {{ __('Coming soon') }}
-            </span>
-
-            @foreach ($comingSoon as $item)
-                <span aria-disabled="true" class="flex h-11 shrink-0 cursor-default items-center px-2.5 font-nav text-sm font-medium whitespace-nowrap text-zinc-400">
-                    {{ $item->label }}
-                </span>
-            @endforeach
-        @endif
     </div>
 </nav>

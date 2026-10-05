@@ -4,6 +4,7 @@ namespace App\Support\Navigation;
 
 use App\Enums\NavigationState;
 use App\Enums\Permission;
+use Illuminate\Support\Arr;
 
 /**
  * One entry in the navigation: a center, or a section inside one.
@@ -13,8 +14,9 @@ final readonly class NavigationItem
     /**
      * @param  string  $id  Stable identifier that never changes, even if the label does.
      * @param  list<Permission>  $permissions  Holding any one of these makes the item visible.
-     * @param  string|null  $route  Route name; present only for live items.
+     * @param  string|null  $route  Route name. Every built item has one; an unbuilt item has one only when it is the page its center opens on.
      * @param  list<NavigationItem>  $children
+     * @param  string|null  $primary  ID of the child this item opens on. Defaults to the first child.
      */
     public function __construct(
         public string $id,
@@ -25,11 +27,23 @@ final readonly class NavigationItem
         public ?string $icon = null,
         public ?string $description = null,
         public array $children = [],
+        public ?string $primary = null,
     ) {}
 
+    /**
+     * Determine whether the feature behind this item has been built.
+     */
     public function isLive(): bool
     {
         return $this->state === NavigationState::Live;
+    }
+
+    /**
+     * Determine whether this item has a page a staff member can be taken to.
+     */
+    public function isReachable(): bool
+    {
+        return $this->route !== null;
     }
 
     /**
@@ -42,23 +56,12 @@ final readonly class NavigationItem
     }
 
     /**
-     * Get this item's children that have been built.
-     *
-     * @return list<NavigationItem>
+     * Get the child this item opens on: the one named as primary, otherwise the first.
      */
-    public function liveChildren(): array
+    public function primaryChild(): ?NavigationItem
     {
-        return array_values(array_filter($this->children, fn (NavigationItem $item): bool => $item->isLive()));
-    }
-
-    /**
-     * Get this item's children that have not been built yet.
-     *
-     * @return list<NavigationItem>
-     */
-    public function comingSoonChildren(): array
-    {
-        return array_values(array_filter($this->children, fn (NavigationItem $item): bool => ! $item->isLive()));
+        return Arr::first($this->children, fn (NavigationItem $child): bool => $child->id === $this->primary)
+            ?? Arr::first($this->children);
     }
 
     /**

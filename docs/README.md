@@ -47,7 +47,7 @@ written to `storage/logs/laravel.log` instead of being sent.
 | Navigation definition | `app/Support/Navigation/Navigation.php` |
 | Staff operations (invite, grant, deactivate) | `app/Actions/Staff/` |
 | Application shell | `resources/views/layouts/app.blade.php`, `resources/views/components/shell/` |
-| Pages | `resources/views/pages/`, `resources/views/centers/` |
+| Pages | `resources/views/pages/`, `resources/views/sections/` |
 | Design tokens | `resources/css/app.css` |
 
 ## Reference material
