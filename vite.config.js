@@ -13,8 +13,17 @@ export default defineConfig({
             ],
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
+                bunny('Outfit', {
                     weights: [400, 500, 600],
+                }),
+                bunny('Poppins', {
+                    weights: [600, 700, 800],
+                }),
+                bunny('Knewave', {
+                    weights: [400],
+                }),
+                bunny('Permanent Marker', {
+                    weights: [400],
                 }),
             ],
         }),

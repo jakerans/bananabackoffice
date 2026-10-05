@@ -3,11 +3,13 @@
 ## Where we are
 
 **Current checkpoint: A — Secure branded foundation.**
-**State: planning complete, implementation not started, awaiting owner approval.**
+**State: built on the `checkpoint-a` branch (2026-10-04), awaiting owner review.**
+Checkpoint B has not been started and needs the decisions listed at the end of
+this document first.
 
 | Checkpoint | Scope | State |
 | --- | --- | --- |
-| A | Secure branded foundation | Planned, not started |
+| A | Secure branded foundation | Built, awaiting owner review |
 | B | Core CRM records (customers, properties, projects, photos, notes, timeline) | Not started |
 | C | First Color Studio workflow | Not started |
 | Later | Estimating and proposals, homeowner portal, production, finance, reporting | Not started |
@@ -20,16 +22,48 @@
 - Public registration is already off: there is no `/register` route.
 - The starter kit's 32 tests pass.
 - The database has the starter tables only and no users.
-- The project is not yet a git repository.
 
 ## Checkpoint A plan
 
-Status: **Proposed.** Each step is one small reviewable change with its own tests,
-and each stops for owner review.
+Status: **Approved** (2026-10-04) and **built**. Each step is one commit on the
+`checkpoint-a` branch, named A0 to A7, with its own tests.
+
+### What changed from the plan while building
+
+- **Small screens.** The center menu scrolls sideways instead of collapsing into a
+  slide-out menu. It is simpler and works without extra code.
+- **Coming Soon in the center menu.** Corrected after the owner's review; see
+  "Changes after the owner's visual review" below.
+- **No third menu row yet.** No built section has sub-sections, so the sub-navigation
+  row is not drawn. The registry already holds the sub-sections.
+- **Settings has no single permission.** It opens for anyone who may manage
+  locations or manage users, so no ninth permission was needed.
+- **Invitation links have their own table** (`staff_invitation_tokens`) so they can
+  never be used on the password reset form. See decisions.md, decision 11.
+- **Company Overview and Settings do not depend on the selected location.** They
+  are company-level and behave the same whichever location is selected.
+
+### Changes after the owner's visual review (2026-10-04)
+
+The owner reviewed the shell in a browser and asked for the navigation hierarchy to
+be corrected. Authorization, locations, roles and route protection were not changed.
+
+- **Center "Overview" pages removed.** A center has no page of its own. Choosing a
+  center opens its primary section directly; see navigation-map.md.
+- **Second row simplified.** It lists only the sections of the selected center. The
+  "Overview" item and the standalone "Coming soon" item are gone.
+- **"Coming soon" is a state of each section.** An unbuilt section is muted and not
+  clickable; "Coming soon" shows on hover and is read out by screen readers.
+- **Primary sections have a page even before they are built**, so that a center
+  has somewhere to open. That page states it is not built and shows nothing else.
+- **Open: the header logo.** The owner asked for the real Banana Backoffice
+  horizontal logo in place of the text wordmark. No Backoffice logo file exists in
+  the project (see design-system.md, "Assets noted on inspection"), so the header
+  brand was left unchanged until the file is supplied.
 
 ### A0 — Housekeeping
 
-- Start version control (pending owner approval) with `docs/reference` excluded.
+- Start version control with `docs/reference` excluded.
 - Name the app "Banana Backoffice".
 - Remove starter-kit leftovers: the Laravel welcome page, the "Repository" and
   "Documentation" links, the placeholder dashboard.
@@ -61,7 +95,7 @@ and each stops for owner review.
 - The central navigation definition.
 - Header with brand, center switcher, authorized location switcher, user menu.
 - Horizontal center navigation with Coming Soon items.
-- A landing page for each center and for Settings.
+- Each center opens directly on its primary section (changed after review; originally a landing page per center).
 - Friendly "no access assigned yet" page.
 
 ### A5 — Settings: Locations
@@ -84,7 +118,7 @@ and each stops for owner review.
 2. Personal profile and security settings.
 3. First-owner creation from the command line.
 4. The application shell: header, center switcher, location switcher, navigation.
-5. A landing page for each center the person is authorized for.
+5. Every authorized center opens directly on its primary section, with that center's sections in the second row.
 6. Settings: Locations.
 7. Settings: Users and Access.
 8. "No access assigned yet" and "not authorized" pages.
@@ -97,9 +131,10 @@ Proposals, Relationships, Commissions, Projects, Crews / Subcontractors, Cash
 Management, Job Costing, Payroll, Commission Approvals, all of Color Studio,
 Customers, Inbox, and the remaining Settings pages.
 
-## Tests planned for Checkpoint A
+## Tests in Checkpoint A
 
-See [permission-model.md](permission-model.md) for the rules being tested.
+All of the following are covered by automated tests in `tests/`. See
+[permission-model.md](permission-model.md) for the rules being tested.
 
 **Authentication**
 - The existing sign-in, password reset, verification, two-factor tests keep passing.
@@ -148,9 +183,30 @@ See [permission-model.md](permission-model.md) for the rules being tested.
 - An invitation creates the account without a usable password and sends a
   set-password email.
 
+## Security review before merge (2026-10-04)
+
+The branch was reviewed in full before merging. Eight findings were fixed on the
+branch and the rest are recorded, with what each needs, in
+[security-notes.md](security-notes.md). Two of the open ones must be closed before
+real staff use the system on a server: "forgot password" reveals which addresses
+have accounts, and a deactivated person can complete a passkey sign-in before
+being signed out again.
+
+## Known limits of Checkpoint A
+
+- Location names are compared exactly, so "Northside" and "northside" count as different.
+- Changes to access are stamped with who granted them, but there is no audit log
+  screen and removed grants leave no history.
+- Invitation emails are sent immediately rather than queued, so a slow mail server
+  slows that one click.
+- The mail service for the live system is not chosen. Invitations need one before launch.
+- Passkeys only work over a secure address. The local site is served over plain
+  `http`, so passkeys cannot be tried locally until Herd's HTTPS option is turned on.
+
 ## Decisions to make before Checkpoint B
 
 - Who can see a centrally received lead before a location owns it.
 - Whether a person's access to a customer follows the customer's projects, the
   customer's properties, or both.
 - Audit log scope.
+- Whether sensitive roles (Owner, Finance) must use two-factor sign-in.

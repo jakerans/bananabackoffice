@@ -1,6 +1,6 @@
 # Permission Model
 
-Status: **Proposed** (2026-10-04). The role list and matrix need owner confirmation.
+Status: **Approved** (2026-10-04). Roles and matrix confirmed by the owner.
 
 ## The idea in plain English
 
@@ -101,7 +101,7 @@ job costs, approve commissions, edit leads) are added when the feature is built.
 | Role | Company Overview | Marketing | Sales | Production | Finance | Color Studio | Settings |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | Owner | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
-| Leadership | Yes | Yes | Yes | Yes | **Open** | Yes | No |
+| Leadership | Yes | Yes | Yes | Yes | No | Yes | No |
 | Finance | No | No | No | No | Yes | No | No |
 | Location Manager | No | Yes | Yes | Yes | No | Yes | No |
 | Call Center Agent | No | Yes | No | No | No | No | No |
@@ -116,9 +116,10 @@ Notes:
   location does not open it.
 - Call Center Agent is normally granted at all locations and still has no finance,
   payroll or settings access.
-- **Open:** whether Leadership includes Finance. Proposed default: no. A leader who
-  needs finance is given a separate Finance grant, so finance access is always a
-  deliberate choice.
+- Leadership does not include Finance. A leader who needs finance is given a
+  separate Finance grant, so finance access is always a deliberate choice.
+- The structure is extensible: a new role or permission is one new entry in code
+  plus its line in this matrix.
 
 ## Where the rules are enforced
 
@@ -136,6 +137,44 @@ Notes:
 - The first Owner is created from the command line on the server.
 - Other staff are invited by someone with `settings.users.manage`.
 - Accounts are deactivated, not deleted, so history stays attributable.
+
+### Invitations
+
+- An invited account is created with a long random password that nobody is shown.
+  Administrators never create, see or send a password.
+- The staff member receives an email link and chooses their own password.
+- The link works once, expires after 72 hours, and is stored only in hashed form.
+- Sending a new invitation cancels the previous link. Deactivating the account
+  cancels it too.
+- Accepting the invitation also confirms the email address.
+- Inviting is all or nothing. If the email cannot be sent, no account is created.
+  If a resend fails, nothing changes and an earlier link keeps working.
+- Someone invited who sets their password through "forgot password" has accepted
+  the invitation: they stop showing as "Invited" and the unused link is retired.
+- A new account has no access until a role is granted. It can sign in and sees
+  "No access assigned yet".
+
+### Email addresses
+
+Every email address is stored in lowercase and compared in lowercase, at sign-in,
+password reset, invitations, profile changes and Owner creation. Two accounts
+cannot differ only by capital letters.
+
+### Safeguards
+
+- There is always at least one **usable Owner**: an Owner who is active, has a
+  confirmed email address, and has chosen their own password. An Owner who was
+  invited but never accepted does not count. The last usable Owner cannot be
+  deactivated or lose the Owner role.
+- Nobody can deactivate their own account.
+- A deactivated person cannot sign in. Deactivation ends their existing sessions
+  and destroys their "remember me" login, so reactivating never revives an old
+  sign-in. Their grants are kept, so reactivating restores the access they had.
+- The database refuses a duplicate grant: one person holds a role at most once per
+  location and at most once company-wide.
+- Each grant records who granted it.
+- Only the Owner role contains `settings.users.manage` today. If another role is
+  ever given it, add a rule that only an Owner may grant or remove the Owner role.
 
 ## Homeowners
 

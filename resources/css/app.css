@@ -8,31 +8,47 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Design tokens from the Banana Backoffice Application Design System.
+ * See docs/design-system.md. Templates use these names, never raw hex values.
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-nav: 'Poppins', var(--font-sans);
+    --font-display: 'Knewave', var(--font-sans);
+    --font-hand: 'Permanent Marker', var(--font-sans);
 
-    --color-zinc-50: #fafafa;
-    --color-zinc-100: #f5f5f5;
-    --color-zinc-200: #e5e5e5;
-    --color-zinc-300: #d4d4d4;
-    --color-zinc-400: #a3a3a3;
-    --color-zinc-500: #737373;
-    --color-zinc-600: #525252;
-    --color-zinc-700: #404040;
-    --color-zinc-800: #262626;
-    --color-zinc-900: #171717;
-    --color-zinc-950: #0a0a0a;
+    --color-banana: #ffd21f;
+    --color-ink: #111111;
+    --color-cream: #fff8e8;
+    --color-card: #fffcf4;
+    --color-wall-teal: #17707a;
 
-    --color-accent: var(--color-neutral-800);
-    --color-accent-content: var(--color-neutral-800);
-    --color-accent-foreground: var(--color-white);
+    /* Warm neutrals so borders and secondary text sit comfortably on Cream. */
+    --color-zinc-50: #fafaf9;
+    --color-zinc-100: #f5f5f4;
+    --color-zinc-200: #e7e5e4;
+    --color-zinc-300: #d6d3d1;
+    --color-zinc-400: #a8a29e;
+    --color-zinc-500: #78716c;
+    --color-zinc-600: #57534e;
+    --color-zinc-700: #44403c;
+    --color-zinc-800: #292524;
+    --color-zinc-900: #1c1917;
+    --color-zinc-950: #0c0a09;
+
+    /* Flux primary actions are Banana Yellow with Ink text. */
+    --color-accent: var(--color-banana);
+    --color-accent-content: var(--color-ink);
+    --color-accent-foreground: var(--color-ink);
 }
 
 @layer theme {
+    /* The Ink header is the only dark region; Yellow is readable as text there. */
     .dark {
-        --color-accent: var(--color-white);
-        --color-accent-content: var(--color-white);
-        --color-accent-foreground: var(--color-neutral-800);
+        --color-accent: var(--color-banana);
+        --color-accent-content: var(--color-banana);
+        --color-accent-foreground: var(--color-ink);
     }
 }
 
@@ -47,6 +63,15 @@
     }
 }
 
+@layer components {
+
+    [data-flux-button],
+    [data-flux-navbar-items],
+    [data-flux-navlist-item] {
+        font-family: var(--font-nav);
+    }
+}
+
 [data-flux-field]:not(ui-radio, ui-checkbox) {
     @apply grid gap-2;
 }
@@ -58,9 +83,5 @@
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+    @apply outline-hidden ring-2 ring-wall-teal ring-offset-2 ring-offset-card;
 }
-
-/* \[:where(&)\]:size-4 {
-    @apply size-4;
-} */

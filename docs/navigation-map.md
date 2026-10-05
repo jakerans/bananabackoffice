@@ -1,7 +1,7 @@
 # Navigation Map
 
-Status: **Proposed** (structure from the owner's brief; IDs, states and permissions
-proposed 2026-10-04).
+Status: **Approved** (structure from the owner's brief; IDs, states and permissions
+approved 2026-10-04).
 
 ## How navigation works
 
@@ -15,18 +15,41 @@ Navigation is defined once, in code, in a single registry. Every item has:
 | Permission | What a person needs to see and open it. |
 | Scope | `location` (works inside one location or All Locations) or `company` (company-wide only). |
 | State | `live` (built) or `coming_soon` (not built). |
-| Route | Present only when the item is `live`. |
+| Route | Every built item has one. An unbuilt item has one only if its center opens on it. |
+| Primary | The section a center opens on, or the sub-section a section opens on. |
+
+### The hierarchy
+
+There are exactly three levels, and no level in between:
+
+1. **Ink header** — brand, center selector, location selector, user.
+2. **Second row** — the sections of the selected center, and nothing else.
+3. **Page** — the content of the selected section.
+
+A center has no page of its own. There is no "Overview" page and no "Overview"
+item. Choosing a center goes straight to that center's primary section.
 
 ### The three states a person can see
 
 | Situation | What the person sees | What the server does |
 | --- | --- | --- |
 | Authorized and built | A normal link | Serves the page |
-| Authorized and not built | Muted item labelled "Coming soon", not clickable | No route exists |
+| Authorized and not built | The section name, muted and not clickable. "Coming soon" appears on hover and is read out by screen readers. | No route exists |
 | Not authorized | Nothing | Refuses the request ("forbidden") |
+
+"Coming soon" is a state of an individual section. It is never a navigation item
+of its own.
 
 "Not built yet" and "not authorized" are never shown the same way. Hiding an item
 is a courtesy; the server-side check is what protects the page.
+
+### The one exception: a center's primary section
+
+A center has to open on something. If its primary section is not built yet, that
+one section still has a page: its title, a "Coming soon" badge and a plain
+statement that it is not built. It shows no numbers, charts, tables or buttons.
+Because it is the page you are on, it appears in the second row as the current
+item. Every other unbuilt section stays muted and unclickable.
 
 Until a feature is built it borrows its center's access permission. When it is
 built it receives its own specific permission, recorded in
@@ -36,33 +59,73 @@ built it receives its own specific permission, recorded in
 
 ```
 +----------------------------------------------------------------------------+
-| BANANA | Sales Center v                   Location v      (AB) Name v     |  Ink header
+| Brand | Sales Center v                    Location v      (AB) Name v     |  Ink header
 +----------------------------------------------------------------------------+
-| Performance   Appointments   ESTIMATES   Proposals   Customers   Inbox     |  Center navigation
-|                              =========                                     |  Yellow marker
+| PERFORMANCE BOARD  Appointments  Estimates  Proposals  Relationships  ...  |  Sections of the center
+| =================                                                          |  Yellow marker
 +----------------------------------------------------------------------------+
-| Sub-navigation, only where an item has children                            |
-+----------------------------------------------------------------------------+
-| Cream workspace with Card surfaces                                         |
+| Cream workspace with Card surfaces: the selected section                   |
 +----------------------------------------------------------------------------+
 ```
 
-- Header: brand at left, then the center switcher, then on the right the location
-  switcher and the user menu.
-- Center navigation: horizontal. The current item is heavier with a small Yellow marker.
-- Sub-navigation: a third row, shown only for items with children.
-- On small screens the center navigation collapses into a slide-out menu.
+- Header: brand at left, then the center selector, then on the right the location
+  selector and the user menu.
+- Second row: the sections of the selected center, in the order listed below. The
+  current section is heavier with a small Yellow marker.
+- Sub-sections (for example the pages inside Call Center) will get their own row
+  when the first section that has them is built. The registry already holds them.
+- On small screens the center menu scrolls sideways.
+- Company Overview and Settings are company-level: they do not change with the
+  selected location. Every other center follows the selected location.
+- Settings opens for anyone who may manage locations or manage users. Its unbuilt
+  pages borrow both of those permissions.
+
+## Where each center opens
+
+| Center | Opens on | Built? |
+| --- | --- | --- |
+| Company Overview | Company Performance | Not yet |
+| Marketing Center | Performance Board | Not yet |
+| Sales Center | Performance Board | Not yet |
+| Production Center | Performance Board | Not yet |
+| Finance Center | Performance Board | Not yet |
+| Color Studio | Color Projects | Not yet |
+| Settings | Locations | Yes |
+
+Sections with sub-sections open on:
+
+| Section | Opens on |
+| --- | --- |
+| Marketing → Call Center | Central Inbox |
+| Marketing → Reporting | Lead Sources |
+| Production → Projects | Ready to Schedule |
+| Finance → Cash Management | Receivables |
+
+How these were chosen:
+
+- Marketing, Sales, Production and Finance open on Performance Board, as the owner
+  specified.
+- Color Studio, Company Overview and every section with sub-sections open on the
+  first item listed for them in the owner's brief. Nothing was invented.
+- Settings is the one center that does not open on its first listed item
+  ("Company", which is not built). It opens on Locations, its first working page,
+  so that Settings never lands on an empty page while working pages sit beside it.
+  This can be changed in one line when Company is built.
+
+If a person may not open a center's primary section but may open another section
+in that center, the center opens on the first section they may open.
 
 ## Centers
 
-State at the end of Checkpoint A. `CS` = Coming soon.
+State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
+(`/sales`, for example) is only a shortcut that opens its primary section.
 
 ### Company Overview — `company` — scope: company
 
 | ID | Label | State |
 | --- | --- | --- |
-| `company.home` | Company Overview (landing) | Live |
-| `company.performance` | Company Performance | CS |
+| `company.home` | Shortcut: opens Company Performance | — |
+| `company.performance` | Company Performance | CS, primary |
 | `company.location_comparison` | Location Comparison | CS |
 | `company.reports` | Company Reports | CS |
 
@@ -70,8 +133,8 @@ State at the end of Checkpoint A. `CS` = Coming soon.
 
 | ID | Label | State |
 | --- | --- | --- |
-| `marketing.home` | Marketing Center (landing) | Live |
-| `marketing.performance` | Performance Board | CS |
+| `marketing.home` | Shortcut: opens Performance Board | — |
+| `marketing.performance` | Performance Board | CS, primary |
 | `marketing.call_center` | Call Center | CS |
 | `marketing.call_center.inbox` | Central Inbox | CS |
 | `marketing.call_center.leads` | Leads | CS |
@@ -94,8 +157,8 @@ State at the end of Checkpoint A. `CS` = Coming soon.
 
 | ID | Label | State |
 | --- | --- | --- |
-| `sales.home` | Sales Center (landing) | Live |
-| `sales.performance` | Performance Board | CS |
+| `sales.home` | Shortcut: opens Performance Board | — |
+| `sales.performance` | Performance Board | CS, primary |
 | `sales.appointments` | Appointments | CS |
 | `sales.estimates` | Estimates | CS |
 | `sales.proposals` | Proposals | CS |
@@ -107,8 +170,8 @@ State at the end of Checkpoint A. `CS` = Coming soon.
 
 | ID | Label | State |
 | --- | --- | --- |
-| `production.home` | Production Center (landing) | Live |
-| `production.performance` | Performance Board | CS |
+| `production.home` | Shortcut: opens Performance Board | — |
+| `production.performance` | Performance Board | CS, primary |
 | `production.projects` | Projects | CS |
 | `production.projects.ready` | Ready to Schedule | CS |
 | `production.projects.pre_production` | Pre-Production | CS |
@@ -121,8 +184,8 @@ State at the end of Checkpoint A. `CS` = Coming soon.
 
 | ID | Label | State |
 | --- | --- | --- |
-| `finance.home` | Finance Center (landing) | Live |
-| `finance.performance` | Performance Board | CS |
+| `finance.home` | Shortcut: opens Performance Board | — |
+| `finance.performance` | Performance Board | CS, primary |
 | `finance.cash` | Cash Management | CS |
 | `finance.cash.receivables` | Receivables | CS |
 | `finance.cash.payments` | Payments | CS |
@@ -136,8 +199,8 @@ State at the end of Checkpoint A. `CS` = Coming soon.
 
 | ID | Label | State |
 | --- | --- | --- |
-| `color_studio.home` | Color Studio (landing) | Live |
-| `color_studio.projects` | Color Projects | CS |
+| `color_studio.home` | Shortcut: opens Color Projects | — |
+| `color_studio.projects` | Color Projects | CS, primary |
 | `color_studio.sample_requests` | Sample Requests | CS |
 | `color_studio.estimate_requests` | Estimate Requests | CS |
 | `color_studio.catalog` | Color Catalog | CS |
@@ -146,9 +209,9 @@ State at the end of Checkpoint A. `CS` = Coming soon.
 
 | ID | Label | State |
 | --- | --- | --- |
-| `settings.home` | Settings (landing) | Live |
+| `settings.home` | Shortcut: opens Locations | — |
 | `settings.company` | Company | CS |
-| `settings.locations` | Locations | Live |
+| `settings.locations` | Locations | Live, primary |
 | `settings.users` | Users and Access | Live |
 | `settings.service_areas` | Service Areas | CS |
 | `settings.services` | Services and Products | CS |
@@ -167,12 +230,11 @@ State at the end of Checkpoint A. `CS` = Coming soon.
 Customers and Inbox each exist once, with one route. They appear inside the
 navigation of the centers that use them, pointing at the same shared page.
 
-## Landing pages
+## Home
 
-Each center has a landing page that is real and authorized. It shows the center
-name, what is available now, and what is coming. It shows no metrics, charts or
-counts, because there is no real data to show yet. A center's Performance Board is
-a separate, later feature.
+After signing in, a person lands on Home, which lists the centers they may open in
+their current location, or says "No access assigned yet". Home is not part of any
+center, so the second row is not shown there.
 
 ## What we took from the CRM reference screenshots
 

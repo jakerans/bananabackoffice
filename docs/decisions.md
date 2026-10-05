@@ -3,7 +3,7 @@
 Each entry records a decision, why it was made, and what it rules out. Entries are
 added, not rewritten. A reversed decision gets a new entry that refers to the old one.
 
-Status of entries 1–10: **Proposed** (2026-10-04), awaiting owner approval.
+Status of entries 1–10: **Approved** (2026-10-04).
 
 ## 1. Keep the installed stack
 
@@ -96,6 +96,169 @@ or invented numbers.
 
 Why: the shell can show the whole intended system honestly, and a feature moves
 from "coming soon" to "live" by changing one entry.
+
+## 11. Invitations use Laravel's password-reset machinery with their own table
+
+Made while building Checkpoint A (2026-10-04).
+
+Staff invitations use a second "password broker" named `invitations`, backed by its
+own `staff_invitation_tokens` table, with a 72-hour lifetime.
+
+Why: Laravel's broker already provides hashed, single-use, expiring tokens, so no
+new security code had to be written. A separate table means an invitation link can
+never be used on the ordinary password reset form, and a "forgot password" request
+never cancels a pending invitation.
+
+Considered: signed links. Not chosen because a signed link stays valid until it
+expires, where a broker token is destroyed the moment it is used.
+
+## 12. Deactivated staff are stopped in two places
+
+Made while building Checkpoint A (2026-10-04).
+
+Sign-in refuses a deactivated account, and a check on every web request signs out
+anyone who is deactivated while signed in. The second check also covers passkey
+sign-in and "remember me", which do not pass through the password check.
+
+The "this account is deactivated" message appears only after the correct password
+is given, so it cannot be used to discover which accounts exist.
+
+## 13. Application code beyond Laravel's standard folders lives in `app/Support`
+
+Made while building Checkpoint A (2026-10-04).
+
+`app/Support/Access` holds the current-location resolver and `app/Support/Navigation`
+holds the navigation registry. Staff operations are action classes in
+`app/Actions/Staff`, next to the starter kit's `app/Actions/Fortify`.
+
+Why: these are neither models, controllers nor Livewire pages, and Laravel has no
+standard home for them. One clearly named folder is easier to find than several.
+
+## 14. Personal account pages stay at `/settings/profile` and `/settings/security`
+
+Made while building Checkpoint A (2026-10-04).
+
+The starter kit's profile, password, two-factor and passkey pages were left where
+they were and relabelled "My account". The company Settings center shares the
+`/settings` address prefix.
+
+Why: moving them would have touched working sign-in security code for a cosmetic
+gain. Route names hide the addresses, so they can be moved later in one place.
+
+## 15. A center has no page of its own
+
+Made after the owner's visual review (2026-10-04). Replaces the center landing
+pages built in step A4.
+
+Choosing a center opens its primary section directly. The second row lists only
+that center's sections. There is no "Overview" page or item, and "Coming soon" is
+a state of an individual section, never a navigation item.
+
+Why: a landing page put an extra level between choosing a center and working in
+it. Three levels are enough: header, sections of the center, the section's page.
+
+Consequence: a center's primary section must have a page even before it is built,
+or the center would have nowhere to open. That page says the section is not built
+and shows nothing else. Every other unbuilt section still has no route at all.
+
+Each center's address (for example `/sales`) is kept as a shortcut that checks
+authorization and then forwards to the primary section, so links and bookmarks to
+a center keep working as sections are built.
+
+## 16. Email addresses are stored and compared in lowercase
+
+Made after the security review of Checkpoint A (2026-10-04).
+
+Every email address is trimmed and lowercased when it is saved, whatever saves it,
+and is lowercased before any uniqueness check. Sign-in, password reset and
+invitation acceptance already lowercase what is typed.
+
+Why: sign-in lowercases the address it is given. On a database that compares text
+exactly, an address saved with a capital letter could then never be matched, which
+locked the account out, and two addresses differing only by capitals could coexist.
+
+Where: the `User` model normalizes on save, so no caller can forget. The profile
+page, the invitation form and the create-owner command normalize before validating
+so that "already taken" is reported correctly.
+
+## 17. "Always one Owner" means an Owner who can actually sign in
+
+Made after the security review of Checkpoint A (2026-10-04).
+
+The safeguard counts only usable Owners. A usable Owner holds the Owner role and:
+
+- is active,
+- has a confirmed email address, because the management pages require one, and
+- has a password they chose themselves, so an unaccepted invitation does not count.
+
+The last usable Owner cannot lose the Owner role or be deactivated. The
+create-owner command uses the same test, so it works without `--force` when the
+only Owner on record cannot sign in.
+
+Why: counting any active Owner row let the only person able to sign in hand the
+system to an invitation that might never be accepted.
+
+Consequence: an Owner who changes their email address is not counted until they
+confirm the new one. During that time the other Owners cannot remove themselves.
+
+## 18. Deactivating someone ends every sign-in they have
+
+Made after the security review of Checkpoint A (2026-10-04).
+
+Deactivation deletes the person's stored sessions and replaces their remember-me
+token. Reactivation restores their access grants but never an old sign-in: they
+must sign in again.
+
+Why: without this, a remembered login on a lost laptop came back to life when the
+account was reactivated.
+
+How: both are Laravel's own mechanisms. Replacing the remember-me token is what
+Laravel does on sign-out. Deleting session rows is how Laravel's own starter kits
+sign out other devices, and it requires sessions to be stored in the database,
+which is this project's configured default. See security-notes.md for the limit
+this places on other session stores.
+
+Considered: resetting the password on deactivation. Not chosen, because
+reactivating should give someone back the account they had.
+
+## 19. Inviting someone is all or nothing
+
+Made after the security review of Checkpoint A (2026-10-04). Changes decision 11's
+behaviour on failure.
+
+If the invitation email cannot be sent for any reason, no account is created.
+Resending works the same way: if it fails, nothing changes and an earlier link
+keeps working.
+
+Why: the first version kept the account when the mail server was unreachable, but
+crashed, leaving an account behind, when the mailer refused the address. An
+address the mailer refuses can never be invited, so keeping that account was
+pointless and there is no screen to correct its email.
+
+Also: if someone invited sets their password through "forgot password" instead of
+the invitation, that counts as accepting it. The reset link went to the same
+inbox, so it proves the same thing. The invitation is marked accepted, the email
+address confirmed, and the unused invitation link retired. Merely requesting a
+reset still leaves the invitation alone, as decision 11 says; completing one is
+what accepts it.
+
+## 20. The database itself prevents duplicate access grants
+
+Made after the security review of Checkpoint A (2026-10-04).
+
+`access_grants.location_key` is calculated by the database: the location's ID, or
+0 for an all-locations grant. A unique index on person, role and `location_key`
+replaces the original index.
+
+Why: the original index included `location_id`, which is empty for an
+all-locations grant, and databases never treat two empty values as equal. Two
+identical all-locations grants could therefore be stored.
+
+A person can still hold a role once per location and once company-wide; those
+remain separate grants. The permission model is unchanged.
+
+Considered: an index that applies only to all-locations rows. Not chosen because
+not every database engine supports it, and the production engine is not yet chosen.
 
 ## Future decisions already constrained by the brief
 

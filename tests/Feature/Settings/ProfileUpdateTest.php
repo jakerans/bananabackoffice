@@ -43,33 +43,60 @@ test('email verification status is unchanged when email address is unchanged', f
     expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
 
-test('user can delete their account', function () {
-    $user = User::factory()->create();
+test('a profile email typed with capital letters is stored in lowercase and still signs in', function () {
+    $user = User::factory()->create(['email' => 'jordan@example.com']);
 
-    $this->actingAs($user);
-
-    $response = Livewire::test('pages::settings.delete-user-modal')
-        ->set('password', 'password')
-        ->call('deleteUser');
-
-    $response
+    Livewire::actingAs($user)
+        ->test('pages::settings.profile')
+        ->set('name', $user->name)
+        ->set('email', 'Jordan.New@Example.COM')
+        ->call('updateProfileInformation')
         ->assertHasNoErrors()
-        ->assertRedirect('/');
+        ->assertSet('email', 'jordan.new@example.com');
 
-    expect($user->fresh())->toBeNull();
-    expect(auth()->check())->toBeFalse();
+    expect($user->refresh()->email)->toBe('jordan.new@example.com');
+
+    auth()->logout();
+
+    $this->post(route('login.store'), ['email' => 'Jordan.New@Example.COM', 'password' => 'password']);
+
+    $this->assertAuthenticatedAs($user);
 });
 
-test('correct password must be provided to delete account', function () {
-    $user = User::factory()->create();
+test('retyping the same email with different capital letters does not ask for it to be confirmed again', function () {
+    $user = User::factory()->create(['email' => 'jordan@example.com']);
 
-    $this->actingAs($user);
+    Livewire::actingAs($user)
+        ->test('pages::settings.profile')
+        ->set('name', $user->name)
+        ->set('email', 'JORDAN@Example.com')
+        ->call('updateProfileInformation')
+        ->assertHasNoErrors();
 
-    $response = Livewire::test('pages::settings.delete-user-modal')
-        ->set('password', 'wrong-password')
-        ->call('deleteUser');
+    $user->refresh();
 
-    $response->assertHasErrors(['password']);
+    expect($user->email)->toBe('jordan@example.com');
+    expect($user->email_verified_at)->not->toBeNull();
+});
 
-    expect($user->fresh())->not->toBeNull();
+test('a profile email cannot be changed to one that differs from another account only by capital letters', function () {
+    User::factory()->create(['email' => 'taken@example.com']);
+    $user = User::factory()->create(['email' => 'jordan@example.com']);
+
+    Livewire::actingAs($user)
+        ->test('pages::settings.profile')
+        ->set('name', $user->name)
+        ->set('email', 'Taken@Example.com')
+        ->call('updateProfileInformation')
+        ->assertHasErrors(['email' => 'The email has already been taken.']);
+
+    expect($user->refresh()->email)->toBe('jordan@example.com');
+});
+
+test('staff cannot delete their own account', function () {
+    $this->actingAs(User::factory()->create());
+
+    $this->get(route('profile.edit'))
+        ->assertOk()
+        ->assertDontSee('Delete account');
 });

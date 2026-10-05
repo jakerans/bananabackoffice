@@ -6,10 +6,12 @@
 </title>
 
 <link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
 @fonts
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance
+{{-- Backoffice has a light theme only, so pin Flux to it instead of following the system setting. --}}
+<script>window.Flux.applyAppearance('light')</script>
