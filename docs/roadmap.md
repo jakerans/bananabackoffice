@@ -188,10 +188,11 @@ All of the following are covered by automated tests in `tests/`. See
 
 The branch was reviewed in full before merging. Eight findings were fixed on the
 branch and the rest are recorded, with what each needs, in
-[security-notes.md](security-notes.md). Two of the open ones must be closed before
-real staff use the system on a server: "forgot password" reveals which addresses
-have accounts, and a deactivated person can complete a passkey sign-in before
-being signed out again.
+[security-notes.md](security-notes.md). Two of the open ones had to be closed before
+real staff use the system on a server: "forgot password" revealed which addresses
+have accounts, and a deactivated person could complete a passkey or two-factor
+sign-in before being signed out again. Both were fixed on 2026-10-04, before
+Checkpoint B.
 
 ## Staging (deployed and operational, 2026-10-04)
 

@@ -35,29 +35,34 @@ test unless it says otherwise.
 | 7 | The database could not stop two identical all-locations grants. | A database-calculated column and unique index now do. See decisions.md, 20. |
 | 10 | Someone invited who used "forgot password" stayed marked "Invited" with a live invitation link. | Resetting a password now accepts the invitation and retires its link. |
 
+### Fixed before Checkpoint B (2026-10-04)
+
+Both were found in the review above and deferred at the time. Each fix has tests
+that were also run against the old code to confirm they fail without it.
+
+**8. "Forgot password" revealed whether an email address has an account, and was not
+rate-limited per visitor.**
+An unknown address got "We can't find a user with that email address"; a known one
+got "We have emailed your password reset link".
+Fixed: every well-formed request now gets the same answer, including when a link
+was sent moments ago and when the email fails to send. The work happens after the
+answer has been sent, so the time taken does not give it away either. Requests are
+limited to 6 a minute per visitor. See decisions.md, 24.
+Still to check: that the time taken really is the same on the server. It depends
+on how the server runs PHP and can only be measured once this is deployed.
+
+**9. A deactivated person could complete a passkey sign-in, or a two-factor step
+that was already in progress.**
+They received a signed-in session and were signed out on their very next request.
+Fixed: a deactivated account is now refused before it is signed in, at the
+two-factor challenge (code or recovery code) and at passkey sign-in. No session is
+created, no "signed in" event is recorded, and a recovery code is not used up. The
+check at ordinary sign-in and the check on every request both remain.
+
 ### Open: must be handled before real staff use the system
 
 These are not blocking for development, but they must be closed before Backoffice
 is used with real accounts on a server.
-
-**8. "Forgot password" reveals whether an email address has an account, and is not
-rate-limited per visitor.**
-An unknown address gets "We can't find a user with that email address"; a known one
-gets "We have emailed your password reset link". Anyone can therefore test which
-addresses are staff accounts, as fast as they like. This is the starter kit's
-default behaviour and is unchanged from `main`. It also contradicts the care taken
-elsewhere (the sign-in and invitation screens deliberately reveal nothing).
-To do: answer every request with the same message, and add a rate limit to the
-forgot-password form.
-
-**9. A deactivated person can complete a passkey sign-in, or a two-factor step that
-was already in progress.**
-They receive a signed-in session and are signed out on their very next request, so
-no page is ever shown to them, but a "signed in" event is recorded for an account
-that should not be able to sign in. The two-factor case was reproduced by a
-reviewer; the passkey case was traced in the code, not run.
-To do: refuse deactivated accounts at the passkey step (Laravel's passkey package
-has a hook for this) and at the two-factor challenge.
 
 **Two-factor sign-in is optional for every role.**
 Decide whether Owner and Finance accounts must use it. Already listed in

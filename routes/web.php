@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CenterController;
 use App\Http\Controllers\InvitationAcceptanceController;
+use App\Http\Controllers\PasswordResetLinkController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SwitchLocationController;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +15,11 @@ Route::middleware('guest')->group(function () {
     Route::post('invitation', [InvitationAcceptanceController::class, 'store'])
         ->middleware('throttle:6,1')
         ->name('invitation.store');
+
+    // Replaces Fortify's route of the same address, which reveals whether an email has an account.
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware('throttle:password-reset-link')
+        ->name('password.email');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

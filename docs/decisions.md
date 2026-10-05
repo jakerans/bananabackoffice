@@ -352,6 +352,28 @@ What this does not cover: uploaded files. A database backup contains the databas
 only. Storage and backup of uploaded customer and project files is a separate
 decision that must be made before any are stored. See roadmap.md, "Backups".
 
+## 24. "Forgot password" answers the same way for every email address
+
+Decided 2026-10-04, closing security finding 8.
+
+- **One answer.** Any well-formed request gets "If that email address belongs to
+  an account, we have emailed a password reset link." Nothing differs for an unknown
+  address, for an address that was sent a link moments ago, or when the email fails.
+- **The work happens after the answer.** Looking up the account, creating the link
+  and sending the email all run once the response has been sent. Otherwise the
+  extra time those steps take would give the answer away.
+- **A failed email is reported, not shown.** It goes to the application log. The
+  person sees the same answer and can ask again.
+- **Limited per visitor,** 6 requests a minute, counted by network address and never
+  by email address. The existing wait between links for one account (60 seconds)
+  still applies, silently.
+- **Our own route replaces Fortify's.** Fortify's version cannot be made to answer
+  uniformly, so `routes/web.php` declares the same address and takes its place. The
+  form page is still Fortify's.
+
+The cost: someone who mistypes their address is no longer told so. That is the
+unavoidable price of not revealing which addresses have accounts.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
