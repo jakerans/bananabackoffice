@@ -549,7 +549,9 @@ Built in step B1 (2026-10-05).
 - **Readable later.** The actor's name is copied onto the event, and so is a
   location's name inside the values, because both can change afterwards.
 - **Before and after are stored separately,** each holding only the fields that
-  matter for that change.
+  matter for that change. MySQL does not keep the order the fields were stored in,
+  so nothing may depend on that order. (The first run of the checks on MySQL 8.4
+  caught four tests that did; SQLite had hidden it.)
 - **Append-only in the application.** An event refuses to be changed or deleted
   through the application. Someone with direct access to the database could still
   alter it; preventing that is part of giving production a least-privilege

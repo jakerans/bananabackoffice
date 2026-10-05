@@ -13,6 +13,22 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
+/**
+ * Put recorded values in a fixed order before comparing them.
+ *
+ * MySQL does not keep the order in which fields were stored, so nothing may
+ * depend on it; the values themselves are still compared exactly.
+ *
+ * @param  array<string, mixed>  $values
+ * @return array<string, mixed>
+ */
+function byField(array $values): array
+{
+    ksort($values);
+
+    return $values;
+}
+
 test('granting a role at a location records who granted what to whom, and where', function () {
     $lakeview = Location::factory()->create(['name' => 'Lakeview']);
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create(['name' => 'Olive Owner']);
@@ -34,12 +50,12 @@ test('granting a role at a location records who granted what to whom, and where'
     expect($event->subject->is($staff))->toBeTrue();
     expect($event->location->is($lakeview))->toBeTrue();
     expect($event->before())->toBe([]);
-    expect($event->after())->toBe([
+    expect(byField($event->after()))->toBe(byField([
         'role' => 'sales_consultant',
         'scope' => 'location',
         'location_id' => $lakeview->id,
         'location' => 'Lakeview',
-    ]);
+    ]));
 });
 
 test('granting a role across all locations records no location', function () {
@@ -56,12 +72,12 @@ test('granting a role across all locations records no location', function () {
     $event = AuditEvent::query()->sole();
 
     expect($event->location_id)->toBeNull();
-    expect($event->after())->toBe([
+    expect(byField($event->after()))->toBe(byField([
         'role' => 'call_center_agent',
         'scope' => 'all_locations',
         'location_id' => null,
         'location' => null,
-    ]);
+    ]));
 });
 
 test('a grant that is refused records nothing', function () {
@@ -98,12 +114,12 @@ test('removing access records what was removed, which the deleted grant can no l
     expect($event->subject->is($staff))->toBeTrue();
     expect($event->location->is($lakeview))->toBeTrue();
     expect($event->after())->toBe([]);
-    expect($event->before())->toBe([
+    expect(byField($event->before()))->toBe(byField([
         'role' => 'sales_consultant',
         'scope' => 'location',
         'location_id' => $lakeview->id,
         'location' => 'Lakeview',
-    ]);
+    ]));
 });
 
 test('a removal that is refused records nothing', function () {
@@ -176,7 +192,7 @@ test('inviting a staff member records who invited whom', function () {
     expect($event->action)->toBe(AuditAction::StaffInvited);
     expect($event->actor->is($owner))->toBeTrue();
     expect($event->subject->is(User::query()->where('email', 'sam@example.com')->sole()))->toBeTrue();
-    expect($event->after())->toBe(['name' => 'Sam Sales', 'email' => 'sam@example.com']);
+    expect(byField($event->after()))->toBe(byField(['name' => 'Sam Sales', 'email' => 'sam@example.com']));
 });
 
 test('an invitation that could not be sent records nothing', function () {
@@ -269,10 +285,10 @@ test('creating the first owner from the command line records the access with nob
     expect($event->actor_id)->toBeNull();
     expect($event->actor_name)->toBeNull();
     expect($event->subject->is(User::query()->sole()))->toBeTrue();
-    expect($event->after())->toBe([
+    expect(byField($event->after()))->toBe(byField([
         'role' => 'owner',
         'scope' => 'all_locations',
         'location_id' => null,
         'location' => null,
-    ]);
+    ]));
 });
