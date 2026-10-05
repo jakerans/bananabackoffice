@@ -9,6 +9,7 @@ before starting work, and update them in the same change that alters what they d
 | --- | --- |
 | [project-brief.md](project-brief.md) | What Backoffice is, the business rules that never bend, and how we work. |
 | [roadmap.md](roadmap.md) | Checkpoints, the current checkpoint, and what has been built. |
+| [checkpoint-b.md](checkpoint-b.md) | The current checkpoint in full: leads, customers and projects. The records, the rules, the build steps and the open decisions. |
 | [navigation-map.md](navigation-map.md) | Every center and menu item, its stable ID, and whether it is built yet. |
 | [permission-model.md](permission-model.md) | Who can do what, and where. Roles, permissions, location rules. |
 | [design-system.md](design-system.md) | How the Backoffice design system is applied in code. |

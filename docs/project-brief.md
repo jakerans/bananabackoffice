@@ -47,6 +47,9 @@ portal.
 
 - The long-term core is Customer, Property, Project. A customer may have several
   properties and projects. A project belongs to a location once assigned.
+  (Refined by the owner on 2026-10-05: the customer record is called an Account
+  and has several Contacts; an inquiry is a Lead, a record of its own that may be
+  unrouted; a Project always has a location. See checkpoint-b.md.)
 - Customers and Inbox are shared concepts. There is one Customer record, never a
   "Sales customer" and a "Finance customer".
 - Shared does not mean everyone can see it.

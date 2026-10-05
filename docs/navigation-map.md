@@ -230,6 +230,30 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 Customers and Inbox each exist once, with one route. They appear inside the
 navigation of the centers that use them, pointing at the same shared page.
 
+## Planned for Checkpoint B (not built yet)
+
+Nothing below is live. Each change is made in the step that builds the page. See
+[checkpoint-b.md](checkpoint-b.md).
+
+All approved by the owner on 2026-10-05.
+
+| Item | Change | Step |
+| --- | --- | --- |
+| `settings.lists` — Lead & Sales Lists | A new Settings page holding the five managed lists. Opened by its own permission, held by Owner and Leadership. Leadership sees Settings with this page only. | B2 |
+| `shared.leads` — Leads | One shared Leads page with one address, shown in **both** the Marketing Center and the Sales Center to anyone holding the lead permission. There is no separate Marketing Leads and Sales Leads. Marketing > Call Center > Leads points at it. | B3 |
+| `shared.customers` — Customers | Becomes live. Lists Accounts. | B6 |
+| `shared.projects` — Projects | One shared Projects page with one address, shown in the Sales Center and the Production Center as appropriate. There are no separate Sales Projects and Production Projects. | B8 |
+
+Shared pages are opened by their own permission, not by access to the center whose
+menu happens to show them.
+
+- The first live section that has sub-sections brings the third row (sub-sections)
+  into the shell, as already described under "Shell layout".
+- Every other item on this page keeps its current state through Checkpoint B.
+  Estimates, Proposals, Relationships, the Production project stages, the Finance
+  sections and the Call Center tools all stay Coming Soon. They will be different
+  views of the same Project record, not separate records.
+
 ## Home
 
 After signing in, a person lands on Home, which lists the centers they may open in

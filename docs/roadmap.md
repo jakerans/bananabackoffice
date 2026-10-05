@@ -4,13 +4,19 @@
 
 **Checkpoint A — Secure branded foundation — is approved and merged into `main`
 (2026-10-04).**
-**Next: Checkpoint B.** It has not been started and needs the decisions listed at
-the end of this document first.
+**Current: Checkpoint B.** Its plan was approved on 2026-10-05 (step B0) and is in
+[checkpoint-b.md](checkpoint-b.md). It is built one small step at a time on the
+`checkpoint-b` branch, stopping for the owner's review after each step. The table
+under "Checkpoint B" below shows how far it has got.
+
+Banana Painting launches about a week after that approval. The operational target
+for launch is steps B1 to B9, with a production-readiness checkpoint around B7 or
+B8.
 
 | Checkpoint | Scope | State |
 | --- | --- | --- |
 | A | Secure branded foundation | Approved and merged (2026-10-04) |
-| B | Core CRM records (customers, properties, projects, photos, notes, timeline) | Not started |
+| B | Leads, customers and projects: lead capture and attribution, routing, accounts, contacts, properties, qualification, projects, sales outcome, notes, private attachments, timeline | Plan approved (2026-10-05); being built step by step |
 | C | First Color Studio workflow | Not started |
 | Later | Estimating and proposals, homeowner portal, production, finance, reporting | Not started |
 
@@ -311,9 +317,10 @@ uploaded files, it needs its own durable storage and backup strategy for them:**
 - a defined way to restore them, tested, and kept in step with the database so a
   restored record still finds its files.
 
-Checkpoint B introduces private photos, so this must be decided before Checkpoint B
-stores its first real file. It is listed under "Decisions to make before
-Checkpoint B" below.
+Checkpoint B introduces private attachments in step B10. The storage itself is
+decided (a private Space separate from backups; see checkpoint-b.md,
+"Attachments"). How those files are backed up and restored must still be settled
+in B10, before the first real file is stored.
 
 ## Automated checks on GitHub
 
@@ -346,13 +353,78 @@ PHP 8.4.
 - Passkeys only work over a secure address. The local site is served over plain
   `http`, so passkeys cannot be tried locally until Herd's HTTPS option is turned on.
 
-## Decisions to make before Checkpoint B
+## Checkpoint B
 
-- Who can see a centrally received lead before a location owns it.
-- Whether a person's access to a customer follows the customer's projects, the
-  customer's properties, or both.
-- Audit log scope.
-- Whether sensitive roles (Owner, Finance) must use two-factor sign-in.
-- **Where uploaded files are stored and how they are backed up.** Database backups
-  do not cover them. Checkpoint B's private photos must not start storing real
-  files until this is settled. See "Backups" above.
+Status: **plan approved by the owner, including the final review (2026-10-05).**
+The plan, the tables, the managed lists and the launch plan are in
+[checkpoint-b.md](checkpoint-b.md). The permissions are in
+[permission-model.md](permission-model.md), and the reasoning is in decisions.md,
+25 to 37.
+
+Checkpoint B is larger than the brief's original outline ("customers, properties,
+projects, photos, notes, timeline"). The owner added the Lead as a record of its
+own, marketing attribution, qualification and disqualification, and the sales
+outcome, because Backoffice is to be the system of record from launch.
+
+| Step | Delivers | State |
+| --- | --- | --- |
+| B0 | The plan and updated documents | Complete |
+| B1 | Audit event recording, including Checkpoint A's staff and access changes | Not started |
+| B2 | Attribution and managed lists: the Lead & Sales Lists page | Not started |
+| B3 | Lead capture with attribution; the shared Leads page | Not started |
+| B4 | Lead routing and assignment | Not started |
+| B5 | Lead notes | Not started |
+| B6 | Accounts, Contacts and Properties; the Customers pages | Not started |
+| B7 | Qualification, disqualification and nurture | Not started |
+| — | **Production-readiness checkpoint** (around B7 or B8) | Not started |
+| B8 | Projects; the shared Projects page | Not started |
+| B9 | Sales outcome: Won with Sold Amount, Lost | Not started |
+| B10 | Attachments and project photos | Not started; may follow launch |
+| B11 | Timeline and record history | Not started; may follow launch |
+| B12 | Wrap-up and review | Not started; may follow launch |
+
+Each step stops for the owner's review before the next begins. B1 to B9 are the
+operational target for launch. Authorization, data integrity, tests and
+auditability are not traded for the date.
+
+### Production readiness
+
+Production is prepared before the operational steps are finished, not after B12.
+Production does not reuse staging, and **real customer data is never entered into
+staging.** Before real customer data is entered into production:
+
+- a dedicated production environment and server;
+- dedicated database credentials with least privilege (staging uses the server's
+  general database account; see security-notes.md);
+- production backups;
+- a deliberate restore drill (see "Restoring" above);
+- production Resend configuration and credentials;
+- the real production domain, with HTTPS;
+- the required two-factor policy for sensitive roles, as decided;
+- a production file-storage strategy, before uploaded files are enabled.
+
+### Decisions settled for Checkpoint B (2026-10-05)
+
+- **Who sees a centrally received lead before a location owns it:** only Owner,
+  Leadership and Call Center, through a company-wide grant.
+- **How access to a customer follows its records:** whoever can see one of its
+  leads or projects can see its core details, and never another location's work.
+- **Audit scope:** important changes only, listed in checkpoint-b.md, extended to
+  Checkpoint A's staff and access changes.
+- **Where uploaded files are stored:** a private DigitalOcean Space of their own,
+  `banana-backoffice-staging-files` in NYC3 for staging, separate from the backup
+  Space and with its own access key. Nothing is created until step B10.
+- **Existing data:** there is none to import.
+- **The eight questions raised by the plan** (where Leads and Projects live in the
+  menu, the Lead & Sales Lists page, Nurture, what a duplicate suggestion may
+  reveal, Sold Amount, disqualification categories, launch scope): all settled.
+  See checkpoint-b.md, "Decisions settled at the final review".
+
+### Still open
+
+- Whether sensitive roles (Owner, Finance) must use two-factor sign-in. Needed by
+  the production-readiness checkpoint.
+- The production domain. Needed by the production-readiness checkpoint.
+- **How uploaded files are backed up.** Database backups do not cover them. This is
+  settled as part of step B10, before the first real file is stored. See "Backups"
+  above.
