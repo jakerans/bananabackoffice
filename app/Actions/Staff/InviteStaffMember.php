@@ -34,13 +34,15 @@ class InviteStaffMember
                 'password' => Str::password(64),
             ]);
 
-            $this->sendInvitation->handle($user);
-
+            // Recorded before the email goes out: an email cannot be taken back,
+            // so everything that could still fail happens first.
             $this->recordAuditEvent->handle(
                 AuditAction::StaffInvited,
                 $user,
                 after: ['name' => $user->name, 'email' => $user->email],
             );
+
+            $this->sendInvitation->handle($user);
 
             return $user;
         });

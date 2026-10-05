@@ -560,8 +560,14 @@ Built in step B1 (2026-10-05).
   "location 2", using a short fixed name for each kind of record. Every kind of
   record that can be pointed at must be given a name first; an unnamed one is
   refused. This also applies to Livewire pages that hold a record.
-- **Not recorded, deliberately:** resending an invitation, profile and password
-  changes, sign-ins, and anything viewed or searched.
+- **Resending an invitation is recorded** (added at the owner's review): it cancels
+  the earlier link and issues a new one, so it is an account-access action. The
+  event holds who resent it, for whom and when, and never the link or its token.
+- **Recorded before an email goes out.** Where a change sends an email, the audit
+  event is written first, because an email cannot be taken back if something later
+  fails.
+- **Not recorded, deliberately:** profile and password changes, sign-ins, and
+  anything viewed or searched. These stay outside this business audit history.
 
 Also in B1: the GitHub checks now run on `checkpoint-` branches as well as `main`,
 so each step's database changes are run on MySQL 8.4 before review, not only when

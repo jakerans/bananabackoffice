@@ -6,6 +6,7 @@ use App\Actions\Staff\DeactivateStaffMember;
 use App\Actions\Staff\GrantAccess;
 use App\Actions\Staff\InviteStaffMember;
 use App\Actions\Staff\ReactivateStaffMember;
+use App\Actions\Staff\ResendStaffInvitation;
 use App\Actions\Staff\RevokeAccess;
 use App\Enums\GrantScope;
 use App\Enums\Role;
@@ -13,6 +14,7 @@ use App\Models\AccessGrant;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Livewire\Livewire;
 
 /*
@@ -61,13 +63,26 @@ test('a staff member is not reactivated when the audit event cannot be recorded'
     expect($staff->fresh()->is_active)->toBeFalse();
 });
 
-test('no account is created by an invitation whose audit event cannot be recorded', function () {
+test('no account is created and no email sent by an invitation whose audit event cannot be recorded', function () {
     Notification::fake();
 
     expect(fn () => app(InviteStaffMember::class)->handle('Sam Sales', 'sam@example.com'))
         ->toThrow(RuntimeException::class);
 
     expect(User::query()->where('email', 'sam@example.com')->exists())->toBeFalse();
+    Notification::assertNothingSent();
+});
+
+test('an invitation is not replaced and no email sent when the resend cannot be recorded', function () {
+    Notification::fake();
+
+    $staff = User::factory()->invited()->create();
+    $earlierToken = Password::broker('invitations')->createToken($staff);
+
+    expect(fn () => app(ResendStaffInvitation::class)->handle($staff))->toThrow(RuntimeException::class);
+
+    expect(Password::broker('invitations')->tokenExists($staff, $earlierToken))->toBeTrue();
+    Notification::assertNothingSent();
 });
 
 test('no owner is created when the audit event cannot be recorded', function () {

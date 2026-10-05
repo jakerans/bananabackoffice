@@ -348,7 +348,7 @@ never disagree. This is deliberately not a compliance product.
 | Contact connected, disconnected, role changed, primary changed | Yes | No |
 | Note removed | Yes | No |
 | Managed list option added, renamed, reordered, activated, deactivated | Yes | No |
-| Staff invited; invitation accepted | Yes | No |
+| Staff invited; invitation resent; invitation accepted | Yes | No |
 | Staff access granted or revoked | Yes | No |
 | Staff deactivated or reactivated | Yes | No |
 | Location created, renamed, deactivated, reactivated | Yes | No |

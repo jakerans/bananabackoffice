@@ -8,6 +8,8 @@ use App\Models\AccessGrant;
 use App\Models\AuditEvent;
 use App\Models\Location;
 use App\Models\User;
+use App\Notifications\StaffInvitation;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
@@ -208,6 +210,54 @@ test('an invitation that could not be sent records nothing', function () {
         ->assertHasErrors('email');
 
     expect(User::query()->where('email', 'sam@example.com')->exists())->toBeFalse();
+    expect(AuditEvent::query()->count())->toBe(0);
+});
+
+test('resending an invitation records who resent it and for whom, and never the link', function () {
+    Notification::fake();
+
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create(['name' => 'Olive Owner']);
+    $staff = User::factory()->invited()->create();
+
+    $this->freezeSecond();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.user', ['user' => $staff])
+        ->call('resendInvitation')
+        ->assertHasNoErrors();
+
+    $event = AuditEvent::query()->sole();
+
+    expect($event->action)->toBe(AuditAction::StaffInvitationResent);
+    expect($event->actor->is($owner))->toBeTrue();
+    expect($event->actor_name)->toBe('Olive Owner');
+    expect($event->subject->is($staff))->toBeTrue();
+    expect($event->created_at->equalTo(now()))->toBeTrue();
+    expect($event->values_before)->toBeNull();
+    expect($event->values_after)->toBeNull();
+    expect($event->reason)->toBeNull();
+
+    Notification::assertSentTo($staff, StaffInvitation::class, function (StaffInvitation $invitation) {
+        $everythingRecorded = json_encode(DB::table('audit_events')->get());
+
+        expect($everythingRecorded)->not->toContain($invitation->token);
+        expect($everythingRecorded)->not->toContain('invitation/');
+
+        return true;
+    });
+});
+
+test('a resend that could not be sent records nothing', function () {
+    useFailingMailer();
+
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $staff = User::factory()->invited()->create();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.user', ['user' => $staff])
+        ->call('resendInvitation')
+        ->assertOk();
+
     expect(AuditEvent::query()->count())->toBe(0);
 });
 

@@ -11,6 +11,7 @@ namespace App\Enums;
 enum AuditAction: string
 {
     case StaffInvited = 'staff.invited';
+    case StaffInvitationResent = 'staff.invitation_resent';
     case StaffInvitationAccepted = 'staff.invitation_accepted';
     case StaffAccessGranted = 'staff.access_granted';
     case StaffAccessRevoked = 'staff.access_revoked';

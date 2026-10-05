@@ -3,8 +3,8 @@
 use App\Actions\Staff\DeactivateStaffMember;
 use App\Actions\Staff\GrantAccess;
 use App\Actions\Staff\ReactivateStaffMember;
+use App\Actions\Staff\ResendStaffInvitation;
 use App\Actions\Staff\RevokeAccess;
-use App\Actions\Staff\SendStaffInvitation;
 use App\Enums\GrantScope;
 use App\Enums\Role;
 use App\Exceptions\InvitationNotSent;
@@ -143,14 +143,14 @@ new #[Title('Manage access')] class extends Component {
     /**
      * Email a fresh invitation link, which replaces any earlier one.
      */
-    public function resendInvitation(SendStaffInvitation $sendStaffInvitation): void
+    public function resendInvitation(ResendStaffInvitation $resendStaffInvitation): void
     {
         $this->authorize('update', $this->staff);
 
         abort_unless($this->staff->isActive() && $this->staff->invitationIsPending(), 403);
 
         try {
-            $sendStaffInvitation->handle($this->staff);
+            $resendStaffInvitation->handle($this->staff);
         } catch (InvitationNotSent) {
             // Nothing was changed, so an invitation sent earlier still works.
             $this->staff->refresh();
