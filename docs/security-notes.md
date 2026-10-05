@@ -63,12 +63,16 @@ has a hook for this) and at the two-factor challenge.
 Decide whether Owner and Finance accounts must use it. Already listed in
 roadmap.md under decisions for Checkpoint B.
 
-**Database backups run on staging, but a restore has never been tested.**
+**Database backups run on staging, but a restore has never been performed.**
 Staging is backed up daily (keep 7) to a dedicated private DigitalOcean Spaces
-bucket, with failure notifications, and the first backup succeeded (2026-10-05).
-A backup that has never been restored is unproven: test a restore into a temporary
-database, never the live one. Production needs its own configuration before it
-holds real data. See roadmap.md, "Backups".
+bucket, with failure notifications, and a successful backup has been verified
+(2026-10-05). Forge restores a backup directly over the database it came from and
+cannot restore into a separate one, so Forge Restore was deliberately not run
+against the active staging database. A full Forge restore drill is required before
+production holds meaningful real data: done deliberately when staging can safely be
+overwritten or rebuilt, with a fresh backup taken immediately beforehand and a
+written recovery procedure. Production also needs its own backup configuration.
+See roadmap.md, "Backups".
 
 **Database backups do NOT cover uploaded files.**
 A database backup contains the database only. Uploaded customer and project files

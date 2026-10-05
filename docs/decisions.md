@@ -331,7 +331,10 @@ Decided by the owner (2026-10-04). Configured on staging, with a first successfu
 backup, on 2026-10-05 UTC. Current state is in roadmap.md, "Backups".
 
 - **Method:** Forge's native database backups, which Forge schedules, prunes and
-  can restore from its dashboard.
+  can restore from its dashboard. A Forge restore writes directly over the database
+  the backup came from; it cannot restore into a separate one. So Forge Restore has
+  deliberately not been run against active staging, and a full restore drill is
+  required before production holds meaningful real data (roadmap.md, "Restoring").
 - **Staging:** the `banana_backoffice` database, daily at 08:00 UTC, keeping the 7
   most recent, with failure notifications on.
 - **Destination:** DigitalOcean Spaces, in a bucket used only for Backoffice

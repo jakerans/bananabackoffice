@@ -230,8 +230,9 @@ empty, so no data was involved.
 
 ### Database backups
 
-State: **staging is configured and its first backup succeeded** (2026-10-05 UTC).
-A restore has not been tested yet. Production is not set up.
+State: **automated staging backups are configured and a successful backup has been
+verified** (2026-10-05 UTC). A restore has deliberately not been run yet; see
+"Restoring" below. Production is not set up.
 
 Staging configuration:
 
@@ -258,16 +259,40 @@ What was verified on the first backup:
 - Not verified directly: the file sitting in the bucket. That needs the storage
   credentials, which were deliberately not used. Forge's own report is the evidence.
 
-Next: a restore test into a temporary database, never into the live one. Until that
-is done, the backups are unproven.
-
 Production will get its own, stricter configuration when it is set up: more
 frequent backups, longer retention, its own bucket and its own access key.
+
+### Restoring
+
+**Forge restores a backup directly over the database it was taken from.** It does
+not let you choose a separate, isolated database to restore into. Pressing Restore
+in Forge replaces the live database's contents with the backup's.
+
+How this was established (2026-10-05): Forge's documentation says backups "will be
+restored to the database they were created from"; and Forge's backup script writes
+the database's own name into the backup file, so the file loads into that database
+wherever it is run. Forge's stated route for restoring anywhere else is to download
+the file from the storage bucket and load it by hand.
+
+**For that reason Forge Restore was deliberately not run against the active staging
+database at this stage.** No restore of any kind has been performed. The backups
+are verified as taken, not as restorable.
+
+**Required before production holds meaningful real data: a full Forge restore
+drill.** It should be done deliberately, not in passing:
+
+- at a time when staging can safely be overwritten, and rebuilt if the restore
+  goes wrong;
+- with a fresh backup taken immediately beforehand, so nothing is lost;
+- following a written recovery procedure, which the drill should produce or
+  correct: who does what, in what order, how to confirm the result, and what to do
+  if the restore fails partway.
 
 Known gaps to close for production:
 
 - A restore goes back to the last backup and no further, because MySQL's change
   log is switched off. Point-in-time recovery would need it switched on.
+- No written recovery procedure exists yet.
 
 ### Uploaded files are NOT covered
 
