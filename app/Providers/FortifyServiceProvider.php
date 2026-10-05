@@ -13,6 +13,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Contracts\PasskeyUser;
+use Laravel\Passkeys\Passkeys;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -42,6 +44,9 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
         Fortify::authenticateUsing(fn (Request $request): ?User => $this->authenticateActiveStaff($request));
+
+        // A passkey proves who someone is, not that they still work here: refuse deactivated staff before sign-in.
+        Passkeys::authorizeLoginUsing(fn (Request $request, PasskeyUser $user): bool => $user instanceof User && $user->isActive());
     }
 
     /**
@@ -108,6 +113,11 @@ class FortifyServiceProvider extends ServiceProvider
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
             return Limit::perMinute(5)->by($throttleKey);
+        });
+
+        // Counted per visitor and never per email address, so the limit itself says nothing about which accounts exist.
+        RateLimiter::for('password-reset-link', function (Request $request) {
+            return Limit::perMinute(6)->by($request->ip());
         });
 
         RateLimiter::for('passkeys', function (Request $request) {
