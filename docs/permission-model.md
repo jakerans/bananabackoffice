@@ -93,6 +93,7 @@ always limited to what the person's grants allow, in every view.
 | `color_studio.access` | Location | Open Color Studio |
 | `settings.locations.manage` | Company | Manage locations |
 | `settings.users.manage` | Company | Manage staff and access grants |
+| `settings.lists.manage` | Company | Manage the Lead & Sales Lists page (added in step B2; held by Owner and Leadership) |
 
 Only permissions that guard something real are defined. Finer permissions (view
 job costs, approve commissions, edit leads) are added when the feature is built.
@@ -102,7 +103,7 @@ job costs, approve commissions, edit leads) are added when the feature is built.
 | Role | Company Overview | Marketing | Sales | Production | Finance | Color Studio | Settings |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | Owner | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
-| Leadership | Yes | Yes | Yes | Yes | No | Yes | No |
+| Leadership | Yes | Yes | Yes | Yes | No | Yes | Lead & Sales Lists only |
 | Finance | No | No | No | No | Yes | No | No |
 | Location Manager | No | Yes | Yes | Yes | No | Yes | No |
 | Call Center Agent | No | Yes | No | No | No | No | No |

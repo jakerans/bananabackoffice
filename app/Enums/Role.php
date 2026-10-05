@@ -44,6 +44,8 @@ enum Role: string
                 Permission::SalesAccess,
                 Permission::ProductionAccess,
                 Permission::ColorStudioAccess,
+                // The one Settings page Leadership may use. It opens no other.
+                Permission::ManageLeadSalesLists,
             ],
             self::Finance => [
                 Permission::FinanceAccess,

@@ -3,7 +3,12 @@
 namespace App\Providers;
 
 use App\Enums\Permission;
+use App\Models\LeadChannel;
+use App\Models\LeadDisqualificationReason;
+use App\Models\LeadSource;
 use App\Models\Location;
+use App\Models\MarketingSource;
+use App\Models\SalesLossReason;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
 use App\Support\Navigation\Navigation;
@@ -47,6 +52,11 @@ class AppServiceProvider extends ServiceProvider
         Relation::enforceMorphMap([
             'user' => User::class,
             'location' => Location::class,
+            'marketing_source' => MarketingSource::class,
+            'lead_source' => LeadSource::class,
+            'lead_channel' => LeadChannel::class,
+            'lead_disqualification_reason' => LeadDisqualificationReason::class,
+            'sales_loss_reason' => SalesLossReason::class,
         ]);
     }
 

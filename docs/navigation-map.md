@@ -77,8 +77,10 @@ built it receives its own specific permission, recorded in
 - On small screens the center menu scrolls sideways.
 - Company Overview and Settings are company-level: they do not change with the
   selected location. Every other center follows the selected location.
-- Settings opens for anyone who may manage locations or manage users. Its unbuilt
-  pages borrow both of those permissions.
+- Settings opens for anyone who may manage locations, manage users, or manage the
+  Lead & Sales Lists. Its unbuilt pages borrow the first two permissions only, so
+  someone who holds just the lists permission sees that one page and no other
+  Settings item, built or not.
 
 ## Where each center opens
 
@@ -213,6 +215,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | `settings.company` | Company | CS |
 | `settings.locations` | Locations | Live, primary |
 | `settings.users` | Users and Access | Live |
+| `settings.lists` | Lead & Sales Lists | Live (step B2). Opened by its own permission; see below. |
 | `settings.service_areas` | Service Areas | CS |
 | `settings.services` | Services and Products | CS |
 | `settings.pricing` | Pricing Settings | CS |
@@ -239,7 +242,7 @@ All approved by the owner on 2026-10-05.
 
 | Item | Change | Step |
 | --- | --- | --- |
-| `settings.lists` — Lead & Sales Lists | A new Settings page holding the five managed lists. Opened by its own permission, held by Owner and Leadership. Leadership sees Settings with this page only. | B2 |
+| `settings.lists` — Lead & Sales Lists | A new Settings page holding the five managed lists. Opened by its own permission, held by Owner and Leadership. Leadership sees Settings with this page only. | B2 — **built** |
 | `shared.leads` — Leads | One shared Leads page with one address, shown in **both** the Marketing Center and the Sales Center to anyone holding the lead permission. There is no separate Marketing Leads and Sales Leads. Marketing > Call Center > Leads points at it. | B3 |
 | `shared.customers` — Customers | Becomes live. Lists Accounts. | B6 |
 | `shared.projects` — Projects | One shared Projects page with one address, shown in the Sales Center and the Production Center as appropriate. There are no separate Sales Projects and Production Projects. | B8 |

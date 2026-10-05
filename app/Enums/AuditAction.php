@@ -21,4 +21,10 @@ enum AuditAction: string
     case LocationRenamed = 'location.renamed';
     case LocationDeactivated = 'location.deactivated';
     case LocationReactivated = 'location.reactivated';
+    case ListOptionAdded = 'list_option.added';
+    case ListOptionRenamed = 'list_option.renamed';
+    case ListOptionReclassified = 'list_option.reclassified';
+    case ListOptionMoved = 'list_option.moved';
+    case ListOptionDeactivated = 'list_option.deactivated';
+    case ListOptionReactivated = 'list_option.reactivated';
 }

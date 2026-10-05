@@ -15,6 +15,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ColorStudioAccess,
         Permission::ManageLocations,
         Permission::ManageUsers,
+        Permission::ManageLeadSalesLists,
     ]],
     'leadership' => [Role::Leadership, [
         Permission::CompanyOverviewAccess,
@@ -22,6 +23,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::SalesAccess,
         Permission::ProductionAccess,
         Permission::ColorStudioAccess,
+        Permission::ManageLeadSalesLists,
     ]],
     'finance' => [Role::Finance, [
         Permission::FinanceAccess,
@@ -58,6 +60,7 @@ test('company overview and settings are company-level permissions', function (Pe
     'company overview' => [Permission::CompanyOverviewAccess, true],
     'manage locations' => [Permission::ManageLocations, true],
     'manage users' => [Permission::ManageUsers, true],
+    'manage lead and sales lists' => [Permission::ManageLeadSalesLists, true],
     'marketing' => [Permission::MarketingAccess, false],
     'sales' => [Permission::SalesAccess, false],
     'production' => [Permission::ProductionAccess, false],

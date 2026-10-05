@@ -1,6 +1,10 @@
 <?php
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Lists\AddListOption;
+use App\Actions\Lists\MoveListOption;
+use App\Actions\Lists\SetListOptionActive;
+use App\Actions\Lists\UpdateListOption;
 use App\Actions\Staff\CreateOwner;
 use App\Actions\Staff\DeactivateStaffMember;
 use App\Actions\Staff\GrantAccess;
@@ -9,8 +13,10 @@ use App\Actions\Staff\ReactivateStaffMember;
 use App\Actions\Staff\ResendStaffInvitation;
 use App\Actions\Staff\RevokeAccess;
 use App\Enums\GrantScope;
+use App\Enums\ManagedList;
 use App\Enums\Role;
 use App\Models\AccessGrant;
+use App\Models\LeadChannel;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Support\Facades\Notification;
@@ -92,6 +98,20 @@ test('no owner is created when the audit event cannot be recorded', function () 
     expect(User::query()->count())->toBe(0);
     expect(AccessGrant::query()->count())->toBe(0);
 });
+
+test('a list change is not kept when its audit event cannot be recorded', function (Closure $change) {
+    $before = LeadChannel::query()->ordered()->get(['name', 'position', 'is_active'])->toArray();
+    $email = LeadChannel::query()->where('name', 'Email')->sole();
+
+    expect(fn () => $change($email))->toThrow(RuntimeException::class);
+
+    expect(LeadChannel::query()->ordered()->get(['name', 'position', 'is_active'])->toArray())->toBe($before);
+})->with([
+    'adding' => [fn () => app(AddListOption::class)->handle(ManagedList::LeadChannels, 'Carrier Pigeon')],
+    'renaming' => [fn (LeadChannel $email) => app(UpdateListOption::class)->handle($email, 'Electronic Mail')],
+    'moving' => [fn (LeadChannel $email) => app(MoveListOption::class)->handle($email, towardsStart: true)],
+    'deactivating' => [fn (LeadChannel $email) => app(SetListOptionActive::class)->handle($email, active: false)],
+]);
 
 test('a location change is not kept when its audit event cannot be recorded', function (Closure $change, Closure $unchanged) {
     $location = Location::factory()->create(['name' => 'Lakeview']);

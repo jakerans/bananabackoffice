@@ -284,16 +284,18 @@ class Navigation
 
     private function settings(): NavigationItem
     {
+        // Unbuilt Settings pages borrow these two. They deliberately do not borrow the
+        // lists permission, so holding it shows the Lead & Sales Lists page and nothing else.
         $permissions = [Permission::ManageLocations, Permission::ManageUsers];
 
         return new NavigationItem(
             id: 'settings',
             label: 'Settings',
-            permissions: $permissions,
+            permissions: [...$permissions, Permission::ManageLeadSalesLists],
             state: NavigationState::Live,
             route: 'settings.home',
             icon: 'cog-6-tooth',
-            description: 'Locations, staff access and company configuration.',
+            description: 'Locations, staff access, lead and sales lists, and company configuration.',
             primary: 'settings.locations',
             children: [
                 new NavigationItem('settings.company', 'Company', $permissions),
@@ -310,6 +312,13 @@ class Navigation
                     permissions: [Permission::ManageUsers],
                     state: NavigationState::Live,
                     route: 'settings.users',
+                ),
+                new NavigationItem(
+                    id: 'settings.lists',
+                    label: 'Lead & Sales Lists',
+                    permissions: [Permission::ManageLeadSalesLists],
+                    state: NavigationState::Live,
+                    route: 'settings.lists',
                 ),
                 new NavigationItem('settings.service_areas', 'Service Areas', $permissions),
                 new NavigationItem('settings.services', 'Services and Products', $permissions),

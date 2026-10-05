@@ -194,6 +194,26 @@ deactivate** an option.
 - Lifecycle statuses, Account types, Contact roles and responsibility types are
   **not** managed lists. They carry behavior, so they stay in code.
 
+As built in step B2:
+
+- **There is no delete at all,** for used and unused options alike. An option is
+  deactivated. The application also refuses to delete one if asked.
+- **Reordering** is by moving an option up or down one place.
+- **A list always keeps at least one active option,** or staff would have nothing
+  to pick.
+- **A name must be unique within its list.** The same name may appear in two
+  different lists, as "Referral" does.
+- **Renaming an option renames it everywhere,** because records point at the
+  option and do not keep a copy of its name.
+- **The reporting category** of a disqualification reason is chosen when it is
+  added and can be changed later.
+- **Two behaviours are set on the starting values and cannot be changed from the
+  page yet:** "a note is required" (on "Other" in both reason lists) and "ask which
+  competitor" (on "Chose Another Contractor"). A reason added later has neither.
+  The page shows which reasons have them.
+- Every add, rename, change of category, move, deactivation and reactivation is an
+  audit event.
+
 ### Starting values
 
 **Marketing Sources:** Google Search / Organic · Google Ads · Facebook / Instagram ·
@@ -421,7 +441,7 @@ first; photos and history presentation come last.
 | --- | --- |
 | **B0** | This plan and the updated documents. No code. **Complete.** |
 | **B1** | Audit event recording, and audit events for the Checkpoint A changes: staff invited, access granted and revoked, staff deactivated and reactivated, location changes. |
-| **B2** | Attribution and managed lists: the Lead & Sales Lists page in Settings for Owner and Leadership, with the three attribution lists and their starting values. The two reason lists join the same page in B7 and B9. |
+| **B2** | Attribution and managed lists: the Lead & Sales Lists page in Settings for Owner and Leadership, with all five lists and their starting values. (The two reason lists were first planned for B7 and B9; the owner moved them into B2. They are used from B7 and B9.) |
 | **B3** | Lead capture: the inquiry as received, the three attribution fields, New and Working, the shared Leads page shown in Marketing and Sales, the Lead page. |
 | **B4** | Routing and assignment: the unrouted queue, route and re-route, return to central with a reason, assign a person, "Assigned to me". |
 | **B5** | Notes on a Lead. (Extended to Accounts and Projects as those arrive.) |

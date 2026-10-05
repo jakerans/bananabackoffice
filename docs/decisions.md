@@ -573,6 +573,34 @@ Also in B1: the GitHub checks now run on `checkpoint-` branches as well as `main
 so each step's database changes are run on MySQL 8.4 before review, not only when
 merged.
 
+## 39. How the managed lists are built (step B2)
+
+Built in step B2 (2026-10-05).
+
+- **Five small tables, one per list,** not one shared table with a "which list"
+  column. Each record that later uses a list can then point at exactly the right
+  kind of option, and the database itself refuses a lead whose "marketing source"
+  is really a sales loss reason. The five share their behavior in code.
+- **The five lists are fixed in code.** There is no way to create a sixth list or
+  to add fields from the page. That is what keeps this from becoming a general
+  "configure your CRM" tool.
+- **The starting values are created with the tables,** in the same database change,
+  not by a separate seeding step. Every environment, including a brand new
+  production database and the test runs, has them without anyone remembering to
+  load them.
+- **No delete, even for an unused option.** One rule with no exceptions is easier
+  to trust than "deleted if unused". Deactivating does everything deleting would.
+- **At least one active option per list,** enforced when deactivating.
+- **Order is a simple position,** renumbered 1, 2, 3 each time something moves.
+- **"A note is required" and "ask which competitor" are stored on the option,** not
+  tied to its name, so renaming "Other" does not switch the behavior off. They are
+  not yet changeable from the page.
+- **Leadership's access is a permission of its own.** The Settings center opens
+  for anyone holding it, but the unbuilt Settings pages do not borrow it, so
+  Leadership sees exactly one page there.
+- **One list's page cannot touch another's options.** An option is always looked up
+  inside the list being shown, never by its number alone.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

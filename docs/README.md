@@ -60,6 +60,7 @@ each server's environment settings. See [decisions.md](decisions.md), decision 2
 | Current location | `app/Support/Access/CurrentLocation.php` |
 | Navigation definition | `app/Support/Navigation/Navigation.php` |
 | Staff operations (invite, grant, deactivate) | `app/Actions/Staff/` |
+| The five managed lists and their Settings page | `app/Enums/ManagedList.php`, `app/Models/ManagedListOption.php`, `app/Actions/Lists/`, `resources/views/pages/settings/⚡lists.blade.php` |
 | Recording an audit event | `app/Actions/Audit/RecordAuditEvent.php`, `app/Enums/AuditAction.php`, `app/Models/AuditEvent.php` |
 | The short names records are stored under | `app/Providers/AppServiceProvider.php` (`configureRecordNames`) |
 | Application shell | `resources/views/layouts/app.blade.php`, `resources/views/components/shell/` |
