@@ -1,6 +1,10 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
+use Symfony\Component\Mailer\Exception\TransportException;
+use Symfony\Component\Mailer\SentMessage;
+use Symfony\Component\Mailer\Transport\AbstractTransport;
 use Tests\TestCase;
 
 /*
@@ -47,4 +51,25 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Make every outgoing email fail as it would when the mail server cannot be reached.
+ */
+function useFailingMailer(): void
+{
+    Mail::extend('failing', fn () => new class extends AbstractTransport
+    {
+        protected function doSend(SentMessage $message): void
+        {
+            throw new TransportException('Connection could not be established.');
+        }
+
+        public function __toString(): string
+        {
+            return 'failing://';
+        }
+    });
+
+    config(['mail.default' => 'failing', 'mail.mailers.failing' => ['transport' => 'failing']]);
 }

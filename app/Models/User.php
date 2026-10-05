@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -82,25 +83,56 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Limit the query to staff who have not been deactivated.
+     * Put an email address into the one form the application stores and compares.
      *
-     * @param  Builder<User>  $query
+     * Sign-in lowercases what is typed, so an address stored with a capital letter
+     * could never be matched on a database that compares text exactly.
      */
-    #[Scope]
-    protected function active(Builder $query): void
+    public static function normalizeEmail(string $email): string
     {
-        $query->where('is_active', true);
+        return Str::lower(trim($email));
     }
 
     /**
-     * Limit the query to staff who hold the Owner role.
+     * Store every email address in its normalized form, whatever wrote it.
+     *
+     * @return Attribute<string, string>
+     */
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            set: fn (string $value): string => self::normalizeEmail($value),
+        );
+    }
+
+    /**
+     * Limit the query to Owners who can actually sign in and manage the system.
+     *
+     * Holding an Owner grant is not enough: the account must be active, must have
+     * a confirmed email address (management pages require one), and must have a
+     * password its owner chose (an unaccepted invitation has none).
      *
      * @param  Builder<User>  $query
      */
     #[Scope]
-    protected function owners(Builder $query): void
+    protected function usableOwners(Builder $query): void
     {
-        $query->whereRelation('accessGrants', 'role', Role::Owner);
+        $query
+            ->where('is_active', true)
+            ->whereNotNull('email_verified_at')
+            ->where(fn (Builder $query) => $query->whereNull('invited_at')->orWhereNotNull('invitation_accepted_at'))
+            ->whereRelation('accessGrants', 'role', Role::Owner);
+    }
+
+    /**
+     * Determine whether this person is an Owner who can actually sign in and manage the system.
+     */
+    public function isUsableOwner(): bool
+    {
+        return $this->isActive()
+            && $this->hasVerifiedEmail()
+            && ! $this->invitationIsPending()
+            && $this->holdsRole(Role::Owner);
     }
 
     public function isActive(): bool
@@ -114,6 +146,19 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function invitationIsPending(): bool
     {
         return $this->invited_at !== null && $this->invitation_accepted_at === null;
+    }
+
+    /**
+     * Record that the person has chosen their own password through a link sent to their inbox.
+     *
+     * That delivery also proves the email address, so it is marked as confirmed.
+     */
+    public function markInvitationAccepted(): static
+    {
+        return $this->forceFill([
+            'invitation_accepted_at' => now(),
+            'email_verified_at' => $this->email_verified_at ?? now(),
+        ]);
     }
 
     public function holdsRole(Role $role): bool

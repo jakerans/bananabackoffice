@@ -149,6 +149,35 @@ test('a company-wide grant authorizes every active location', function () {
     expect($user->authorizedLocations()->pluck('name')->all())->toBe(['Lakeview', 'Riverside']);
 });
 
+test('an email address is stored trimmed and in lowercase however it is written', function () {
+    $user = User::factory()->create(['email' => '  Jordan.Smith@Example.COM ']);
+
+    expect($user->email)->toBe('jordan.smith@example.com');
+    expect($user->refresh()->email)->toBe('jordan.smith@example.com');
+
+    $user->update(['email' => 'NEW@Example.com']);
+
+    expect($user->refresh()->email)->toBe('new@example.com');
+});
+
+test('only an owner who can sign in and manage the system counts as a usable owner', function (Closure $make, bool $usable) {
+    $person = $make();
+
+    expect($person->isUsableOwner())->toBe($usable);
+    expect(User::query()->usableOwners()->whereKey($person->id)->exists())->toBe($usable);
+})->with([
+    'an active owner who has confirmed their email' => [fn () => User::factory()->withRoleEverywhere(Role::Owner)->create(), true],
+    'an owner who accepted their invitation' => [
+        fn () => User::factory()->withRoleEverywhere(Role::Owner)->create(['invited_at' => now()->subDay(), 'invitation_accepted_at' => now()]),
+        true,
+    ],
+    'an owner who never accepted their invitation' => [fn () => User::factory()->invited()->withRoleEverywhere(Role::Owner)->create(), false],
+    'a deactivated owner' => [fn () => User::factory()->inactive()->withRoleEverywhere(Role::Owner)->create(), false],
+    'an owner who has not confirmed their email' => [fn () => User::factory()->unverified()->withRoleEverywhere(Role::Owner)->create(), false],
+    'an active person who is not an owner' => [fn () => User::factory()->withRoleEverywhere(Role::Leadership)->create(), false],
+    'a person with no grants' => [fn () => User::factory()->create(), false],
+]);
+
 test('holding a role is determined by the access grants', function () {
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
     $agent = User::factory()->has(AccessGrant::factory()->role(Role::CallCenterAgent)->everywhere())->create();

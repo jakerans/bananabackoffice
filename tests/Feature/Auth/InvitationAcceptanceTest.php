@@ -1,8 +1,10 @@
 <?php
 
+use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Livewire\Livewire;
 
 function invitationTokenFor(User $staff): string
 {
@@ -161,6 +163,38 @@ test('an invitation token does not work on the password reset form', function ()
     ])->assertSessionHasErrors('email');
 
     expect($staff->refresh()->invitationIsPending())->toBeTrue();
+});
+
+test('an invitation can be accepted with the email typed in capital letters', function () {
+    $staff = User::factory()->invited()->create(['email' => 'sam@example.com']);
+
+    $this->post(route('invitation.store'), [
+        'token' => invitationTokenFor($staff),
+        'email' => 'Sam@Example.COM',
+        'password' => 'a-long-passphrase',
+        'password_confirmation' => 'a-long-passphrase',
+    ])->assertSessionHasNoErrors();
+
+    expect($staff->refresh()->invitationIsPending())->toBeFalse();
+});
+
+test('a resend invitation option is not offered after someone set their password through password reset', function () {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $staff = User::factory()->invited()->create();
+
+    $this->post(route('password.update'), [
+        'token' => Password::broker()->createToken($staff),
+        'email' => $staff->email,
+        'password' => 'a-long-passphrase',
+        'password_confirmation' => 'a-long-passphrase',
+    ])->assertSessionHasNoErrors();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.user', ['user' => $staff->refresh()])
+        ->assertDontSee('Resend invitation')
+        ->assertSee('Active')
+        ->call('resendInvitation')
+        ->assertForbidden();
 });
 
 test('a signed-in staff member is sent away from the accept invitation screen', function () {

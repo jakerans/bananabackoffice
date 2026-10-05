@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use LogicException;
 
 class LocalDemoSeeder extends Seeder
 {
@@ -16,6 +17,11 @@ class LocalDemoSeeder extends Seeder
      */
     public function run(): void
     {
+        // Checked here as well as in DatabaseSeeder, because a seeder can be run by name.
+        if (! app()->environment('local', 'testing')) {
+            throw new LogicException('The demo seeder creates accounts with a known password and only runs in local development.');
+        }
+
         $northside = Location::factory()->create(['name' => 'Northside']);
         $lakeview = Location::factory()->create(['name' => 'Lakeview']);
         $riverside = Location::factory()->create(['name' => 'Riverside']);

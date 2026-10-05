@@ -28,11 +28,38 @@ test('it creates a verified owner with company-wide access', function () {
     expect($grant->location_id)->toBeNull();
 });
 
-test('it refuses to create a second owner while an active owner exists', function () {
+test('it refuses to create a second owner while an owner who can sign in exists', function () {
     User::factory()->withRoleEverywhere(Role::Owner)->create();
 
     $this->artisan('backoffice:create-owner')
-        ->expectsOutputToContain('An active Owner already exists.')
+        ->expectsOutputToContain('An Owner who can sign in already exists.')
+        ->assertFailed();
+
+    expect(User::query()->count())->toBe(1);
+});
+
+test('it creates an owner when the only existing owner never accepted their invitation', function () {
+    User::factory()->invited()->withRoleEverywhere(Role::Owner)->create();
+
+    $this->artisan('backoffice:create-owner')
+        ->expectsQuestion('Full name', 'Replacement Owner')
+        ->expectsQuestion('Email address', 'replacement@example.com')
+        ->expectsQuestion('Password', 'a-long-passphrase')
+        ->expectsQuestion('Confirm password', 'a-long-passphrase')
+        ->assertSuccessful();
+
+    expect(User::query()->where('email', 'replacement@example.com')->exists())->toBeTrue();
+});
+
+test('it rejects an email address that differs from an existing one only by capital letters', function () {
+    User::factory()->create(['email' => 'taken@example.com']);
+
+    $this->artisan('backoffice:create-owner')
+        ->expectsQuestion('Full name', 'Olive Owner')
+        ->expectsQuestion('Email address', 'Taken@Example.COM')
+        ->expectsQuestion('Password', 'a-long-passphrase')
+        ->expectsQuestion('Confirm password', 'a-long-passphrase')
+        ->expectsOutputToContain('The email has already been taken.')
         ->assertFailed();
 
     expect(User::query()->count())->toBe(1);

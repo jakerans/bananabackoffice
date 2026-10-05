@@ -7,6 +7,7 @@ use App\Models\Location;
 use App\Models\User;
 use App\Notifications\StaffInvitation;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Livewire\Livewire;
 
 test('guests are redirected to the login page', function () {
@@ -196,16 +197,33 @@ test('a grant belonging to someone else cannot be removed from this page', funct
     expect(AccessGrant::query()->whereKey($otherGrant->id)->exists())->toBeTrue();
 });
 
-test('the last active owner cannot lose the owner role', function () {
+test('the only owner who can sign in cannot lose the owner role', function (Closure $otherOwner) {
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
-    User::factory()->inactive()->withRoleEverywhere(Role::Owner)->create();
+    $otherOwner();
 
     Livewire::actingAs($owner)
         ->test('pages::settings.user', ['user' => $owner])
         ->call('revoke', $owner->accessGrants()->sole()->id)
-        ->assertHasErrors(['grant' => 'At least one active Owner is required. Make someone else an Owner first.']);
+        ->assertHasErrors(['grant' => 'This is the only Owner who can sign in. Make sure another Owner has signed in before removing this one.']);
 
     expect($owner->accessGrants()->count())->toBe(1);
+})->with([
+    'no other owner' => [fn () => null],
+    'the other owner is deactivated' => [fn () => User::factory()->inactive()->withRoleEverywhere(Role::Owner)->create()],
+    'the other owner never accepted their invitation' => [fn () => User::factory()->invited()->withRoleEverywhere(Role::Owner)->create()],
+    'the other owner has not confirmed their email' => [fn () => User::factory()->unverified()->withRoleEverywhere(Role::Owner)->create()],
+]);
+
+test('the owner role can be removed from an owner who never accepted their invitation', function () {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $invited = User::factory()->invited()->withRoleEverywhere(Role::Owner)->create();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.user', ['user' => $invited])
+        ->call('revoke', $invited->accessGrants()->sole()->id)
+        ->assertHasNoErrors();
+
+    expect($invited->accessGrants()->count())->toBe(0);
 });
 
 test('an owner role can be removed while another active owner remains', function () {
@@ -272,18 +290,73 @@ test('deactivating a staff member cancels their pending invitation', function ()
     $this->assertDatabaseMissing('staff_invitation_tokens', ['email' => 'sam@example.com']);
 });
 
-test('an owner can resend a pending invitation', function () {
+test('resending an invitation sends a new link and the earlier link stops working', function () {
     Notification::fake();
 
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
     $staff = User::factory()->invited()->create();
+
+    $earlierToken = Password::broker('invitations')->createToken($staff);
 
     Livewire::actingAs($owner)
         ->test('pages::settings.user', ['user' => $staff])
         ->call('resendInvitation')
         ->assertHasNoErrors();
 
-    Notification::assertSentTo($staff, StaffInvitation::class);
+    $newToken = null;
+
+    Notification::assertSentTo($staff, StaffInvitation::class, function (StaffInvitation $invitation) use (&$newToken) {
+        $newToken = $invitation->token;
+
+        return true;
+    });
+
+    expect($newToken)->not->toBe($earlierToken);
+
+    auth()->logout();
+
+    $accept = fn (string $token) => $this->post(route('invitation.store'), [
+        'token' => $token,
+        'email' => $staff->email,
+        'password' => 'a-long-passphrase',
+        'password_confirmation' => 'a-long-passphrase',
+    ]);
+
+    $accept($earlierToken)->assertSessionHasErrors('email');
+
+    expect($staff->refresh()->invitationIsPending())->toBeTrue();
+
+    $accept($newToken)->assertSessionHasNoErrors();
+
+    expect($staff->refresh()->invitationIsPending())->toBeFalse();
+});
+
+test('an earlier invitation still works when a resend cannot be delivered', function () {
+    useFailingMailer();
+
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $staff = User::factory()->invited()->create();
+    $invitedAt = $staff->invited_at;
+
+    $earlierToken = Password::broker('invitations')->createToken($staff);
+
+    $this->travel(1)->hours();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.user', ['user' => $staff])
+        ->call('resendInvitation')
+        ->assertOk();
+
+    expect($staff->refresh()->invited_at->equalTo($invitedAt))->toBeTrue();
+
+    auth()->logout();
+
+    $this->post(route('invitation.store'), [
+        'token' => $earlierToken,
+        'email' => $staff->email,
+        'password' => 'a-long-passphrase',
+        'password_confirmation' => 'a-long-passphrase',
+    ])->assertSessionHasNoErrors();
 });
 
 test('an invitation cannot be resent to someone who has already set a password', function () {

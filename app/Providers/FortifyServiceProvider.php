@@ -55,8 +55,9 @@ class FortifyServiceProvider extends ServiceProvider
     private function authenticateActiveStaff(Request $request): ?User
     {
         $guard = Auth::guard(config('fortify.guard'));
+        $credentials = $request->only(Fortify::username(), 'password');
 
-        if (! $guard instanceof SessionGuard || ! $guard->validate($request->only(Fortify::username(), 'password'))) {
+        if (! $guard instanceof SessionGuard || ! $guard->validate($credentials)) {
             return null;
         }
 
@@ -70,6 +71,12 @@ class FortifyServiceProvider extends ServiceProvider
             throw ValidationException::withMessages([
                 Fortify::username() => __('This account has been deactivated. Please contact an administrator.'),
             ]);
+        }
+
+        // Laravel's own sign-in upgrades a stored password hash when the hashing
+        // settings have changed. Checking credentials by hand skips that, so do it here.
+        if (config('hashing.rehash_on_login', true)) {
+            $guard->getProvider()->rehashPasswordIfRequired($user, $credentials);
         }
 
         return $user;

@@ -19,7 +19,7 @@ class AcceptInvitation
      */
     public function handle(string $email, #[SensitiveParameter] string $token, #[SensitiveParameter] string $password): bool
     {
-        $email = Str::lower($email);
+        $email = User::normalizeEmail($email);
 
         if (User::query()->where('email', $email)->where('is_active', false)->exists()) {
             return false;
@@ -31,9 +31,7 @@ class AcceptInvitation
                 $user->forceFill([
                     'password' => $password,
                     'remember_token' => Str::random(60),
-                    'invitation_accepted_at' => now(),
-                    'email_verified_at' => $user->email_verified_at ?? now(),
-                ])->save();
+                ])->markInvitationAccepted()->save();
 
                 event(new PasswordReset($user));
             },

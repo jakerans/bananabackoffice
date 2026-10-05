@@ -1,6 +1,7 @@
 <?php
 
 use App\Concerns\ProfileValidationRules;
+use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
@@ -30,6 +31,9 @@ new #[Title('Profile settings')] class extends Component {
     public function updateProfileInformation(): void
     {
         $user = Auth::user();
+
+        // Compare and store the address in the same form sign-in uses.
+        $this->email = User::normalizeEmail($this->email);
 
         $validated = $this->validate($this->profileRules($user->id));
 

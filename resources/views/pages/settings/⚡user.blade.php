@@ -7,6 +7,7 @@ use App\Actions\Staff\RevokeAccess;
 use App\Actions\Staff\SendStaffInvitation;
 use App\Enums\GrantScope;
 use App\Enums\Role;
+use App\Exceptions\InvitationNotSent;
 use App\Models\AccessGrant;
 use App\Models\Location;
 use App\Models\User;
@@ -18,7 +19,6 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 new #[Title('Manage access')] class extends Component {
     public User $staff;
@@ -151,10 +151,11 @@ new #[Title('Manage access')] class extends Component {
 
         try {
             $sendStaffInvitation->handle($this->staff);
-        } catch (TransportExceptionInterface $exception) {
-            report($exception);
+        } catch (InvitationNotSent) {
+            // Nothing was changed, so an invitation sent earlier still works.
+            $this->staff->refresh();
 
-            Flux::toast(variant: 'danger', duration: 0, text: __('The invitation email could not be sent. Check the mail settings and try again.'));
+            Flux::toast(variant: 'danger', duration: 0, text: __('The invitation email could not be sent, so nothing was changed. Check the mail settings and try again.'));
 
             return;
         }

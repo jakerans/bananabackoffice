@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 class RevokeAccess
 {
     /**
-     * Remove an access grant, keeping at least one active Owner.
+     * Remove an access grant, keeping at least one Owner who can sign in and manage the system.
      *
      * @throws ValidationException
      */
@@ -18,9 +18,9 @@ class RevokeAccess
     {
         $staff = $grant->user;
 
-        if ($grant->role === Role::Owner && $staff->isActive() && User::query()->active()->owners()->count() <= 1) {
+        if ($grant->role === Role::Owner && $staff->isUsableOwner() && User::query()->usableOwners()->count() <= 1) {
             throw ValidationException::withMessages([
-                'grant' => __('At least one active Owner is required. Make someone else an Owner first.'),
+                'grant' => __('This is the only Owner who can sign in. Make sure another Owner has signed in before removing this one.'),
             ]);
         }
 

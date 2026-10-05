@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Validator;
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\text;
 
-#[Signature('backoffice:create-owner {--force : Create another Owner even if an active one already exists}')]
+#[Signature('backoffice:create-owner {--force : Create another Owner even if one who can sign in already exists}')]
 #[Description('Create an Owner account, the only way to add the first staff member')]
 class CreateOwner extends Command
 {
@@ -25,15 +25,15 @@ class CreateOwner extends Command
      */
     public function handle(CreateOwnerAction $createOwner): int
     {
-        if (! $this->option('force') && User::query()->active()->owners()->exists()) {
-            $this->components->error('An active Owner already exists. Invite other staff from Settings > Users and Access, or pass --force to add another Owner.');
+        if (! $this->option('force') && User::query()->usableOwners()->exists()) {
+            $this->components->error('An Owner who can sign in already exists. Invite other staff from Settings > Users and Access, or pass --force to add another Owner.');
 
             return self::FAILURE;
         }
 
         $input = [
             'name' => text(label: 'Full name', required: true),
-            'email' => text(label: 'Email address', required: true),
+            'email' => User::normalizeEmail(text(label: 'Email address', required: true)),
             'password' => password(label: 'Password', required: true),
             'password_confirmation' => password(label: 'Confirm password', required: true),
         ];

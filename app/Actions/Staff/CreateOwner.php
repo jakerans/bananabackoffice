@@ -6,7 +6,6 @@ use App\Enums\GrantScope;
 use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use SensitiveParameter;
 
 class CreateOwner
@@ -19,7 +18,7 @@ class CreateOwner
         return DB::transaction(function () use ($name, $email, $password): User {
             $owner = new User([
                 'name' => $name,
-                'email' => Str::lower($email),
+                'email' => $email,
                 'password' => $password,
             ]);
 

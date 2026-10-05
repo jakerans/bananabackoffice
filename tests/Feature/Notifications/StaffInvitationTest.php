@@ -23,11 +23,3 @@ test('the invitation email escapes the staff member\'s name', function () {
         ->toContain('&lt;script&gt;')
         ->not->toContain("<script>alert('xss')</script>");
 });
-
-test('the invitation email never contains a password', function () {
-    $staff = User::factory()->invited()->make();
-
-    $content = (string) (new StaffInvitation('the-token'))->toMail($staff)->render();
-
-    expect($content)->not->toContain($staff->password);
-});

@@ -7,6 +7,7 @@ use App\Enums\Role;
 use App\Models\AccessGrant;
 use App\Models\Location;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Validation\ValidationException;
 
 class GrantAccess
@@ -49,12 +50,19 @@ class GrantAccess
             ]);
         }
 
-        $grant = $staff->accessGrants()->create([
-            'role' => $role,
-            'scope' => $scope,
-            'location_id' => $locationId,
-            'granted_by' => $grantedBy->id,
-        ]);
+        try {
+            $grant = $staff->accessGrants()->create([
+                'role' => $role,
+                'scope' => $scope,
+                'location_id' => $locationId,
+                'granted_by' => $grantedBy->id,
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            // Two requests arrived together and the database refused the second.
+            throw ValidationException::withMessages([
+                'role' => __('This person already has that access.'),
+            ]);
+        }
 
         $staff->unsetRelation('accessGrants');
 

@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\Staff\SendStaffInvitation;
 use App\Enums\Role;
 use App\Models\Location;
 use App\Models\User;
@@ -8,7 +7,6 @@ use App\Notifications\StaffInvitation;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
-use Symfony\Component\Mailer\Exception\TransportException;
 
 test('guests are redirected to the login page', function () {
     $this->get(route('settings.users'))->assertRedirect(route('login'));
@@ -121,25 +119,84 @@ test('an invitation requires a name and a valid unused email address', function 
     'email in use' => ['Sam Sales', 'taken@example.com', ['email' => 'The email has already been taken.']],
 ]);
 
-test('the account is kept when the invitation email cannot be sent', function () {
-    $this->mock(SendStaffInvitation::class)
-        ->shouldReceive('handle')
-        ->once()
-        ->andThrow(new TransportException('Connection refused'));
+test('no account is created when the mail server cannot be reached', function () {
+    useFailingMailer();
 
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
-
-    $staff = fn () => User::query()->where('email', 'sam@example.com')->sole();
 
     Livewire::actingAs($owner)
         ->test('pages::settings.users')
         ->set('name', 'Sam Sales')
         ->set('email', 'sam@example.com')
         ->call('invite')
-        ->assertHasNoErrors()
-        ->assertRedirect(route('settings.users.show', $staff()));
+        ->assertOk()
+        ->assertNoRedirect()
+        ->assertHasErrors([
+            'email' => 'The invitation email could not be sent, so no account was created. Check the address and try again. If it keeps happening, the mail settings need attention.',
+        ]);
 
-    expect($staff()->is_active)->toBeTrue();
+    expect(User::query()->where('email', 'sam@example.com')->exists())->toBeFalse();
+    $this->assertDatabaseCount('staff_invitation_tokens', 0);
+});
+
+test('no account is created when the mailer refuses the address', function () {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    // This address passes validation, but the mailer rejects it before anything is sent.
+    expect(validator(['email' => 'sam(sales)@example.com'], ['email' => 'email'])->passes())->toBeTrue();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.users')
+        ->set('name', 'Sam Sales')
+        ->set('email', 'sam(sales)@example.com')
+        ->call('invite')
+        ->assertOk()
+        ->assertNoRedirect()
+        ->assertHasErrors([
+            'email' => 'The invitation email could not be sent, so no account was created. Check the address and try again. If it keeps happening, the mail settings need attention.',
+        ]);
+
+    expect(User::query()->count())->toBe(1);
+    $this->assertDatabaseCount('staff_invitation_tokens', 0);
+});
+
+test('an invitation can be sent again after an earlier attempt failed', function () {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    useFailingMailer();
+
+    $component = Livewire::actingAs($owner)
+        ->test('pages::settings.users')
+        ->set('name', 'Sam Sales')
+        ->set('email', 'sam@example.com')
+        ->call('invite')
+        ->assertHasErrors('email');
+
+    config(['mail.default' => 'array']);
+
+    $component->call('invite')->assertHasNoErrors();
+
+    expect(User::query()->where('email', 'sam@example.com')->sole()->invitationIsPending())->toBeTrue();
+    $this->assertDatabaseHas('staff_invitation_tokens', ['email' => 'sam@example.com']);
+});
+
+test('an invitation to an address that differs from an existing one only by capital letters is rejected', function () {
+    Notification::fake();
+
+    User::factory()->create(['email' => 'taken@example.com']);
+
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.users')
+        ->set('name', 'Sam Sales')
+        ->set('email', 'Taken@Example.COM')
+        ->call('invite')
+        ->assertHasErrors(['email' => 'The email has already been taken.']);
+
+    expect(User::query()->count())->toBe(2);
+
+    Notification::assertNothingSent();
 });
 
 test('an invitation is refused once the permission has been removed', function () {

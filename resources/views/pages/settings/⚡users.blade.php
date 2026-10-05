@@ -2,14 +2,13 @@
 
 use App\Actions\Staff\InviteStaffMember;
 use App\Concerns\ProfileValidationRules;
+use App\Exceptions\InvitationNotSent;
 use App\Models\User;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 new #[Title('Users and Access')] class extends Component {
     use ProfileValidationRules;
@@ -47,26 +46,22 @@ new #[Title('Users and Access')] class extends Component {
         $this->authorize('create', User::class);
 
         $this->name = trim($this->name);
-        $this->email = trim($this->email);
+
+        // Compare and store the address in the same form sign-in uses.
+        $this->email = User::normalizeEmail($this->email);
 
         $validated = $this->validate($this->profileRules());
 
         try {
             $staff = $inviteStaffMember->handle($validated['name'], $validated['email']);
+        } catch (InvitationNotSent) {
+            // Inviting is all or nothing, so there is no half-made account to tidy up.
+            $this->addError('email', __('The invitation email could not be sent, so no account was created. Check the address and try again. If it keeps happening, the mail settings need attention.'));
 
-            Flux::toast(variant: 'success', text: __('Invitation sent to :email.', ['email' => $staff->email]));
-        } catch (TransportExceptionInterface $exception) {
-            report($exception);
-
-            // The account exists by this point; only the email failed, and it can be sent again.
-            $staff = User::query()->where('email', Str::lower($validated['email']))->sole();
-
-            Flux::toast(
-                variant: 'danger',
-                duration: 0,
-                text: __('The account was created, but the invitation email could not be sent. Check the mail settings, then use "Resend invitation".'),
-            );
+            return;
         }
+
+        Flux::toast(variant: 'success', text: __('Invitation sent to :email.', ['email' => $staff->email]));
 
         $this->redirectRoute('settings.users.show', $staff, navigate: true);
     }
