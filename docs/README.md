@@ -13,6 +13,7 @@ before starting work, and update them in the same change that alters what they d
 | [permission-model.md](permission-model.md) | Who can do what, and where. Roles, permissions, location rules. |
 | [design-system.md](design-system.md) | How the Backoffice design system is applied in code. |
 | [decisions.md](decisions.md) | Important architectural decisions and the reasoning behind them. |
+| [security-notes.md](security-notes.md) | Security review findings: what was fixed and what is still open. |
 
 ## Status labels used in these documents
 

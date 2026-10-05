@@ -183,17 +183,25 @@ All of the following are covered by automated tests in `tests/`. See
 - An invitation creates the account without a usable password and sends a
   set-password email.
 
+## Security review before merge (2026-10-04)
+
+The branch was reviewed in full before merging. Eight findings were fixed on the
+branch and the rest are recorded, with what each needs, in
+[security-notes.md](security-notes.md). Two of the open ones must be closed before
+real staff use the system on a server: "forgot password" reveals which addresses
+have accounts, and a deactivated person can complete a passkey sign-in before
+being signed out again.
+
 ## Known limits of Checkpoint A
 
-- The interface has been checked by automated tests, not yet by eye in a browser.
 - Location names are compared exactly, so "Northside" and "northside" count as different.
 - Changes to access are stamped with who granted them, but there is no audit log
   screen and removed grants leave no history.
 - Invitation emails are sent immediately rather than queued, so a slow mail server
   slows that one click.
 - The mail service for the live system is not chosen. Invitations need one before launch.
-- `APP_URL` in the local `.env` still points at `http://localhost:8000`. Passkeys
-  and emailed links use it, so it must match the address the app is opened at.
+- Passkeys only work over a secure address. The local site is served over plain
+  `http`, so passkeys cannot be tried locally until Herd's HTTPS option is turned on.
 
 ## Decisions to make before Checkpoint B
 
