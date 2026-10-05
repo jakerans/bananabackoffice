@@ -75,10 +75,11 @@ The header shows which location a person is working in.
 - Switching is a server request that is refused if the location is not authorized.
 
 The current location is a way of viewing, not a source of permission. From
-Checkpoint B, every record carries its own location, and access to a record is
-decided by the record's location against the person's grants, whatever the
-selector says. Lists are always limited to the person's authorized locations, in
-every view.
+Checkpoint B, Leads and Projects carry their own location, and access to them is
+decided by that location against the person's grants, whatever the selector says.
+Accounts, Contacts and Properties have no location; access to them follows the
+Leads and Projects they are connected to (see "Checkpoint B" below). Lists are
+always limited to what the person's grants allow, in every view.
 
 ## Permissions in Checkpoint A
 
@@ -182,8 +183,109 @@ Homeowners will never be rows in the staff `users` table and will never sign in
 through the staff sign-in page. The future portal gets its own sign-in, its own
 account table and its own access rules.
 
-## Open decisions for Checkpoint B
+## Checkpoint B
 
-- Who can see a centrally received lead before a location owns it. Proposed
-  starting point: only people holding the relevant permission at all-locations scope.
-- How access to a shared Customer is derived from its projects and properties.
+Status: **Approved by the owner (2026-10-05). Not built yet.** Each permission is
+added to the code in the step that builds what it guards. The records and their
+rules are described in [checkpoint-b.md](checkpoint-b.md).
+
+### The rules Checkpoint B adds
+
+1. **Location stays the authorization boundary.** A Project is governed by its
+   Location. A routed Lead is governed by its Location.
+2. **An unrouted Lead has no Location,** so no location grant covers it. It is
+   visible only through its own company-level permission, which counts only when
+   held through an all-locations grant, exactly like Company Overview.
+3. **Accounts, Contacts and Properties have no Location.** A person may see an
+   Account, with its Contacts and Properties, if they can see at least one of its
+   Leads or Projects, or if they hold the account permission through an
+   all-locations grant.
+4. **Seeing an Account never widens access.** Its page lists only the Leads and
+   Projects the viewer is authorized for, and reveals nothing about the rest.
+5. **A Property's address never decides access.**
+6. **Assignment grants nothing.** Being the assigned person on a Lead, or holding a
+   responsibility on a Project, gives no access. The person must already have
+   access at that Location, or the assignment is refused.
+7. **Routing, returning to central and transferring are their own permissions,**
+   separate from being able to edit the record.
+
+### Permissions
+
+| Permission | Scope | Allows |
+| --- | --- | --- |
+| `accounts.view` | Location | See Accounts, Contacts and Properties, under rule 3 |
+| `accounts.manage` | Location | Create and edit Accounts, Contacts and Properties |
+| `accounts.archive` | Location | Archive and restore Accounts, Contacts and Properties |
+| `leads.view` | Location | See Leads routed to the location |
+| `leads.manage` | Location | Capture, edit and work Leads; qualify, disqualify, reopen |
+| `leads.view_unrouted` | Company | See and work Leads that have no location yet |
+| `leads.route` | Company | Send a Lead to a location, or change it |
+| `leads.return` | Location | Return a Lead to the central queue, with a reason |
+| `leads.assign` | Location | Assign a Lead to a staff member |
+| `leads.convert` | Location | Create a Project from a Qualified Lead |
+| `projects.view` | Location | See Projects at the location |
+| `projects.create` | Location | Create a Project, from a Lead or directly |
+| `projects.update` | Location | Edit a Project |
+| `projects.assign` | Location | Set a Project's responsibilities |
+| `projects.transfer` | Company | Move a Project to another location |
+| `projects.archive` | Location | Archive and restore Projects |
+| `projects.sales_outcome` | Location | Mark a Project Won or Lost |
+| `notes.write` | Location | Add notes to a record the person can see |
+| `attachments.manage` | Location | Upload and remove attachments |
+| `history.view` | Location | See a record's audit history |
+| `settings.lists.manage` | Company | Manage the five managed lists |
+
+Company-scope permissions count only when held through an all-locations grant.
+
+### Matrix
+
+"Yes" means the role contains the permission. Where it applies still depends on
+each grant's scope.
+
+The owner stated most of these lines directly. Four were filled in to be
+consistent with them and are open to correction at the final review: who may mark
+a Project Won or Lost, who may set Project responsibilities, that Call Center may
+return a Lead to the central queue, and that Call Center may assign Leads.
+
+| Capability | Owner | Leadership | Location Manager | Call Center Agent | Sales Consultant | Production Manager | Finance |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| See Accounts, Contacts, Properties | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
+| Create and edit Accounts, Contacts, Properties | Yes | Yes | Yes | Yes | Yes | No | No |
+| Archive Accounts, Contacts, Properties | Yes | Yes | Yes | No | No | No | No |
+| See routed Leads | Yes | Yes | Yes | Yes | Yes | No | No |
+| Capture, edit, work, qualify and disqualify Leads | Yes | Yes | Yes | Yes | Yes | No | No |
+| See unrouted Leads (all-locations grant only) | Yes | Yes | No | Yes | No | No | No |
+| Route a Lead to a location | Yes | Yes | No | Yes | No | No | No |
+| Return a Lead to the central queue | Yes | Yes | Yes | Yes | No | No | No |
+| Assign a Lead to a staff member | Yes | Yes | Yes | Yes | No | No | No |
+| Create a Project from a Qualified Lead | Yes | Yes | Yes | No | Yes | No | No |
+| See Projects | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
+| Create a Project directly | Yes | Yes | Yes | No | Yes | No | No |
+| Edit a Project | Yes | Yes | Yes | No | Yes | Yes | No |
+| Set Project responsibilities | Yes | Yes | Yes | No | No | No | No |
+| Transfer a Project to another location | Yes | Yes | No | No | No | No | No |
+| Archive and restore Projects | Yes | Yes | Yes | No | No | No | No |
+| Mark a Project Won or Lost | Yes | Yes | Yes | No | Yes | No | No |
+| Add notes | Yes | Yes | Yes | Yes | Yes | Yes | No |
+| Upload and remove attachments | Yes | Yes | Yes | No | Yes | Yes | No |
+| See a record's audit history | Yes | Yes | Yes | No | No | No | No |
+| Manage the managed lists (all-locations grant only) | Yes | Yes | No | No | No | No | No |
+
+Notes:
+
+- Call Center Agents capture, edit, work and route Leads. They do not create
+  Projects.
+- A Location Manager cannot route a Lead to another location. They can return it
+  to the central queue with a reason, after which they no longer see it.
+- Location staff who capture a Lead create it at one of their own locations. Only
+  people who can see unrouted Leads can leave one unrouted.
+- Leadership granted at a single location works within that location. Seeing
+  unrouted Leads, transferring Projects and managing the lists need an
+  all-locations grant.
+- Managing the lists gives Leadership a reason to open Settings for the first time.
+  They would see only that page there; Locations and Users and Access stay
+  Owner-only. Where that page sits in the menu is open (checkpoint-b.md, open
+  decision 2).
+- Finance sees Accounts and Projects and changes nothing in Checkpoint B.
+- The Checkpoint A center permissions are unchanged. Which center's menu shows a
+  shared page is a navigation question; see navigation-map.md.

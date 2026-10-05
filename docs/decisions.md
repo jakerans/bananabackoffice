@@ -374,6 +374,128 @@ Decided 2026-10-04, closing security finding 8.
 The cost: someone who mistypes their address is no longer told so. That is the
 unavoidable price of not revealing which addresses have accounts.
 
+## Checkpoint B decisions (25 to 34)
+
+Decided by the owner on 2026-10-05, before any of Checkpoint B was built. The full
+model is in [checkpoint-b.md](checkpoint-b.md); these entries record what was
+chosen, why, and what it rules out.
+
+## 25. The customer record is an Account with many Contacts
+
+"Account" in the code and data; "Customers" wherever staff see it. An Account is
+Residential or Commercial. A Contact is a person and may be connected to several
+Accounts, each connection carrying a role. An Account has no Location.
+
+Why: real customers are a homeowner and a spouse, an owner and a property manager,
+a business and its manager. A record limited to one name, email and phone would
+have to be rebuilt.
+
+Rules out: a single name, email and phone on the customer; homeowner-only
+assumptions; copying a person once per Account they deal with.
+
+## 26. A Lead is one inquiry and is never a Project
+
+A Lead is its own record with its own lifecycle. It preserves the inquiry as
+received, may be linked later to an Account, Contact, Property and Location, and
+may remain unrouted for a time. A Project always has a Location; "not yet
+assigned" lives on the Lead.
+
+Why: someone may inquire and never book, inquire again later, have several
+properties, or never become work. A placeholder project at first contact would
+misrepresent all of those and pollute sales figures.
+
+Rules out: treating a Lead as an unassigned Project; a Project without a Location.
+This supersedes the first proposal for Checkpoint B and refines the brief's "a
+project belongs to a location once assigned".
+
+## 27. A Lead becomes a Project when a real scope of work is identified
+
+A Qualified Lead may produce one or more Projects. A Project may also be created
+directly, with no Lead, for legitimate repeat-customer work.
+
+Rules out: a single universal conversion point such as "estimate scheduled";
+requiring every Project to have a Lead.
+
+## 28. Disqualifying a Lead and losing a sale are different things
+
+A Lead is New, Working, Qualified or Disqualified. A Project's sales outcome is
+Open, Won or Lost. Each has its own list of reasons. "Not ready yet" is not a
+disqualification.
+
+Why: disqualified Leads must never drag down the Sales close rate, and reasons for
+not pursuing an inquiry answer a different question from reasons for losing a
+qualified opportunity.
+
+Rules out: one "closed" status; one combined reason list; one status field
+covering sales, production and finance.
+
+## 29. Attribution is three separate facts, recorded on each Lead
+
+Marketing Source (how they first heard of us), Lead Source (where this inquiry
+entered), Lead Channel (how they communicated). Each belongs to the Lead, not the
+Account, and each is reportable on its own. Unknown is recorded as unknown.
+
+Why: the three answer different spending questions, and the same customer can
+arrive differently each time.
+
+Rules out: one "source" field; storing attribution on the customer; guessing.
+
+## 30. The lists staff choose from are managed data, not fixed in code
+
+Marketing Sources, Lead Sources, Lead Channels, Disqualification Reasons and Sales
+Loss Reasons can be added to, renamed, reordered, and activated or deactivated by
+Owner and Leadership. A used value is never deleted, and old records keep it.
+
+Why: these lists change with the business, and changing them should not need a
+developer. Statuses and roles are different: they carry behavior, so they stay in
+code.
+
+Rules out: a general "configure your CRM" framework.
+
+## 31. Location is the authorization boundary; assignment is not
+
+Leads and Projects are governed by their Location. Accounts, Contacts and
+Properties have none: a person sees them through a Lead or Project they are
+authorized for, and that never reveals another location's work. A Property's
+address decides nothing. Being assigned to a record grants nothing.
+
+Why: assignment changes constantly and is about who is responsible. If it were the
+security boundary, covering for a colleague would mean changing access.
+
+Rules out: per-person record ownership as security; access by geography.
+
+## 32. Records with history are archived, and duplicates are never merged silently
+
+Accounts, Contacts, Properties and Projects are archived and restored, not
+deleted. Leads have their lifecycle instead. Possible duplicates are suggested
+from normalized phone and email, and a person decides.
+
+Why: deleting a customer destroys the history of the work, and an automatic merge
+that is wrong is very hard to undo.
+
+## 33. One attachment model, in private storage of its own
+
+A general attachment record, though Checkpoint B shows only project photos. Files
+live in a private DigitalOcean Space used for nothing else, separate from the
+backup Space, one per environment, each with a key limited to it. Access is by
+permission check followed by a short-lived link. A removed file is hidden at once,
+kept 30 days, then eligible for purge. Laravel's standard S3-compatible storage
+driver is approved for this.
+
+Rules out: a photos-only table; public file addresses; sharing the backup bucket.
+
+## 34. Notes, audit events and the timeline are three things with one event store
+
+A note is what a person wrote. An audit event is the system's append-only record
+of an important change. The timeline is what staff read: notes plus selected audit
+events. Audit events also cover Checkpoint A's staff and access changes.
+
+Why: "customer prefers Tuesday" and "the location was changed from A to B" are
+different kinds of fact, but keeping two parallel histories invites them to
+disagree.
+
+Rules out: a compliance product; logging who viewed or searched what.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
