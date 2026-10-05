@@ -616,8 +616,8 @@ these are the choices made while building it.
   trusted.
 - **Times are stored in UTC and shown in one company timezone.** It is a setting
   (`APP_DISPLAY_TIMEZONE`), defaulting to US Eastern. It is one value for the whole
-  company until locations in different timezones need their own. **The owner
-  should confirm the timezone.**
+  company until locations in different timezones need their own. The owner
+  confirmed `America/New_York` on 2026-10-05.
 - **Phone numbers are stored twice:** as typed, and in international notation for
   matching. Recognition is tuned for U.S. numbers but the stored form is not
   U.S.-only, so it can be improved later without changing the data.
@@ -639,6 +639,72 @@ Known limit: a Lead at a location that is later deactivated cannot be seen by
 anyone, because a deactivated location is covered by no grant (permission model,
 rule 3). Step B4 adds re-routing, which is the way to move such Leads; whether
 deactivating a location with open Leads should be refused is for that step.
+
+## 41. Services and Project Size on a Lead (B3, after the owner's browser review)
+
+Decided by the owner on 2026-10-05 and built the same day.
+
+- **Services are a managed list;** a Lead may have several, one primary. They are
+  stored as rows linking a Lead to a Service, so reporting and later routing can
+  ask "all Leads for Cabinet Painting" or "primary Service only" directly. The
+  database refuses a second primary on one Lead.
+- **Project Size is Small, Medium or Large, and required at intake.** It is the
+  intake person's informed classification, not an estimate, and is stored apart
+  from any estimate or sold amount so the two can be compared later.
+- **The value each size covers is data and can change. The three sizes cannot.**
+  They are fixed because behavior and reporting will depend on them, and because
+  the staff-facing choice should stay simple.
+- **A Lead copies the range its size covered when it was classified.** Changing
+  the ranges later therefore never rewrites history, and nothing has to be
+  redesigned when the average job changes.
+- **The ranges are edited as two numbers** (where Medium starts, where Large
+  starts), not three independent ranges, so they can never overlap or leave a gap.
+- **Staff must choose a size; the data allows none.** That is for Leads recorded
+  before sizes existed and for inquiries that will one day arrive automatically.
+- **No salesperson routing is built.** Location, primary and additional Services
+  and Project Size are captured from the first Lead so a later recommendation has
+  the history it needs.
+- **Services are optional** on a Lead. Only Project Size was made required.
+
+## 42. Address lookup provider: recommendation, awaiting the owner's approval
+
+Status: **Proposed (2026-10-05).** Nothing is installed or connected.
+
+The owner wants real address autocomplete that keeps a structured address, with
+latitude and longitude, for Property records, duplicate detection, mapping,
+service-area routing, distance and geographic reporting.
+
+**The finding that decides it:** Google Places, the leading candidate, publishes
+terms that do not allow keeping what it returns. Its policy says Places content
+must not be pre-fetched, cached or stored, with one exception: the place ID may be
+stored indefinitely. Latitude and longitude may be cached for up to 30 days. Read
+plainly, that rules out keeping coordinates and address parts for the uses above.
+This is a reading of Google's published terms on 2026-10-05, not legal advice.
+
+| | Google Places (New) | Mapbox | Smarty |
+| --- | --- | --- | --- |
+| Finds addresses | Best, including many new builds | Good for US addresses | Good; US only; postal-service based |
+| May we keep the result? | Place ID only; coordinates 30 days | **Yes, with "permanent" results** | Yes |
+| Coordinates | Yes | Yes | A separate product |
+| Cost at our size | Likely free (10,000 a month free, then about $5 per 1,000) | Suggestions within a free allowance; about $5 per 1,000 addresses kept | From about $21 a month; every keystroke counts |
+
+**Recommendation: Mapbox,** using its "permanent" results for the address that is
+saved, because it is the option whose terms plainly allow what the owner asked
+for. Google remains the better matcher; choosing it would mean either accepting
+its storage limits or getting advice that our use is permitted.
+
+How it would be built, whichever provider is chosen:
+
+- **Through our own server, not from the browser.** The page asks Backoffice,
+  Backoffice asks the provider. The provider's key never reaches the browser, the
+  number of requests per person is limited, and it can be tested without the
+  provider. No new package is needed; Laravel's built-in HTTP client is enough.
+- **Credentials:** one secret access token, entered by the owner directly in each
+  server's environment settings, as the Resend key was. A separate token for
+  staging and production.
+- **What leaves Backoffice:** only the address text being typed. No names, phone
+  numbers or anything else about the Lead.
+- **If the provider is slow or down,** the form falls back to typing the address.
 
 ## Future decisions already constrained by the brief
 

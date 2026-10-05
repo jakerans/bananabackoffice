@@ -78,7 +78,7 @@ new #[Title('Leads')] class extends Component {
         $user = Auth::user();
 
         // Always start from what the person is allowed to see, whatever is selected.
-        $query = Lead::query()->visibleTo($user)->with(['channel', 'leadSource', 'location']);
+        $query = Lead::query()->visibleTo($user)->with(['channel', 'leadSource', 'location', 'services', 'projectSize']);
 
         if ($this->showingUnrouted) {
             $query->unrouted();
@@ -236,6 +236,7 @@ new #[Title('Leads')] class extends Component {
                     <flux:table.column>{{ __('Received') }}</flux:table.column>
                     <flux:table.column>{{ __('Name') }}</flux:table.column>
                     <flux:table.column>{{ __('Contact') }}</flux:table.column>
+                    <flux:table.column>{{ __('Service and size') }}</flux:table.column>
                     <flux:table.column>{{ __('Channel') }}</flux:table.column>
                     <flux:table.column>{{ __('Lead source') }}</flux:table.column>
                     <flux:table.column>{{ __('Location') }}</flux:table.column>
@@ -261,6 +262,16 @@ new #[Title('Leads')] class extends Component {
                             <flux:table.cell class="tabular-nums">
                                 <div>{{ $lead->displayPhone() }}</div>
                                 <div class="text-sm text-zinc-500">{{ $lead->inquiry_email }}</div>
+                            </flux:table.cell>
+
+                            <flux:table.cell>
+                                <div>
+                                    {{ $lead->primaryService()?->name ?? '—' }}
+                                    @if ($lead->services->count() > 1)
+                                        <span class="text-sm text-zinc-500">+{{ $lead->services->count() - 1 }}</span>
+                                    @endif
+                                </div>
+                                <div class="text-sm text-zinc-500">{{ $lead->projectSize?->name ?? __('Not classified') }}</div>
                             </flux:table.cell>
 
                             <flux:table.cell>{{ $lead->channel->name }}</flux:table.cell>
@@ -301,6 +312,11 @@ new #[Title('Leads')] class extends Component {
                         @if ($lead->inquiry_email !== null)
                             <div class="break-all">{{ $lead->inquiry_email }}</div>
                         @endif
+                        <div>
+                            {{ $lead->primaryService()?->name ?? __('No service') }}
+                            &middot;
+                            {{ $lead->projectSize?->name ?? __('Not classified') }}
+                        </div>
                         <div>
                             {{ $lead->channel->name }}
                             &middot;

@@ -9,7 +9,9 @@ use App\Models\LeadChannel;
 use App\Models\LeadSource;
 use App\Models\ManagedListOption;
 use App\Models\MarketingSource;
+use App\Models\ProjectSize;
 use App\Support\Contact\PhoneNumber;
+use App\Support\Leads\ServiceSelection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -30,7 +32,8 @@ class UpdateLeadDetails
     public function __construct(private RecordAuditEvent $recordAuditEvent) {}
 
     /**
-     * Correct what was recorded for an inquiry, and change where it is attributed.
+     * Correct what was recorded for an inquiry: its details, its attribution,
+     * the services it is about and its project size.
      *
      * A correction never changes the Lead's status. Each kind of change is
      * recorded with the values before and after, so what was first captured can
@@ -40,8 +43,15 @@ class UpdateLeadDetails
      *
      * @throws ValidationException
      */
-    public function handle(Lead $lead, array $inquiry, LeadChannel $channel, LeadSource $leadSource, MarketingSource $marketingSource): void
-    {
+    public function handle(
+        Lead $lead,
+        array $inquiry,
+        LeadChannel $channel,
+        LeadSource $leadSource,
+        MarketingSource $marketingSource,
+        ProjectSize $projectSize,
+        ServiceSelection $services,
+    ): void {
         $inquiry = CaptureLead::clean($inquiry);
 
         if ($inquiry['name'] === null && $inquiry['phone'] === null && $inquiry['email'] === null) {
@@ -65,35 +75,51 @@ class UpdateLeadDetails
             }
         }
 
-        DB::transaction(function () use ($lead, $inquiry, $attribution): void {
+        $currentServices = ServiceSelection::ofLead($lead);
+
+        foreach ($services->services as $service) {
+            if (! $service->is_active && ! $currentServices->services->contains($service)) {
+                throw ValidationException::withMessages([
+                    'serviceIds' => __(':option is no longer offered. Choose another.', ['option' => $service->name]),
+                ]);
+            }
+        }
+
+        DB::transaction(function () use ($lead, $inquiry, $attribution, $projectSize, $services, $currentServices): void {
             [$inquiryBefore, $inquiryAfter] = $this->applyInquiry($lead, $inquiry);
             [$attributionBefore, $attributionAfter] = $this->applyAttribution($lead, $attribution);
+            [$sizeBefore, $sizeAfter] = $this->applyProjectSize($lead, $projectSize);
 
-            if ($inquiryBefore === [] && $attributionBefore === []) {
+            $servicesChanged = ! $services->matches($currentServices);
+
+            if ($inquiryBefore === [] && $attributionBefore === [] && $sizeAfter === [] && ! $servicesChanged) {
                 return;
             }
 
             $lead->save();
-            $lead->unsetRelations();
 
-            if ($inquiryBefore !== []) {
-                $this->recordAuditEvent->handle(
-                    AuditAction::LeadInquiryCorrected,
-                    $lead,
-                    before: $inquiryBefore,
-                    after: $inquiryAfter,
-                    location: $lead->location,
-                );
+            if ($servicesChanged) {
+                $lead->services()->sync($services->forSync());
             }
 
-            if ($attributionBefore !== []) {
-                $this->recordAuditEvent->handle(
-                    AuditAction::LeadAttributionChanged,
-                    $lead,
-                    before: $attributionBefore,
-                    after: $attributionAfter,
-                    location: $lead->location,
-                );
+            $lead->unsetRelations();
+
+            $events = [
+                [AuditAction::LeadInquiryCorrected, $inquiryBefore, $inquiryAfter, $inquiryBefore !== []],
+                [AuditAction::LeadAttributionChanged, $attributionBefore, $attributionAfter, $attributionBefore !== []],
+                [AuditAction::LeadProjectSizeChanged, $sizeBefore, $sizeAfter, $sizeAfter !== []],
+                [
+                    AuditAction::LeadServicesChanged,
+                    ['services' => $currentServices->names(), 'primary_service' => $currentServices->primary?->name],
+                    ['services' => $services->names(), 'primary_service' => $services->primary?->name],
+                    $servicesChanged,
+                ],
+            ];
+
+            foreach ($events as [$action, $before, $after, $changed]) {
+                if ($changed) {
+                    $this->recordAuditEvent->handle($action, $lead, before: $before, after: $after, location: $lead->location);
+                }
             }
         });
     }
@@ -145,5 +171,28 @@ class UpdateLeadDetails
         }
 
         return [$before, $after];
+    }
+
+    /**
+     * Reclassify the Lead when a different size is chosen, and return the size before and after.
+     *
+     * Choosing the size the Lead already has changes nothing: the value range
+     * recorded when it was classified is kept, even if the ranges have changed since.
+     *
+     * @return array{array<string, string|null>, array<string, string>}
+     */
+    private function applyProjectSize(Lead $lead, ProjectSize $projectSize): array
+    {
+        if ($lead->project_size_id === $projectSize->id) {
+            return [[], []];
+        }
+
+        $before = ['project_size' => $lead->projectSize?->name];
+
+        $lead->project_size_id = $projectSize->id;
+        $lead->project_size_min_value = $projectSize->min_value;
+        $lead->project_size_max_value = $projectSize->max_value;
+
+        return [$before, ['project_size' => $projectSize->name]];
     }
 }

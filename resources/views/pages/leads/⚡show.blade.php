@@ -8,7 +8,10 @@ use App\Models\LeadChannel;
 use App\Models\LeadSource;
 use App\Models\ManagedListOption;
 use App\Models\MarketingSource;
+use App\Models\ProjectSize;
+use App\Models\Service;
 use App\Support\Contact\PhoneNumber;
+use App\Support\Leads\ServiceSelection;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\Rule;
@@ -36,6 +39,13 @@ new #[Title('Lead')] class extends Component {
     public ?int $leadSourceId = null;
 
     public ?int $marketingSourceId = null;
+
+    /** @var list<string> */
+    public array $serviceIds = [];
+
+    public ?string $primaryServiceId = null;
+
+    public ?int $projectSizeId = null;
 
     /**
      * Mount the component.
@@ -75,6 +85,9 @@ new #[Title('Lead')] class extends Component {
         $this->channelId = $this->lead->lead_channel_id;
         $this->leadSourceId = $this->lead->lead_source_id;
         $this->marketingSourceId = $this->lead->marketing_source_id;
+        $this->serviceIds = $this->lead->services->map(fn (Service $service): string => (string) $service->id)->values()->all();
+        $this->primaryServiceId = $this->lead->primaryService() === null ? null : (string) $this->lead->primaryService()->id;
+        $this->projectSizeId = $this->lead->project_size_id;
 
         $this->resetValidation();
 
@@ -98,11 +111,19 @@ new #[Title('Lead')] class extends Component {
             'channelId' => ['required', 'integer', Rule::exists(LeadChannel::class, 'id')],
             'leadSourceId' => ['required', 'integer', Rule::exists(LeadSource::class, 'id')],
             'marketingSourceId' => ['required', 'integer', Rule::exists(MarketingSource::class, 'id')],
-        ], attributes: [
+            'serviceIds' => ['array'],
+            'serviceIds.*' => ['integer', Rule::exists(Service::class, 'id')],
+            'projectSizeId' => ['required', 'integer', Rule::exists(ProjectSize::class, 'id')],
+        ], [
+            'projectSizeId.required' => __('Choose a project size. It is your best judgment, not an estimate.'),
+        ], [
             'businessName' => 'business name',
             'channelId' => 'lead channel',
             'leadSourceId' => 'lead source',
             'marketingSourceId' => 'marketing source',
+            'serviceIds' => 'services',
+            'serviceIds.*' => 'service',
+            'projectSizeId' => 'project size',
         ]);
 
         $updateLeadDetails->handle(
@@ -118,6 +139,8 @@ new #[Title('Lead')] class extends Component {
             LeadChannel::query()->findOrFail($validated['channelId']),
             LeadSource::query()->findOrFail($validated['leadSourceId']),
             MarketingSource::query()->findOrFail($validated['marketingSourceId']),
+            ProjectSize::query()->findOrFail($validated['projectSizeId']),
+            ServiceSelection::fromIds($this->serviceIds, $this->primaryServiceId),
         );
 
         $this->lead->refresh();
@@ -157,6 +180,29 @@ new #[Title('Lead')] class extends Component {
     public function marketingSources(): Collection
     {
         return $this->optionsIncluding(MarketingSource::class, $this->lead->marketing_source_id);
+    }
+
+    /**
+     * The services on offer, plus any this Lead already has even if since deactivated.
+     *
+     * @return Collection<int, Service>
+     */
+    #[Computed]
+    public function services(): Collection
+    {
+        return Service::query()
+            ->where(fn ($query) => $query->where('is_active', true)->orWhereIn('id', $this->lead->services->modelKeys()))
+            ->ordered()
+            ->get();
+    }
+
+    /**
+     * @return Collection<int, ProjectSize>
+     */
+    #[Computed]
+    public function projectSizes(): Collection
+    {
+        return ProjectSize::query()->ordered()->get();
     }
 
     /**
@@ -252,14 +298,42 @@ new #[Title('Lead')] class extends Component {
                     </dd>
                 </div>
 
-                <div class="sm:col-span-2">
-                    <dt class="text-sm text-zinc-500">{{ __('Address or area') }}</dt>
-                    <dd class="text-ink">{{ $lead->inquiry_address ?? '—' }}</dd>
+                <div>
+                    <dt class="text-sm text-zinc-500">{{ __('Service(s)') }}</dt>
+                    <dd class="text-ink" data-test="lead-services">
+                        @forelse ($lead->services as $service)
+                            <div>
+                                {{ $service->name }}
+                                @if ($lead->services->count() > 1 && $service->is($lead->primaryService()))
+                                    <flux:badge size="sm" color="zinc" class="ms-1">{{ __('Main') }}</flux:badge>
+                                @endif
+                            </div>
+                        @empty
+                            —
+                        @endforelse
+                    </dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm text-zinc-500">{{ __('Project size') }}</dt>
+                    <dd class="text-ink" data-test="lead-size">
+                        @if ($lead->projectSize)
+                            {{ $lead->projectSize->name }}
+                            <div class="text-sm tabular-nums text-zinc-500">{{ __(':range when classified', ['range' => $lead->projectSizeRangeLabel()]) }}</div>
+                        @else
+                            {{ __('Not classified') }}
+                        @endif
+                    </dd>
                 </div>
 
                 <div class="sm:col-span-2">
-                    <dt class="text-sm text-zinc-500">{{ __('What they asked for') }}</dt>
+                    <dt class="text-sm text-zinc-500">{{ __('About what we\'re painting') }}</dt>
                     <dd class="whitespace-pre-line text-ink">{{ $lead->inquiry_message ?? '—' }}</dd>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <dt class="text-sm text-zinc-500">{{ __('Property address') }}</dt>
+                    <dd class="text-ink">{{ $lead->inquiry_address ?? '—' }}</dd>
                 </div>
             </dl>
         </div>
@@ -315,8 +389,13 @@ new #[Title('Lead')] class extends Component {
             </div>
 
             <flux:input wire:model="businessName" :label="__('Business name')" type="text" autocomplete="off" />
-            <flux:textarea wire:model="message" :label="__('What they asked for')" rows="3" />
-            <flux:input wire:model="address" :label="__('Address or area')" type="text" autocomplete="off" />
+
+            <x-lead.service-picker :services="$this->services" />
+
+            <x-lead.size-picker :sizes="$this->projectSizes" />
+
+            <flux:textarea wire:model="message" :label="__('Tell us about what we\'re painting today')" rows="3" />
+            <flux:input wire:model="address" :label="__('Property address')" type="text" autocomplete="off" />
 
             <div class="grid gap-5 sm:grid-cols-3">
                 <flux:select wire:model="channelId" :label="__('Lead channel')">

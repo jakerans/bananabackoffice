@@ -8,6 +8,7 @@ use App\Actions\Lists\AddListOption;
 use App\Actions\Lists\MoveListOption;
 use App\Actions\Lists\SetListOptionActive;
 use App\Actions\Lists\UpdateListOption;
+use App\Actions\Lists\UpdateProjectSizeRanges;
 use App\Actions\Staff\CreateOwner;
 use App\Actions\Staff\DeactivateStaffMember;
 use App\Actions\Staff\GrantAccess;
@@ -22,7 +23,10 @@ use App\Models\AccessGrant;
 use App\Models\Lead;
 use App\Models\LeadChannel;
 use App\Models\Location;
+use App\Models\ProjectSize;
+use App\Models\Service;
 use App\Models\User;
+use App\Support\Leads\ServiceSelection;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Livewire\Livewire;
@@ -120,10 +124,17 @@ test('a list change is not kept when its audit event cannot be recorded', functi
 test('no lead is kept when its audit event cannot be recorded', function () {
     $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
 
-    expect(fn () => app(CaptureLead::class)->handle($agent, LeadChannel::query()->firstOrFail(), ['name' => 'Maria Lopez']))
+    expect(fn () => app(CaptureLead::class)->handle($agent, LeadChannel::query()->firstOrFail(), ['name' => 'Maria Lopez'], ProjectSize::forKey(ProjectSize::SMALL)))
         ->toThrow(RuntimeException::class);
 
     expect(Lead::query()->count())->toBe(0);
+});
+
+test('project size values are not changed when the audit event cannot be recorded', function () {
+    expect(fn () => app(UpdateProjectSizeRanges::class)->handle(3000, 12000))->toThrow(RuntimeException::class);
+
+    expect(ProjectSize::forKey(ProjectSize::MEDIUM)->min_value)->toBe(2000);
+    expect(ProjectSize::forKey(ProjectSize::LARGE)->min_value)->toBe(10000);
 });
 
 test('a change to a lead is not kept when its audit event cannot be recorded', function (Closure $change) {
@@ -133,12 +144,19 @@ test('a change to a lead is not kept when its audit event cannot be recorded', f
     expect(fn () => $change($lead))->toThrow(RuntimeException::class);
 
     expect($lead->fresh()->getAttributes())->toBe($before);
+    expect($lead->services()->count())->toBe(0);
 })->with([
     'correcting' => [fn (Lead $lead) => app(UpdateLeadDetails::class)->handle(
-        $lead, ['name' => 'Maria Lopez', 'phone' => $lead->inquiry_phone], $lead->channel, $lead->leadSource, $lead->marketingSource,
+        $lead, ['name' => 'Maria Lopez', 'phone' => $lead->inquiry_phone], $lead->channel, $lead->leadSource, $lead->marketingSource, $lead->projectSize, ServiceSelection::ofLead($lead),
     )],
     'changing attribution' => [fn (Lead $lead) => app(UpdateLeadDetails::class)->handle(
-        $lead, ['name' => $lead->inquiry_name, 'phone' => $lead->inquiry_phone], LeadChannel::query()->where('name', 'Web Form')->sole(), $lead->leadSource, $lead->marketingSource,
+        $lead, ['name' => $lead->inquiry_name, 'phone' => $lead->inquiry_phone], LeadChannel::query()->where('name', 'Web Form')->sole(), $lead->leadSource, $lead->marketingSource, $lead->projectSize, ServiceSelection::ofLead($lead),
+    )],
+    'changing the project size' => [fn (Lead $lead) => app(UpdateLeadDetails::class)->handle(
+        $lead, ['name' => $lead->inquiry_name, 'phone' => $lead->inquiry_phone], $lead->channel, $lead->leadSource, $lead->marketingSource, ProjectSize::forKey(ProjectSize::LARGE), ServiceSelection::ofLead($lead),
+    )],
+    'changing the services' => [fn (Lead $lead) => app(UpdateLeadDetails::class)->handle(
+        $lead, ['name' => $lead->inquiry_name, 'phone' => $lead->inquiry_phone], $lead->channel, $lead->leadSource, $lead->marketingSource, $lead->projectSize, ServiceSelection::fromIds([Service::query()->firstOrFail()->id]),
     )],
     'starting work' => [fn (Lead $lead) => app(StartWorkingLead::class)->handle($lead)],
 ]);

@@ -9,7 +9,9 @@ use App\Models\LeadDisqualificationReason;
 use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
+use App\Models\ProjectSize;
 use App\Models\SalesLossReason;
+use App\Models\Service;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
 use App\Support\Navigation\Navigation;
@@ -59,6 +61,8 @@ class AppServiceProvider extends ServiceProvider
             'lead_disqualification_reason' => LeadDisqualificationReason::class,
             'sales_loss_reason' => SalesLossReason::class,
             'lead' => Lead::class,
+            'service' => Service::class,
+            'project_size' => ProjectSize::class,
         ]);
     }
 

@@ -8,6 +8,7 @@ use App\Models\LeadChannel;
 use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
+use App\Models\ProjectSize;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -33,6 +34,9 @@ test('capturing a lead records who received it, how, and where it was routed', f
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId(ProjectSize::LARGE))
+        ->set('serviceIds', [(string) serviceNamed('Deck / Fence')->id, (string) serviceNamed('Exterior Painting')->id])
+        ->set('primaryServiceId', (string) serviceNamed('Deck / Fence')->id)
         ->set('name', 'Maria Lopez')
         ->set('phone', '555-201-3344')
         ->set('channelId', LeadChannel::query()->where('name', 'Phone Call')->sole()->id)
@@ -54,6 +58,9 @@ test('capturing a lead records who received it, how, and where it was routed', f
         'lead_channel' => 'Phone Call',
         'lead_source' => 'Google Business Profile',
         'marketing_source' => 'Unknown / Unattributed',
+        'services' => ['Exterior Painting', 'Deck / Fence'],
+        'primary_service' => 'Deck / Fence',
+        'project_size' => 'Large',
         'location' => 'Lakeview',
         'received_at' => '2026-10-05T18:30:00+00:00',
     ]));
@@ -64,6 +71,7 @@ test('capturing an unrouted lead records no location', function () {
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('name', 'Maria Lopez')
         ->set('channelId', LeadChannel::query()->where('name', 'Phone Call')->sole()->id)
         ->call('save')
@@ -80,6 +88,7 @@ test('a lead that is refused records nothing', function () {
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('name', 'Maria Lopez')
         ->call('save')
         ->assertHasErrors('channelId');
@@ -189,4 +198,101 @@ test('starting work records the change of status once', function () {
     expect($event->location->is($lakeview))->toBeTrue();
     expect($event->before())->toBe(['status' => 'new']);
     expect($event->after())->toBe(['status' => 'working']);
+});
+
+test('changing the services records the services and the main one before and after', function () {
+    $lakeview = Location::factory()->create();
+    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+    $lead = Lead::factory()->at($lakeview)->create();
+
+    $lead->services()->attach(serviceNamed('Interior Painting')->id, ['is_primary' => true]);
+
+    Livewire::actingAs($consultant)
+        ->test('pages::leads.show', ['lead' => $lead])
+        ->call('edit')
+        ->set('serviceIds', [(string) serviceNamed('Interior Painting')->id, (string) serviceNamed('Cabinet Painting')->id])
+        ->set('primaryServiceId', (string) serviceNamed('Cabinet Painting')->id)
+        ->call('update')
+        ->assertHasNoErrors();
+
+    $event = AuditEvent::query()->sole();
+
+    expect($event->action)->toBe(AuditAction::LeadServicesChanged);
+    expect($event->actor->is($consultant))->toBeTrue();
+    expect($event->subject->is($lead))->toBeTrue();
+    expect(recorded($event->before()))->toBe(recorded(['services' => ['Interior Painting'], 'primary_service' => 'Interior Painting']));
+    expect(recorded($event->after()))->toBe(recorded(['services' => ['Interior Painting', 'Cabinet Painting'], 'primary_service' => 'Cabinet Painting']));
+});
+
+test('changing only which service is the main one is recorded', function () {
+    $lakeview = Location::factory()->create();
+    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+    $lead = Lead::factory()->at($lakeview)->create();
+
+    $lead->services()->attach([
+        serviceNamed('Interior Painting')->id => ['is_primary' => true],
+        serviceNamed('Cabinet Painting')->id => ['is_primary' => false],
+    ]);
+
+    Livewire::actingAs($consultant)
+        ->test('pages::leads.show', ['lead' => $lead])
+        ->call('edit')
+        ->set('primaryServiceId', (string) serviceNamed('Cabinet Painting')->id)
+        ->call('update')
+        ->assertHasNoErrors();
+
+    $event = AuditEvent::query()->sole();
+
+    expect($event->action)->toBe(AuditAction::LeadServicesChanged);
+    expect($event->before()['primary_service'])->toBe('Interior Painting');
+    expect($event->after()['primary_service'])->toBe('Cabinet Painting');
+});
+
+test('reclassifying the project size records the size before and after', function () {
+    $lakeview = Location::factory()->create();
+    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+    $lead = Lead::factory()->at($lakeview)->create();
+
+    Livewire::actingAs($consultant)
+        ->test('pages::leads.show', ['lead' => $lead])
+        ->call('edit')
+        ->set('projectSizeId', projectSizeId(ProjectSize::LARGE))
+        ->call('update')
+        ->assertHasNoErrors();
+
+    $event = AuditEvent::query()->sole();
+
+    expect($event->action)->toBe(AuditAction::LeadProjectSizeChanged);
+    expect($event->before())->toBe(['project_size' => 'Small']);
+    expect($event->after())->toBe(['project_size' => 'Large']);
+});
+
+test('changing the value a project size covers records the range before and after', function () {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.project-sizes')
+        ->set('mediumStartsAt', '2000')
+        ->set('largeStartsAt', '12000')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Small did not change, so only Medium and Large are recorded.
+    $events = AuditEvent::query()->orderBy('id')->get();
+
+    expect($events->pluck('action')->unique()->all())->toBe([AuditAction::ProjectSizeRangeChanged]);
+    expect($events->map(fn (AuditEvent $event) => $event->subject->key)->all())->toBe(['medium', 'large']);
+    expect(recorded($events[0]->before()))->toBe(recorded(['min_value' => 2000, 'max_value' => 9999]));
+    expect(recorded($events[0]->after()))->toBe(recorded(['min_value' => 2000, 'max_value' => 11999]));
+    expect(recorded($events[1]->before()))->toBe(recorded(['min_value' => 10000, 'max_value' => null]));
+    expect(recorded($events[1]->after()))->toBe(recorded(['min_value' => 12000, 'max_value' => null]));
+    expect($events[0]->actor->is($owner))->toBeTrue();
+});
+
+test('saving project sizes without changing them records nothing', function () {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    Livewire::actingAs($owner)->test('pages::settings.project-sizes')->call('save')->assertHasNoErrors();
+
+    expect(AuditEvent::query()->count())->toBe(0);
 });

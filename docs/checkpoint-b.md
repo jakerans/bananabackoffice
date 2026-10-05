@@ -131,13 +131,23 @@ same customer may answer differently on a later inquiry.
 
 #### Lead capture, as built in step B3
 
-- **To save a Lead:** a Lead Channel, and at least one of name, phone or email.
-  Nothing else is required. Business name, what they asked for and address or area
-  are optional.
-- **The form is one page in two groups.** Quick capture: name, phone, email,
-  business name, channel, what they asked for, address or area. Attribution and
-  routing: marketing source, lead source, location, received time. Typing starts in
-  the name; the channel is chosen with one tap and is never chosen for you.
+- **To save a Lead:** a Lead Channel, a Project Size, and at least one of name,
+  phone or email. Nothing else is required.
+- **The form is one page in two groups.** Quick capture: name, phone and email,
+  business name, channel, service(s), project size, "Tell us about what we're
+  painting today", property address. Attribution and routing: marketing source,
+  lead source, location, received time. Typing starts in the name. The channel and
+  the project size are each one tap and are never chosen for you.
+- **Services.** Any number may be tapped, or none. With one, it is the primary.
+  With several, staff pick the main one; if they do not, it is the first in list
+  order. The database itself refuses a second primary on one Lead.
+- **Project Size** is required: Small, Medium or Large, shown with the expected
+  value each covers. It is the intake person's judgment from the conversation, not
+  an estimate, and it is stored apart from any estimate or sold amount.
+- **The free-text field stays,** labelled "Tell us about what we're painting
+  today". The structured choices do not replace what a person can describe.
+- **Property address** is still typed as given. Address lookup is designed below
+  and is not connected until the owner approves a provider.
 - **Both sources start on their "unknown" option,** so a Lead can be saved without
   touching them. That option is marked in the data, may be renamed, and can never
   be deactivated.
@@ -168,7 +178,95 @@ same customer may answer differently on a later inquiry.
   searched by name, business, phone or email and narrowed by status. On a narrow
   screen it becomes cards.
 - **Audit events:** Lead received; inquiry details corrected (old and new values
-  of each changed field); attribution changed; work started.
+  of each changed field); attribution changed; services changed; project size
+  changed; work started.
+
+#### Services
+
+- A managed list like the others, on the Lead & Sales Lists page: Owner and
+  Leadership add, rename, reorder, activate and deactivate; nothing is deleted.
+- Starting values: Interior Painting · Exterior Painting · Cabinet Painting ·
+  Deck / Fence · Commercial Interior · Commercial Exterior · Other.
+- A Lead may have several, one of them primary. A Lead keeps a service that was
+  deactivated after it was chosen, but cannot be given a deactivated one.
+- "Services and Products" in the Settings menu is a different, unbuilt page (for
+  products and pricing later). It is unchanged.
+
+#### Project Size
+
+- Three sizes, fixed: **Small, Medium, Large.** Those are the business values;
+  nothing is named Minnow, Fish or Whale underneath.
+- Each covers a range of expected project value. Starting ranges: Small under
+  $2,000; Medium $2,000 to $9,999; Large $10,000 or more.
+- **The ranges are data, not code.** Owner and Leadership change where Medium and
+  Large begin on the Project Sizes tab of the Lead & Sales Lists page. The three
+  always cover every value with no gap and no overlap. Each change is audited.
+- **A Lead keeps the range it was classified under.** The range is copied onto the
+  Lead when it is classified, so a Lead called "Medium" last year can still be
+  compared fairly with what was estimated and sold after the ranges move.
+  Choosing the same size again does not re-copy it; choosing a different size does.
+- Staff must choose a size to save or correct a Lead. The data allows a Lead to
+  have none, for Leads recorded before sizes existed and for inquiries that will
+  one day arrive automatically and cannot be classified by a person.
+
+#### What this preserves for future salesperson routing
+
+Nothing here routes a Lead to a salesperson. The data a later recommendation would
+need is kept from the first Lead: Location, primary Service, additional Services,
+Project Size (with the range it meant), and later the Project's responsibilities,
+sales outcome and Sold Amount. Close rate and revenue by Service and by Project
+Size can be worked out from those without changing the records.
+
+#### Property address: designed, not built
+
+Status: **Proposed.** Nothing is connected to an outside address service until the
+owner approves a provider. The typed field stays until then.
+
+The Lead will carry a structured address made of:
+
+| Field | Notes |
+| --- | --- |
+| Display address | The whole address on one line, as shown to staff |
+| Line 1, line 2 | Street number and name; unit or suite |
+| City, state, postal code | |
+| Latitude, longitude | For mapping, distance and service-area routing |
+| Provider and place identifier | Which service found it, and its ID for that place |
+| How it was entered | Chosen from lookup, or typed by hand |
+
+- **There is always a manual path.** If the lookup finds nothing (new construction,
+  a rural route) or is unavailable, staff type the address in the same fields,
+  without coordinates. Lookup can never stop a Lead being saved.
+- **What the person said is still kept.** The typed text stays as part of the
+  original inquiry.
+- These fields are the same ones a Property will have in step B6, so a Lead's
+  address can become, or be matched to, a Property without re-entry. Duplicate
+  addresses are suggested from the place identifier and the normalized parts,
+  never merged silently.
+
+#### Suggested location from a service area: designed, not built
+
+Status: **Proposed.** It stays inactive until real service-area rules exist.
+
+- The boundary is one question with one answer: *given a structured address, which
+  Location normally serves it?* The answer is a Location or "none known".
+- The answer comes only from an explicit **Service Area** definition owned by the
+  business. **It is never worked out from which office is nearest.**
+- When there is an answer, the Location is pre-selected and marked as suggested.
+  Staff who are authorized may change it; the usual location rules still apply,
+  and the person saving must be allowed to capture for the Location that is saved.
+- When there is no answer, nothing is pre-selected: company-wide staff leave the
+  Lead unrouted or choose, exactly as now.
+- **Dependency:** the Service Area model (Settings > Service Areas is not built).
+  How areas are defined is the owner's decision; see "Open decisions".
+
+#### Recorded for step B4
+
+- **Deactivating a Location must not strand its work.** A Location with active
+  Leads or active Projects should not be deactivated in a way that makes them
+  inaccessible. The likely rule: refuse until those records are reassigned or
+  resolved.
+- **Correcting a Lead's Received time** after creation, by authorized staff, with
+  an audit event.
 
 ### Project
 
@@ -213,13 +311,17 @@ same customer may answer differently on a later inquiry.
 
 ## Managed lists
 
-Five lists are data that Owner and Leadership manage, not values fixed in code:
+Six lists are data that Owner and Leadership manage, not values fixed in code.
+(Services was added during the B3 review. Project Sizes sit on the same Settings
+page but are not a list of options: there are always three, and only the value
+each covers can change. See "Project Size".)
 
 | List | Used on |
 | --- | --- |
 | Marketing Sources | Lead |
 | Lead Sources | Lead |
 | Lead Channels | Lead |
+| Services | Lead |
 | Disqualification Reasons | Lead |
 | Sales Loss Reasons | Project |
 
@@ -554,3 +656,10 @@ None blocks the next step. These are settled in the step that needs them:
   role should. Needed by the production-readiness checkpoint.
 - How uploaded files are backed up and restored. Needed by B10.
 - The production domain. Needed by the production-readiness checkpoint.
+- **Which address lookup provider to use.** The recommendation and its trade-off
+  are in decisions.md, 42. Nothing is installed or connected until this is approved.
+- **How service areas are defined:** by postal code, by city or county, or by
+  boundaries drawn on a map. Needed before a Location can be suggested from an
+  address.
+- **Whether a Lead must have at least one Service.** Built as optional, since only
+  Project Size was made required.

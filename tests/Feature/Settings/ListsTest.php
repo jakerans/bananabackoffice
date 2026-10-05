@@ -29,6 +29,7 @@ dataset('lists', [
     'marketing sources' => [ManagedList::MarketingSources],
     'lead sources' => [ManagedList::LeadSources],
     'lead channels' => [ManagedList::LeadChannels],
+    'services' => [ManagedList::Services],
     'disqualification reasons' => [ManagedList::DisqualificationReasons],
     'sales loss reasons' => [ManagedList::SalesLossReasons],
 ]);
@@ -168,6 +169,10 @@ test('each list starts with the approved values in the approved order', function
     'lead channels' => [ManagedList::LeadChannels, [
         'Phone Call', 'Web Form', 'Meta Form', 'Text Message', 'Email', 'Facebook / Instagram Message',
         'In Person', 'Other',
+    ]],
+    'services' => [ManagedList::Services, [
+        'Interior Painting', 'Exterior Painting', 'Cabinet Painting', 'Deck / Fence', 'Commercial Interior',
+        'Commercial Exterior', 'Other',
     ]],
     'disqualification reasons' => [ManagedList::DisqualificationReasons, [
         'Outside Service Area', 'Service Not Offered', 'Project Too Small / Below Minimum',

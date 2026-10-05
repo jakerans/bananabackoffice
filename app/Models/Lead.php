@@ -8,9 +8,11 @@ use App\Support\Contact\PhoneNumber;
 use Database\Factories\LeadFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -34,6 +36,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $inquiry_business_name
  * @property string|null $inquiry_address
  * @property string|null $inquiry_message
+ * @property int|null $project_size_id
+ * @property int|null $project_size_min_value
+ * @property int|null $project_size_max_value
  * @property int|null $location_id
  * @property int|null $captured_by
  * @property Carbon|null $created_at
@@ -41,6 +46,8 @@ use Illuminate\Support\Carbon;
  * @property-read LeadChannel $channel
  * @property-read LeadSource $leadSource
  * @property-read MarketingSource $marketingSource
+ * @property-read ProjectSize|null $projectSize
+ * @property-read Collection<int, Service> $services
  * @property-read Location|null $location
  * @property-read User|null $capturedBy
  */
@@ -59,6 +66,8 @@ class Lead extends Model
         return [
             'received_at' => 'datetime',
             'status' => LeadStatus::class,
+            'project_size_min_value' => 'integer',
+            'project_size_max_value' => 'integer',
         ];
     }
 
@@ -84,6 +93,51 @@ class Lead extends Model
     public function marketingSource(): BelongsTo
     {
         return $this->belongsTo(MarketingSource::class);
+    }
+
+    /**
+     * The kinds of work the inquiry is about. One of them is the primary.
+     *
+     * @return BelongsToMany<Service, $this>
+     */
+    public function services(): BelongsToMany
+    {
+        return $this->belongsToMany(Service::class)
+            ->withPivot('is_primary')
+            ->withTimestamps()
+            ->orderBy('services.position')
+            ->orderBy('services.id');
+    }
+
+    /**
+     * The service the opportunity is mainly about, if any service was recorded.
+     */
+    public function primaryService(): ?Service
+    {
+        return $this->services->first(
+            fn (Service $service): bool => (bool) $service->getRelationValue('pivot')?->getAttribute('is_primary'),
+        );
+    }
+
+    /**
+     * The intake person's classification of how big the opportunity is.
+     *
+     * @return BelongsTo<ProjectSize, $this>
+     */
+    public function projectSize(): BelongsTo
+    {
+        return $this->belongsTo(ProjectSize::class);
+    }
+
+    /**
+     * The expected value the size covered when this Lead was classified, in plain
+     * words. It is what was recorded then, whatever the size covers today.
+     */
+    public function projectSizeRangeLabel(): ?string
+    {
+        return $this->project_size_min_value === null
+            ? null
+            : ProjectSize::describeRange($this->project_size_min_value, $this->project_size_max_value);
     }
 
     /**

@@ -6,9 +6,12 @@ use App\Models\LeadChannel;
 use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
+use App\Models\ProjectSize;
+use App\Models\Service;
 use App\Enums\Permission;
 use App\Support\Access\CurrentLocation;
 use App\Support\Contact\PhoneNumber;
+use App\Support\Leads\ServiceSelection;
 use Carbon\CarbonImmutable;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
@@ -32,6 +35,13 @@ new #[Title('New lead')] class extends Component {
     public string $businessName = '';
 
     public ?int $channelId = null;
+
+    /** @var list<string> */
+    public array $serviceIds = [];
+
+    public ?string $primaryServiceId = null;
+
+    public ?int $projectSizeId = null;
 
     public string $message = '';
 
@@ -72,6 +82,24 @@ new #[Title('New lead')] class extends Component {
     public function channels(): Collection
     {
         return LeadChannel::query()->active()->ordered()->get();
+    }
+
+    /**
+     * @return Collection<int, Service>
+     */
+    #[Computed]
+    public function services(): Collection
+    {
+        return Service::query()->active()->ordered()->get();
+    }
+
+    /**
+     * @return Collection<int, ProjectSize>
+     */
+    #[Computed]
+    public function projectSizes(): Collection
+    {
+        return ProjectSize::query()->ordered()->get();
     }
 
     /**
@@ -189,6 +217,9 @@ new #[Title('New lead')] class extends Component {
             'email' => ['nullable', 'string', 'email', 'max:255'],
             'businessName' => ['nullable', 'string', 'max:255'],
             'channelId' => ['required', 'integer', Rule::exists(LeadChannel::class, 'id')->where('is_active', true)],
+            'serviceIds' => ['array'],
+            'serviceIds.*' => ['integer', Rule::exists(Service::class, 'id')->where('is_active', true)],
+            'projectSizeId' => ['required', 'integer', Rule::exists(ProjectSize::class, 'id')],
             'message' => ['nullable', 'string', 'max:5000'],
             'address' => ['nullable', 'string', 'max:500'],
             'leadSourceId' => ['required', 'integer', Rule::exists(LeadSource::class, 'id')->where('is_active', true)],
@@ -197,9 +228,13 @@ new #[Title('New lead')] class extends Component {
             'receivedAt' => ['required', 'date_format:Y-m-d\TH:i'],
         ], [
             'channelId.required' => __('Choose how the inquiry arrived.'),
+            'projectSizeId.required' => __('Choose a project size. It is your best judgment, not an estimate.'),
         ], [
             'businessName' => 'business name',
             'channelId' => 'lead channel',
+            'serviceIds' => 'services',
+            'serviceIds.*' => 'service',
+            'projectSizeId' => 'project size',
             'leadSourceId' => 'lead source',
             'marketingSourceId' => 'marketing source',
             'locationId' => 'location',
@@ -233,6 +268,8 @@ new #[Title('New lead')] class extends Component {
                     'address' => $this->address,
                     'message' => $this->message,
                 ],
+                projectSize: ProjectSize::query()->findOrFail($validated['projectSizeId']),
+                services: ServiceSelection::fromIds($this->serviceIds, $this->primaryServiceId),
                 location: $location,
                 leadSource: LeadSource::query()->findOrFail($validated['leadSourceId']),
                 marketingSource: MarketingSource::query()->findOrFail($validated['marketingSourceId']),
@@ -289,7 +326,7 @@ new #[Title('New lead')] class extends Component {
     <div>
         <flux:link :href="route('leads')" wire:navigate class="text-sm">&larr; {{ __('Leads') }}</flux:link>
         <flux:heading size="xl" level="1" class="mt-2">{{ __('New lead') }}</flux:heading>
-        <flux:subheading>{{ __('Record the inquiry as it came in. A name or a number and how it arrived are enough to save it.') }}</flux:subheading>
+        <flux:subheading>{{ __('Record the inquiry as it came in. A name or a number, how it arrived and a project size are enough to save it.') }}</flux:subheading>
     </div>
 
     <form wire:submit="save" class="flex flex-col gap-6">
@@ -351,9 +388,18 @@ new #[Title('New lead')] class extends Component {
                 <flux:error name="channelId" />
             </fieldset>
 
-            <flux:textarea wire:model="message" :label="__('What they asked for')" rows="3" />
+            <x-lead.service-picker :services="$this->services" />
 
-            <flux:input wire:model="address" :label="__('Address or area')" :description="__('As they gave it. A street address or just a neighborhood is fine.')" type="text" autocomplete="off" />
+            <x-lead.size-picker :sizes="$this->projectSizes" />
+
+            <flux:textarea
+                wire:model="message"
+                :label="__('Tell us about what we\'re painting today')"
+                :placeholder="__('For example: whole exterior, single-story, about 2,000 sq ft, peeling on the south side.')"
+                rows="3"
+            />
+
+            <flux:input wire:model="address" :label="__('Property address')" :description="__('As they gave it. Address lookup is not connected yet, so type what you have.')" type="text" autocomplete="off" />
         </div>
 
         <div class="flex flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-5">

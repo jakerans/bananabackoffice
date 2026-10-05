@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\ProjectSize;
+use App\Models\Service;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Mailer\Exception\TransportException;
@@ -51,6 +53,19 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * The ID of one of the three project sizes, for filling in a lead form.
+ */
+function projectSizeId(string $key = ProjectSize::SMALL): int
+{
+    return ProjectSize::forKey($key)->id;
+}
+
+function serviceNamed(string $name): Service
+{
+    return Service::query()->where('name', $name)->sole();
 }
 
 /**

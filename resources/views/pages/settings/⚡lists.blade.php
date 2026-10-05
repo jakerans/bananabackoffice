@@ -20,6 +20,8 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new #[Title('Lead & Sales Lists')] class extends Component {
+    public const string PROJECT_SIZES = 'project_sizes';
+
     #[Url]
     public string $list = ManagedList::MarketingSources->value;
 
@@ -41,7 +43,19 @@ new #[Title('Lead & Sales Lists')] class extends Component {
     {
         $this->authorize(Permission::ManageLeadSalesLists);
 
-        $this->currentList();
+        if (! $this->showingProjectSizes) {
+            $this->currentList();
+        }
+    }
+
+    /**
+     * Project sizes share this page but are not a list of options: there are
+     * always three, and only the value each covers can change.
+     */
+    #[Computed]
+    public function showingProjectSizes(): bool
+    {
+        return $this->list === self::PROJECT_SIZES;
     }
 
     /**
@@ -71,9 +85,9 @@ new #[Title('Lead & Sales Lists')] class extends Component {
     {
         $this->authorize(Permission::ManageLeadSalesLists);
 
-        $this->list = (ManagedList::tryFrom($list) ?? abort(404))->value;
+        $this->list = $list === self::PROJECT_SIZES ? $list : (ManagedList::tryFrom($list) ?? abort(404))->value;
 
-        unset($this->currentList, $this->options);
+        unset($this->currentList, $this->options, $this->showingProjectSizes);
 
         $this->reset('name', 'category', 'editingId', 'editingName', 'editingCategory');
         $this->resetValidation();
@@ -246,20 +260,37 @@ new #[Title('Lead & Sales Lists')] class extends Component {
         <flux:subheading>{{ __('The choices staff pick from when they record a lead or the outcome of a sale.') }}</flux:subheading>
     </div>
 
+    @php
+        $activeList = $this->showingProjectSizes ? null : $this->currentList;
+    @endphp
+
     <nav aria-label="{{ __('Lists') }}" class="flex flex-wrap gap-2">
         @foreach (ManagedList::cases() as $tab)
             <flux:button
                 size="sm"
-                :variant="$tab === $this->currentList ? 'primary' : 'ghost'"
+                :variant="$tab === $activeList ? 'primary' : 'ghost'"
                 wire:click="show('{{ $tab->value }}')"
-                :aria-current="$tab === $this->currentList ? 'page' : null"
+                :aria-current="$tab === $activeList ? 'page' : null"
                 data-test="list-tab-{{ $tab->value }}"
             >
                 {{ $tab->label() }}
             </flux:button>
         @endforeach
+
+        <flux:button
+            size="sm"
+            :variant="$this->showingProjectSizes ? 'primary' : 'ghost'"
+            wire:click="show('project_sizes')"
+            :aria-current="$this->showingProjectSizes ? 'page' : null"
+            data-test="list-tab-project_sizes"
+        >
+            {{ __('Project Sizes') }}
+        </flux:button>
     </nav>
 
+    @if ($this->showingProjectSizes)
+        <livewire:pages::settings.project-sizes />
+    @else
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div class="max-w-2xl">
             <flux:heading size="lg" level="2">{{ $this->currentList->label() }}</flux:heading>
@@ -421,4 +452,5 @@ new #[Title('Lead & Sales Lists')] class extends Component {
             </div>
         </form>
     </flux:modal>
+    @endif
 </section>

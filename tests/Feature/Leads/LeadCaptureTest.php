@@ -63,6 +63,7 @@ test('a lead can be saved with only a name, a phone number and a channel', funct
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('name', '  Maria Lopez  ')
         ->set('phone', '(555) 201-3344')
         ->set('channelId', channelNamed('Phone Call')->id)
@@ -91,6 +92,7 @@ test('any one of a name, a phone number or an email is enough', function (string
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set($field, $value)
         ->set('channelId', channelNamed('Facebook / Instagram Message')->id)
         ->call('save')
@@ -108,6 +110,7 @@ test('a lead needs a name, a phone number or an email', function () {
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('name', '   ')
         ->set('businessName', 'Lopez Bakery')
         ->set('message', 'Wants the shopfront repainted.')
@@ -123,6 +126,7 @@ test('a lead needs a channel, and none is chosen for you', function () {
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->assertSet('channelId', null)
         ->set('name', 'Maria Lopez')
         ->call('save')
@@ -136,6 +140,7 @@ test('every detail given is kept as it was typed', function () {
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('name', 'Maria Lopez')
         ->set('phone', '555.201.3344 x12')
         ->set('email', 'Maria.Lopez@Example.COM')
@@ -162,6 +167,7 @@ test('an odd phone number is saved as typed with a hint, not refused', function 
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('phone', '201-3344 ask for Sam')
         ->assertSee('This does not look like a complete phone number. It will be saved exactly as typed.')
         ->set('channelId', channelNamed('Phone Call')->id)
@@ -179,6 +185,7 @@ test('a recognizable phone number shows no hint', function () {
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('phone', '555 201 3344')
         ->assertDontSee('This does not look like a complete phone number');
 });
@@ -188,6 +195,7 @@ test('a malformed email address is refused', function () {
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('email', 'maria at example')
         ->set('channelId', channelNamed('Email')->id)
         ->call('save')
@@ -207,6 +215,7 @@ test('both sources start on unknown, so a lead can be saved without touching the
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->assertSet('leadSourceId', LeadSource::fallback()->id)
         ->assertSet('marketingSourceId', MarketingSource::fallback()->id)
         ->set('name', 'Maria Lopez')
@@ -225,6 +234,7 @@ test('the three kinds of attribution are recorded separately when they are known
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('name', 'Maria Lopez')
         ->set('channelId', channelNamed('Web Form')->id)
         ->set('leadSourceId', LeadSource::query()->where('name', 'Google Business Profile')->sole()->id)
@@ -247,6 +257,7 @@ test('a deactivated option is not offered and is refused if submitted', function
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->assertDontSee($inactive->name)
         ->set('name', 'Maria Lopez')
         ->set('channelId', channelNamed('Phone Call')->id)
@@ -275,6 +286,7 @@ test('company-wide staff start on not yet routed and may leave the lead unrouted
 
     Livewire::actingAs($user)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->assertSet('locationId', '')
         ->assertSee('Not yet routed')
         ->set('name', 'Maria Lopez')
@@ -295,6 +307,7 @@ test('company-wide staff may choose a location while creating the lead', functio
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('name', 'Maria Lopez')
         ->set('channelId', channelNamed('Phone Call')->id)
         ->set('locationId', (string) $lakeview->id)
@@ -312,6 +325,7 @@ test('staff with one location capture for that location without choosing', funct
 
     Livewire::actingAs($consultant)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->assertSet('locationId', (string) $lakeview->id)
         ->assertSee('Lakeview')
         ->assertDontSee('Northside')
@@ -338,6 +352,7 @@ test('staff with several locations start on the one they are working in and are 
 
     Livewire::actingAs($consultant)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->assertSet('locationId', (string) $northside->id)
         ->assertSee('Lakeview')
         ->assertDontSee('Riverside')
@@ -350,6 +365,7 @@ test('location staff cannot leave a lead unrouted', function () {
 
     Livewire::actingAs($consultant)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('name', 'Maria Lopez')
         ->set('channelId', channelNamed('Phone Call')->id)
         ->set('locationId', '')
@@ -365,6 +381,7 @@ test('a lead cannot be captured for a location the person does not work in', fun
 
     Livewire::actingAs($consultant)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('name', 'Maria Lopez')
         ->set('channelId', channelNamed('Phone Call')->id)
         ->set('locationId', $locationId())
@@ -389,6 +406,7 @@ test('a role that cannot work leads at a location cannot capture one there, even
 
     Livewire::actingAs($user)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->assertDontSee('Northside')
         ->set('name', 'Maria Lopez')
         ->set('channelId', channelNamed('Phone Call')->id)
@@ -414,6 +432,7 @@ test('the received time is typed in the company timezone and stored in utc', fun
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->assertSet('receivedAt', '2026-10-05T14:30')
         ->set('receivedAt', '2026-10-04T21:15')
         ->set('name', 'Maria Lopez')
@@ -433,6 +452,7 @@ test('the received time cannot be in the future', function () {
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('receivedAt', '2026-10-05T16:00')
         ->set('name', 'Maria Lopez')
         ->set('channelId', channelNamed('Phone Call')->id)
@@ -453,6 +473,7 @@ test('save and add another records the lead and returns to a fresh form', functi
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('name', 'Maria Lopez')
         ->set('channelId', channelNamed('Phone Call')->id)
         ->call('saveAndAddAnother')
@@ -467,6 +488,7 @@ test('pressing save twice records one lead', function () {
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('name', 'Maria Lopez')
         ->set('channelId', channelNamed('Phone Call')->id)
         ->call('save')
@@ -481,6 +503,7 @@ test('a form that was refused can be corrected and saved', function () {
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('channelId', channelNamed('Phone Call')->id)
         ->call('save')
         ->assertHasErrors('name')
@@ -497,7 +520,12 @@ test('the form starts with the name ready to type and the save button reachable'
     $this->actingAs($agent)
         ->get(route('leads.create'))
         ->assertOk()
-        ->assertSeeInOrder(['Quick capture', 'Name', 'Phone', 'Email', 'Business name', 'How did it arrive?', 'What they asked for', 'Address or area', 'Attribution and routing', 'Marketing source', 'Lead source', 'Location', 'Received', 'Save and add another', 'Save lead'])
+        ->assertSeeInOrder([
+            'Quick capture', 'Name', 'Phone', 'Email', 'Business name', 'How did it arrive?', 'Service(s)', 'Project size',
+            'Tell us about what we&#039;re painting today', 'Property address',
+            'Attribution and routing', 'Marketing source', 'Lead source', 'Location', 'Received',
+            'Save and add another', 'Save lead',
+        ], escape: false)
         ->assertSee('autofocus', escape: false)
         ->assertSee('type="tel"', escape: false);
 });
@@ -518,6 +546,7 @@ test('earlier inquiries with the same phone or email are shown when the person m
 
     Livewire::actingAs($consultant)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->assertDontSee('Earlier inquiries with this phone or email')
         ->set('phone', '(555) 201-3344')
         ->assertSee('Earlier inquiries with this phone or email')
@@ -536,6 +565,7 @@ test('an earlier inquiry never stops a new one being saved', function () {
 
     Livewire::actingAs($consultant)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('phone', '555-201-3344')
         ->set('channelId', channelNamed('Phone Call')->id)
         ->call('save')
@@ -558,6 +588,7 @@ test('nothing is revealed about a matching inquiry the person may not see', func
 
     Livewire::actingAs($consultant)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('phone', '(555) 201-3344')
         ->set('email', 'harriet@example.com')
         ->assertDontSee('Earlier inquiries with this phone or email')
@@ -578,6 +609,7 @@ test('company-wide staff see matching inquiries wherever they are', function () 
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->set('projectSizeId', projectSizeId())
         ->set('phone', '555 201 3344')
         ->assertSee('Routed Rita')
         ->assertSee('Unrouted Una');

@@ -10,8 +10,10 @@ use App\Models\LeadChannel;
 use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
+use App\Models\ProjectSize;
 use App\Models\User;
 use App\Support\Contact\PhoneNumber;
+use App\Support\Leads\ServiceSelection;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -24,10 +26,15 @@ class CaptureLead
     /**
      * Record an inquiry as it was received.
      *
-     * Only a channel and one way of identifying the person are needed. The two
-     * sources fall back to their "unknown" option, so nobody has to guess. What
-     * was typed is kept; a matching form of the phone and email is stored beside
-     * it. A Lead with no location is unrouted.
+     * A channel, a project size and one way of identifying the person are needed.
+     * The two sources fall back to their "unknown" option, so nobody has to guess.
+     * What was typed is kept; a matching form of the phone and email is stored
+     * beside it. A Lead with no location is unrouted.
+     *
+     * The project size is the intake person's classification. The value range the
+     * size covers today is copied onto the Lead, so it still means the same thing
+     * after the ranges are changed. Services are optional; when any are given, one
+     * is the primary.
      *
      * The caller is responsible for checking that the person may capture a Lead
      * for this location; this action enforces what makes a Lead valid.
@@ -40,6 +47,8 @@ class CaptureLead
         User $capturedBy,
         LeadChannel $channel,
         array $inquiry,
+        ProjectSize $projectSize,
+        ?ServiceSelection $services = null,
         ?Location $location = null,
         ?LeadSource $leadSource = null,
         ?MarketingSource $marketingSource = null,
@@ -59,6 +68,16 @@ class CaptureLead
             ]);
         }
 
+        $services ??= ServiceSelection::none();
+
+        foreach ($services->services as $service) {
+            if (! $service->is_active) {
+                throw ValidationException::withMessages([
+                    'serviceIds' => __(':option is no longer offered. Choose another.', ['option' => $service->name]),
+                ]);
+            }
+        }
+
         $leadSource ??= LeadSource::fallback();
         $marketingSource ??= MarketingSource::fallback();
 
@@ -70,7 +89,7 @@ class CaptureLead
             }
         }
 
-        return DB::transaction(function () use ($capturedBy, $channel, $inquiry, $location, $leadSource, $marketingSource, $receivedAt): Lead {
+        return DB::transaction(function () use ($capturedBy, $channel, $inquiry, $projectSize, $services, $location, $leadSource, $marketingSource, $receivedAt): Lead {
             $lead = new Lead;
 
             $lead->forceFill([
@@ -87,9 +106,14 @@ class CaptureLead
                 'inquiry_business_name' => $inquiry['business_name'],
                 'inquiry_address' => $inquiry['address'],
                 'inquiry_message' => $inquiry['message'],
+                'project_size_id' => $projectSize->id,
+                'project_size_min_value' => $projectSize->min_value,
+                'project_size_max_value' => $projectSize->max_value,
                 'location_id' => $location?->id,
                 'captured_by' => $capturedBy->id,
             ])->save();
+
+            $lead->services()->sync($services->forSync());
 
             $this->recordAuditEvent->handle(
                 AuditAction::LeadReceived,
@@ -99,6 +123,9 @@ class CaptureLead
                     'lead_channel' => $channel->name,
                     'lead_source' => $leadSource->name,
                     'marketing_source' => $marketingSource->name,
+                    'services' => $services->names(),
+                    'primary_service' => $services->primary?->name,
+                    'project_size' => $projectSize->name,
                     'location' => $location?->name,
                     'received_at' => $lead->received_at->toIso8601String(),
                 ],
