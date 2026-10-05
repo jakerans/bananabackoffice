@@ -5,12 +5,15 @@ namespace App\Support\Leads;
 use App\Models\Lead;
 use App\Models\Service;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Validation\ValidationException;
 
 /**
  * The services chosen for a Lead, and which one is the primary.
  *
- * A Lead may have none. When it has any, exactly one is primary: the one that
- * was named, or failing that the first in the list's order.
+ * A single service is the primary without anyone saying so. With several, the
+ * primary is the one a person named. It is never chosen for them: when several
+ * are selected and none of them is named, there is no primary, and the actions
+ * that save a Lead refuse it.
  */
 final readonly class ServiceSelection
 {
@@ -50,9 +53,32 @@ final readonly class ServiceSelection
             ? new Collection
             : Service::query()->whereKey($ids)->ordered()->get();
 
-        $primary = $services->firstWhere('id', (int) $primaryServiceId) ?? $services->first();
+        $primary = $services->count() === 1
+            ? $services->first()
+            : $services->firstWhere('id', (int) $primaryServiceId);
 
         return new self($services, $primary);
+    }
+
+    /**
+     * Refuse a selection a Lead cannot be saved with: no service at all, or
+     * several with none identified as the main one.
+     *
+     * @throws ValidationException
+     */
+    public function ensureComplete(): void
+    {
+        if ($this->services->isEmpty()) {
+            throw ValidationException::withMessages([
+                'serviceIds' => __('Choose at least one service.'),
+            ]);
+        }
+
+        if ($this->primary === null) {
+            throw ValidationException::withMessages([
+                'primaryServiceId' => __('Choose which service is the main one.'),
+            ]);
+        }
     }
 
     /**

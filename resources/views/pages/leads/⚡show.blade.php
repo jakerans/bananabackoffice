@@ -2,6 +2,7 @@
 
 use App\Actions\Leads\StartWorkingLead;
 use App\Actions\Leads\UpdateLeadDetails;
+use App\Support\Addresses\AddressCapturePage;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\LeadChannel;
@@ -10,6 +11,7 @@ use App\Models\ManagedListOption;
 use App\Models\MarketingSource;
 use App\Models\ProjectSize;
 use App\Models\Service;
+use App\Support\Addresses\StructuredAddress;
 use App\Support\Contact\PhoneNumber;
 use App\Support\Leads\ServiceSelection;
 use Flux\Flux;
@@ -17,9 +19,8 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
-use Livewire\Component;
 
-new #[Title('Lead')] class extends Component {
+new #[Title('Lead')] class extends AddressCapturePage {
     public Lead $lead;
 
     public string $name = '';
@@ -31,8 +32,6 @@ new #[Title('Lead')] class extends Component {
     public string $businessName = '';
 
     public string $message = '';
-
-    public string $address = '';
 
     public ?int $channelId = null;
 
@@ -55,6 +54,8 @@ new #[Title('Lead')] class extends Component {
         $this->authorize('view', $lead);
 
         $this->lead = $lead;
+
+        $this->startAddressCapture();
     }
 
     /**
@@ -81,7 +82,7 @@ new #[Title('Lead')] class extends Component {
         $this->email = (string) $this->lead->inquiry_email;
         $this->businessName = (string) $this->lead->inquiry_business_name;
         $this->message = (string) $this->lead->inquiry_message;
-        $this->address = (string) $this->lead->inquiry_address;
+        $this->fillAddress(StructuredAddress::ofLead($this->lead));
         $this->channelId = $this->lead->lead_channel_id;
         $this->leadSourceId = $this->lead->lead_source_id;
         $this->marketingSourceId = $this->lead->marketing_source_id;
@@ -107,16 +108,23 @@ new #[Title('Lead')] class extends Component {
             'email' => ['nullable', 'string', 'email', 'max:255'],
             'businessName' => ['nullable', 'string', 'max:255'],
             'message' => ['nullable', 'string', 'max:5000'],
-            'address' => ['nullable', 'string', 'max:500'],
+            ...$this->addressRules(),
             'channelId' => ['required', 'integer', Rule::exists(LeadChannel::class, 'id')],
             'leadSourceId' => ['required', 'integer', Rule::exists(LeadSource::class, 'id')],
             'marketingSourceId' => ['required', 'integer', Rule::exists(MarketingSource::class, 'id')],
-            'serviceIds' => ['array'],
+            'serviceIds' => ['required', 'array', 'min:1'],
             'serviceIds.*' => ['integer', Rule::exists(Service::class, 'id')],
             'projectSizeId' => ['required', 'integer', Rule::exists(ProjectSize::class, 'id')],
         ], [
+            'serviceIds.required' => __('Choose at least one service.'),
+            'serviceIds.min' => __('Choose at least one service.'),
             'projectSizeId.required' => __('Choose a project size. It is your best judgment, not an estimate.'),
         ], [
+            'addressLine1' => 'street address',
+            'addressLine2' => 'unit',
+            'addressCity' => 'city',
+            'addressState' => 'state',
+            'addressPostalCode' => 'ZIP code',
             'businessName' => 'business name',
             'channelId' => 'lead channel',
             'leadSourceId' => 'lead source',
@@ -133,7 +141,6 @@ new #[Title('Lead')] class extends Component {
                 'phone' => $this->phone,
                 'email' => $this->email,
                 'business_name' => $this->businessName,
-                'address' => $this->address,
                 'message' => $this->message,
             ],
             LeadChannel::query()->findOrFail($validated['channelId']),
@@ -141,6 +148,7 @@ new #[Title('Lead')] class extends Component {
             MarketingSource::query()->findOrFail($validated['marketingSourceId']),
             ProjectSize::query()->findOrFail($validated['projectSizeId']),
             ServiceSelection::fromIds($this->serviceIds, $this->primaryServiceId),
+            $this->structuredAddress(),
         );
 
         $this->lead->refresh();
@@ -333,7 +341,20 @@ new #[Title('Lead')] class extends Component {
 
                 <div class="sm:col-span-2">
                     <dt class="text-sm text-zinc-500">{{ __('Property address') }}</dt>
-                    <dd class="text-ink">{{ $lead->inquiry_address ?? '—' }}</dd>
+                    <dd class="text-ink" data-test="lead-address">
+                        @if ($lead->inquiry_address !== null)
+                            {{ $lead->inquiry_address }}
+                            <div class="text-sm text-zinc-500">
+                                @if ($lead->address_entry === 'lookup')
+                                    {{ __('Found by address lookup') }}
+                                @else
+                                    {{ __('Typed by hand, so it has no map position') }}
+                                @endif
+                            </div>
+                        @else
+                            —
+                        @endif
+                    </dd>
                 </div>
             </dl>
         </div>
@@ -395,7 +416,14 @@ new #[Title('Lead')] class extends Component {
             <x-lead.size-picker :sizes="$this->projectSizes" />
 
             <flux:textarea wire:model="message" :label="__('Tell us about what we\'re painting today')" rows="3" />
-            <flux:input wire:model="address" :label="__('Property address')" type="text" autocomplete="off" />
+
+            <x-lead.address-picker
+                :mode="$addressMode"
+                :suggestions="$addressSuggestions"
+                :selected="$selectedAddress"
+                :available="$this->addressLookupIsAvailable()"
+                :failed="$addressLookupFailed"
+            />
 
             <div class="grid gap-5 sm:grid-cols-3">
                 <flux:select wire:model="channelId" :label="__('Lead channel')">

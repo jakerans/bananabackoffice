@@ -12,6 +12,7 @@ use App\Models\Location;
 use App\Models\MarketingSource;
 use App\Models\ProjectSize;
 use App\Models\User;
+use App\Support\Addresses\StructuredAddress;
 use App\Support\Contact\PhoneNumber;
 use App\Support\Leads\ServiceSelection;
 use Carbon\CarbonInterface;
@@ -33,8 +34,11 @@ class CaptureLead
      *
      * The project size is the intake person's classification. The value range the
      * size covers today is copied onto the Lead, so it still means the same thing
-     * after the ranges are changed. Services are optional; when any are given, one
-     * is the primary.
+     * after the ranges are changed. At least one service is needed, and when
+     * there are several a person must have said which is the main one.
+     *
+     * The property address is optional. Given in parts, it is stored in parts;
+     * the location that its service area suggested is recorded with the event.
      *
      * The caller is responsible for checking that the person may capture a Lead
      * for this location; this action enforces what makes a Lead valid.
@@ -48,11 +52,13 @@ class CaptureLead
         LeadChannel $channel,
         array $inquiry,
         ProjectSize $projectSize,
-        ?ServiceSelection $services = null,
+        ServiceSelection $services,
         ?Location $location = null,
         ?LeadSource $leadSource = null,
         ?MarketingSource $marketingSource = null,
         ?CarbonInterface $receivedAt = null,
+        ?StructuredAddress $address = null,
+        ?Location $suggestedLocation = null,
     ): Lead {
         $inquiry = self::clean($inquiry);
 
@@ -68,7 +74,7 @@ class CaptureLead
             ]);
         }
 
-        $services ??= ServiceSelection::none();
+        $services->ensureComplete();
 
         foreach ($services->services as $service) {
             if (! $service->is_active) {
@@ -89,7 +95,7 @@ class CaptureLead
             }
         }
 
-        return DB::transaction(function () use ($capturedBy, $channel, $inquiry, $projectSize, $services, $location, $leadSource, $marketingSource, $receivedAt): Lead {
+        return DB::transaction(function () use ($capturedBy, $channel, $inquiry, $projectSize, $services, $location, $leadSource, $marketingSource, $receivedAt, $address, $suggestedLocation): Lead {
             $lead = new Lead;
 
             $lead->forceFill([
@@ -111,6 +117,7 @@ class CaptureLead
                 'project_size_max_value' => $projectSize->max_value,
                 'location_id' => $location?->id,
                 'captured_by' => $capturedBy->id,
+                ...($address?->toLeadAttributes() ?? []),
             ])->save();
 
             $lead->services()->sync($services->forSync());
@@ -126,6 +133,8 @@ class CaptureLead
                     'services' => $services->names(),
                     'primary_service' => $services->primary?->name,
                     'project_size' => $projectSize->name,
+                    'postal_code' => $address?->postalCode,
+                    'suggested_location' => $suggestedLocation?->name,
                     'location' => $location?->name,
                     'received_at' => $lead->received_at->toIso8601String(),
                 ],

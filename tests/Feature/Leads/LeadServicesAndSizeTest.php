@@ -32,6 +32,7 @@ test('a lead cannot be saved without a project size, and none is chosen for you'
         ->set('name', 'Maria Lopez')
         ->set('phone', '555-201-3344')
         ->set('channelId', phoneCallId())
+        ->set('serviceIds', oneService())
         ->call('save')
         ->assertHasErrors(['projectSizeId' => 'Choose a project size. It is your best judgment, not an estimate.']);
 
@@ -54,6 +55,7 @@ test('the chosen size is stored with the value range it covered at the time', fu
         ->test('pages::leads.create')
         ->set('name', 'Maria Lopez')
         ->set('channelId', phoneCallId())
+        ->set('serviceIds', oneService())
         ->set('projectSizeId', projectSizeId($key))
         ->call('save')
         ->assertHasNoErrors();
@@ -76,6 +78,7 @@ test('a size that does not exist is refused', function () {
         ->test('pages::leads.create')
         ->set('name', 'Maria Lopez')
         ->set('channelId', phoneCallId())
+        ->set('serviceIds', oneService())
         ->set('projectSizeId', 999999)
         ->call('save')
         ->assertHasErrors('projectSizeId');
@@ -112,6 +115,7 @@ test('a lead keeps the range it was classified under when the ranges are changed
         ->test('pages::leads.create')
         ->set('name', 'Later Lena')
         ->set('channelId', phoneCallId())
+        ->set('serviceIds', oneService())
         ->set('projectSizeId', projectSizeId(ProjectSize::MEDIUM))
         ->call('save')
         ->assertHasNoErrors();
@@ -167,25 +171,24 @@ test('the size is kept apart from any estimate or sold amount', function () {
 
 /*
 |--------------------------------------------------------------------------
-| Services: several, one of them primary
+| Services: at least one, and an explicit primary when there are several
 |--------------------------------------------------------------------------
 */
 
-test('services are optional', function () {
+test('a lead cannot be saved without a service, and none is chosen for you', function () {
     $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
 
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
+        ->assertSet('serviceIds', [])
+        ->assertSet('primaryServiceId', null)
         ->set('name', 'Maria Lopez')
         ->set('channelId', phoneCallId())
         ->set('projectSizeId', projectSizeId())
         ->call('save')
-        ->assertHasNoErrors();
+        ->assertHasErrors(['serviceIds' => 'Choose at least one service.']);
 
-    $lead = Lead::query()->sole();
-
-    expect($lead->services)->toBeEmpty();
-    expect($lead->primaryService())->toBeNull();
+    expect(Lead::query()->count())->toBe(0);
 });
 
 test('a single service is the primary without being asked', function () {
@@ -196,7 +199,7 @@ test('a single service is the primary without being asked', function () {
         ->set('name', 'Maria Lopez')
         ->set('channelId', phoneCallId())
         ->set('projectSizeId', projectSizeId())
-        ->set('serviceIds', [(string) serviceNamed('Cabinet Painting')->id])
+        ->set('serviceIds', oneService('Cabinet Painting'))
         ->call('save')
         ->assertHasNoErrors();
 
@@ -219,18 +222,18 @@ test('a lead may have several services with one marked primary', function () {
             (string) serviceNamed('Exterior Painting')->id,
             (string) serviceNamed('Interior Painting')->id,
         ])
-        ->set('primaryServiceId', (string) serviceNamed('Exterior Painting')->id)
+        ->set('primaryServiceId', (string) serviceNamed('Deck / Fence')->id)
         ->call('save')
         ->assertHasNoErrors();
 
     $lead = Lead::query()->sole();
 
     expect($lead->services->pluck('name')->all())->toBe(['Interior Painting', 'Exterior Painting', 'Deck / Fence']);
-    expect($lead->primaryService()->name)->toBe('Exterior Painting');
+    expect($lead->primaryService()->name)->toBe('Deck / Fence');
     expect(DB::table('lead_service')->where('lead_id', $lead->id)->where('is_primary', true)->count())->toBe(1);
 });
 
-test('when no primary is named, or the one named was not chosen, the first chosen service in list order is primary', function (?Closure $primary) {
+test('with several services the primary must be named: it is never chosen by list order', function (?Closure $primary) {
     $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
 
     Livewire::actingAs($agent)
@@ -241,9 +244,9 @@ test('when no primary is named, or the one named was not chosen, the first chose
         ->set('serviceIds', [(string) serviceNamed('Deck / Fence')->id, (string) serviceNamed('Exterior Painting')->id])
         ->set('primaryServiceId', $primary === null ? null : $primary())
         ->call('save')
-        ->assertHasNoErrors();
+        ->assertHasErrors(['primaryServiceId' => 'Choose which service is the main one.']);
 
-    expect(Lead::query()->sole()->primaryService()->name)->toBe('Exterior Painting');
+    expect(Lead::query()->count())->toBe(0);
 })->with([
     'none named' => [null],
     'one that was not chosen' => [fn () => (string) serviceNamed('Cabinet Painting')->id],
@@ -285,7 +288,7 @@ test('a service that does not exist is refused', function () {
 });
 
 test('the database refuses a second primary service for one lead', function () {
-    $lead = Lead::factory()->create();
+    $lead = Lead::factory()->withoutServices()->create();
 
     $lead->services()->attach(serviceNamed('Interior Painting')->id, ['is_primary' => true]);
 
@@ -299,30 +302,71 @@ test('the database refuses a second primary service for one lead', function () {
     expect($lead->services()->count())->toBe(3);
 });
 
-test('the services of a lead can be changed, and removing the primary promotes another', function () {
+test('the services of a lead can be changed, and removing the primary means another must be named', function () {
     $lakeview = Location::factory()->create();
     $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
     $lead = Lead::factory()->at($lakeview)->create();
 
-    $lead->services()->attach([
+    $lead->services()->sync([
         serviceNamed('Interior Painting')->id => ['is_primary' => true],
         serviceNamed('Cabinet Painting')->id => ['is_primary' => false],
     ]);
 
-    Livewire::actingAs($consultant)
-        ->test('pages::leads.show', ['lead' => $lead])
-        ->assertSeeInOrder(['Interior Painting', 'Main', 'Cabinet Painting'])
+    $page = Livewire::actingAs($consultant)->test('pages::leads.show', ['lead' => $lead]);
+
+    $page->assertSeeInOrder(['Interior Painting', 'Main', 'Cabinet Painting'])
         ->call('edit')
         ->assertSet('serviceIds', [(string) serviceNamed('Interior Painting')->id, (string) serviceNamed('Cabinet Painting')->id])
         ->assertSet('primaryServiceId', (string) serviceNamed('Interior Painting')->id)
+        // Interior, the primary, is dropped. Two remain and neither has been named.
         ->set('serviceIds', [(string) serviceNamed('Cabinet Painting')->id, (string) serviceNamed('Deck / Fence')->id])
+        ->call('update')
+        ->assertHasErrors(['primaryServiceId' => 'Choose which service is the main one.']);
+
+    expect($lead->fresh()->services->pluck('name')->all())->toBe(['Interior Painting', 'Cabinet Painting']);
+
+    $page->set('primaryServiceId', (string) serviceNamed('Deck / Fence')->id)
         ->call('update')
         ->assertHasNoErrors();
 
     $lead->refresh();
 
     expect($lead->services->pluck('name')->all())->toBe(['Cabinet Painting', 'Deck / Fence']);
-    expect($lead->primaryService()->name)->toBe('Cabinet Painting');
+    expect($lead->primaryService()->name)->toBe('Deck / Fence');
+});
+
+test('a lead cannot be corrected down to no services', function () {
+    $lakeview = Location::factory()->create();
+    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+    $lead = Lead::factory()->at($lakeview)->create();
+
+    Livewire::actingAs($consultant)
+        ->test('pages::leads.show', ['lead' => $lead])
+        ->call('edit')
+        ->set('serviceIds', [])
+        ->call('update')
+        ->assertHasErrors(['serviceIds' => 'Choose at least one service.']);
+
+    expect($lead->fresh()->services)->toHaveCount(1);
+});
+
+test('a lead recorded before services existed must be given one when corrected', function () {
+    $lakeview = Location::factory()->create();
+    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+    $lead = Lead::factory()->at($lakeview)->withoutServices()->create();
+
+    expect($lead->services()->count())->toBe(0);
+
+    Livewire::actingAs($consultant)
+        ->test('pages::leads.show', ['lead' => $lead])
+        ->call('edit')
+        ->call('update')
+        ->assertHasErrors('serviceIds')
+        ->set('serviceIds', oneService('Exterior Painting'))
+        ->call('update')
+        ->assertHasNoErrors();
+
+    expect($lead->fresh()->primaryService()->name)->toBe('Exterior Painting');
 });
 
 test('a lead keeps a service that was deactivated after it was chosen, but cannot be given another deactivated one', function () {
@@ -333,7 +377,7 @@ test('a lead keeps a service that was deactivated after it was chosen, but canno
     $cabinets = serviceNamed('Cabinet Painting');
     $decks = serviceNamed('Deck / Fence');
 
-    $lead->services()->attach($cabinets->id, ['is_primary' => true]);
+    $lead->services()->sync([$cabinets->id => ['is_primary' => true]]);
 
     $cabinets->forceFill(['is_active' => false])->save();
     $decks->forceFill(['is_active' => false])->save();
@@ -350,6 +394,7 @@ test('a lead keeps a service that was deactivated after it was chosen, but canno
 
     $page->call('edit')
         ->set('serviceIds', [(string) $cabinets->id, (string) $decks->id])
+        ->set('primaryServiceId', (string) $cabinets->id)
         ->call('update')
         ->assertHasErrors('serviceIds');
 
@@ -362,7 +407,7 @@ test('the list shows each lead\'s main service and size', function () {
 
     $lead = Lead::factory()->at($lakeview)->sized(ProjectSize::LARGE)->create(['inquiry_name' => 'Maria Lopez']);
 
-    $lead->services()->attach([
+    $lead->services()->sync([
         serviceNamed('Exterior Painting')->id => ['is_primary' => true],
         serviceNamed('Deck / Fence')->id => ['is_primary' => false],
     ]);
@@ -373,10 +418,9 @@ test('the list shows each lead\'s main service and size', function () {
 });
 
 test('a service cannot be deleted while leads point at it, or at all', function () {
-    $lead = Lead::factory()->create();
-    $service = serviceNamed('Interior Painting');
+    Lead::factory()->create();
 
-    $lead->services()->attach($service->id, ['is_primary' => true]);
+    $service = serviceNamed('Interior Painting');
 
     expect(fn () => $service->delete())->toThrow(LogicException::class);
     expect(Service::query()->whereKey($service->id)->exists())->toBeTrue();

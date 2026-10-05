@@ -14,7 +14,12 @@ use App\Models\SalesLossReason;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
+use App\Support\Addresses\AddressLookup;
+use App\Support\Addresses\MapboxAddressLookup;
+use App\Support\Addresses\UnavailableAddressLookup;
 use App\Support\Navigation\Navigation;
+use App\Support\ServiceAreas\PostalCodeServiceAreas;
+use App\Support\ServiceAreas\ServiceAreaResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
@@ -31,6 +36,18 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(Navigation::class);
+
+        // Address lookup is offered only when a provider's token has been set up.
+        // Without one, staff type addresses by hand and nothing else changes.
+        $this->app->bind(AddressLookup::class, function (): AddressLookup {
+            $token = config('services.mapbox.token');
+
+            return is_string($token) && $token !== ''
+                ? new MapboxAddressLookup($token)
+                : new UnavailableAddressLookup;
+        });
+
+        $this->app->bind(ServiceAreaResolver::class, PostalCodeServiceAreas::class);
     }
 
     /**

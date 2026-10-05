@@ -69,6 +69,16 @@ function serviceNamed(string $name): Service
 }
 
 /**
+ * A single service, as a lead form holds it: enough to satisfy "at least one service".
+ *
+ * @return list<string>
+ */
+function oneService(string $name = 'Interior Painting'): array
+{
+    return [(string) serviceNamed($name)->id];
+}
+
+/**
  * Make every outgoing email fail as it would when the mail server cannot be reached.
  */
 function useFailingMailer(): void

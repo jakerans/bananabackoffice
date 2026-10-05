@@ -61,6 +61,8 @@ test('capturing a lead records who received it, how, and where it was routed', f
         'services' => ['Exterior Painting', 'Deck / Fence'],
         'primary_service' => 'Deck / Fence',
         'project_size' => 'Large',
+        'postal_code' => null,
+        'suggested_location' => null,
         'location' => 'Lakeview',
         'received_at' => '2026-10-05T18:30:00+00:00',
     ]));
@@ -72,6 +74,7 @@ test('capturing an unrouted lead records no location', function () {
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
         ->set('projectSizeId', projectSizeId())
+        ->set('serviceIds', oneService())
         ->set('name', 'Maria Lopez')
         ->set('channelId', LeadChannel::query()->where('name', 'Phone Call')->sole()->id)
         ->call('save')
@@ -89,6 +92,7 @@ test('a lead that is refused records nothing', function () {
     Livewire::actingAs($agent)
         ->test('pages::leads.create')
         ->set('projectSizeId', projectSizeId())
+        ->set('serviceIds', oneService())
         ->set('name', 'Maria Lopez')
         ->call('save')
         ->assertHasErrors('channelId');
@@ -112,7 +116,7 @@ test('correcting inquiry details records what each changed field was before and 
         ->call('edit')
         ->set('name', 'Maria Lopez')
         ->set('email', 'maria@example.com')
-        ->set('address', '')
+        ->set('addressLine1', '')
         ->call('update')
         ->assertHasNoErrors();
 
@@ -203,9 +207,8 @@ test('starting work records the change of status once', function () {
 test('changing the services records the services and the main one before and after', function () {
     $lakeview = Location::factory()->create();
     $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+    // Starts with one service, Interior Painting, which is therefore the main one.
     $lead = Lead::factory()->at($lakeview)->create();
-
-    $lead->services()->attach(serviceNamed('Interior Painting')->id, ['is_primary' => true]);
 
     Livewire::actingAs($consultant)
         ->test('pages::leads.show', ['lead' => $lead])
@@ -229,7 +232,7 @@ test('changing only which service is the main one is recorded', function () {
     $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
     $lead = Lead::factory()->at($lakeview)->create();
 
-    $lead->services()->attach([
+    $lead->services()->sync([
         serviceNamed('Interior Painting')->id => ['is_primary' => true],
         serviceNamed('Cabinet Painting')->id => ['is_primary' => false],
     ]);

@@ -131,23 +131,25 @@ same customer may answer differently on a later inquiry.
 
 #### Lead capture, as built in step B3
 
-- **To save a Lead:** a Lead Channel, a Project Size, and at least one of name,
-  phone or email. Nothing else is required.
+- **To save a Lead:** a Lead Channel, at least one Service, a Project Size, and at
+  least one of name, phone or email. Nothing else is required.
 - **The form is one page in two groups.** Quick capture: name, phone and email,
   business name, channel, service(s), project size, "Tell us about what we're
   painting today", property address. Attribution and routing: marketing source,
   lead source, location, received time. Typing starts in the name. The channel and
   the project size are each one tap and are never chosen for you.
-- **Services.** Any number may be tapped, or none. With one, it is the primary.
-  With several, staff pick the main one; if they do not, it is the first in list
-  order. The database itself refuses a second primary on one Lead.
+- **Services.** At least one is required. With one, it is the primary without
+  anyone saying so. With several, the intake person must say which is the main
+  one; it is never chosen for them by list order. The Primary Service is the
+  dominant opportunity, for reporting and later routing. The database itself
+  refuses a second primary on one Lead.
 - **Project Size** is required: Small, Medium or Large, shown with the expected
   value each covers. It is the intake person's judgment from the conversation, not
   an estimate, and it is stored apart from any estimate or sold amount.
 - **The free-text field stays,** labelled "Tell us about what we're painting
   today". The structured choices do not replace what a person can describe.
-- **Property address** is still typed as given. Address lookup is designed below
-  and is not connected until the owner approves a provider.
+- **Property address** is looked up, or typed by hand. See "Property address, as
+  built" below.
 - **Both sources start on their "unknown" option,** so a Lead can be saved without
   touching them. That option is marked in the data, may be renamed, and can never
   be deactivated.
@@ -187,8 +189,9 @@ same customer may answer differently on a later inquiry.
   Leadership add, rename, reorder, activate and deactivate; nothing is deleted.
 - Starting values: Interior Painting · Exterior Painting · Cabinet Painting ·
   Deck / Fence · Commercial Interior · Commercial Exterior · Other.
-- A Lead may have several, one of them primary. A Lead keeps a service that was
-  deactivated after it was chosen, but cannot be given a deactivated one.
+- A Lead has at least one, and exactly one is primary. A Lead keeps a service
+  that was deactivated after it was chosen, but cannot be given a deactivated one.
+- Services stay on the Lead & Sales Lists page for now.
 - "Services and Products" in the Settings menu is a different, unbuilt page (for
   products and pricing later). It is unchanged.
 
@@ -217,48 +220,69 @@ Project Size (with the range it meant), and later the Project's responsibilities
 sales outcome and Sold Amount. Close rate and revenue by Service and by Project
 Size can be worked out from those without changing the records.
 
-#### Property address: designed, not built
+#### Property address, as built
 
-Status: **Proposed.** Nothing is connected to an outside address service until the
-owner approves a provider. The typed field stays until then.
-
-The Lead will carry a structured address made of:
+- **Looked up or typed.** With an address provider set up, staff start typing and
+  choose from suggestions. Without one, or whenever it has nothing to offer, they
+  type the address in parts. Either way a Lead can be saved; an address is optional
+  and any part may be left empty.
+- **What is stored:**
 
 | Field | Notes |
 | --- | --- |
-| Display address | The whole address on one line, as shown to staff |
-| Line 1, line 2 | Street number and name; unit or suite |
-| City, state, postal code | |
-| Latitude, longitude | For mapping, distance and service-area routing |
-| Provider and place identifier | Which service found it, and its ID for that place |
-| How it was entered | Chosen from lookup, or typed by hand |
+| Display address | The whole address on one line |
+| Line 1, line 2 | Street number and name; unit, suite or lot |
+| City, state, postal code, country | |
+| Latitude, longitude, accuracy | Only when the address was looked up |
+| Provider and place identifier | Only when the address was looked up |
+| How it was entered | "lookup" or "manual" |
 
-- **There is always a manual path.** If the lookup finds nothing (new construction,
-  a rural route) or is unavailable, staff type the address in the same fields,
-  without coordinates. Lookup can never stop a Lead being saved.
-- **What the person said is still kept.** The typed text stays as part of the
-  original inquiry.
-- These fields are the same ones a Property will have in step B6, so a Lead's
-  address can become, or be matched to, a Property without re-entry. Duplicate
-  addresses are suggested from the place identifier and the normalized parts,
-  never merged silently.
+- **Nothing is invented.** An address typed by hand has no coordinates and no
+  provider. The lead page says which way an address was entered.
+- **The provider is Mapbox** (decisions.md, 42). Suggestions while typing are
+  temporary results that are shown and never kept. The one address a person selects
+  is requested again as a permanent result, the kind Mapbox allows to be stored.
+- **Requests are held back:** nothing is asked until five characters are typed,
+  typing is debounced, and each person is limited to 60 lookups a minute.
+- **The access token stays on the server.** The browser talks to Backoffice and
+  Backoffice talks to Mapbox. Only the address text is sent.
+- **Failure is quiet for staff and loud in the log.** If Mapbox is down, refuses
+  the token or answers nonsense, no suggestions appear and the address is typed.
+  The failure is reported, without the token in the message.
+- **Correcting a Lead** can replace or remove its address. An unchanged address is
+  left exactly as it was, coordinates included. Replacing a looked-up address by
+  hand clears its coordinates, because they belonged to the other address.
+- These parts are the same ones a Property will have in step B6.
 
-#### Suggested location from a service area: designed, not built
+#### Service areas and the suggested location, as built
 
-Status: **Proposed.** It stays inactive until real service-area rules exist.
-
-- The boundary is one question with one answer: *given a structured address, which
-  Location normally serves it?* The answer is a Location or "none known".
-- The answer comes only from an explicit **Service Area** definition owned by the
-  business. **It is never worked out from which office is nearest.**
-- When there is an answer, the Location is pre-selected and marked as suggested.
-  Staff who are authorized may change it; the usual location rules still apply,
-  and the person saving must be allowed to capture for the Location that is saved.
-- When there is no answer, nothing is pre-selected: company-wide staff leave the
-  Lead unrouted or choose, exactly as now.
-- **Dependency:** the Service Area model (Settings > Service Areas is not built).
-  How areas are defined is the owner's decision; see "Open decisions".
-
+- **A service area is a list of ZIP codes for a Location.** It is managed with the
+  Location, on Settings > Locations ("Service area"), by whoever may manage
+  locations. Every change is audited with what was added and removed.
+- **The suggestion is one question:** given an address, which Location normally
+  serves it? It is answered only from those lists. **It is never worked out from
+  which office is nearest**, and an address's coordinates play no part.
+- **Exactly one active Location must list the ZIP code.** If none does, or more than
+  one does, or the only one is deactivated, there is no suggestion and nothing is
+  guessed. The Locations page points out ZIP codes that two locations both list.
+- **On the new-lead form,** when the address has a ZIP code (looked up or typed),
+  the suggested Location is selected and the form says why. With no suggestion,
+  company-wide staff leave the Lead unrouted or choose, exactly as before.
+- **A person's own choice wins.** Once someone picks a Location themselves, no
+  later suggestion replaces it. Anyone allowed to capture for another Location may
+  override the suggestion.
+- **A suggestion never grants anything.** It selects a Location only if the person
+  may capture a Lead there, and the Location actually saved is authorized on the
+  server like any other. Location staff whose address falls in another Location's
+  area keep their own Location and are simply told where it is normally served.
+- **The Lead records what was suggested** in its "Lead received" audit event,
+  beside the Location it was actually given.
+- **Correcting a Lead's address later does not move it.** Changing a Lead's
+  Location after creation is step B4.
+- **Room for territories drawn on a map.** The rest of Backoffice asks the one
+  question above and does not know how it is answered. A map-based answer can be
+  added behind the same question later; Leads store only the Location they end up
+  with, so they do not change.
 #### Recorded for step B4
 
 - **Deactivating a Location must not strand its work.** A Location with active
@@ -656,10 +680,5 @@ None blocks the next step. These are settled in the step that needs them:
   role should. Needed by the production-readiness checkpoint.
 - How uploaded files are backed up and restored. Needed by B10.
 - The production domain. Needed by the production-readiness checkpoint.
-- **Which address lookup provider to use.** The recommendation and its trade-off
-  are in decisions.md, 42. Nothing is installed or connected until this is approved.
-- **How service areas are defined:** by postal code, by city or county, or by
-  boundaries drawn on a map. Needed before a Location can be suggested from an
-  address.
-- **Whether a Lead must have at least one Service.** Built as optional, since only
-  Project Size was made required.
+- **Whether a Property address should become required** once address lookup has
+  been used for a while. It is optional today so a Lead can always be saved.

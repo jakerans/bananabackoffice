@@ -216,7 +216,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | --- | --- | --- |
 | `settings.home` | Shortcut: opens Locations | — |
 | `settings.company` | Company | CS |
-| `settings.locations` | Locations | Live, primary |
+| `settings.locations` | Locations | Live, primary. Each location's service area (its ZIP codes) is managed here. |
 | `settings.users` | Users and Access | Live |
 | `settings.lists` | Lead & Sales Lists | Live (step B2). Opened by its own permission; see below. |
 | `settings.service_areas` | Service Areas | CS |

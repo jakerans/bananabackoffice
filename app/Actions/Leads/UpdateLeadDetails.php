@@ -10,6 +10,7 @@ use App\Models\LeadSource;
 use App\Models\ManagedListOption;
 use App\Models\MarketingSource;
 use App\Models\ProjectSize;
+use App\Support\Addresses\StructuredAddress;
 use App\Support\Contact\PhoneNumber;
 use App\Support\Leads\ServiceSelection;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,6 @@ class UpdateLeadDetails
         'phone' => 'inquiry_phone',
         'email' => 'inquiry_email',
         'business_name' => 'inquiry_business_name',
-        'address' => 'inquiry_address',
         'message' => 'inquiry_message',
     ];
 
@@ -39,7 +39,8 @@ class UpdateLeadDetails
      * recorded with the values before and after, so what was first captured can
      * always be recovered. Saving without changing anything records nothing.
      *
-     * @param  array{name?: string|null, phone?: string|null, email?: string|null, business_name?: string|null, address?: string|null, message?: string|null}  $inquiry
+     * @param  array{name?: string|null, phone?: string|null, email?: string|null, business_name?: string|null, message?: string|null}  $inquiry
+     * @param  StructuredAddress|null  $address  The property address as it should now be; null removes it.
      *
      * @throws ValidationException
      */
@@ -51,8 +52,11 @@ class UpdateLeadDetails
         MarketingSource $marketingSource,
         ProjectSize $projectSize,
         ServiceSelection $services,
+        ?StructuredAddress $address = null,
     ): void {
         $inquiry = CaptureLead::clean($inquiry);
+
+        $services->ensureComplete();
 
         if ($inquiry['name'] === null && $inquiry['phone'] === null && $inquiry['email'] === null) {
             throw ValidationException::withMessages([
@@ -85,8 +89,12 @@ class UpdateLeadDetails
             }
         }
 
-        DB::transaction(function () use ($lead, $inquiry, $attribution, $projectSize, $services, $currentServices): void {
+        DB::transaction(function () use ($lead, $inquiry, $attribution, $projectSize, $services, $currentServices, $address): void {
             [$inquiryBefore, $inquiryAfter] = $this->applyInquiry($lead, $inquiry);
+            [$addressBefore, $addressAfter] = $this->applyAddress($lead, $address);
+
+            $inquiryBefore = [...$inquiryBefore, ...$addressBefore];
+            $inquiryAfter = [...$inquiryAfter, ...$addressAfter];
             [$attributionBefore, $attributionAfter] = $this->applyAttribution($lead, $attribution);
             [$sizeBefore, $sizeAfter] = $this->applyProjectSize($lead, $projectSize);
 
@@ -148,6 +156,27 @@ class UpdateLeadDetails
         $lead->inquiry_email_normalized = CaptureLead::normalizeEmail($lead->inquiry_email);
 
         return [$before, $after];
+    }
+
+    /**
+     * Replace the property address when it differs, and return the address before and after.
+     *
+     * An address looked up again or retyped the same is not a change. Removing the
+     * address clears every part of it, including its coordinates.
+     *
+     * @return array{array<string, string|null>, array<string, string|null>}
+     */
+    private function applyAddress(Lead $lead, ?StructuredAddress $address): array
+    {
+        $current = StructuredAddress::ofLead($lead);
+
+        if ($address === null ? $current === null : $address->matches($current)) {
+            return [[], []];
+        }
+
+        $lead->forceFill($address?->toLeadAttributes() ?? StructuredAddress::emptyLeadAttributes());
+
+        return [['address' => $current?->formatted], ['address' => $address?->formatted]];
     }
 
     /**

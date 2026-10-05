@@ -8,17 +8,19 @@
 @endphp
 
 {{--
-    Tap every service the inquiry is about. With one chosen it is the primary. With several, the
-    first one tapped is the primary until another is picked as the main one. The page it sits on
-    holds "serviceIds" and "primaryServiceId"; the server works out the primary again when saving.
+    Tap every service the inquiry is about; at least one is required. With one chosen it is the
+    primary. With several, the person must say which is the main one: it is never picked for them.
+    The page it sits on holds "serviceIds" and "primaryServiceId", and the server checks both again.
 --}}
 <fieldset
     x-data="{
         selected: $wire.entangle('serviceIds'),
         primary: $wire.entangle('primaryServiceId'),
         keepPrimaryValid() {
-            if (! this.selected.includes(this.primary)) {
-                this.primary = this.selected[0] ?? null;
+            if (this.selected.length === 1) {
+                this.primary = this.selected[0];
+            } else if (! this.selected.includes(this.primary)) {
+                this.primary = null;
             }
         },
     }"
@@ -26,7 +28,10 @@
     class="flex flex-col gap-2"
     data-test="lead-services"
 >
-    <legend class="text-sm font-medium text-ink">{{ __('Service(s)') }}</legend>
+    <legend class="text-sm font-medium text-ink">
+        {{ __('Service(s)') }}
+        <span class="font-normal text-zinc-500">&middot; {{ __('at least one') }}</span>
+    </legend>
 
     <div class="flex flex-wrap gap-2">
         @foreach ($services as $service)
@@ -38,7 +43,10 @@
     </div>
 
     <div x-show="selected.length > 1" x-cloak class="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-cream p-3">
-        <span class="text-sm font-medium text-ink">{{ __('Which is the main one?') }}</span>
+        <span class="text-sm font-medium text-ink">
+            {{ __('Which is the main one?') }}
+            <span class="font-normal text-zinc-500">&middot; {{ __('required') }}</span>
+        </span>
 
         <div class="flex flex-wrap gap-2">
             @foreach ($services as $service)
@@ -51,4 +59,5 @@
     </div>
 
     <flux:error name="serviceIds" />
+    <flux:error name="primaryServiceId" />
 </fieldset>

@@ -1,6 +1,8 @@
 <?php
 
 use App\Actions\Leads\CaptureLead;
+use App\Support\Addresses\AddressCapturePage;
+use App\Enums\Permission;
 use App\Models\Lead;
 use App\Models\LeadChannel;
 use App\Models\LeadSource;
@@ -8,10 +10,11 @@ use App\Models\Location;
 use App\Models\MarketingSource;
 use App\Models\ProjectSize;
 use App\Models\Service;
-use App\Enums\Permission;
 use App\Support\Access\CurrentLocation;
 use App\Support\Contact\PhoneNumber;
 use App\Support\Leads\ServiceSelection;
+use App\Support\ServiceAreas\PostalCode;
+use App\Support\ServiceAreas\ServiceAreaResolver;
 use Carbon\CarbonImmutable;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
@@ -23,9 +26,8 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
-use Livewire\Component;
 
-new #[Title('New lead')] class extends Component {
+new #[Title('New lead')] class extends AddressCapturePage {
     public string $name = '';
 
     public string $phone = '';
@@ -45,14 +47,22 @@ new #[Title('New lead')] class extends Component {
 
     public string $message = '';
 
-    public string $address = '';
-
     public ?int $marketingSourceId = null;
 
     public ?int $leadSourceId = null;
 
     /** An empty value means the Lead is left unrouted. */
     public string $locationId = '';
+
+    /** Whether the person chose the location themselves. A suggestion never overrides that. */
+    public bool $locationChosenByHand = false;
+
+    /** Whether the location now selected was put there by a service-area suggestion. */
+    public bool $locationWasSuggested = false;
+
+    /** The location whose service area includes the address, when exactly one does. */
+    #[Locked]
+    public ?int $suggestedLocationId = null;
 
     /** In the company's timezone, as the browser's date and time field gives it. */
     public string $receivedAt = '';
@@ -73,6 +83,8 @@ new #[Title('New lead')] class extends Component {
         $this->marketingSourceId = MarketingSource::fallback()->id;
         $this->receivedAt = now()->setTimezone(config('app.display_timezone'))->format('Y-m-d\TH:i');
         $this->locationId = $this->defaultLocationId();
+
+        $this->startAddressCapture();
     }
 
     /**
@@ -141,6 +153,24 @@ new #[Title('New lead')] class extends Component {
     }
 
     /**
+     * The location whose service area includes the address, if exactly one does.
+     */
+    #[Computed]
+    public function suggestedLocation(): ?Location
+    {
+        return $this->suggestedLocationId === null ? null : Location::query()->find($this->suggestedLocationId);
+    }
+
+    /**
+     * The five-digit ZIP of the address on the form, when it has one.
+     */
+    #[Computed]
+    public function addressZip(): ?string
+    {
+        return PostalCode::normalize($this->structuredAddress()?->postalCode);
+    }
+
+    /**
      * A typed phone number that cannot be recognized is still saved; staff are only told.
      */
     #[Computed]
@@ -182,6 +212,15 @@ new #[Title('New lead')] class extends Component {
     }
 
     /**
+     * Choosing a location by hand is respected: no later suggestion replaces it.
+     */
+    public function updatedLocationId(): void
+    {
+        $this->locationChosenByHand = true;
+        $this->locationWasSuggested = false;
+    }
+
+    /**
      * Record the Lead and open it, so the rest can be filled in as the conversation continues.
      */
     public function save(CaptureLead $captureLead): void
@@ -207,6 +246,40 @@ new #[Title('New lead')] class extends Component {
         }
     }
 
+    /**
+     * When the address changes, suggest the location whose service area includes it.
+     *
+     * The suggestion comes only from the service areas the business has defined.
+     * It selects a location only when the person has not chosen one themselves
+     * and is allowed to capture a Lead there. With no single answer, nothing is
+     * guessed: a location put there by an earlier suggestion is taken back off.
+     */
+    protected function propertyAddressChanged(): void
+    {
+        $address = $this->structuredAddress();
+        $suggested = $address === null ? null : app(ServiceAreaResolver::class)->locationFor($address);
+
+        $this->suggestedLocationId = $suggested?->id;
+
+        unset($this->suggestedLocation, $this->addressZip);
+
+        if ($this->locationChosenByHand) {
+            return;
+        }
+
+        if ($suggested !== null && Gate::allows('createAt', [Lead::class, $suggested])) {
+            $this->locationId = (string) $suggested->id;
+            $this->locationWasSuggested = true;
+
+            return;
+        }
+
+        if ($this->locationWasSuggested) {
+            $this->locationId = $this->defaultLocationId();
+            $this->locationWasSuggested = false;
+        }
+    }
+
     private function capture(CaptureLead $captureLead): ?Lead
     {
         $this->authorize('create', Lead::class);
@@ -217,17 +290,19 @@ new #[Title('New lead')] class extends Component {
             'email' => ['nullable', 'string', 'email', 'max:255'],
             'businessName' => ['nullable', 'string', 'max:255'],
             'channelId' => ['required', 'integer', Rule::exists(LeadChannel::class, 'id')->where('is_active', true)],
-            'serviceIds' => ['array'],
+            'serviceIds' => ['required', 'array', 'min:1'],
             'serviceIds.*' => ['integer', Rule::exists(Service::class, 'id')->where('is_active', true)],
             'projectSizeId' => ['required', 'integer', Rule::exists(ProjectSize::class, 'id')],
             'message' => ['nullable', 'string', 'max:5000'],
-            'address' => ['nullable', 'string', 'max:500'],
             'leadSourceId' => ['required', 'integer', Rule::exists(LeadSource::class, 'id')->where('is_active', true)],
             'marketingSourceId' => ['required', 'integer', Rule::exists(MarketingSource::class, 'id')->where('is_active', true)],
             'locationId' => ['nullable', 'integer'],
             'receivedAt' => ['required', 'date_format:Y-m-d\TH:i'],
+            ...$this->addressRules(),
         ], [
             'channelId.required' => __('Choose how the inquiry arrived.'),
+            'serviceIds.required' => __('Choose at least one service.'),
+            'serviceIds.min' => __('Choose at least one service.'),
             'projectSizeId.required' => __('Choose a project size. It is your best judgment, not an estimate.'),
         ], [
             'businessName' => 'business name',
@@ -239,6 +314,11 @@ new #[Title('New lead')] class extends Component {
             'marketingSourceId' => 'marketing source',
             'locationId' => 'location',
             'receivedAt' => 'received time',
+            'addressLine1' => 'street address',
+            'addressLine2' => 'unit',
+            'addressCity' => 'city',
+            'addressState' => 'state',
+            'addressPostalCode' => 'ZIP code',
         ]);
 
         $location = $this->chosenLocation();
@@ -257,6 +337,8 @@ new #[Title('New lead')] class extends Component {
         }
 
         try {
+            $address = $this->structuredAddress();
+
             return $captureLead->handle(
                 capturedBy: Auth::user(),
                 channel: LeadChannel::query()->findOrFail($validated['channelId']),
@@ -265,7 +347,6 @@ new #[Title('New lead')] class extends Component {
                     'phone' => $this->phone,
                     'email' => $this->email,
                     'business_name' => $this->businessName,
-                    'address' => $this->address,
                     'message' => $this->message,
                 ],
                 projectSize: ProjectSize::query()->findOrFail($validated['projectSizeId']),
@@ -274,6 +355,9 @@ new #[Title('New lead')] class extends Component {
                 leadSource: LeadSource::query()->findOrFail($validated['leadSourceId']),
                 marketingSource: MarketingSource::query()->findOrFail($validated['marketingSourceId']),
                 receivedAt: $receivedAt->utc(),
+                address: $address,
+                // Worked out again here, on the server, from the address being saved.
+                suggestedLocation: $address === null ? null : app(ServiceAreaResolver::class)->locationFor($address),
             );
         } catch (Throwable $exception) {
             // Nothing was recorded, so the form may be submitted again.
@@ -287,7 +371,8 @@ new #[Title('New lead')] class extends Component {
      * The location chosen on the form, checked against what this person may do.
      *
      * The value comes from the browser, so it is never trusted: an unrouted Lead
-     * and each location are authorized here, on the server, every time.
+     * and each location are authorized here, on the server, every time. A
+     * suggestion changes nothing about that.
      */
     private function chosenLocation(): ?Location
     {
@@ -326,7 +411,7 @@ new #[Title('New lead')] class extends Component {
     <div>
         <flux:link :href="route('leads')" wire:navigate class="text-sm">&larr; {{ __('Leads') }}</flux:link>
         <flux:heading size="xl" level="1" class="mt-2">{{ __('New lead') }}</flux:heading>
-        <flux:subheading>{{ __('Record the inquiry as it came in. A name or a number, how it arrived and a project size are enough to save it.') }}</flux:subheading>
+        <flux:subheading>{{ __('Record the inquiry as it came in. A name or a number, how it arrived, a service and a project size are enough to save it.') }}</flux:subheading>
     </div>
 
     <form wire:submit="save" class="flex flex-col gap-6">
@@ -399,7 +484,13 @@ new #[Title('New lead')] class extends Component {
                 rows="3"
             />
 
-            <flux:input wire:model="address" :label="__('Property address')" :description="__('As they gave it. Address lookup is not connected yet, so type what you have.')" type="text" autocomplete="off" />
+            <x-lead.address-picker
+                :mode="$addressMode"
+                :suggestions="$addressSuggestions"
+                :selected="$selectedAddress"
+                :available="$this->addressLookupIsAvailable()"
+                :failed="$addressLookupFailed"
+            />
         </div>
 
         <div class="flex flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-5">
@@ -423,21 +514,36 @@ new #[Title('New lead')] class extends Component {
             </div>
 
             <div class="grid gap-5 sm:grid-cols-2">
-                @if (! $this->canLeaveUnrouted && $this->locations->count() === 1)
-                    <div>
-                        <div class="text-sm font-medium text-ink">{{ __('Location') }}</div>
-                        <div class="mt-2 text-ink" data-test="lead-location-fixed">{{ $this->locations->first()->name }}</div>
-                    </div>
-                @else
-                    <flux:select wire:model="locationId" :label="__('Location')" data-test="lead-location">
-                        @if ($this->canLeaveUnrouted)
-                            <flux:select.option value="">{{ __('Not yet routed') }}</flux:select.option>
-                        @endif
-                        @foreach ($this->locations as $location)
-                            <flux:select.option :value="$location->id">{{ $location->name }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                @endif
+                <div class="flex flex-col gap-1">
+                    @if (! $this->canLeaveUnrouted && $this->locations->count() === 1)
+                        <div>
+                            <div class="text-sm font-medium text-ink">{{ __('Location') }}</div>
+                            <div class="mt-2 text-ink" data-test="lead-location-fixed">{{ $this->locations->first()->name }}</div>
+                        </div>
+                    @else
+                        <flux:select wire:model.live="locationId" :label="__('Location')" data-test="lead-location">
+                            @if ($this->canLeaveUnrouted)
+                                <flux:select.option value="">{{ __('Not yet routed') }}</flux:select.option>
+                            @endif
+                            @foreach ($this->locations as $location)
+                                <flux:select.option :value="$location->id">{{ $location->name }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    @endif
+
+                    {{-- Where the address's ZIP code points, from the service areas the business has defined. Never a guess. --}}
+                    @if ($this->addressZip !== null)
+                        <flux:text class="text-sm" data-test="location-suggestion">
+                            @if ($this->suggestedLocation === null)
+                                {{ __('No location\'s service area includes :zip, so none is suggested.', ['zip' => $this->addressZip]) }}
+                            @elseif ((string) $this->suggestedLocation->id === $locationId)
+                                {{ __(':location serves :zip. Change it if that is not right.', ['location' => $this->suggestedLocation->name, 'zip' => $this->addressZip]) }}
+                            @else
+                                {{ __(':zip is normally served by :location.', ['location' => $this->suggestedLocation->name, 'zip' => $this->addressZip]) }}
+                            @endif
+                        </flux:text>
+                    @endif
+                </div>
 
                 <flux:input wire:model="receivedAt" :label="__('Received')" :description="__('Change this only if it arrived earlier.')" type="datetime-local" />
             </div>

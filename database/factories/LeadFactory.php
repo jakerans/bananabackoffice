@@ -9,6 +9,7 @@ use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
 use App\Models\ProjectSize;
+use App\Models\Service;
 use App\Support\Contact\PhoneNumber;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -43,6 +44,33 @@ class LeadFactory extends Factory
             'project_size_max_value' => fn (array $attributes): mixed => ProjectSize::query()->whereKey($attributes['project_size_id'])->value('max_value'),
             'location_id' => null,
         ];
+    }
+
+    /**
+     * Give the Lead one service, as every Lead saved by a person has, unless a
+     * test has already given it its own or asked for none.
+     */
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Lead $lead): void {
+            if ($lead->services()->exists()) {
+                return;
+            }
+
+            $lead->services()->attach(Service::query()->ordered()->firstOrFail()->id, ['is_primary' => true]);
+        });
+    }
+
+    /**
+     * Indicate that the Lead was recorded before services existed and has none.
+     *
+     * This runs after the service every Lead is given, and takes it away again.
+     */
+    public function withoutServices(): static
+    {
+        return $this->afterCreating(function (Lead $lead): void {
+            $lead->services()->detach();
+        });
     }
 
     /**

@@ -35,6 +35,18 @@ use Illuminate\Support\Carbon;
  * @property string|null $inquiry_email_normalized
  * @property string|null $inquiry_business_name
  * @property string|null $inquiry_address
+ * @property string|null $address_line1
+ * @property string|null $address_line2
+ * @property string|null $address_city
+ * @property string|null $address_state
+ * @property string|null $address_postal_code
+ * @property string|null $address_country
+ * @property string|float|null $address_latitude
+ * @property string|float|null $address_longitude
+ * @property string|null $address_accuracy
+ * @property string|null $address_provider
+ * @property string|null $address_provider_place_id
+ * @property string|null $address_entry
  * @property string|null $inquiry_message
  * @property int|null $project_size_id
  * @property int|null $project_size_min_value

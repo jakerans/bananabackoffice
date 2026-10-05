@@ -664,11 +664,15 @@ Decided by the owner on 2026-10-05 and built the same day.
 - **No salesperson routing is built.** Location, primary and additional Services
   and Project Size are captured from the first Lead so a later recommendation has
   the history it needs.
-- **Services are optional** on a Lead. Only Project Size was made required.
+- **At least one Service is required** (decided by the owner on 2026-10-05, after
+  it was first built as optional). With several, the person must name the primary;
+  it is never taken from list order, because the Primary Service is meant to be
+  the dominant opportunity and a silent default would not be.
 
-## 42. Address lookup provider: recommendation, awaiting the owner's approval
+## 42. Address lookup provider: Mapbox
 
-Status: **Proposed (2026-10-05).** Nothing is installed or connected.
+Status: **Approved by the owner (2026-10-05) and built.** What follows is the
+evaluation that led to the choice; decision 43 records how it was built.
 
 The owner wants real address autocomplete that keeps a structured address, with
 latitude and longitude, for Property records, duplicate detection, mapping,
@@ -705,6 +709,38 @@ How it would be built, whichever provider is chosen:
 - **What leaves Backoffice:** only the address text being typed. No names, phone
   numbers or anything else about the Lead.
 - **If the provider is slow or down,** the form falls back to typing the address.
+
+## 43. How address lookup and service areas are built
+
+Built on 2026-10-05, after the owner approved Mapbox and ZIP-code service areas.
+
+- **Two kinds of request.** Suggestions while typing are Mapbox "temporary"
+  results: shown, never stored. The address a person selects is requested again
+  as a "permanent" result, which Mapbox allows to be stored indefinitely. That is
+  one paid request per address kept, and it is why coordinates may be kept.
+- **Server-side only.** Backoffice calls Mapbox from the server with Laravel's
+  built-in HTTP client. No package was added. The token is read from the server's
+  environment (`MAPBOX_ACCESS_TOKEN`) and is never sent to a browser.
+- **Lookup is behind one boundary.** The rest of Backoffice asks for suggestions
+  and for a structured address, and does not know that Mapbox answers. With no
+  token set, lookup is simply off and addresses are typed.
+- **Lookup can never block a Lead.** No suggestion, a refused token, a timeout or
+  a nonsense answer all end the same way: the address is typed by hand. Failures
+  are reported to the log without the token in the message.
+- **Requests are limited:** five characters before the first request, a short
+  pause after typing, and 60 lookups a minute per person.
+- **Coordinates come only from the provider.** The selected address is held where
+  the browser cannot alter it, and a hand-typed address never has coordinates.
+- **A service area is a list of ZIP codes per Location,** managed with the
+  Location. A Location is suggested only when exactly one active Location lists
+  the address's ZIP code. Distance is never used.
+- **One question, answered behind a boundary:** "which Location serves this
+  address?" Territories drawn on a map can answer it later without changing Leads,
+  which store only the Location they were given.
+- **A suggestion grants nothing.** It pre-selects a Location only where the person
+  may capture a Lead, and the saved Location is authorized on the server as before.
+- **Tests never reach an outside service.** The test suite refuses any real
+  outgoing request, and the lookup tests use a stand-in for Mapbox.
 
 ## Future decisions already constrained by the brief
 

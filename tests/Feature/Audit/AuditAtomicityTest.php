@@ -24,7 +24,6 @@ use App\Models\Lead;
 use App\Models\LeadChannel;
 use App\Models\Location;
 use App\Models\ProjectSize;
-use App\Models\Service;
 use App\Models\User;
 use App\Support\Leads\ServiceSelection;
 use Illuminate\Support\Facades\Notification;
@@ -124,7 +123,7 @@ test('a list change is not kept when its audit event cannot be recorded', functi
 test('no lead is kept when its audit event cannot be recorded', function () {
     $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
 
-    expect(fn () => app(CaptureLead::class)->handle($agent, LeadChannel::query()->firstOrFail(), ['name' => 'Maria Lopez'], ProjectSize::forKey(ProjectSize::SMALL)))
+    expect(fn () => app(CaptureLead::class)->handle($agent, LeadChannel::query()->firstOrFail(), ['name' => 'Maria Lopez'], ProjectSize::forKey(ProjectSize::SMALL), ServiceSelection::fromIds(oneService())))
         ->toThrow(RuntimeException::class);
 
     expect(Lead::query()->count())->toBe(0);
@@ -140,11 +139,12 @@ test('project size values are not changed when the audit event cannot be recorde
 test('a change to a lead is not kept when its audit event cannot be recorded', function (Closure $change) {
     $lead = Lead::factory()->create(['inquiry_name' => 'Maria Lopes']);
     $before = $lead->fresh()->getAttributes();
+    $servicesBefore = $lead->services()->pluck('services.id', 'is_primary')->all();
 
     expect(fn () => $change($lead))->toThrow(RuntimeException::class);
 
     expect($lead->fresh()->getAttributes())->toBe($before);
-    expect($lead->services()->count())->toBe(0);
+    expect($lead->services()->pluck('services.id', 'is_primary')->all())->toBe($servicesBefore);
 })->with([
     'correcting' => [fn (Lead $lead) => app(UpdateLeadDetails::class)->handle(
         $lead, ['name' => 'Maria Lopez', 'phone' => $lead->inquiry_phone], $lead->channel, $lead->leadSource, $lead->marketingSource, $lead->projectSize, ServiceSelection::ofLead($lead),
@@ -156,7 +156,7 @@ test('a change to a lead is not kept when its audit event cannot be recorded', f
         $lead, ['name' => $lead->inquiry_name, 'phone' => $lead->inquiry_phone], $lead->channel, $lead->leadSource, $lead->marketingSource, ProjectSize::forKey(ProjectSize::LARGE), ServiceSelection::ofLead($lead),
     )],
     'changing the services' => [fn (Lead $lead) => app(UpdateLeadDetails::class)->handle(
-        $lead, ['name' => $lead->inquiry_name, 'phone' => $lead->inquiry_phone], $lead->channel, $lead->leadSource, $lead->marketingSource, $lead->projectSize, ServiceSelection::fromIds([Service::query()->firstOrFail()->id]),
+        $lead, ['name' => $lead->inquiry_name, 'phone' => $lead->inquiry_phone], $lead->channel, $lead->leadSource, $lead->marketingSource, $lead->projectSize, ServiceSelection::fromIds(oneService('Cabinet Painting')),
     )],
     'starting work' => [fn (Lead $lead) => app(StartWorkingLead::class)->handle($lead)],
 ]);

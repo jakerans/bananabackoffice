@@ -1,8 +1,10 @@
 <?php
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Locations\UpdateServiceAreaPostalCodes;
 use App\Enums\AuditAction;
 use App\Models\Location;
+use App\Models\ServiceAreaPostalCode;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +22,12 @@ new #[Title('Locations')] class extends Component {
 
     public string $editingName = '';
 
+    #[Locked]
+    public ?int $serviceAreaLocationId = null;
+
+    /** The location's ZIP codes as typed: one per line, or separated by commas or spaces. */
+    public string $postalCodes = '';
+
     /**
      * Mount the component.
      */
@@ -34,7 +42,7 @@ new #[Title('Locations')] class extends Component {
     #[Computed]
     public function locations(): Collection
     {
-        return Location::query()->withCount('accessGrants')->orderBy('name')->get();
+        return Location::query()->withCount(['accessGrants', 'servicePostalCodes'])->orderBy('name')->get();
     }
 
     /**
@@ -120,6 +128,83 @@ new #[Title('Locations')] class extends Component {
     }
 
     /**
+     * Open the dialog for the postal codes a location normally serves.
+     */
+    public function editServiceArea(int $locationId): void
+    {
+        $location = Location::query()->findOrFail($locationId);
+
+        $this->authorize('update', $location);
+
+        $this->serviceAreaLocationId = $location->id;
+        $this->postalCodes = $location->servicePostalCodes()->orderBy('postal_code')->pluck('postal_code')->implode("\n");
+        $this->resetValidation('postalCodes');
+
+        Flux::modal('service-area')->show();
+    }
+
+    /**
+     * Replace the location's service area with the ZIP codes typed.
+     */
+    public function saveServiceArea(UpdateServiceAreaPostalCodes $updateServiceAreaPostalCodes): void
+    {
+        $location = Location::query()->findOrFail($this->serviceAreaLocationId);
+
+        $this->authorize('update', $location);
+
+        $this->validate(['postalCodes' => ['nullable', 'string', 'max:20000']], attributes: ['postalCodes' => 'ZIP codes']);
+
+        $updateServiceAreaPostalCodes->handle($location, preg_split('/[\s,;]+/', trim($this->postalCodes)) ?: []);
+
+        $this->reset('serviceAreaLocationId', 'postalCodes');
+        unset($this->locations);
+
+        Flux::modal('service-area')->close();
+        Flux::toast(variant: 'success', text: __('Service area saved.'));
+    }
+
+    /**
+     * The location whose service area is being edited.
+     */
+    #[Computed]
+    public function serviceAreaLocation(): ?Location
+    {
+        return $this->serviceAreaLocationId === null ? null : Location::query()->find($this->serviceAreaLocationId);
+    }
+
+    /**
+     * ZIP codes of the location being edited that another active location also
+     * serves. No location is suggested for these, because there is no single answer.
+     *
+     * @return array<string, list<string>>  ZIP code => names of the other locations
+     */
+    #[Computed]
+    public function sharedPostalCodes(): array
+    {
+        $location = $this->serviceAreaLocation;
+
+        if ($location === null) {
+            return [];
+        }
+
+        $shared = [];
+
+        $others = ServiceAreaPostalCode::query()
+            ->with('location')
+            ->where('location_id', '!=', $location->id)
+            ->whereIn('postal_code', $location->servicePostalCodes()->pluck('postal_code'))
+            ->whereHas('location', fn ($query) => $query->where('is_active', true))
+            ->orderBy('postal_code')
+            ->get();
+
+        foreach ($others as $other) {
+            $shared[$other->postal_code][] = $other->location->name;
+        }
+
+        return $shared;
+    }
+
+    /**
      * Stop a location operating. Its history is kept and no grant covers it while inactive.
      */
     public function deactivate(int $locationId, RecordAuditEvent $recordAuditEvent): void
@@ -198,6 +283,7 @@ new #[Title('Locations')] class extends Component {
                 <flux:table.columns>
                     <flux:table.column>{{ __('Location') }}</flux:table.column>
                     <flux:table.column>{{ __('Status') }}</flux:table.column>
+                    <flux:table.column align="end">{{ __('ZIP codes served') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('Access grants') }}</flux:table.column>
                     <flux:table.column align="end"><span class="sr-only">{{ __('Actions') }}</span></flux:table.column>
                 </flux:table.columns>
@@ -215,10 +301,12 @@ new #[Title('Locations')] class extends Component {
                                 @endif
                             </flux:table.cell>
 
+                            <flux:table.cell align="end" class="tabular-nums">{{ $location->service_postal_codes_count }}</flux:table.cell>
                             <flux:table.cell align="end" class="tabular-nums">{{ $location->access_grants_count }}</flux:table.cell>
 
                             <flux:table.cell align="end">
                                 <div class="flex justify-end gap-2">
+                                    <flux:button size="sm" wire:click="editServiceArea({{ $location->id }})">{{ __('Service area') }}</flux:button>
                                     <flux:button size="sm" wire:click="edit({{ $location->id }})">{{ __('Rename') }}</flux:button>
 
                                     @if ($location->is_active)
@@ -256,6 +344,45 @@ new #[Title('Locations')] class extends Component {
                 </flux:modal.close>
 
                 <flux:button type="submit" variant="primary">{{ __('Add location') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="service-area" class="w-full max-w-lg">
+        <form wire:submit="saveServiceArea" class="flex flex-col gap-5">
+            <div>
+                <flux:heading size="lg">{{ __('Service area: :location', ['location' => $this->serviceAreaLocation?->name]) }}</flux:heading>
+                <flux:subheading>
+                    {{ __('The ZIP codes this location normally serves. When a new lead\'s address is in one of them, this location is suggested. A location is never suggested just because it is nearby.') }}
+                </flux:subheading>
+            </div>
+
+            <flux:textarea
+                wire:model="postalCodes"
+                :label="__('ZIP codes')"
+                :description="__('One per line, or separated by commas or spaces.')"
+                rows="8"
+                class="tabular-nums"
+            />
+
+            @if (count($this->sharedPostalCodes) > 0)
+                <div class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm" data-test="shared-postal-codes">
+                    <div class="font-medium text-ink">{{ __('Also in another location\'s service area') }}</div>
+                    <flux:text class="text-sm">{{ __('No location is suggested for these, because there is more than one answer.') }}</flux:text>
+                    <ul class="mt-1 tabular-nums">
+                        @foreach ($this->sharedPostalCodes as $postalCode => $names)
+                            <li wire:key="shared-{{ $postalCode }}">{{ $postalCode }} &middot; {{ implode(', ', $names) }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+
+                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
             </div>
         </form>
     </flux:modal>

@@ -193,7 +193,7 @@ test('anyone who works leads at the location can correct the inquiry details', f
         ->set('phone', '555-201-9999 x4')
         ->set('email', 'Maria@Example.com')
         ->set('businessName', 'Lopez Bakery')
-        ->set('address', '14 Oak St')
+        ->set('addressLine1', '14 Oak St')
         ->set('message', 'Shopfront.')
         ->call('update')
         ->assertHasNoErrors();

@@ -62,6 +62,8 @@ each server's environment settings. See [decisions.md](decisions.md), decision 2
 | Staff operations (invite, grant, deactivate) | `app/Actions/Staff/` |
 | Leads: capture, list and detail | `app/Models/Lead.php`, `app/Policies/LeadPolicy.php`, `app/Actions/Leads/`, `resources/views/pages/leads/` |
 | Phone number matching | `app/Support/Contact/PhoneNumber.php` |
+| Address lookup (Mapbox) and the structured address | `app/Support/Addresses/` |
+| Service areas and the suggested location | `app/Support/ServiceAreas/`, `app/Actions/Locations/` |
 | The five managed lists and their Settings page | `app/Enums/ManagedList.php`, `app/Models/ManagedListOption.php`, `app/Actions/Lists/`, `resources/views/pages/settings/⚡lists.blade.php` |
 | Recording an audit event | `app/Actions/Audit/RecordAuditEvent.php`, `app/Enums/AuditAction.php`, `app/Models/AuditEvent.php` |
 | The short names records are stored under | `app/Providers/AppServiceProvider.php` (`configureRecordNames`) |
