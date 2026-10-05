@@ -99,14 +99,17 @@ Status: **Approved** (2026-10-04).
     the empty state on a section that is not built yet. Section titles are straight
     Poppins, because a section page is an operational page. Center landing pages,
     which the guide lists as a place for display type, no longer exist.
-12. **Open: the header brand.** The header currently draws the wordmark as text (a
-    Yellow block reading BANANA beside BACKOFFICE, as in the guide's mock-up). The
-    owner has asked for the real Banana Backoffice horizontal logo instead, and for
-    the mark not to be recreated in HTML. That file is not in the project yet.
-13. **Open: the favicon and sign-in mark.** They are the banana icon from the public
-    Banana Painting files (`04-Banana-Icon.png`), resized. The Backoffice banana
-    shown in the guidelines sheet is a different drawing, so these should be
-    replaced when Backoffice icon files are supplied.
+12. **The header brand is the supplied Banana Backoffice horizontal logo**, used
+    unaltered (2026-10-04). Its lettering is dark, so it sits on a Cream block at the
+    start of the Ink header, the same place the guide's mock-up puts its brand
+    block. The header height is unchanged. The brand mark is never redrawn in HTML.
+    Open: a version of the logo made for dark backgrounds would let it sit directly
+    on Ink; the guidelines sheet shows one, but no such file has been supplied.
+13. **The favicon, touch icon and in-page icon are the supplied Banana Backoffice
+    icon files**, used unaltered (2026-10-04). The sign-in pages show the horizontal
+    logo. Nothing derived from the public Banana Painting logos remains in the
+    application. Note: the supplied touch icon has a transparent background, which
+    some phones fill with black when the site is added to a home screen.
 14. **Unbuilt sections in the second row** are muted and not clickable. "Coming
     soon" appears as a tooltip on hover and as hidden text for screen readers, so
     the state is never carried by color alone.
@@ -114,18 +117,15 @@ Status: **Approved** (2026-10-04).
 ## Assets noted on inspection
 
 - `docs/reference/brand/01`–`06` are the public **Banana Painting** logos (PNG only).
-- The **Banana Backoffice** logo exists only as a picture inside
-  `Banana Backoffice Brand Guidelines.png`, a single sheet that shows the logo
-  variants, favicon sizes and colors together. There is no standalone Backoffice
-  logo or favicon file, in any format, anywhere in the project (re-checked
-  2026-10-04).
-- The sheet is not usable as a source for the header: its horizontal logo is about
-  340 pixels wide, drawn in black for a light background with a cream paint smear
-  behind it, and the only dark-background version shown is the stacked one with the
-  tagline. Cutting it out would be a low-quality substitute, which the owner has
-  ruled out.
-- What is needed: the horizontal Banana Backoffice logo for a dark background, as
-  SVG if possible or a transparent PNG at least 600 pixels wide, plus the icon-only
-  mark for the favicon.
-- Brand files used by the application are copied into `public/` at the size
-  needed. Nothing is served from `docs/reference/`.
+- `Banana Backoffice Brand Guidelines.png` is a single sheet showing the logo
+  variants, favicon sizes and colors together. It is a reference, not a source
+  file, and nothing is cut out of it.
+- The owner supplied the standalone **Banana Backoffice** files on 2026-10-04:
+  `backoffice-logo-horizontal.png` (764 by 259, transparent, dark lettering), the
+  icon in several sizes (`favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png`,
+  `favicon-48x48.png`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`) and
+  `backoffice-icon-source-1024.png`.
+- Those files are copied into `public/` byte for byte. The copies in `public/` are
+  part of the application and are committed; `docs/reference/` itself stays out of
+  version control and nothing is served from it.
+- Still not supplied: a logo for dark backgrounds, and vector (SVG) versions.

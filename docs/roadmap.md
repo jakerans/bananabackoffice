@@ -57,10 +57,10 @@ be corrected. Authorization, locations, roles and route protection were not chan
   clickable; "Coming soon" shows on hover and is read out by screen readers.
 - **Primary sections have a page even before they are built**, so that a center
   has somewhere to open. That page states it is not built and shows nothing else.
-- **Open: the header logo.** The owner asked for the real Banana Backoffice
-  horizontal logo in place of the text wordmark. No Backoffice logo file exists in
-  the project (see design-system.md, "Assets noted on inspection"), so the header
-  brand was left unchanged until the file is supplied.
+- **The header logo.** The owner asked for the real Banana Backoffice horizontal
+  logo in place of the text wordmark. The files were supplied on 2026-10-04 and
+  are now used, unaltered, for the header, the sign-in pages and the browser icons
+  (see design-system.md, decisions 12 and 13).
 
 ### A0 — Housekeeping
 

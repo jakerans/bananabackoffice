@@ -12,16 +12,19 @@
     <body class="min-h-screen bg-cream text-ink antialiased">
         {{-- The Ink header is the only dark region, so Flux renders its controls for a dark surface here. --}}
         <header class="dark bg-ink text-white">
-            <div class="flex h-14 items-center gap-2 px-4 sm:gap-4 lg:px-8">
-                <x-app-logo :href="route('dashboard')" wire:navigate />
+            <div class="flex h-14 items-stretch">
+                {{-- The logo has dark lettering, so it sits on a Cream block at the start of the Ink header. --}}
+                <x-app-logo :href="route('dashboard')" wire:navigate class="bg-cream px-4 lg:px-6" height="h-8 sm:h-9" />
 
-                <x-shell.center-switcher :centers="$shell->centers()" :current="$currentCenter" />
+                <div class="flex min-w-0 flex-1 items-center gap-2 px-3 sm:gap-4 lg:px-6">
+                    <x-shell.center-switcher :centers="$shell->centers()" :current="$currentCenter" />
 
-                <div class="flex-1"></div>
+                    <div class="flex-1"></div>
 
-                <x-shell.location-switcher :shell="$shell" />
+                    <x-shell.location-switcher :shell="$shell" />
 
-                <x-desktop-user-menu />
+                    <x-desktop-user-menu />
+                </div>
             </div>
         </header>
 
