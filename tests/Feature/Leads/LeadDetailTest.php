@@ -25,7 +25,7 @@ test('staff can open a lead at their own location', function () {
     $lakeview = Location::factory()->create(['name' => 'Lakeview']);
     $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create(['name' => 'Sam Sales']);
 
-    $lead = Lead::factory()->at($lakeview)->create([
+    $lead = Lead::factory()->at($lakeview)->assignedTo($consultant)->create([
         'inquiry_name' => 'Maria Lopez',
         'inquiry_business_name' => 'Lopez Bakery',
         'inquiry_phone' => '555.201.3344',
@@ -133,7 +133,7 @@ test('access to an open lead is refused once the person loses the location', fun
 test('start working moves a new lead to working', function () {
     $lakeview = Location::factory()->create();
     $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
-    $lead = Lead::factory()->at($lakeview)->create();
+    $lead = Lead::factory()->at($lakeview)->assignedTo($consultant)->create();
 
     Livewire::actingAs($consultant)
         ->test('pages::leads.show', ['lead' => $lead])

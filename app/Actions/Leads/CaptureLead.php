@@ -5,6 +5,7 @@ namespace App\Actions\Leads;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Enums\LeadStatus;
+use App\Enums\Role;
 use App\Models\Lead;
 use App\Models\LeadChannel;
 use App\Models\LeadSource;
@@ -22,7 +23,10 @@ use Illuminate\Validation\ValidationException;
 
 class CaptureLead
 {
-    public function __construct(private RecordAuditEvent $recordAuditEvent) {}
+    public function __construct(
+        private RecordAuditEvent $recordAuditEvent,
+        private AssignLead $assignLead,
+    ) {}
 
     /**
      * Record an inquiry as it was received.
@@ -39,6 +43,11 @@ class CaptureLead
      *
      * The property address is optional. Given in parts, it is stored in parts;
      * the location that its service area suggested is recorded with the event.
+     *
+     * A Lead recorded for a location is routed from that moment. When a Sales
+     * Consultant records one at a location where they are a Sales Consultant, it
+     * is assigned to them, as an assignment like any other: the inquiry came to
+     * them. Anyone else's capture is left unassigned.
      *
      * The caller is responsible for checking that the person may capture a Lead
      * for this location; this action enforces what makes a Lead valid.
@@ -116,6 +125,8 @@ class CaptureLead
                 'project_size_min_value' => $projectSize->min_value,
                 'project_size_max_value' => $projectSize->max_value,
                 'location_id' => $location?->id,
+                'first_routed_at' => $location === null ? null : now(),
+                'routed_at' => $location === null ? null : now(),
                 'captured_by' => $capturedBy->id,
                 ...($address?->toLeadAttributes() ?? []),
             ])->save();
@@ -140,6 +151,12 @@ class CaptureLead
                 ],
                 location: $location,
             );
+
+            if ($location !== null && $capturedBy->holdsRoleAt(Role::SalesConsultant, $location)) {
+                $lead->setRelation('location', $location);
+
+                $this->assignLead->handle($lead, $capturedBy, $capturedBy);
+            }
 
             return $lead;
         });

@@ -4,12 +4,14 @@ namespace Database\Factories;
 
 use App\Enums\LeadStatus;
 use App\Models\Lead;
+use App\Models\LeadAssignment;
 use App\Models\LeadChannel;
 use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
 use App\Models\ProjectSize;
 use App\Models\Service;
+use App\Models\User;
 use App\Support\Contact\PhoneNumber;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -102,7 +104,30 @@ class LeadFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'location_id' => $location->id,
+            'first_routed_at' => now(),
+            'routed_at' => now(),
         ]);
+    }
+
+    /**
+     * Indicate that someone is responsible for working the Lead, with the open
+     * assignment that says so in its history.
+     */
+    public function assignedTo(User $user): static
+    {
+        return $this
+            ->state(fn (array $attributes) => [
+                'assigned_user_id' => $user->id,
+                'assigned_at' => now(),
+            ])
+            ->afterCreating(function (Lead $lead) use ($user): void {
+                LeadAssignment::factory()->create([
+                    'lead_id' => $lead->id,
+                    'user_id' => $user->id,
+                    'location_id' => $lead->location_id,
+                    'assigned_at' => $lead->assigned_at,
+                ]);
+            });
     }
 
     /**

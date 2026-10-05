@@ -742,6 +742,64 @@ Built on 2026-10-05, after the owner approved Mapbox and ZIP-code service areas.
 - **Tests never reach an outside service.** The test suite refuses any real
   outgoing request, and the lookup tests use a stand-in for Mapbox.
 
+## 44. Lead routing and assignment (step B4)
+
+Approved by the owner on 2026-10-05 and built the same day.
+
+- **Routing and assignment are separate.** Routing answers "which Location owns
+  this Lead?"; assignment answers "who is responsible for working it?". They are
+  separate actions and separate data, even if automation later does both at once.
+- **One assignee, plus a history.** A Lead has one current assignee. Every
+  assignment is also kept as a row with its start, end and the reason it ended, so
+  workload, response times, performance and fair distribution can be measured
+  later. No report was built.
+- **A change of Location always clears the assignee,** even when that person also
+  works at the destination. A transfer is an operational handoff.
+- **Sales Consultants do not claim Leads.** Distribution stays with management and
+  the Call Center, because future routing will weigh Service, Project Size,
+  performance and workload. There is no way for a Sales Consultant to take an
+  unassigned Lead: not by assigning, not by starting work, and they have no
+  Unassigned queue.
+- **A Sales Consultant who records a Lead at their own Location is assigned it.**
+  That covers a referral, a repeat customer or a field-generated opportunity
+  coming to them directly. Anyone else's capture is left unassigned.
+- **A Location Manager may move a Lead between two Locations they both manage.**
+  Otherwise they may only return it to central. Authorization is checked at both
+  ends.
+- **Correcting the Received time needs a reason,** because it changes response
+  times. Anyone who may correct the Lead may do it. Future times are refused.
+- **A Location with active Leads cannot be deactivated.** Refusal only, with the
+  count; no override and no bulk action. Active Projects will block it too (B8).
+- **Role-appropriate starting view:** Unrouted for company-wide Call Center,
+  Assigned to me for Sales Consultants, Unassigned for Location Managers, All
+  leads for Owner and Leadership.
+- **No recommendation engine.** The Assign dialog shows eligible people and their
+  open-Lead count. A recommendation can later be added as a marker in that same
+  dialog, with management still choosing.
+- **Projects will carry their own Services and Project Size (B8),** copied from
+  the Lead when there is one.
+
+Choices made while building, for the owner to confirm:
+
+- **Only people who may assign can leave a Lead unassigned.** A Sales Consultant
+  cannot release their own Lead; they ask a manager. This follows the decision
+  that distribution is controlled by management.
+- **A Sales Consultant still sees unassigned Leads in "All leads",** and may still
+  correct the details of any Lead at their Location, because Location is the
+  security boundary and assignment is not. They cannot take or start one.
+- **The open-Lead count in the Assign dialog counts only Leads the viewer may
+  see,** so a Location Manager does not learn about work at other Locations.
+- **An unrouted Lead can be assigned only to company-wide lead staff,** since
+  nobody else can open it.
+- **A new permission, `leads.transfer`,** carries the Location Manager's direct
+  move. `leads.route` stays company-wide and covers routing and any move.
+- **Received time is corrected from its own small dialog on the Lead page,** not
+  inside "Correct details", so the required reason is only asked for when the
+  time is what is being changed.
+- **The test run's memory limit was raised to 512 MB** in `phpunit.xml`. The
+  suite outgrew PHP's 128 MB default on a development machine. Nothing in the
+  application changed.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

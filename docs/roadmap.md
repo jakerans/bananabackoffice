@@ -373,8 +373,8 @@ outcome, because Backoffice is to be the system of record from launch.
 | B0 | The plan and updated documents | Complete |
 | B1 | Audit event recording, including Checkpoint A's staff and access changes | Built and approved (2026-10-05) |
 | B2 | Attribution and managed lists: the Lead & Sales Lists page, with all five lists | Built and approved (2026-10-05) |
-| B3 | Lead capture with attribution; the shared Leads page; Services and Project Size; address lookup; service areas | Built (2026-10-05). Reviewed in a browser twice. Required services, address lookup (Mapbox), the structured address and ZIP-code service areas were added from the second review and await the owner's next review. Both GitHub jobs must be re-confirmed before it is merged, because GitHub Actions had an outage during this work. |
-| B4 | Lead routing and assignment | Not started |
+| B3 | Lead capture with attribution; the shared Leads page; Services and Project Size; address lookup; service areas | Built and approved (2026-10-05), including the live Mapbox lookup, which the owner tested in a browser. Both GitHub jobs passed on its final commit. |
+| B4 | Lead routing and assignment: route, move, return to central; one assignee with history; the four Leads views; correcting the Received time; refusing to deactivate a Location with active Leads | Built (2026-10-05). Awaiting the owner's browser review. |
 | B5 | Lead notes | Not started |
 | B6 | Accounts, Contacts and Properties; the Customers pages | Not started |
 | B7 | Qualification, disqualification and nurture | Not started |

@@ -189,7 +189,8 @@ account table and its own access rules.
 Status: **Approved by the owner (2026-10-05). Not built yet.** Each permission is
 added to the code in the step that builds what it guards. Built so far:
 `settings.lists.manage` (B2); `leads.view`, `leads.manage` and
-`leads.view_unrouted` (B3). The records and their
+`leads.view_unrouted` (B3); `leads.route`, `leads.transfer`, `leads.return` and
+`leads.assign` (B4). The records and their
 rules are described in [checkpoint-b.md](checkpoint-b.md).
 
 ### The rules Checkpoint B adds
@@ -211,7 +212,15 @@ rules are described in [checkpoint-b.md](checkpoint-b.md).
    access at that Location, or the assignment is refused.
 7. **Routing, returning to central and transferring are their own permissions,**
    separate from being able to edit the record.
-
+8. **A direct move by a Location Manager is checked at both ends.** They must hold
+   `leads.transfer` at the Location the Lead is leaving and at the one it is going
+   to. Without the company-wide `leads.route`, no other destination is accepted.
+9. **Only someone who can already work a Lead may be assigned it.** For an
+   unrouted Lead that means company-wide lead staff. When a person loses that
+   access, the Leads they can no longer work are unassigned.
+10. **Starting work follows assignment.** The assignee may start their Lead.
+    Someone who may assign may start an unassigned Lead, which assigns it to them.
+    Nobody else may: starting work is never a way to take a Lead.
 ### Permissions
 
 | Permission | Scope | Allows |
@@ -222,9 +231,10 @@ rules are described in [checkpoint-b.md](checkpoint-b.md).
 | `leads.view` | Location | See Leads routed to the location |
 | `leads.manage` | Location | Capture, edit and work Leads; qualify, disqualify, reopen |
 | `leads.view_unrouted` | Company | See and work Leads that have no location yet |
-| `leads.route` | Company | Send a Lead to a location, or change it |
+| `leads.route` | Company | Send a Lead to any location, or move it to any other |
+| `leads.transfer` | Location | Move a Lead directly between two locations, when held at both |
 | `leads.return` | Location | Return a Lead to the central queue, with a reason |
-| `leads.assign` | Location | Assign a Lead to a staff member |
+| `leads.assign` | Location | Assign, reassign or unassign a Lead; start working an unassigned one |
 | `leads.convert` | Location | Create a Project from a Qualified Lead |
 | `projects.view` | Location | See Projects at the location |
 | `projects.create` | Location | Create a Project, from a Lead or directly |
@@ -256,9 +266,11 @@ The owner approved this matrix at the final review on 2026-10-05.
 | See routed Leads | Yes | Yes | Yes | Yes | Yes | No | No |
 | Capture, edit, work, qualify and disqualify Leads | Yes | Yes | Yes | Yes | Yes | No | No |
 | See unrouted Leads (all-locations grant only) | Yes | Yes | No | Yes | No | No | No |
-| Route a Lead to a location | Yes | Yes | No | Yes | No | No | No |
+| Route a Lead to a location, or move it to any other (all-locations grant only) | Yes | Yes | No | Yes | No | No | No |
+| Move a Lead between two locations where they hold this role | Yes | Yes | Yes | No | No | No | No |
 | Return a Lead to the central queue | Yes | Yes | Yes | Yes | No | No | No |
-| Assign a Lead to a staff member | Yes | Yes | Yes | Yes | No | No | No |
+| Assign, reassign or unassign a Lead | Yes | Yes | Yes | Yes | No | No | No |
+| Be assigned a Lead, and work a Lead assigned to them | Yes | Yes | Yes | Yes | Yes | No | No |
 | Create a Project from a Qualified Lead | Yes | Yes | Yes | No | Yes | No | No |
 | See Projects | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
 | Create a Project directly | Yes | Yes | Yes | No | Yes | No | No |

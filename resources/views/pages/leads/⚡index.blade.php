@@ -2,6 +2,7 @@
 
 use App\Enums\LeadStatus;
 use App\Enums\Permission;
+use App\Enums\Role;
 use App\Models\Lead;
 use App\Support\Access\CurrentLocation;
 use App\Support\Access\LocationContext;
@@ -17,12 +18,21 @@ use Livewire\WithPagination;
 new #[Title('Leads')] class extends Component {
     use WithPagination;
 
-    public const string ROUTED = 'routed';
+    /** The Leads this person is responsible for, at every location they can see. */
+    public const string MINE = 'mine';
 
+    /** Leads at the current location that nobody is responsible for yet. */
+    public const string UNASSIGNED = 'unassigned';
+
+    /** Every Lead at the current location. */
+    public const string ALL = 'all';
+
+    /** Leads received centrally and not yet sent to a location. */
     public const string UNROUTED = 'unrouted';
 
+    /** Empty means "the view this person normally starts on". */
     #[Url]
-    public string $view = self::ROUTED;
+    public string $view = '';
 
     #[Url]
     public string $search = '';
@@ -55,18 +65,67 @@ new #[Title('Leads')] class extends Component {
     }
 
     /**
-     * Whether the unrouted queue is being shown. Asking for it without the permission shows the ordinary list.
+     * Whether this person hands out Leads in the current location. Only they get
+     * the Unassigned queue: it is for distributing work, not for picking it up.
      */
     #[Computed]
-    public function showingUnrouted(): bool
+    public function canDistribute(): bool
     {
-        return $this->view === self::UNROUTED && $this->canSeeUnrouted;
+        return $this->context !== null && Auth::user()->hasPermissionIn(Permission::AssignLeads, $this->context);
     }
 
+    /**
+     * The views this person may use, in the order they are shown.
+     *
+     * @return list<string>
+     */
     #[Computed]
-    public function unroutedCount(): int
+    public function views(): array
     {
-        return $this->canSeeUnrouted ? Lead::query()->visibleTo(Auth::user())->unrouted()->count() : 0;
+        return array_values(array_filter([
+            self::MINE,
+            $this->canDistribute ? self::UNASSIGNED : null,
+            self::ALL,
+            $this->canSeeUnrouted ? self::UNROUTED : null,
+        ]));
+    }
+
+    /**
+     * The view being shown. Asking for one this person may not use shows the
+     * one they normally start on, which depends on the job they do.
+     */
+    #[Computed]
+    public function currentView(): string
+    {
+        if (in_array($this->view, $this->views, true)) {
+            return $this->view;
+        }
+
+        $user = Auth::user();
+
+        return match (true) {
+            $user->holdsRole(Role::Owner), $user->holdsRole(Role::Leadership) => self::ALL,
+            $this->canSeeUnrouted => self::UNROUTED,
+            $this->canDistribute => self::UNASSIGNED,
+            default => self::MINE,
+        };
+    }
+
+    /**
+     * How many Leads wait in each queue. "All leads" is not a queue and has no count.
+     *
+     * @return array<string, int>
+     */
+    #[Computed]
+    public function counts(): array
+    {
+        $user = Auth::user();
+
+        return [
+            self::MINE => Lead::query()->visibleTo($user)->where('assigned_user_id', $user->id)->count(),
+            self::UNASSIGNED => $this->canDistribute ? $this->atCurrentLocation(Lead::query()->visibleTo($user))->unassigned()->active()->count() : 0,
+            self::UNROUTED => $this->canSeeUnrouted ? Lead::query()->visibleTo($user)->unrouted()->count() : 0,
+        ];
     }
 
     /**
@@ -78,20 +137,16 @@ new #[Title('Leads')] class extends Component {
         $user = Auth::user();
 
         // Always start from what the person is allowed to see, whatever is selected.
-        $query = Lead::query()->visibleTo($user)->with(['channel', 'leadSource', 'location', 'services', 'projectSize']);
+        $query = Lead::query()->visibleTo($user)->with(['channel', 'leadSource', 'location', 'services', 'projectSize', 'assignee']);
 
-        if ($this->showingUnrouted) {
-            $query->unrouted();
-        } else {
-            $context = $this->context;
-
-            match (true) {
-                $context?->location !== null => $query->where('location_id', $context->location->id),
-                // "All Locations" shows only what a company-wide grant allows.
-                $context?->isAllLocations === true && $user->hasPermissionAcrossAllLocations(Permission::ViewLeads) => $query->whereNotNull('location_id'),
-                default => $query->whereRaw('1 = 0'),
-            };
-        }
+        match ($this->currentView) {
+            // Their own work wherever it is, whatever location is selected: oldest first.
+            self::MINE => $query->where('assigned_user_id', $user->id)->orderBy('received_at')->orderBy('id'),
+            // Longest at this location without anyone responsible first.
+            self::UNASSIGNED => $this->atCurrentLocation($query)->unassigned()->active()->orderBy('routed_at')->orderBy('id'),
+            self::UNROUTED => $query->unrouted()->orderBy('received_at')->orderBy('id'),
+            default => $this->atCurrentLocation($query)->orderByDesc('received_at')->orderByDesc('id'),
+        };
 
         if (LeadStatus::tryFrom($this->status) !== null) {
             $query->where('status', $this->status);
@@ -99,12 +154,14 @@ new #[Title('Leads')] class extends Component {
 
         $this->applySearch($query);
 
-        return $query->orderByDesc('received_at')->orderByDesc('id')->paginate(25);
+        return $query->paginate(25);
     }
 
     public function show(string $view): void
     {
-        $this->view = $view === self::UNROUTED ? self::UNROUTED : self::ROUTED;
+        $this->view = in_array($view, $this->views, true) ? $view : '';
+
+        unset($this->currentView, $this->leads);
 
         $this->resetPage();
     }
@@ -117,6 +174,34 @@ new #[Title('Leads')] class extends Component {
     public function updatedStatus(): void
     {
         $this->resetPage();
+    }
+
+    public function viewLabel(string $view): string
+    {
+        return match ($view) {
+            self::MINE => __('Assigned to me'),
+            self::UNASSIGNED => __('Unassigned'),
+            self::UNROUTED => __('Unrouted'),
+            default => __('All leads'),
+        };
+    }
+
+    /**
+     * Limit a query to the routed Leads of the location being worked in.
+     *
+     * @param  Builder<Lead>  $query
+     * @return Builder<Lead>
+     */
+    private function atCurrentLocation(Builder $query): Builder
+    {
+        $context = $this->context;
+
+        return match (true) {
+            $context?->location !== null => $query->where('location_id', $context->location->id),
+            // "All Locations" shows only what a company-wide grant allows.
+            $context?->isAllLocations === true && Auth::user()->hasPermissionAcrossAllLocations(Permission::ViewLeads) => $query->whereNotNull('location_id'),
+            default => $query->whereRaw('1 = 0'),
+        };
     }
 
     /**
@@ -153,11 +238,21 @@ new #[Title('Leads')] class extends Component {
         <div>
             <flux:heading size="xl" level="1">{{ __('Leads') }}</flux:heading>
             <flux:subheading data-test="leads-scope">
-                @if ($this->showingUnrouted)
-                    {{ __('Received centrally and not yet sent to a location.') }}
-                @elseif ($this->context !== null)
-                    {{ __('Inquiries for :location.', ['location' => $this->context->label()]) }}
-                @endif
+                @switch($this->currentView)
+                    @case($this::MINE)
+                        {{ __('Leads you are responsible for, at every location you work in. Oldest first.') }}
+                        @break
+                    @case($this::UNASSIGNED)
+                        {{ __('Leads for :location that nobody is responsible for yet. Longest waiting first.', ['location' => $this->context?->label()]) }}
+                        @break
+                    @case($this::UNROUTED)
+                        {{ __('Received centrally and not yet sent to a location.') }}
+                        @break
+                    @default
+                        @if ($this->context !== null)
+                            {{ __('Inquiries for :location.', ['location' => $this->context->label()]) }}
+                        @endif
+                @endswitch
             </flux:subheading>
         </div>
 
@@ -168,29 +263,23 @@ new #[Title('Leads')] class extends Component {
         @endcan
     </div>
 
-    @if ($this->canSeeUnrouted)
-        <nav aria-label="{{ __('Lead views') }}" class="flex flex-wrap gap-2">
+    <nav aria-label="{{ __('Lead views') }}" class="flex flex-wrap gap-2">
+        @foreach ($this->views as $option)
             <flux:button
                 size="sm"
-                :variant="$this->showingUnrouted ? 'ghost' : 'primary'"
-                wire:click="show('routed')"
-                :aria-current="$this->showingUnrouted ? null : 'page'"
+                :variant="$this->currentView === $option ? 'primary' : 'ghost'"
+                wire:click="show('{{ $option }}')"
+                wire:key="view-{{ $option }}"
+                :aria-current="$this->currentView === $option ? 'page' : null"
+                data-test="{{ $option }}-tab"
             >
-                {{ $this->context?->label() ?? __('Routed') }}
+                {{ $this->viewLabel($option) }}
+                @if (array_key_exists($option, $this->counts))
+                    <span class="ms-1 tabular-nums">({{ $this->counts[$option] }})</span>
+                @endif
             </flux:button>
-
-            <flux:button
-                size="sm"
-                :variant="$this->showingUnrouted ? 'primary' : 'ghost'"
-                wire:click="show('unrouted')"
-                :aria-current="$this->showingUnrouted ? 'page' : null"
-                data-test="unrouted-tab"
-            >
-                {{ __('Unrouted') }}
-                <span class="ms-1 tabular-nums">({{ $this->unroutedCount }})</span>
-            </flux:button>
-        </nav>
-    @endif
+        @endforeach
+    </nav>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div class="flex-1">
@@ -215,14 +304,18 @@ new #[Title('Leads')] class extends Component {
     </div>
 
     @if ($this->leads->isEmpty())
-        <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 bg-card px-6 py-12 text-center">
+        <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 bg-card px-6 py-12 text-center" data-test="no-leads">
             <x-app-logo-icon class="h-12 w-auto" />
             <flux:heading size="lg">{{ __('No leads here') }}</flux:heading>
             <flux:text class="max-w-md">
                 @if (trim($search) !== '' || $status !== '')
                     {{ __('Nothing matches that search. Try fewer words, or clear the status.') }}
-                @elseif ($this->showingUnrouted)
+                @elseif ($this->currentView === $this::UNROUTED)
                     {{ __('Every lead received centrally has been sent to a location.') }}
+                @elseif ($this->currentView === $this::MINE)
+                    {{ __('No leads are assigned to you right now.') }}
+                @elseif ($this->currentView === $this::UNASSIGNED)
+                    {{ __('Every lead here has someone responsible for it.') }}
                 @else
                     {{ __('Inquiries appear here as soon as they are recorded.') }}
                 @endif
@@ -237,9 +330,9 @@ new #[Title('Leads')] class extends Component {
                     <flux:table.column>{{ __('Name') }}</flux:table.column>
                     <flux:table.column>{{ __('Contact') }}</flux:table.column>
                     <flux:table.column>{{ __('Service and size') }}</flux:table.column>
-                    <flux:table.column>{{ __('Channel') }}</flux:table.column>
-                    <flux:table.column>{{ __('Lead source') }}</flux:table.column>
+                    <flux:table.column>{{ __('Channel and source') }}</flux:table.column>
                     <flux:table.column>{{ __('Location') }}</flux:table.column>
+                    <flux:table.column>{{ __('Assigned to') }}</flux:table.column>
                     <flux:table.column>{{ __('Status') }}</flux:table.column>
                 </flux:table.columns>
 
@@ -274,14 +367,27 @@ new #[Title('Leads')] class extends Component {
                                 <div class="text-sm text-zinc-500">{{ $lead->projectSize?->name ?? __('Not classified') }}</div>
                             </flux:table.cell>
 
-                            <flux:table.cell>{{ $lead->channel->name }}</flux:table.cell>
-                            <flux:table.cell>{{ $lead->leadSource->name }}</flux:table.cell>
+                            <flux:table.cell>
+                                <div>{{ $lead->channel->name }}</div>
+                                <div class="text-sm text-zinc-500">{{ $lead->leadSource->name }}</div>
+                            </flux:table.cell>
 
                             <flux:table.cell>
                                 @if ($lead->location)
                                     {{ $lead->location->name }}
                                 @else
                                     <flux:badge size="sm" color="amber">{{ __('Unrouted') }}</flux:badge>
+                                @endif
+                            </flux:table.cell>
+
+                            <flux:table.cell>
+                                @if ($lead->assignee)
+                                    {{ $lead->assignee->name }}
+                                @else
+                                    <flux:badge size="sm" color="zinc">{{ __('Unassigned') }}</flux:badge>
+                                    @if ($lead->routed_at !== null)
+                                        <div class="text-sm text-zinc-500">{{ __('here') }} <x-local-time :at="$lead->routed_at" relative /></div>
+                                    @endif
                                 @endif
                             </flux:table.cell>
 
@@ -324,6 +430,7 @@ new #[Title('Leads')] class extends Component {
                             &middot;
                             <x-local-time :at="$lead->received_at" relative />
                         </div>
+                        <div>{{ $lead->assignee?->name ?? __('Unassigned') }}</div>
                     </dl>
                 </li>
             @endforeach

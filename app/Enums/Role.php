@@ -49,6 +49,10 @@ enum Role: string
                 Permission::ViewLeads,
                 Permission::ManageLeads,
                 Permission::ViewUnroutedLeads,
+                Permission::RouteLeads,
+                Permission::TransferLeads,
+                Permission::ReturnLeads,
+                Permission::AssignLeads,
             ],
             self::Finance => [
                 Permission::FinanceAccess,
@@ -60,12 +64,20 @@ enum Role: string
                 Permission::ColorStudioAccess,
                 Permission::ViewLeads,
                 Permission::ManageLeads,
+                // A manager may move a Lead between two locations they both manage,
+                // return one to central, and decide who works it.
+                Permission::TransferLeads,
+                Permission::ReturnLeads,
+                Permission::AssignLeads,
             ],
             self::CallCenterAgent => [
                 Permission::MarketingAccess,
                 Permission::ViewLeads,
                 Permission::ManageLeads,
                 Permission::ViewUnroutedLeads,
+                Permission::RouteLeads,
+                Permission::ReturnLeads,
+                Permission::AssignLeads,
             ],
             self::SalesConsultant => [
                 Permission::SalesAccess,

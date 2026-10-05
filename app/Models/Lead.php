@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -53,6 +54,11 @@ use Illuminate\Support\Carbon;
  * @property int|null $project_size_max_value
  * @property int|null $location_id
  * @property int|null $captured_by
+ * @property int|null $assigned_user_id
+ * @property Carbon|null $assigned_at
+ * @property Carbon|null $first_routed_at
+ * @property Carbon|null $routed_at
+ * @property Carbon|null $work_started_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read LeadChannel $channel
@@ -62,6 +68,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Service> $services
  * @property-read Location|null $location
  * @property-read User|null $capturedBy
+ * @property-read User|null $assignee
  */
 class Lead extends Model
 {
@@ -78,6 +85,10 @@ class Lead extends Model
         return [
             'received_at' => 'datetime',
             'status' => LeadStatus::class,
+            'assigned_at' => 'datetime',
+            'first_routed_at' => 'datetime',
+            'routed_at' => 'datetime',
+            'work_started_at' => 'datetime',
             'project_size_min_value' => 'integer',
             'project_size_max_value' => 'integer',
         ];
@@ -168,6 +179,64 @@ class Lead extends Model
     public function capturedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'captured_by');
+    }
+
+    /**
+     * The person responsible for working the Lead now. Empty when nobody is.
+     *
+     * Being the assignee grants no access. It says who is responsible, and it
+     * drives the "Assigned to me" queue.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
+    }
+
+    /**
+     * Everyone who has been responsible for the Lead, and when.
+     *
+     * @return HasMany<LeadAssignment, $this>
+     */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(LeadAssignment::class);
+    }
+
+    public function isAssigned(): bool
+    {
+        return $this->assigned_user_id !== null;
+    }
+
+    public function isAssignedTo(User $user): bool
+    {
+        return $this->assigned_user_id === $user->id;
+    }
+
+    /**
+     * Limit the query to Leads that still need someone's attention.
+     *
+     * Every status that exists today is active. When qualification is built, a
+     * disqualified Lead stops being active.
+     *
+     * @param  Builder<Lead>  $query
+     */
+    #[Scope]
+    protected function active(Builder $query): void
+    {
+        $query->whereIn('status', [LeadStatus::New, LeadStatus::Working]);
+    }
+
+    /**
+     * Limit the query to Leads nobody is responsible for.
+     *
+     * @param  Builder<Lead>  $query
+     */
+    #[Scope]
+    protected function unassigned(Builder $query): void
+    {
+        $query->whereNull('assigned_user_id');
     }
 
     /**

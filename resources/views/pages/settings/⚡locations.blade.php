@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Locations\DeactivateLocation;
 use App\Actions\Locations\UpdateServiceAreaPostalCodes;
 use App\Enums\AuditAction;
 use App\Models\Location;
@@ -207,9 +208,16 @@ new #[Title('Locations')] class extends Component {
     /**
      * Stop a location operating. Its history is kept and no grant covers it while inactive.
      */
-    public function deactivate(int $locationId, RecordAuditEvent $recordAuditEvent): void
+    public function deactivate(int $locationId, DeactivateLocation $deactivateLocation): void
     {
-        $this->setActive($locationId, false, $recordAuditEvent);
+        $location = Location::query()->findOrFail($locationId);
+
+        $this->authorize('update', $location);
+
+        $this->resetValidation('deactivation');
+
+        // Refused, with the count, while the location still has active leads.
+        $deactivateLocation->handle($location);
 
         Flux::toast(variant: 'success', text: __('Location deactivated.'));
     }
@@ -219,28 +227,21 @@ new #[Title('Locations')] class extends Component {
      */
     public function reactivate(int $locationId, RecordAuditEvent $recordAuditEvent): void
     {
-        $this->setActive($locationId, true, $recordAuditEvent);
-
-        Flux::toast(variant: 'success', text: __('Location reactivated.'));
-    }
-
-    private function setActive(int $locationId, bool $isActive, RecordAuditEvent $recordAuditEvent): void
-    {
         $location = Location::query()->findOrFail($locationId);
 
         $this->authorize('update', $location);
 
-        DB::transaction(function () use ($location, $isActive, $recordAuditEvent): void {
-            $location->update(['is_active' => $isActive]);
+        $this->resetValidation('deactivation');
+
+        DB::transaction(function () use ($location, $recordAuditEvent): void {
+            $location->update(['is_active' => true]);
 
             if ($location->wasChanged('is_active')) {
-                $recordAuditEvent->handle(
-                    $isActive ? AuditAction::LocationReactivated : AuditAction::LocationDeactivated,
-                    $location,
-                    location: $location,
-                );
+                $recordAuditEvent->handle(AuditAction::LocationReactivated, $location, location: $location);
             }
         });
+
+        Flux::toast(variant: 'success', text: __('Location reactivated.'));
     }
 
     /**
@@ -270,6 +271,13 @@ new #[Title('Locations')] class extends Component {
             </flux:modal.trigger>
         @endcan
     </div>
+
+    @error('deactivation')
+        <div role="alert" class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-ink" data-test="deactivation-refused">
+            <div class="font-semibold">{{ __('This location cannot be deactivated yet') }}</div>
+            <div>{{ $message }}</div>
+        </div>
+    @enderror
 
     @if ($this->locations->isEmpty())
         <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 bg-card px-6 py-12 text-center">

@@ -20,6 +20,10 @@ enum Permission: string
     case ViewLeads = 'leads.view';
     case ManageLeads = 'leads.manage';
     case ViewUnroutedLeads = 'leads.view_unrouted';
+    case RouteLeads = 'leads.route';
+    case TransferLeads = 'leads.transfer';
+    case ReturnLeads = 'leads.return';
+    case AssignLeads = 'leads.assign';
 
     /**
      * Company-level permissions only count when held through an all-locations grant.
@@ -31,7 +35,8 @@ enum Permission: string
             self::ManageLocations,
             self::ManageUsers,
             self::ManageLeadSalesLists,
-            self::ViewUnroutedLeads => true,
+            self::ViewUnroutedLeads,
+            self::RouteLeads => true,
             default => false,
         };
     }

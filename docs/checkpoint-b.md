@@ -214,11 +214,24 @@ same customer may answer differently on a later inquiry.
 
 #### What this preserves for future salesperson routing
 
-Nothing here routes a Lead to a salesperson. The data a later recommendation would
-need is kept from the first Lead: Location, primary Service, additional Services,
-Project Size (with the range it meant), and later the Project's responsibilities,
-sales outcome and Sold Amount. Close rate and revenue by Service and by Project
-Size can be worked out from those without changing the records.
+Nothing here recommends a salesperson, and step B4 built no algorithm. The data a
+later recommendation would need is kept from the first Lead:
+
+| Factor | Where it comes from |
+| --- | --- |
+| Location eligibility | Access grants |
+| Primary and additional Services | The Lead's services |
+| Project Size | The Lead's size, with the range it meant |
+| Current workload, fair distribution | The current assignee and the assignment history (B4) |
+| Speed: received → routed → assigned → first worked | Four times kept on the Lead (B4) |
+| Qualification performance | Who held the Lead when it was qualified (history, with B7) |
+| Close rate by Service and by Size, sold revenue | The Project's own services, size, responsibilities, outcome and Sold Amount (B8, B9) |
+| Availability and capacity | Not modelled yet; a later addition |
+
+A recommendation, when it is built, appears as a marker beside a person in the
+same Assign dialog ("Recommended: Roseanne"). Management still chooses, and may
+choose someone else. Whether an assignment followed a recommendation is added
+with the recommender: every assignment before then was made by a person.
 
 #### Property address, as built
 
@@ -283,14 +296,108 @@ Size can be worked out from those without changing the records.
   question above and does not know how it is answered. A map-based answer can be
   added behind the same question later; Leads store only the Location they end up
   with, so they do not change.
-#### Recorded for step B4
+#### Routing and assignment, as built in step B4
 
-- **Deactivating a Location must not strand its work.** A Location with active
-  Leads or active Projects should not be deactivated in a way that makes them
-  inaccessible. The likely rule: refuse until those records are reassigned or
-  resolved.
-- **Correcting a Lead's Received time** after creation, by authorized staff, with
-  an audit event.
+Two separate questions, kept as separate actions and separate data:
+
+- **Routing: which Location owns this Lead?**
+- **Assignment: who is responsible for working it?**
+
+**Routing**
+
+| Action | From → to | Who | Reason |
+| --- | --- | --- | --- |
+| Route | Unrouted → a Location | Owner, Leadership, company-wide Call Center | Optional |
+| Move | Location → another Location | The same people; and a Location Manager when they manage **both** Locations | Required |
+| Return to central | Location → Unrouted | Owner, Leadership, Location Manager, Call Center | Required |
+
+- The dialog pre-selects the Location whose service area lists the Lead's ZIP
+  code, and says why. Choosing another is the manual override. Both the suggestion
+  and the choice are recorded.
+- There is no suggestion when the Lead has no ZIP code, when no Location lists it,
+  or when two do.
+- A Location Manager is offered only the other Locations they manage. The
+  permission is checked at both ends on the server. A manager of one Location can
+  only return a Lead to central.
+- The destination must be an active Location, and not the one the Lead is at.
+- Routing never changes a Lead's status.
+- **A dialog that is out of date saves nothing.** If someone else moved or
+  reassigned the Lead after the dialog was opened, the action is refused.
+- Changing a service area, or correcting a Lead's address, never moves a Lead.
+- Someone who returns a Lead they can then no longer see is taken back to the list.
+
+**Assignment**
+
+- **A Lead has one assignee, or none.** The history of everyone who has held it is
+  kept in `lead_assignments`: who, who assigned them, at which Location, from when
+  to when, and why it ended (reassigned, released, the Lead changed Location,
+  access was removed). The database allows one open assignment per Lead and no
+  assignment is ever deleted.
+- **Who may assign, reassign or leave a Lead unassigned:** Owner, Leadership,
+  Location Manager and Call Center, where they hold that role.
+- **Who may be assigned:** anyone who can already work Leads where the Lead is.
+  For an unrouted Lead that is company-wide lead staff only. A deactivated person,
+  or one who has not accepted their invitation, cannot be assigned. **Assignment
+  never grants access.**
+- **Sales Consultants do not pick up Leads.** They cannot assign, reassign or
+  release, and they have no Unassigned queue. They work the Leads given to them.
+- **Every change of Location clears the assignee,** even when that person also
+  works at the destination. A move is a handoff; the new Location decides.
+- **Losing access clears assignments.** When a grant is removed or an account is
+  deactivated, any Lead the person holds and can no longer work becomes
+  unassigned, in the same transaction. Reactivating does not give them back.
+- **Recording a Lead:** a Sales Consultant who records a Lead at a Location where
+  they are a Sales Consultant is assigned it, recorded as an assignment like any
+  other. A Lead recorded by anyone else is left unassigned.
+- **The Assign dialog** lists the eligible people with how many open Leads each
+  has. The count includes only Leads the person looking may see.
+
+**Start working**
+
+- The assignee may start working their Lead.
+- Someone who may assign Leads may start an unassigned one, which assigns it to
+  them. The button says so.
+- Nobody may start a Lead assigned to someone else; it must be reassigned first.
+- A Sales Consultant cannot acquire an unassigned Lead by starting it.
+
+**Views on the Leads page**
+
+| View | Shows | Order | Who has it |
+| --- | --- | --- | --- |
+| Assigned to me | The person's Leads at every Location they can see, whatever Location is selected | Oldest first | Everyone |
+| Unassigned | Leads at the current Location with no assignee | Longest at that Location first | People who may assign there |
+| All leads | Every Lead at the current Location | Newest first | Everyone |
+| Unrouted | Leads not yet sent to a Location | Oldest first | People who may see unrouted Leads |
+
+The page opens on: All leads for Owner and Leadership; Unrouted for company-wide
+Call Center; Unassigned for a Location Manager (and a Call Center agent at one
+Location); Assigned to me for a Sales Consultant. Nurture arrives with B7.
+
+A Sales Consultant can still see unassigned Leads in All leads, because the
+Location, not assignment, decides what may be seen. They cannot take one.
+
+**Times kept on a Lead** (no report uses them yet): received, first routed, arrived
+at its current Location, assigned to its current assignee, work first started.
+
+**Correcting the Received time**
+
+- Anyone who may correct the Lead may correct it, from the Lead page.
+- A reason is required, because response times are measured from it.
+- A future time is refused. The time before and after, who and why are recorded.
+
+**Deactivating a Location**
+
+- A Location with active Leads cannot be deactivated. The refusal says how many.
+- They must first be moved to another Location or returned to central.
+- Nothing overrides this, and there is no bulk "close a Location" action.
+- **For B8:** active Projects must block deactivation the same way.
+
+#### Recorded for step B8
+
+- **Projects carry their own Services and Project Size.** When a Project is
+  created from a Lead they are copied from the Lead as a starting point. A
+  Project created directly captures them itself. Sales-performance reporting then
+  reads the Project, not a Lead that may be corrected later or may not exist.
 
 ### Project
 
@@ -428,6 +535,11 @@ Not a Fit · Financing / Payment · Unable to Re-Engage / No Decision · Other
   own permission. Each change is an audit event.
 - **A Location Manager may return a Lead to the central queue.** A reason is
   required and an audit event is recorded. They then no longer see it.
+- **A Location Manager who manages both Locations may move a Lead directly between
+  them.** The permission is checked at both ends.
+- **Any change of a Lead's Location clears its assignee.**
+- Routing and assignment as built are described under "Routing and assignment, as
+  built in step B4".
 - **Transferring** a Project to another Location is an explicit action reserved for
   Owner and Leadership, and is an audit event.
 - **Assignment drives responsibility, queues and "Assigned to me" views, and nothing

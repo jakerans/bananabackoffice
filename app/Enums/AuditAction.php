@@ -34,5 +34,12 @@ enum AuditAction: string
     case LeadWorkStarted = 'lead.work_started';
     case LeadServicesChanged = 'lead.services_changed';
     case LeadProjectSizeChanged = 'lead.project_size_changed';
+    case LeadRouted = 'lead.routed';
+    case LeadTransferred = 'lead.transferred';
+    case LeadReturnedToCentral = 'lead.returned_to_central';
+    case LeadAssigned = 'lead.assigned';
+    case LeadReassigned = 'lead.reassigned';
+    case LeadUnassigned = 'lead.unassigned';
+    case LeadReceivedTimeCorrected = 'lead.received_time_corrected';
     case ProjectSizeRangeChanged = 'project_size.range_changed';
 }

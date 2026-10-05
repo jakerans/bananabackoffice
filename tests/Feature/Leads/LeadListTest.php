@@ -64,6 +64,7 @@ test('location staff see the leads of the location they are working in and no ot
     Lead::factory()->create(['inquiry_name' => 'Unrouted Una']);
 
     Livewire::actingAs($consultant)
+        ->withQueryParams(['view' => 'all'])
         ->test('pages::leads.index')
         ->assertSee('Inquiries for Lakeview.')
         ->assertSee('Lakeview Lena')
@@ -87,6 +88,7 @@ test('staff with two locations see one location at a time, following the locatio
     session([CurrentLocation::SESSION_KEY => $northside->id]);
 
     Livewire::actingAs($consultant)
+        ->withQueryParams(['view' => 'all'])
         ->test('pages::leads.index')
         ->assertSee('Northside Nora')
         ->assertDontSee('Lakeview Lena');
@@ -108,7 +110,7 @@ test('a role that does not work leads at the current location is refused, even w
     $this->actingAs($user)->get(route('leads'))->assertForbidden();
 });
 
-test('asking for the unrouted queue without the permission shows the ordinary list', function () {
+test('asking for the unrouted queue without the permission shows the view the person normally starts on', function () {
     $lakeview = Location::factory()->create(['name' => 'Lakeview']);
     $manager = User::factory()->withRoleAt(Role::LocationManager, $lakeview)->create();
 
@@ -149,6 +151,7 @@ test('company-wide staff have an unrouted queue beside the list for the location
     session([CurrentLocation::SESSION_KEY => $lakeview->id]);
 
     Livewire::actingAs($user)
+        ->withQueryParams(['view' => 'all'])
         ->test('pages::leads.index')
         ->assertSee('Lakeview Lena')
         ->assertDontSee('Northside Nora')
@@ -177,6 +180,7 @@ test('the all locations view lists every routed lead for company-wide staff', fu
     session([CurrentLocation::SESSION_KEY => CurrentLocation::ALL_LOCATIONS]);
 
     Livewire::actingAs($agent)
+        ->withQueryParams(['view' => 'all'])
         ->test('pages::leads.index')
         ->assertSee('Inquiries for All Locations.')
         ->assertSee('Lakeview Lena')
@@ -214,6 +218,7 @@ test('leads at a deactivated location are not listed', function () {
     session([CurrentLocation::SESSION_KEY => CurrentLocation::ALL_LOCATIONS]);
 
     Livewire::actingAs($agent)
+        ->withQueryParams(['view' => 'all'])
         ->test('pages::leads.index')
         ->assertSee('Lakeview Lena')
         ->assertDontSee('Closed Clara');
@@ -241,6 +246,7 @@ test('leads are listed newest first with what was captured', function () {
     Lead::factory()->at($lakeview)->create(['inquiry_name' => null, 'received_at' => now()->subDay()]);
 
     Livewire::actingAs($consultant)
+        ->withQueryParams(['view' => 'all'])
         ->test('pages::leads.index')
         ->assertSeeInOrder(['Newer Nina', 'No name given', 'Older Olga'])
         ->assertSee('Nina Bakery')
@@ -267,6 +273,7 @@ test('the list can be searched by name, business, phone or email', function (str
     Lead::factory()->at($lakeview)->create(['inquiry_name' => 'Someone Else']);
 
     Livewire::actingAs($consultant)
+        ->withQueryParams(['view' => 'all'])
         ->test('pages::leads.index')
         ->set('search', $search)
         ->assertSee('Maria Lopez')
@@ -287,6 +294,7 @@ test('a search cannot reach leads the person may not see', function () {
     Lead::factory()->create(['inquiry_name' => 'Unrouted Una']);
 
     Livewire::actingAs($consultant)
+        ->withQueryParams(['view' => 'all'])
         ->test('pages::leads.index')
         ->set('search', 'n')
         ->assertDontSee('Northside Nora')
@@ -304,6 +312,7 @@ test('the list can be narrowed to one status', function () {
     Lead::factory()->at($lakeview)->working()->create(['inquiry_name' => 'Working Wanda']);
 
     Livewire::actingAs($consultant)
+        ->withQueryParams(['view' => 'all'])
         ->test('pages::leads.index')
         ->set('status', 'working')
         ->assertSee('Working Wanda')
@@ -318,6 +327,7 @@ test('an empty list says so plainly', function () {
     $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
 
     Livewire::actingAs($consultant)
+        ->withQueryParams(['view' => 'all'])
         ->test('pages::leads.index')
         ->assertSee('No leads here')
         ->assertSee('Inquiries appear here as soon as they are recorded.');

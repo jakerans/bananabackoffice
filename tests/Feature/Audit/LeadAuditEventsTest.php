@@ -186,7 +186,7 @@ test('saving a lead without changing anything records nothing', function () {
 test('starting work records the change of status once', function () {
     $lakeview = Location::factory()->create(['name' => 'Lakeview']);
     $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
-    $lead = Lead::factory()->at($lakeview)->create();
+    $lead = Lead::factory()->at($lakeview)->assignedTo($consultant)->create();
 
     Livewire::actingAs($consultant)
         ->test('pages::leads.show', ['lead' => $lead])

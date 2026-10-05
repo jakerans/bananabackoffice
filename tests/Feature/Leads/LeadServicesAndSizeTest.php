@@ -413,6 +413,7 @@ test('the list shows each lead\'s main service and size', function () {
     ]);
 
     Livewire::actingAs($consultant)
+        ->withQueryParams(['view' => 'all'])
         ->test('pages::leads.index')
         ->assertSeeInOrder(['Maria Lopez', 'Exterior Painting', '+1', 'Large']);
 });

@@ -3,6 +3,7 @@
 namespace App\Actions\Staff;
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Leads\ReleaseUnworkableAssignments;
 use App\Enums\AuditAction;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -12,14 +13,19 @@ use Illuminate\Validation\ValidationException;
 
 class DeactivateStaffMember
 {
-    public function __construct(private RecordAuditEvent $recordAuditEvent) {}
+    public function __construct(
+        private RecordAuditEvent $recordAuditEvent,
+        private ReleaseUnworkableAssignments $releaseUnworkableAssignments,
+    ) {}
 
     /**
      * Stop a staff member signing in, and end every sign-in they already have.
      *
      * Their record and access grants are kept, so reactivating restores their
      * access, but they must sign in again: nothing from before deactivation
-     * comes back to life.
+     * comes back to life. Leads they were responsible for become unassigned, so
+     * no Lead is left with someone who cannot work it; reactivating does not
+     * give those back.
      *
      * @throws ValidationException
      */
@@ -43,6 +49,8 @@ class DeactivateStaffMember
             if ($wasActive) {
                 $this->recordAuditEvent->handle(AuditAction::StaffDeactivated, $staff);
             }
+
+            $this->releaseUnworkableAssignments->handle($staff);
 
             Password::broker('invitations')->deleteToken($staff);
 

@@ -1,8 +1,13 @@
 <?php
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Leads\AssignLead;
 use App\Actions\Leads\CaptureLead;
+use App\Actions\Leads\CorrectLeadReceivedTime;
+use App\Actions\Leads\ReturnLeadToCentral;
+use App\Actions\Leads\RouteLead;
 use App\Actions\Leads\StartWorkingLead;
+use App\Actions\Leads\UnassignLead;
 use App\Actions\Leads\UpdateLeadDetails;
 use App\Actions\Lists\AddListOption;
 use App\Actions\Lists\MoveListOption;
@@ -16,11 +21,13 @@ use App\Actions\Staff\InviteStaffMember;
 use App\Actions\Staff\ReactivateStaffMember;
 use App\Actions\Staff\ResendStaffInvitation;
 use App\Actions\Staff\RevokeAccess;
+use App\Enums\AssignmentEndReason;
 use App\Enums\GrantScope;
 use App\Enums\ManagedList;
 use App\Enums\Role;
 use App\Models\AccessGrant;
 use App\Models\Lead;
+use App\Models\LeadAssignment;
 use App\Models\LeadChannel;
 use App\Models\Location;
 use App\Models\ProjectSize;
@@ -158,7 +165,32 @@ test('a change to a lead is not kept when its audit event cannot be recorded', f
     'changing the services' => [fn (Lead $lead) => app(UpdateLeadDetails::class)->handle(
         $lead, ['name' => $lead->inquiry_name, 'phone' => $lead->inquiry_phone], $lead->channel, $lead->leadSource, $lead->marketingSource, $lead->projectSize, ServiceSelection::fromIds(oneService('Cabinet Painting')),
     )],
-    'starting work' => [fn (Lead $lead) => app(StartWorkingLead::class)->handle($lead)],
+    'starting work' => [fn (Lead $lead) => app(StartWorkingLead::class)->handle($lead, User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create())],
+    'routing' => [fn (Lead $lead) => app(RouteLead::class)->handle($lead, Location::factory()->create())],
+    'assigning' => [fn (Lead $lead) => app(AssignLead::class)->handle($lead, User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create())],
+    'correcting the received time' => [fn (Lead $lead) => app(CorrectLeadReceivedTime::class)->handle($lead, now()->subDay(), 'It arrived yesterday.')],
+]);
+
+test('a handoff is not kept when its audit event cannot be recorded', function (Closure $change) {
+    $lakeview = Location::factory()->create();
+    $northside = Location::factory()->create();
+    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+
+    $lead = Lead::factory()->at($lakeview)->assignedTo($consultant)->create();
+    $before = $lead->fresh()->getAttributes();
+
+    expect(fn () => $change($lead, $northside, $consultant))->toThrow(RuntimeException::class);
+
+    expect($lead->fresh()->getAttributes())->toBe($before);
+    expect(LeadAssignment::query()->sole()->isOpen())->toBeTrue();
+    expect($consultant->accessGrants()->count())->toBe(1);
+})->with([
+    'moving to another location' => [fn (Lead $lead, Location $northside) => app(RouteLead::class)->handle($lead, $northside, 'North side.')],
+    'returning to central' => [fn (Lead $lead) => app(ReturnLeadToCentral::class)->handle($lead, 'Wrong branch.')],
+    'releasing' => [fn (Lead $lead) => app(UnassignLead::class)->handle($lead, AssignmentEndReason::Released)],
+    'reassigning' => [fn (Lead $lead) => app(AssignLead::class)->handle($lead, User::factory()->withRoleAt(Role::SalesConsultant, $lead->location)->create())],
+    'removing the holder\'s access' => [fn (Lead $lead, Location $northside, User $consultant) => app(RevokeAccess::class)->handle($consultant->accessGrants()->sole())],
+    'deactivating the holder' => [fn (Lead $lead, Location $northside, User $consultant) => app(DeactivateStaffMember::class)->handle($consultant)],
 ]);
 
 test('a location change is not kept when its audit event cannot be recorded', function (Closure $change, Closure $unchanged) {

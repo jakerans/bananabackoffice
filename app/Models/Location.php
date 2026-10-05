@@ -66,6 +66,16 @@ class Location extends Model
     }
 
     /**
+     * The Leads that belong to this location.
+     *
+     * @return HasMany<Lead, $this>
+     */
+    public function leads(): HasMany
+    {
+        return $this->hasMany(Lead::class);
+    }
+
+    /**
      * Limit the query to locations that are currently operating.
      *
      * @param  Builder<Location>  $query
