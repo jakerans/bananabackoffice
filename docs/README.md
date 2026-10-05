@@ -36,7 +36,9 @@ The seeder only does anything in local development. Every seeded account uses th
 password `password`; the Owner is `owner@example.com`.
 
 Invitation emails use the mail settings in `.env`. With `MAIL_MAILER=log` they are
-written to `storage/logs/laravel.log` instead of being sent.
+written to `storage/logs/laravel.log` instead of being sent. Staging and production
+send real email through Resend (`MAIL_MAILER=resend`); the Resend key lives only in
+each server's environment settings. See [decisions.md](decisions.md), decision 22.
 
 ## Where things live
 

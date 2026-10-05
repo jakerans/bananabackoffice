@@ -111,8 +111,25 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
+        'address' => env('MAIL_FROM_ADDRESS', 'backoffice@mail.bananapainting.com'),
+        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Banana Backoffice')),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Global "Reply-To" Address
+    |--------------------------------------------------------------------------
+    |
+    | Backoffice sends from a domain used only for sending, so nobody reads
+    | mail delivered to the "from" address. When a monitored inbox is set
+    | here, replies to any application email are directed to it instead.
+    | Leave it unset and no reply-to header is added.
+    |
+    */
+
+    'reply_to' => [
+        'address' => env('MAIL_REPLY_TO_ADDRESS'),
+        'name' => env('MAIL_REPLY_TO_NAME', env('MAIL_FROM_NAME', env('APP_NAME', 'Banana Backoffice'))),
     ],
 
 ];

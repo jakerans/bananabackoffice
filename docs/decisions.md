@@ -290,6 +290,35 @@ half-finished states. The whole test suite was also run on MySQL and passed.
 Still open: the automated checks on GitHub run on SQLite only. Adding a MySQL 8.4
 run there would catch this class of problem before a deployment does. See roadmap.md.
 
+## 22. Resend sends application email, from a domain used only for sending
+
+Decided by the owner (2026-10-04).
+
+Backoffice sends its transactional email through Resend, using Laravel's built-in
+Resend mail transport and Resend's official PHP library. Transactional email means
+messages a person triggers and expects: staff invitations, email verification,
+password resets and account or security notices.
+
+- **Sending domain:** `mail.bananapainting.com`, verified in Resend. It is a
+  subdomain kept for application email, so its reputation is separate from the
+  company's main domain and from any marketing email added later.
+- **Sender:** "Banana Backoffice" at `backoffice@mail.bananapainting.com`. No
+  email is sent under a generic or framework name.
+- **Replies:** the sending domain receives no mail. A monitored inbox can be set
+  as the reply-to address (`MAIL_REPLY_TO_ADDRESS`); until then no reply-to is added.
+- **Keys:** one Resend API key per environment, each limited to sending and to
+  this domain. A key is entered only into that server's environment settings. It
+  is never committed, never put in documentation, and not needed on a developer's
+  machine.
+- **Local development** does not use Resend. It writes emails to a log or a local
+  mail catcher, so nothing real is sent while developing.
+- **Not set up:** broadcasts, newsletters, marketing contacts, automations,
+  webhooks and inbound email. Customer and marketing email will be designed
+  separately, on its own sending domain.
+
+Why Resend's API transport and not SMTP: it needs one key and no mail server
+settings, and Laravel supports it natively.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

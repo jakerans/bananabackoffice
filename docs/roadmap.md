@@ -213,7 +213,9 @@ SQLite, which does not enforce all of MySQL's rules.
   screen and removed grants leave no history.
 - Invitation emails are sent immediately rather than queued, so a slow mail server
   slows that one click.
-- The mail service for the live system is not chosen. Invitations need one before launch.
+- Application email is sent through Resend from `mail.bananapainting.com`
+  (decisions.md, 22). No monitored reply-to inbox has been named yet, so replies
+  to application email currently go nowhere.
 - Passkeys only work over a secure address. The local site is served over plain
   `http`, so passkeys cannot be tried locally until Herd's HTTPS option is turned on.
 
