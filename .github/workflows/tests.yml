@@ -10,7 +10,10 @@ permissions:
   contents: read
 
 jobs:
+  # Local development uses SQLite, so the full set of checks runs on it:
+  # code style, static analysis and every test.
   ci:
+    name: Checks and tests (SQLite)
     runs-on: ubuntu-latest
 
     steps:
@@ -36,3 +39,96 @@ jobs:
 
       - name: Run CI Checks
         run: composer ci:check
+
+  # Staging and production use MySQL 8.4, which enforces rules SQLite does not.
+  # This job applies every migration to an empty MySQL 8.4 database and then runs
+  # every test against it, so a database change is proven on the real engine
+  # before it is deployed.
+  #
+  # The database lives only for the length of this job. The credentials below are
+  # throwaway values for that container; they are not secrets and are used nowhere else.
+  mysql:
+    name: Migrations and tests (MySQL 8.4)
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: backoffice_ci
+          MYSQL_USER: backoffice_ci
+          MYSQL_PASSWORD: disposable-ci-only
+          MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --user=backoffice_ci --password=disposable-ci-only --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: backoffice_ci
+      DB_USERNAME: backoffice_ci
+      DB_PASSWORD: disposable-ci-only
+      MYSQL_DSN: mysql:host=127.0.0.1;port=3306;dbname=backoffice_ci
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      - name: Install dependencies and build assets
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          cp .env.example .env
+          php artisan key:generate --ansi
+          npm install
+          npm run build
+
+      - name: Confirm the database is an empty MySQL 8.4
+        run: |
+          php -r '
+            $pdo = new PDO(getenv("MYSQL_DSN"), getenv("DB_USERNAME"), getenv("DB_PASSWORD"));
+            $version = $pdo->query("select version()")->fetchColumn();
+            $tables = (int) $pdo->query("select count(*) from information_schema.tables where table_schema = database()")->fetchColumn();
+            echo "Database server: MySQL {$version}", PHP_EOL, "Tables before migrating: {$tables}", PHP_EOL;
+            exit(str_starts_with($version, "8.4.") && $tables === 0 ? 0 : 1);
+          '
+
+      - name: Run every migration on the empty database
+        run: |
+          php artisan migrate --force --no-interaction
+          php artisan migrate:status
+
+      - name: Empty the database so the test suite starts from nothing
+        run: php artisan db:wipe --force --no-interaction
+
+      - name: Run the complete test suite on MySQL 8.4
+        run: php artisan test
+
+      # If the suite had quietly run on another database, this one would still be empty.
+      - name: Confirm the test suite ran on MySQL
+        run: |
+          php -r '
+            $pdo = new PDO(getenv("MYSQL_DSN"), getenv("DB_USERNAME"), getenv("DB_PASSWORD"));
+            $migrations = (int) $pdo->query("select count(*) from migrations")->fetchColumn();
+            echo "Migrations the test suite applied to MySQL: {$migrations}", PHP_EOL;
+            exit($migrations > 0 ? 0 : 1);
+          '

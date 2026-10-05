@@ -290,6 +290,10 @@ half-finished states. The whole test suite was also run on MySQL and passed.
 Still open: the automated checks on GitHub run on SQLite only. Adding a MySQL 8.4
 run there would catch this class of problem before a deployment does. See roadmap.md.
 
+Update (2026-10-04): done. The checks on GitHub now include a job that applies
+every migration to an empty MySQL 8.4 database and then runs every test against
+it, alongside the existing SQLite job. See roadmap.md, "Automated checks on GitHub".
+
 ## 22. Resend sends application email, from a domain used only for sending
 
 Decided by the owner (2026-10-04).
@@ -306,6 +310,8 @@ password resets and account or security notices.
   email is sent under a generic or framework name.
 - **Replies:** the sending domain receives no mail. A monitored inbox can be set
   as the reply-to address (`MAIL_REPLY_TO_ADDRESS`); until then no reply-to is added.
+  Staging currently uses `admin@bananapainting.com`, an interim choice by the
+  owner (2026-10-04).
 - **Keys:** one Resend API key per environment, each limited to sending and to
   this domain. A key is entered only into that server's environment settings. It
   is never committed, never put in documentation, and not needed on a developer's

@@ -193,18 +193,55 @@ real staff use the system on a server: "forgot password" reveals which addresses
 have accounts, and a deactivated person can complete a passkey sign-in before
 being signed out again.
 
-## Staging and the production database (2026-10-04)
+## Staging (deployed and operational, 2026-10-04)
 
-The first deployment to the Forge staging server failed while applying a database
-change on MySQL 8.4. The cause and the fix are recorded in decisions.md, 21. No
-data was involved: the staging database was new and empty.
+Staging is live on Laravel Forge and deploys automatically whenever `main` is
+pushed to GitHub.
 
-Production runs **MySQL 8.4**. Local development and the automated tests run on
-SQLite, which does not enforce all of MySQL's rules.
+| | |
+| --- | --- |
+| Address | `https://bananabackoffice-xg8eqczb.on-forge.com` |
+| Forge | server "BackOffice", one site |
+| Runs as | production mode, debug off |
+| Database | MySQL 8.4 |
+| Email | Resend, working (see below) |
 
-- Open: add a MySQL 8.4 run to the automated checks on GitHub, so a database
-  change is tested on the production engine before it is deployed. The full suite
-  has been run on MySQL 8.4 once by hand and passed.
+Verified by the owner on staging:
+
+- The Owner account was created with the application's own create-owner logic and
+  a random password nobody saw.
+- "Forgot password" delivered a real email through Resend.
+- The owner set their own password from that email and signed in.
+
+Email on staging:
+
+- Sent through Resend from `backoffice@mail.bananapainting.com`, shown as
+  "Banana Backoffice (Staging)" so staging email can be told apart from production.
+- Reply-To is `admin@bananapainting.com`. This is an interim address the owner
+  intends to change.
+- The Resend API key was entered by the owner directly in Forge and exists only
+  there.
+
+History: the first deployment failed while applying a database change on MySQL
+8.4. The cause and fix are in decisions.md, 21. The staging database was new and
+empty, so no data was involved.
+
+## Automated checks on GitHub
+
+Every push to `main` and every pull request runs two jobs:
+
+| Job | Database | What it runs |
+| --- | --- | --- |
+| Checks and tests (SQLite) | SQLite, as in local development | Code style, static analysis, every test |
+| Migrations and tests (MySQL 8.4) | MySQL 8.4, as on staging and production | Every migration on an empty database, then every test |
+
+The MySQL job exists because MySQL enforces rules SQLite does not, which is how
+the first staging deployment failed. Its database is created for the job and
+destroyed afterwards. Its credentials are throwaway values written in the
+workflow file; no staging or production credential is used or needed.
+
+Not yet covered: staging runs PHP 8.5, while both jobs and local development use
+PHP 8.4.
 
 ## Known limits of Checkpoint A
 
@@ -214,8 +251,9 @@ SQLite, which does not enforce all of MySQL's rules.
 - Invitation emails are sent immediately rather than queued, so a slow mail server
   slows that one click.
 - Application email is sent through Resend from `mail.bananapainting.com`
-  (decisions.md, 22). No monitored reply-to inbox has been named yet, so replies
-  to application email currently go nowhere.
+  (decisions.md, 22). Replies on staging go to `admin@bananapainting.com`, an
+  interim address. The permanent reply-to inbox, and production's, are still to
+  be named.
 - Passkeys only work over a secure address. The local site is served over plain
   `http`, so passkeys cannot be tried locally until Herd's HTTPS option is turned on.
 

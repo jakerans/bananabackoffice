@@ -21,6 +21,16 @@ before starting work, and update them in the same change that alters what they d
 - **Proposed** — recommended, awaiting owner approval. Do not build yet.
 - **Open** — a decision that has not been made. Do not guess.
 
+## Environments
+
+| Environment | Where | Database | Email |
+| --- | --- | --- | --- |
+| Local | Herd, `http://backoffice.test` | SQLite | Log file or local mail catcher; nothing real is sent |
+| Staging | Forge, `https://bananabackoffice-xg8eqczb.on-forge.com`, deploys from `main` | MySQL 8.4 | Resend, real email |
+| Production | Not set up yet | MySQL 8.4 | Resend |
+
+Staging is deployed and operational; see [roadmap.md](roadmap.md), "Staging".
+
 ## Running Backoffice locally
 
 | Task | Command |
