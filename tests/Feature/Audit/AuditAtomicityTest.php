@@ -1,6 +1,9 @@
 <?php
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Leads\CaptureLead;
+use App\Actions\Leads\StartWorkingLead;
+use App\Actions\Leads\UpdateLeadDetails;
 use App\Actions\Lists\AddListOption;
 use App\Actions\Lists\MoveListOption;
 use App\Actions\Lists\SetListOptionActive;
@@ -16,6 +19,7 @@ use App\Enums\GrantScope;
 use App\Enums\ManagedList;
 use App\Enums\Role;
 use App\Models\AccessGrant;
+use App\Models\Lead;
 use App\Models\LeadChannel;
 use App\Models\Location;
 use App\Models\User;
@@ -111,6 +115,32 @@ test('a list change is not kept when its audit event cannot be recorded', functi
     'renaming' => [fn (LeadChannel $email) => app(UpdateListOption::class)->handle($email, 'Electronic Mail')],
     'moving' => [fn (LeadChannel $email) => app(MoveListOption::class)->handle($email, towardsStart: true)],
     'deactivating' => [fn (LeadChannel $email) => app(SetListOptionActive::class)->handle($email, active: false)],
+]);
+
+test('no lead is kept when its audit event cannot be recorded', function () {
+    $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
+
+    expect(fn () => app(CaptureLead::class)->handle($agent, LeadChannel::query()->firstOrFail(), ['name' => 'Maria Lopez']))
+        ->toThrow(RuntimeException::class);
+
+    expect(Lead::query()->count())->toBe(0);
+});
+
+test('a change to a lead is not kept when its audit event cannot be recorded', function (Closure $change) {
+    $lead = Lead::factory()->create(['inquiry_name' => 'Maria Lopes']);
+    $before = $lead->fresh()->getAttributes();
+
+    expect(fn () => $change($lead))->toThrow(RuntimeException::class);
+
+    expect($lead->fresh()->getAttributes())->toBe($before);
+})->with([
+    'correcting' => [fn (Lead $lead) => app(UpdateLeadDetails::class)->handle(
+        $lead, ['name' => 'Maria Lopez', 'phone' => $lead->inquiry_phone], $lead->channel, $lead->leadSource, $lead->marketingSource,
+    )],
+    'changing attribution' => [fn (Lead $lead) => app(UpdateLeadDetails::class)->handle(
+        $lead, ['name' => $lead->inquiry_name, 'phone' => $lead->inquiry_phone], LeadChannel::query()->where('name', 'Web Form')->sole(), $lead->leadSource, $lead->marketingSource,
+    )],
+    'starting work' => [fn (Lead $lead) => app(StartWorkingLead::class)->handle($lead)],
 ]);
 
 test('a location change is not kept when its audit event cannot be recorded', function (Closure $change, Closure $unchanged) {

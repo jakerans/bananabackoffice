@@ -72,8 +72,10 @@ built it receives its own specific permission, recorded in
   selector and the user menu.
 - Second row: the sections of the selected center, in the order listed below. The
   current section is heavier with a small Yellow marker.
-- Sub-sections (for example the pages inside Call Center) will get their own row
-  when the first section that has them is built. The registry already holds them.
+- A section that has pages of its own (Call Center is the first) shows them in a
+  third row while you are inside it. In the second row such a section is a link to
+  the first of its pages the person may open. If none of its pages is built, it
+  stays muted like any other unbuilt section.
 - On small screens the center menu scrolls sideways.
 - Company Overview and Settings are company-level: they do not change with the
   selected location. Every other center follows the selected location.
@@ -139,7 +141,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | `marketing.performance` | Performance Board | CS, primary |
 | `marketing.call_center` | Call Center | CS |
 | `marketing.call_center.inbox` | Central Inbox | CS |
-| `marketing.call_center.leads` | Leads | CS |
+| `shared.leads` | Leads | Live (step B3). The shared Leads page; see "Shared". It replaced the never-built `marketing.call_center.leads`. |
 | `marketing.call_center.appointments` | Appointments | CS |
 | `marketing.call_center.close_assist` | Close Assist | CS |
 | `marketing.call_center.canceled` | Canceled Appointments | CS |
@@ -161,6 +163,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | --- | --- | --- |
 | `sales.home` | Shortcut: opens Performance Board | — |
 | `sales.performance` | Performance Board | CS, primary |
+| `shared.leads` | Leads | Live (step B3). The shared Leads page; see "Shared". |
 | `sales.appointments` | Appointments | CS |
 | `sales.estimates` | Estimates | CS |
 | `sales.proposals` | Proposals | CS |
@@ -227,6 +230,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 
 | ID | Label | State |
 | --- | --- | --- |
+| `shared.leads` | Leads | Live (step B3). Shown in Marketing > Call Center and in Sales. |
 | `shared.customers` | Customers | CS |
 | `shared.inbox` | Inbox | CS |
 
@@ -243,12 +247,18 @@ All approved by the owner on 2026-10-05.
 | Item | Change | Step |
 | --- | --- | --- |
 | `settings.lists` — Lead & Sales Lists | A new Settings page holding the five managed lists. Opened by its own permission, held by Owner and Leadership. Leadership sees Settings with this page only. | B2 — **built** |
-| `shared.leads` — Leads | One shared Leads page with one address, shown in **both** the Marketing Center and the Sales Center to anyone holding the lead permission. There is no separate Marketing Leads and Sales Leads. Marketing > Call Center > Leads points at it. | B3 |
+| `shared.leads` — Leads | One shared Leads page with one address, shown in **both** the Marketing Center and the Sales Center to anyone holding the lead permission. There is no separate Marketing Leads and Sales Leads. Marketing > Call Center > Leads points at it. | B3 â **built** |
 | `shared.customers` — Customers | Becomes live. Lists Accounts. | B6 |
 | `shared.projects` — Projects | One shared Projects page with one address, shown in the Sales Center and the Production Center as appropriate. There are no separate Sales Projects and Production Projects. | B8 |
 
 Shared pages are opened by their own permission, not by access to the center whose
 menu happens to show them.
+
+A shared page is drawn inside the menu of a center the person may open. When they
+may open more than one, it is the center they were last in. That choice only
+decides which menu surrounds the page; it never grants access to a center.
+
+Until Central Inbox is built, Call Center opens on Leads.
 
 - The first live section that has sub-sections brings the third row (sub-sections)
   into the shell, as already described under "Shell layout".

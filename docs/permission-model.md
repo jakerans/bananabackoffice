@@ -187,7 +187,9 @@ account table and its own access rules.
 ## Checkpoint B
 
 Status: **Approved by the owner (2026-10-05). Not built yet.** Each permission is
-added to the code in the step that builds what it guards. The records and their
+added to the code in the step that builds what it guards. Built so far:
+`settings.lists.manage` (B2); `leads.view`, `leads.manage` and
+`leads.view_unrouted` (B3). The records and their
 rules are described in [checkpoint-b.md](checkpoint-b.md).
 
 ### The rules Checkpoint B adds

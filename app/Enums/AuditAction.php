@@ -27,4 +27,8 @@ enum AuditAction: string
     case ListOptionMoved = 'list_option.moved';
     case ListOptionDeactivated = 'list_option.deactivated';
     case ListOptionReactivated = 'list_option.reactivated';
+    case LeadReceived = 'lead.received';
+    case LeadInquiryCorrected = 'lead.inquiry_corrected';
+    case LeadAttributionChanged = 'lead.attribution_changed';
+    case LeadWorkStarted = 'lead.work_started';
 }

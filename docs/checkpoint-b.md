@@ -129,6 +129,47 @@ same customer may answer differently on a later inquiry.
   "Unknown" value, so that "unknown" is recorded one way only. Lead Channel is
   always chosen, because the person taking the inquiry knows how it arrived.
 
+#### Lead capture, as built in step B3
+
+- **To save a Lead:** a Lead Channel, and at least one of name, phone or email.
+  Nothing else is required. Business name, what they asked for and address or area
+  are optional.
+- **The form is one page in two groups.** Quick capture: name, phone, email,
+  business name, channel, what they asked for, address or area. Attribution and
+  routing: marketing source, lead source, location, received time. Typing starts in
+  the name; the channel is chosen with one tap and is never chosen for you.
+- **Both sources start on their "unknown" option,** so a Lead can be saved without
+  touching them. That option is marked in the data, may be renamed, and can never
+  be deactivated.
+- **Location.** Company-wide lead staff start on "Not yet routed" and may choose a
+  location while creating. Location staff create the Lead at one of their own
+  locations and cannot leave it unrouted. Changing the location afterward,
+  returning it to central and assigning a person are step B4.
+- **Phone.** What was typed is kept, beside a matching form in international
+  notation ("+15552013344"). Ordinary U.S. numbers are recognized; a number that is
+  not is saved as typed with a gentle hint and simply cannot be matched. Nothing in
+  the data limits it to U.S. numbers.
+- **Email.** Kept as typed, beside a lowercase form for matching. A malformed
+  address is refused.
+- **Address.** Kept as typed. It is not parsed or looked up.
+- **Earlier inquiries.** When a phone or email matches earlier Leads the person is
+  already allowed to see, they are listed on the form. It never blocks saving.
+  Nothing at all is shown about a match the person may not see.
+- **Received time** is typed and shown in the company's timezone and stored in UTC.
+  It may be set earlier, never in the future.
+- **Statuses built:** New and Working. "Start working" is the only way a Lead
+  becomes Working. Correcting or adding information never changes the status.
+- **Correcting.** Anyone who may work the Lead may correct the inquiry details and
+  change its attribution. A Lead keeps an option that was deactivated after it was
+  chosen, but cannot be moved to a deactivated one.
+- **Save and add another,** and pressing Save twice records one Lead.
+- **The list** shows the Leads of the location the person is working in, newest
+  first, with an "Unrouted" queue beside it for those allowed to see it. It can be
+  searched by name, business, phone or email and narrowed by status. On a narrow
+  screen it becomes cards.
+- **Audit events:** Lead received; inquiry details corrected (old and new values
+  of each changed field); attribution changed; work started.
+
 ### Project
 
 - A Project represents a specific qualified potential or actual scope of work at a

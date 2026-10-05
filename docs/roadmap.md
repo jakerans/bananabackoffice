@@ -372,8 +372,8 @@ outcome, because Backoffice is to be the system of record from launch.
 | --- | --- | --- |
 | B0 | The plan and updated documents | Complete |
 | B1 | Audit event recording, including Checkpoint A's staff and access changes | Built and approved (2026-10-05) |
-| B2 | Attribution and managed lists: the Lead & Sales Lists page, with all five lists | Built (2026-10-05); awaiting the owner's review |
-| B3 | Lead capture with attribution; the shared Leads page | Not started |
+| B2 | Attribution and managed lists: the Lead & Sales Lists page, with all five lists | Built and approved (2026-10-05) |
+| B3 | Lead capture with attribution; the shared Leads page | Built (2026-10-05); awaiting the owner's browser review |
 | B4 | Lead routing and assignment | Not started |
 | B5 | Lead notes | Not started |
 | B6 | Accounts, Contacts and Properties; the Customers pages | Not started |

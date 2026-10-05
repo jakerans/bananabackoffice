@@ -496,6 +496,40 @@ test('the last active option in a list cannot be deactivated', function () {
     expect($phone->fresh()->is_active)->toBeTrue();
 });
 
+test('each source list has exactly one unknown option, and it is the approved one', function () {
+    expect(MarketingSource::query()->where('is_fallback', true)->pluck('name')->all())->toBe(['Unknown / Unattributed']);
+    expect(LeadSource::query()->where('is_fallback', true)->pluck('name')->all())->toBe(['Unknown']);
+
+    expect(MarketingSource::fallback()->is_active)->toBeTrue();
+    expect(LeadSource::fallback()->is_active)->toBeTrue();
+});
+
+test('the unknown option can be renamed but never deactivated', function (ManagedList $list, Closure $unknown) {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $option = $unknown();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.lists')
+        ->call('show', $list->value)
+        ->assertSee('Used when not known')
+        ->call('edit', $option->id)
+        ->set('editingName', 'Not sure')
+        ->call('update')
+        ->assertHasNoErrors()
+        ->call('deactivate', $option->id)
+        ->assertHasErrors(['option' => 'This is the option used when the source is not known, so it cannot be deactivated. It can be renamed.']);
+
+    $renamed = $option->fresh();
+
+    expect($renamed->name)->toBe('Not sure');
+    expect($renamed->is_active)->toBeTrue();
+    expect($renamed->isFallback())->toBeTrue();
+    expect($unknown()->is($option))->toBeTrue();
+})->with([
+    'marketing sources' => [ManagedList::MarketingSources, fn () => MarketingSource::fallback()],
+    'lead sources' => [ManagedList::LeadSources, fn () => LeadSource::fallback()],
+]);
+
 test('a list option cannot be deleted', function (ManagedList $list) {
     $option = $list->modelClass()::query()->firstOrFail();
 

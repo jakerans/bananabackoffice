@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Enums\Permission;
+use App\Models\Lead;
 use App\Models\LeadChannel;
 use App\Models\LeadDisqualificationReason;
 use App\Models\LeadSource;
@@ -57,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
             'lead_channel' => LeadChannel::class,
             'lead_disqualification_reason' => LeadDisqualificationReason::class,
             'sales_loss_reason' => SalesLossReason::class,
+            'lead' => Lead::class,
         ]);
     }
 

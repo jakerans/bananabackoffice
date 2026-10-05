@@ -27,6 +27,12 @@ class SetListOptionActive
             return;
         }
 
+        if (! $active && $option->isFallback()) {
+            throw ValidationException::withMessages([
+                'option' => __('This is the option used when the source is not known, so it cannot be deactivated. It can be renamed.'),
+            ]);
+        }
+
         if (! $active && ! $option->newQuery()->where('is_active', true)->whereKeyNot($option->getKey())->exists()) {
             throw ValidationException::withMessages([
                 'option' => __('This is the only active :option. Add or reactivate another before deactivating it.', [

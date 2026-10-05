@@ -97,6 +97,26 @@ class Navigation
     }
 
     /**
+     * Get every center whose menu contains a route. A shared page belongs to more than one.
+     *
+     * @return list<NavigationItem>
+     */
+    public function centersForRoute(?string $routeName): array
+    {
+        if ($routeName === null) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            $this->centers(),
+            fn (NavigationItem $center): bool => Arr::first(
+                $center->flatten(),
+                fn (NavigationItem $item): bool => $item->ownsRoute($routeName),
+            ) !== null,
+        ));
+    }
+
+    /**
      * Determine whether the staff member may see an item in their current location.
      */
     public function allows(User $user, NavigationItem $item): bool
@@ -155,7 +175,7 @@ class Navigation
                 new NavigationItem('marketing.performance', 'Performance Board', $permissions, route: 'marketing.performance'),
                 new NavigationItem('marketing.call_center', 'Call Center', $permissions, primary: 'marketing.call_center.inbox', children: [
                     new NavigationItem('marketing.call_center.inbox', 'Central Inbox', $permissions),
-                    new NavigationItem('marketing.call_center.leads', 'Leads', $permissions),
+                    $this->leads(),
                     new NavigationItem('marketing.call_center.appointments', 'Appointments', $permissions),
                     new NavigationItem('marketing.call_center.close_assist', 'Close Assist', $permissions),
                     new NavigationItem('marketing.call_center.canceled', 'Canceled Appointments', $permissions),
@@ -192,6 +212,7 @@ class Navigation
             primary: 'sales.performance',
             children: [
                 new NavigationItem('sales.performance', 'Performance Board', $permissions, route: 'sales.performance'),
+                $this->leads(),
                 new NavigationItem('sales.appointments', 'Appointments', $permissions),
                 new NavigationItem('sales.estimates', 'Estimates', $permissions),
                 new NavigationItem('sales.proposals', 'Proposals', $permissions),
@@ -327,6 +348,24 @@ class Navigation
                 new NavigationItem('settings.integrations', 'Integrations', $permissions),
                 new NavigationItem('settings.audit_log', 'Audit Log', $permissions),
             ],
+        );
+    }
+
+    /**
+     * Leads is one page with one address, shown in more than one center.
+     *
+     * It is opened by the lead permission, not by access to the center whose
+     * menu shows it, so a Sales Consultant reaches the same page through Sales
+     * that a Call Center Agent reaches through Marketing.
+     */
+    private function leads(): NavigationItem
+    {
+        return new NavigationItem(
+            id: 'shared.leads',
+            label: 'Leads',
+            permissions: [Permission::ViewLeads],
+            state: NavigationState::Live,
+            route: 'leads',
         );
     }
 

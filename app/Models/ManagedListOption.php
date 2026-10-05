@@ -40,6 +40,16 @@ abstract class ManagedListOption extends Model
     abstract public function list(): ManagedList;
 
     /**
+     * Whether this is its list's "unknown" choice: the one a new record starts on
+     * when nothing better is known. Only the two source lists have one. It can be
+     * renamed but never deactivated, so an honest "unknown" is always available.
+     */
+    public function isFallback(): bool
+    {
+        return (bool) $this->getAttribute('is_fallback');
+    }
+
+    /**
      * Refuse to delete a choice: records that use it must keep their history.
      */
     protected static function booted(): void

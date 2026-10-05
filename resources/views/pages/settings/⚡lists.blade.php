@@ -321,6 +321,10 @@ new #[Title('Lead & Sales Lists')] class extends Component {
                             @if ($option instanceof SalesLossReason && $option->asks_for_competitor)
                                 <flux:badge size="sm" color="zinc" class="ms-2">{{ __('Asks which competitor') }}</flux:badge>
                             @endif
+
+                            @if ($option->isFallback())
+                                <flux:badge size="sm" color="zinc" class="ms-2">{{ __('Used when not known') }}</flux:badge>
+                            @endif
                         </flux:table.cell>
 
                         @if ($option instanceof LeadDisqualificationReason)
@@ -339,7 +343,9 @@ new #[Title('Lead & Sales Lists')] class extends Component {
                             <div class="flex justify-end gap-2">
                                 <flux:button size="sm" wire:click="edit({{ $option->id }})">{{ __('Edit') }}</flux:button>
 
-                                @if ($option->is_active)
+                                @if ($option->isFallback())
+                                    {{-- The "unknown" choice can be renamed but is always available. --}}
+                                @elseif ($option->is_active)
                                     <flux:button
                                         size="sm"
                                         wire:click="deactivate({{ $option->id }})"

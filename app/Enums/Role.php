@@ -46,6 +46,9 @@ enum Role: string
                 Permission::ColorStudioAccess,
                 // The one Settings page Leadership may use. It opens no other.
                 Permission::ManageLeadSalesLists,
+                Permission::ViewLeads,
+                Permission::ManageLeads,
+                Permission::ViewUnroutedLeads,
             ],
             self::Finance => [
                 Permission::FinanceAccess,
@@ -55,13 +58,20 @@ enum Role: string
                 Permission::SalesAccess,
                 Permission::ProductionAccess,
                 Permission::ColorStudioAccess,
+                Permission::ViewLeads,
+                Permission::ManageLeads,
             ],
             self::CallCenterAgent => [
                 Permission::MarketingAccess,
+                Permission::ViewLeads,
+                Permission::ManageLeads,
+                Permission::ViewUnroutedLeads,
             ],
             self::SalesConsultant => [
                 Permission::SalesAccess,
                 Permission::ColorStudioAccess,
+                Permission::ViewLeads,
+                Permission::ManageLeads,
             ],
             self::ProductionManager => [
                 Permission::ProductionAccess,

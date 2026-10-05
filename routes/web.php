@@ -1,10 +1,12 @@
 <?php
 
+use App\Enums\Permission;
 use App\Http\Controllers\CenterController;
 use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\PasswordResetLinkController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SwitchLocationController;
+use App\Models\Lead;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', 'dashboard')->name('home');
@@ -26,6 +28,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
 
     Route::post('location', SwitchLocationController::class)->name('location.switch');
+
+    // Leads is one shared page, shown in the Marketing and Sales menus. It is opened by the
+    // lead permission; each Lead is then authorized by its own location, not the selected one.
+    Route::livewire('leads', 'pages::leads.index')->can(Permission::ViewLeads)->name('leads');
+    Route::livewire('leads/new', 'pages::leads.create')->can('create', Lead::class)->name('leads.create');
+    Route::livewire('leads/{lead}', 'pages::leads.show')->can('view', 'lead')->name('leads.show');
 
     // A center has no page of its own: its address opens the center's primary section.
     Route::get('company', CenterController::class)->defaults('center', 'company')->name('company.home');

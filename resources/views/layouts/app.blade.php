@@ -30,6 +30,10 @@
 
         @if ($currentCenter)
             <x-shell.center-nav :center="$currentCenter" :shell="$shell" />
+
+            @if ($currentSection = $shell->currentSection($currentCenter))
+                <x-shell.section-nav :section="$currentSection" :shell="$shell" />
+            @endif
         @endif
 
         <main class="px-4 py-6 lg:px-8 lg:py-8">

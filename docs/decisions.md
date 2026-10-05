@@ -601,6 +601,45 @@ Built in step B2 (2026-10-05).
 - **One list's page cannot touch another's options.** An option is always looked up
   inside the list being shown, never by its number alone.
 
+## 40. How lead capture is built (step B3)
+
+Built in step B3 (2026-10-05). The behavior was approved by the owner beforehand;
+these are the choices made while building it.
+
+- **A Lead is authorized by its own location, never the selected one.** Opening,
+  correcting and working a Lead check the Lead's location against the person's
+  grants. The list starts from "what this person may see" and only then narrows to
+  the location they are working in. An unrouted Lead has no location, so only its
+  own company-wide permission reaches it.
+- **Capturing for a location and leaving a Lead unrouted are checked on the
+  server every time.** The location on the form comes from the browser and is not
+  trusted.
+- **Times are stored in UTC and shown in one company timezone.** It is a setting
+  (`APP_DISPLAY_TIMEZONE`), defaulting to US Eastern. It is one value for the whole
+  company until locations in different timezones need their own. **The owner
+  should confirm the timezone.**
+- **Phone numbers are stored twice:** as typed, and in international notation for
+  matching. Recognition is tuned for U.S. numbers but the stored form is not
+  U.S.-only, so it can be improved later without changing the data.
+- **The "unknown" source is identified by a marker, not its name,** so renaming it
+  cannot break the default. The marker also stops it being deactivated.
+- **Pressing Save twice records one Lead.** Each filling-in of the form carries an
+  identifier that can be used once.
+- **A shared page is drawn inside a center the person may open,** the one they
+  were last in when there is a choice. That is remembered in the session and only
+  chooses which menu surrounds the page. It grants nothing.
+- **The third menu row now exists,** for sections with pages of their own. Call
+  Center is the first.
+- **`marketing.call_center.leads` was retired** in favor of `shared.leads`, the one
+  entry used in both menus. It had never been built, so nothing referred to it.
+- **Not built in B3:** correcting the received time after saving, and showing a
+  Lead's earlier inquiries on its own page.
+
+Known limit: a Lead at a location that is later deactivated cannot be seen by
+anyone, because a deactivated location is covered by no grant (permission model,
+rule 3). Step B4 adds re-routing, which is the way to move such Leads; whether
+deactivating a location with open Leads should be refused is for that step.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

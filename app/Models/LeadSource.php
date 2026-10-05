@@ -20,4 +20,12 @@ class LeadSource extends ManagedListOption
     {
         return ManagedList::LeadSources;
     }
+
+    /**
+     * The "unknown" source a new Lead starts on.
+     */
+    public static function fallback(): self
+    {
+        return self::query()->where('is_fallback', true)->sole();
+    }
 }

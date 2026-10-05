@@ -69,6 +69,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Display Timezone
+    |--------------------------------------------------------------------------
+    |
+    | Times are stored in UTC. This is the timezone staff see them in, and the
+    | one a time they type is understood to be in. It is one value for the
+    | whole company until locations in different timezones need their own.
+    |
+    */
+
+    'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'America/New_York'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

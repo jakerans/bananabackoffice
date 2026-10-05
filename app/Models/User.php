@@ -234,6 +234,18 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Get the active locations where the staff member may use a location-level permission.
+     *
+     * @return Collection<int, Location>
+     */
+    public function locationsWhere(Permission $permission): Collection
+    {
+        return $this->authorizedLocations()
+            ->filter(fn (Location $location): bool => $this->hasPermissionAt($permission, $location))
+            ->values();
+    }
+
+    /**
      * Get the user's initials
      */
     public function initials(): string

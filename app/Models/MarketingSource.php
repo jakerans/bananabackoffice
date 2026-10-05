@@ -20,4 +20,12 @@ class MarketingSource extends ManagedListOption
     {
         return ManagedList::MarketingSources;
     }
+
+    /**
+     * The "unknown / unattributed" source a new Lead starts on.
+     */
+    public static function fallback(): self
+    {
+        return self::query()->where('is_fallback', true)->sole();
+    }
 }
