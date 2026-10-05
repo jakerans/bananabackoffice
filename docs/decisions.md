@@ -325,6 +325,29 @@ password resets and account or security notices.
 Why Resend's API transport and not SMTP: it needs one key and no mail server
 settings, and Laravel supports it natively.
 
+## 23. Database backups use Forge's built-in backups, to a bucket of their own
+
+Decided by the owner (2026-10-04). Agreed, not yet configured.
+
+- **Method:** Forge's native database backups, which Forge schedules, prunes and
+  can restore from its dashboard.
+- **Staging:** the `banana_backoffice` database, daily, keeping the 7 most recent,
+  with failure notifications on.
+- **Destination:** DigitalOcean Spaces, in a bucket used only for Backoffice
+  staging backups (`banana-backoffice-staging`), reached with an access key that
+  can use only that bucket. The organization's existing Spaces destination belongs
+  to another system and is not reused.
+- **Production** will have a separate configuration, bucket and access key, with
+  more frequent backups and longer retention.
+
+Why a bucket and key of its own: backups hold everything the database holds. A key
+shared with another system would let a problem in either one reach the other's
+backups.
+
+What this does not cover: uploaded files. A database backup contains the database
+only. Storage and backup of uploaded customer and project files is a separate
+decision that must be made before any are stored. See roadmap.md, "Backups".
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

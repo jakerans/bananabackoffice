@@ -226,6 +226,55 @@ History: the first deployment failed while applying a database change on MySQL
 8.4. The cause and fix are in decisions.md, 21. The staging database was new and
 empty, so no data was involved.
 
+## Backups
+
+### Database backups
+
+State: **agreed, not yet configured** (2026-10-04). Nothing is being backed up yet.
+
+Agreed target for staging:
+
+| | |
+| --- | --- |
+| Method | Forge's built-in database backups |
+| What | The `banana_backoffice` MySQL database |
+| Destination | DigitalOcean Spaces, in a bucket used only for this: `banana-backoffice-staging` |
+| Frequency | Daily |
+| Retention | The 7 most recent backups |
+| Failure notifications | On |
+
+Waiting on: the bucket and a storage destination being created in DigitalOcean and
+Forge by the owner. See decisions.md, 23.
+
+Production will get its own, stricter configuration when it is set up: more
+frequent backups, longer retention, its own bucket and its own access key.
+
+Known gaps to close for production:
+
+- A restore goes back to the last backup and no further, because MySQL's change
+  log is switched off. Point-in-time recovery would need it switched on.
+- A restore has never been tested. One should be done on staging once backups run.
+
+### Uploaded files are NOT covered
+
+**A database backup does not include uploaded files.** It contains the database
+only. Customer and project files (photos, documents, anything uploaded) live on the
+server's disk or in file storage, and no database backup of any frequency will
+bring them back.
+
+Backoffice stores no uploaded files today. **Before it begins storing meaningful
+uploaded files, it needs its own durable storage and backup strategy for them:**
+
+- files kept in durable object storage, not only on the application server's disk;
+- private by default, since they will include customers' homes and details;
+- protected against accidental deletion and overwriting, for example with versioning;
+- a defined way to restore them, tested, and kept in step with the database so a
+  restored record still finds its files.
+
+Checkpoint B introduces private photos, so this must be decided before Checkpoint B
+stores its first real file. It is listed under "Decisions to make before
+Checkpoint B" below.
+
 ## Automated checks on GitHub
 
 Every push to `main` and every pull request runs two jobs:
@@ -264,3 +313,6 @@ PHP 8.4.
   customer's properties, or both.
 - Audit log scope.
 - Whether sensitive roles (Owner, Finance) must use two-factor sign-in.
+- **Where uploaded files are stored and how they are backed up.** Database backups
+  do not cover them. Checkpoint B's private photos must not start storing real
+  files until this is settled. See "Backups" above.

@@ -63,6 +63,24 @@ has a hook for this) and at the two-factor challenge.
 Decide whether Owner and Finance accounts must use it. Already listed in
 roadmap.md under decisions for Checkpoint B.
 
+**No database backups are running yet.**
+A target for staging has been agreed (daily, keep 7, to a dedicated DigitalOcean
+Spaces bucket, with failure notifications) but is not configured. Production needs
+its own configuration before it holds real data. See roadmap.md, "Backups".
+
+**Database backups do NOT cover uploaded files.**
+A database backup contains the database only. Uploaded customer and project files
+are stored separately and would not be restored by it. Backoffice stores no
+uploaded files today. Before it begins storing meaningful uploaded files, it needs
+a separate, durable object-storage and backup strategy for them: private, protected
+against deletion and overwriting, restorable, and tested. This must be settled
+before Checkpoint B stores its first real photo.
+
+**The application uses the server's main database account.**
+On staging the application connects to MySQL as the server's general `forge`
+account, which can also reach the other database on that server. Production should
+use an account of its own that can reach only the Backoffice database.
+
 **Session invalidation depends on database sessions.**
 Ending a deactivated person's sessions works by deleting their rows from the
 `sessions` table, which requires `SESSION_DRIVER=database` (the configured
