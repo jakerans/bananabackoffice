@@ -235,12 +235,17 @@ navigation of the centers that use them, pointing at the same shared page.
 Nothing below is live. Each change is made in the step that builds the page. See
 [checkpoint-b.md](checkpoint-b.md).
 
-| Item | Change | Status |
+All approved by the owner on 2026-10-05.
+
+| Item | Change | Step |
 | --- | --- | --- |
-| `shared.customers` — Customers | Becomes live in step B6. Lists Accounts. | Approved |
-| Leads | Becomes live in step B3. The approved place is `marketing.call_center.leads`, but Sales Consultants cannot open the Marketing Center and they work Leads. Recommended: one shared Leads page, shown under Marketing > Call Center and in the Sales Center. | **Open** |
-| Managed lists in Settings | A new Settings page for Owner and Leadership, in step B2. No menu item for it has been approved. Recommended: one item, "Lists". | **Open** |
-| Projects | Needs a minimum way to be found, in step B8. No menu item for a plain list has been approved. Recommended: one shared Projects list, shown in the Sales and Production centers. | **Open** |
+| `settings.lists` — Lead & Sales Lists | A new Settings page holding the five managed lists. Opened by its own permission, held by Owner and Leadership. Leadership sees Settings with this page only. | B2 |
+| `shared.leads` — Leads | One shared Leads page with one address, shown in **both** the Marketing Center and the Sales Center to anyone holding the lead permission. There is no separate Marketing Leads and Sales Leads. Marketing > Call Center > Leads points at it. | B3 |
+| `shared.customers` — Customers | Becomes live. Lists Accounts. | B6 |
+| `shared.projects` — Projects | One shared Projects page with one address, shown in the Sales Center and the Production Center as appropriate. There are no separate Sales Projects and Production Projects. | B8 |
+
+Shared pages are opened by their own permission, not by access to the center whose
+menu happens to show them.
 
 - The first live section that has sub-sections brings the third row (sub-sections)
   into the shell, as already described under "Shell layout".

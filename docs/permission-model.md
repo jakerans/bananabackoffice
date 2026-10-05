@@ -229,11 +229,12 @@ rules are described in [checkpoint-b.md](checkpoint-b.md).
 | `projects.assign` | Location | Set a Project's responsibilities |
 | `projects.transfer` | Company | Move a Project to another location |
 | `projects.archive` | Location | Archive and restore Projects |
-| `projects.sales_outcome` | Location | Mark a Project Won or Lost |
+| `projects.sales_outcome` | Location | Mark a Project Won (with its Sold Amount) or Lost |
+| `projects.correct_sold_amount` | Location | Correct the Sold Amount of a Won Project |
 | `notes.write` | Location | Add notes to a record the person can see |
 | `attachments.manage` | Location | Upload and remove attachments |
 | `history.view` | Location | See a record's audit history |
-| `settings.lists.manage` | Company | Manage the five managed lists |
+| `settings.lists.manage` | Company | Manage the Lead & Sales Lists page in Settings, and nothing else there |
 
 Company-scope permissions count only when held through an all-locations grant.
 
@@ -242,10 +243,7 @@ Company-scope permissions count only when held through an all-locations grant.
 "Yes" means the role contains the permission. Where it applies still depends on
 each grant's scope.
 
-The owner stated most of these lines directly. Four were filled in to be
-consistent with them and are open to correction at the final review: who may mark
-a Project Won or Lost, who may set Project responsibilities, that Call Center may
-return a Lead to the central queue, and that Call Center may assign Leads.
+The owner approved this matrix at the final review on 2026-10-05.
 
 | Capability | Owner | Leadership | Location Manager | Call Center Agent | Sales Consultant | Production Manager | Finance |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
@@ -266,10 +264,11 @@ return a Lead to the central queue, and that Call Center may assign Leads.
 | Transfer a Project to another location | Yes | Yes | No | No | No | No | No |
 | Archive and restore Projects | Yes | Yes | Yes | No | No | No | No |
 | Mark a Project Won or Lost | Yes | Yes | Yes | No | Yes | No | No |
+| Correct a Sold Amount | Yes | Yes | No | No | No | No | No |
 | Add notes | Yes | Yes | Yes | Yes | Yes | Yes | No |
 | Upload and remove attachments | Yes | Yes | Yes | No | Yes | Yes | No |
 | See a record's audit history | Yes | Yes | Yes | No | No | No | No |
-| Manage the managed lists (all-locations grant only) | Yes | Yes | No | No | No | No | No |
+| Manage Lead & Sales Lists (all-locations grant only) | Yes | Yes | No | No | No | No | No |
 
 Notes:
 
@@ -282,10 +281,14 @@ Notes:
 - Leadership granted at a single location works within that location. Seeing
   unrouted Leads, transferring Projects and managing the lists need an
   all-locations grant.
-- Managing the lists gives Leadership a reason to open Settings for the first time.
-  They would see only that page there; Locations and Users and Access stay
-  Owner-only. Where that page sits in the menu is open (checkpoint-b.md, open
-  decision 2).
+- Leadership's permission is for the Lead & Sales Lists page specifically. It lets
+  them open Settings and see that one page. It gives no access to Locations, Users
+  and Access, or any other Settings page, which stay Owner-only.
+- Every correction of a Sold Amount is an audit event recording the old and new
+  amounts.
+- Leads and Projects are each one shared page, shown in more than one center. A
+  person opens them through the lead or project permission, not through access to
+  a particular center.
 - Finance sees Accounts and Projects and changes nothing in Checkpoint B.
 - The Checkpoint A center permissions are unchanged. Which center's menu shows a
   shared page is a navigation question; see navigation-map.md.

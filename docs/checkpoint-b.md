@@ -1,10 +1,10 @@
 # Checkpoint B — Leads, Customers and Projects
 
-Status: **Model approved by the owner (2026-10-05). Plan awaiting one last review.**
-**B0 (this document) is complete. B1 has not been started. Nothing here is built.**
+Status: **Approved by the owner (2026-10-05), including the final review.**
+**B0 (this document) is complete. The roadmap shows which steps are built.**
 
-Where a point goes beyond what the owner decided, it is marked **Proposed** or
-**Open** and listed again under "Open decisions" at the end.
+The few points still marked **Proposed** are details the owner has seen and not
+objected to; they are confirmed or changed in the step that builds them.
 
 ## Objective
 
@@ -89,8 +89,8 @@ There is no existing customer or lead data to bring in. No import tooling is bui
 | --- | --- |
 | **New** | Received; nobody has worked it yet. |
 | **Working** | Someone is in contact or trying to be. |
-| **Nurture** (Proposed) | A real opportunity that is not ready now. Carries an optional "follow up on" date. Not a disqualification. |
 | **Qualified** | A legitimate sales opportunity. Projects may be created from it. |
+| **Nurture** | The opportunity remains viable but should be followed up later. Carries a next follow-up date. Never treated as Disqualified or as a Sales Loss. |
 | **Disqualified** | Did not become a legitimate opportunity, or Banana Painting decided not to pursue it. Requires a reason. |
 
 - There is no generic "closed" status. Disqualification and sales loss are never
@@ -154,6 +154,12 @@ same customer may answer differently on a later inquiry.
   typed in. There is no competitor list or management screen.
 - In Checkpoint B the outcome is set by a person. Later it will follow from
   estimates and proposals.
+- **Marking a Project Won records its Sold Amount.** Until estimates and proposals
+  exist this is the temporary source of sold value, so early revenue is not lost
+  from the system. When accepted proposals exist they become the authoritative
+  source, and the amount is no longer typed in a second time.
+- Owner and Leadership may correct a Sold Amount. Every correction is an audit
+  event recording the old and new amounts.
 
 #### Responsibilities
 
@@ -182,8 +188,9 @@ deactivate** an option.
 - A deactivated option disappears from the choices for new records. Every existing
   record keeps pointing at it, and history and reports still show it.
 - An option that has been used is never deleted.
-- The Settings screen is one simple pattern repeated for the five lists. It is not a
-  general "configure your CRM" tool.
+- All five live on one Settings page, **Lead & Sales Lists**: one simple pattern
+  repeated five times. It is not a general "configure your CRM" tool.
+- Leadership's permission is for this page alone. It opens no other Settings page.
 - Lifecycle statuses, Account types, Contact roles and responsibility types are
   **not** managed lists. They carry behavior, so they stay in code.
 
@@ -204,7 +211,7 @@ Facebook / Instagram Message · In Person · Other
 
 **Disqualification Reasons** (with the reporting category proposed for each):
 
-| Reason | Category (Proposed) |
+| Reason | Category |
 | --- | --- |
 | Outside Service Area | Serviceability |
 | Service Not Offered | Serviceability |
@@ -272,8 +279,11 @@ Not a Fit · Financing / Payment · Unable to Re-Engage / No Decision · Other
   human decision.
 - Checkpoint B builds the normalized data and the suggestions at the point of
   entry. A tool for merging two existing records is not part of Checkpoint B.
-- Open: how much of an existing Account a suggestion may show to someone who could
-  not otherwise see it. See "Open decisions".
+- **A suggestion never becomes a way to discover customers.** When the likely
+  duplicate is an Account the person could not otherwise see, the suggestion shows
+  only the minimum needed to recognize it: the Account type and a masked form of
+  the phone or email that matched. It shows no name, address, Lead, Project or
+  Location. When the person can already see the Account, it is shown normally.
 
 ## Archiving
 
@@ -330,6 +340,7 @@ never disagree. This is deliberately not a compliance product.
 | Project transferred to another Location | Yes | Yes |
 | Project responsibility changed | Yes | Yes |
 | Project sales outcome set or changed (with reason) | Yes | Yes |
+| Sold Amount corrected (old and new amount) | Yes | Yes |
 | Project, Account, Contact or Property archived or restored | Yes | Yes |
 | Attachment added or removed | Yes | Yes |
 | Original inquiry details corrected | Yes | No |
@@ -364,7 +375,7 @@ Proposed tables and their important fields. "Optional" means it may be empty.
 | `lead_disqualification_reasons` | name; position; active; category; whether a note is required |
 | `sales_loss_reasons` | name; position; active; whether a note is required; whether a competitor may be recorded |
 | `leads` | received at; marketing source; lead source; lead channel; inquiry name, phone, email, address, message (as received); account, contact, property (each optional); location (optional: empty is unrouted); assigned staff member (optional); status; follow-up date; first qualified at, by; disqualified at, by; disqualification reason and note |
-| `projects` | property; location; originating lead (optional); primary contact (optional); title; description; sales outcome; outcome set at, by; sales loss reason and note; competitor name (optional); archived at, by |
+| `projects` | property; location; originating lead (optional); primary contact (optional); title; description; sales outcome; outcome set at, by; sold amount; sales loss reason and note; competitor name (optional); archived at, by |
 | `project_responsibilities` | project; responsibility type; staff member; assigned by. One person per type per project. |
 | `notes` | the record it belongs to (Lead, Project, Account or Property); text; author; removed at, by |
 | `attachments` | the record it belongs to; kind; storage key; original filename; file type; size; checksum; caption; uploaded by; removed at, by; purged at |
@@ -397,8 +408,8 @@ built correctly later:
 
 - A Project created directly has no Lead and so no attribution. It is reported as
   "no originating Lead", never given an invented source.
-- Revenue will come from accepted proposals when estimating is built. Whether to
-  record a sold amount before then is an open decision.
+- Revenue comes from the Sold Amount recorded when a Project is marked Won, until
+  accepted proposals take over as the authoritative source.
 
 ## Build sequence
 
@@ -410,21 +421,19 @@ first; photos and history presentation come last.
 | --- | --- |
 | **B0** | This plan and the updated documents. No code. **Complete.** |
 | **B1** | Audit event recording, and audit events for the Checkpoint A changes: staff invited, access granted and revoked, staff deactivated and reactivated, location changes. |
-| **B2** | Managed lists: the three attribution lists with their starting values, and the Settings screen for Owner and Leadership. |
-| **B3** | Lead capture: the inquiry as received, the three attribution fields, New and Working, the Leads list for a location, the Lead page. |
+| **B2** | Attribution and managed lists: the Lead & Sales Lists page in Settings for Owner and Leadership, with the three attribution lists and their starting values. The two reason lists join the same page in B7 and B9. |
+| **B3** | Lead capture: the inquiry as received, the three attribution fields, New and Working, the shared Leads page shown in Marketing and Sales, the Lead page. |
 | **B4** | Routing and assignment: the unrouted queue, route and re-route, return to central with a reason, assign a person, "Assigned to me". |
 | **B5** | Notes on a Lead. (Extended to Accounts and Projects as those arrive.) |
 | **B6** | Accounts, Contacts and Properties: create them from a Lead or link an existing one with duplicate suggestions; the Customers list and page with the visibility rules; archive and restore. |
 | **B7** | Qualification: Qualified, Disqualified with managed reasons, Nurture with a follow-up date, reopening. |
-| **B8** | Projects: create one or more from a Qualified Lead, or directly; the Project page; responsibilities; transfer between locations; archive and restore; the minimum way to find Projects. |
-| **B9** | Sales outcome: Open, Won, Lost, with managed Sales Loss Reasons. |
+| **B8** | Projects: create one or more from a Qualified Lead, or directly; the Project page; responsibilities; transfer between locations; archive and restore; the shared Projects page shown in Sales and Production. |
+| **B9** | Sales outcome: Open, Won with its Sold Amount, Lost with managed Sales Loss Reasons; correcting a Sold Amount. |
 | **B10** | Attachments: storage setup for staging, the attachment model, project photos, removal and the 30-day purge. |
 | **B11** | Timeline on Lead, Project and Account pages; the History view for managers. |
 | **B12** | Documentation, full check, staging verification, owner review of the whole checkpoint. |
 
-B5 is one step earlier than the owner's stated order. People working Leads need
-somewhere to write down what was said from the first day. It is small and can be
-moved if the owner prefers.
+B1 to B9 are the operational target for launch. See "Launch and production".
 
 ## Not in Checkpoint B
 
@@ -435,17 +444,52 @@ merging records; competitor management; "Referred By"; automatic routing by serv
 area; follow-up automation; the company-wide Audit Log screen; the homeowner
 portal; Color Studio.
 
+## Launch and production
+
+Banana Painting launches about a week after this plan was approved, and Backoffice
+is its system of record from the start.
+
+- **The operational target for launch is B1 to B9.** B10 (attachments and photos),
+  B11 (timeline and history presentation) and B12 (wrap-up) may follow the first
+  production launch if necessary.
+- **Authorization, data integrity, tests and auditability are not traded for the
+  date.**
+- B1 to B9 are built and reviewed against staging.
+- **Around B7 or B8, work stops for a production-readiness checkpoint,** so the
+  production environment exists before the operational steps are finished.
+  Production is not left until B12.
+- **Production does not reuse staging,** and **real customer data is never entered
+  into staging.**
+
+Before real customer data is entered into production:
+
+- a dedicated production environment and server;
+- dedicated database credentials with least privilege;
+- production backups;
+- a deliberate restore drill;
+- production Resend configuration and credentials;
+- the real production domain, with HTTPS;
+- the required two-factor policy for sensitive roles, as decided;
+- a production file-storage strategy, before uploaded files are enabled.
+
+## Decisions settled at the final review (2026-10-05)
+
+| # | Question | Decision |
+| --- | --- | --- |
+| 1 | Where Leads live in the menu | One shared Leads page, shown in both Marketing and Sales to people whose permissions allow it. There is no separate Marketing Leads and Sales Leads data or behavior. |
+| 2 | The Settings page for the managed lists | One Settings page named **Lead & Sales Lists**, holding all five lists. Owner and Leadership manage it. Leadership's permission is for this page only and opens no other Settings page. |
+| 3 | Nurture | Approved as a Lead status with a next follow-up date. Never treated as Disqualified or as a Sales Loss. |
+| 4 | What a duplicate suggestion may reveal | The minimum needed to recognize a likely duplicate: the Account type and a masked form of the matching phone or email. Never a way to discover customers the person may not see. |
+| 5 | How Projects are found | One shared Projects page, shown in Sales and Production as appropriate. Future center screens are views of the same records. |
+| 6 | Sold Amount | Recorded when a Project is marked Won, as the temporary source of sold value. Owner and Leadership may correct it; corrections are audited. Accepted proposals take over later. |
+| 7 | Disqualification reporting categories | Approved as listed: serviceability, lead quality, invalid, other. Sales Loss Reasons are never mixed into them. |
+| 8 | Launch scope | B1 to B9, with a production-readiness checkpoint around B7 or B8. See "Launch and production". |
+
 ## Open decisions
 
-Nothing blocks B1.
+None blocks the next step. These are settled in the step that needs them:
 
-| # | Decision | Recommendation | Needed by |
-| --- | --- | --- | --- |
-| 1 | **Where Leads live in the menu.** The approved place is Marketing > Call Center > Leads, but Sales Consultants cannot open the Marketing Center, and they work and convert Leads. | Make Leads a shared page like Customers: one address, shown under Marketing > Call Center and in the Sales Center, opened by the lead permission. | B3 |
-| 2 | **The Settings page for the managed lists** has no approved menu item, and Leadership has no Settings access today. | Add one Settings item, "Lists". Leadership with a company-wide grant sees Settings containing only that page. | B2 |
-| 3 | **Nurture as a fifth Lead status**, with a follow-up date. | Include it. Without it staff must leave such Leads in Working forever or disqualify them. | B7 |
-| 4 | **How much a duplicate suggestion may reveal** about an Account the person could not otherwise see. | Show the name, the Account type and the phone or email that matched, and nothing about its Leads, Projects or Locations. | B6 |
-| 5 | **The minimum way to find Projects.** There is no approved menu item for a plain Projects list. | One shared "Projects" list with filters for location, "assigned to me" and sales outcome, shown in the Sales and Production centers. | B8 |
-| 6 | **A sold amount on a Won Project** before estimating exists. Without it nothing records what a job sold for at launch. | An optional amount entered when marking Won, plainly temporary and replaced by proposals later. | B9 |
-| 7 | **The reporting category of each Disqualification Reason.** | As in the table above. | B7 |
-| 8 | **Launch scope and timing.** Backoffice is to be the system of record from launch, which is about a week away. There is no production environment yet, and the items in security-notes.md that must precede real use are open. | Decide which steps are the minimum for the first day (B1 to B9 cover the operational path), and schedule production setup alongside them. | Planning |
+- Whether Owner and Finance must use two-factor sign-in, and whether any other
+  role should. Needed by the production-readiness checkpoint.
+- How uploaded files are backed up and restored. Needed by B10.
+- The production domain. Needed by the production-readiness checkpoint.

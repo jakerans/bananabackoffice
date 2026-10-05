@@ -374,7 +374,7 @@ Decided 2026-10-04, closing security finding 8.
 The cost: someone who mistypes their address is no longer told so. That is the
 unavoidable price of not revealing which addresses have accounts.
 
-## Checkpoint B decisions (25 to 34)
+## Checkpoint B decisions (25 to 37)
 
 Decided by the owner on 2026-10-05, before any of Checkpoint B was built. The full
 model is in [checkpoint-b.md](checkpoint-b.md); these entries record what was
@@ -495,6 +495,41 @@ different kinds of fact, but keeping two parallel histories invites them to
 disagree.
 
 Rules out: a compliance product; logging who viewed or searched what.
+
+## 35. Leads and Projects are each one shared page, shown in more than one center
+
+Decided by the owner at the final review (2026-10-05). Leads is one page shown in
+Marketing and in Sales. Projects is one page shown in Sales and in Production.
+Each is opened by its own permission, not by access to a center. Future
+center-specific screens are different views of the same records.
+
+Why: Sales Consultants work Leads but cannot open the Marketing Center, and a
+Project passes from Sales to Production without becoming a different thing.
+
+Rules out: Marketing Leads and Sales Leads, or Sales Projects and Production
+Projects, as separate data or separate behavior.
+
+## 36. Sold Amount is typed in when a Project is Won, until proposals exist
+
+Marking a Project Won records its Sold Amount, so revenue is in the system from
+the first day. Owner and Leadership may correct it, and every correction is
+audited. When estimates and proposals are built, the accepted proposal becomes the
+authoritative source and the amount is no longer entered by hand.
+
+Why: the business launches before estimating is built. Without this, nothing would
+record what the first jobs sold for.
+
+## 37. Launch on B1 to B9, and prepare production before they are finished
+
+The operational target for launch is steps B1 to B9. Attachments, the timeline and
+the wrap-up may follow. Work stops around B7 or B8 for a production-readiness
+checkpoint. Production is a separate environment, never staging reused, and real
+customer data is never entered into staging. Leadership manages the Lead & Sales
+Lists page through a permission that opens no other Settings page.
+
+Why: leaving production to the end would put the first real customer data into an
+environment nobody had time to check. Authorization, data integrity, tests and
+auditability are not traded for the date.
 
 ## Future decisions already constrained by the brief
 
