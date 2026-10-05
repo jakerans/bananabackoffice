@@ -1,6 +1,7 @@
 <?php
 
 use App\Concerns\PasswordValidationRules;
+use App\Support\Access\Impersonation;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -39,6 +40,15 @@ new #[Title('Security settings')] class extends Component {
 
     #[Locked]
     public string $deletingPasskeyName = '';
+
+    /**
+     * Runs on every request to this page. A person's own sign-in details are
+     * never shown or changed while an Owner is viewing Backoffice as them.
+     */
+    public function boot(): void
+    {
+        app(Impersonation::class)->refuseAccountChanges();
+    }
 
     /**
      * Mount the component.

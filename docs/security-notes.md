@@ -83,8 +83,30 @@ that would mean deactivating the only account there. The passkey tests replace t
 passkey's own cryptographic check with one that accepts it, and test everything
 the application decides after that.
 
-### Open: must be handled before real staff use the system
+### Owner impersonation (added 2026-10-05)
 
+An Owner can view Backoffice as another staff member. The points that matter for
+security:
+
+- The session never stops being the Owner's; it only remembers a choice, which is
+  re-checked on every request. Signing out ends everything.
+- The request is served as the staff member alone. The Owner's permissions are
+  not combined with theirs, on page loads, Livewire updates or already-open pages.
+- The staff member's password, email, two-factor codes, passkeys and "remember
+  me" sign-ins are never read, changed or reset, and the pages and addresses that
+  manage them are refused while impersonating.
+- Staff accounts and access cannot be changed while impersonating.
+- The session ID changes on entering and leaving, and a recent password
+  confirmation is not carried across.
+- Every audit event made while impersonating names the real Owner as well as the
+  staff identity. Starting and stopping are audit events.
+- Tests send real requests for these checks, because Livewire's test helper skips
+  middleware and impersonation is applied by middleware.
+
+To decide at the production-readiness checkpoint: whether impersonation should be
+restricted or announced in production.
+
+### Open: must be handled before real staff use the system
 These are not blocking for development, but they must be closed before Backoffice
 is used with real accounts on a server.
 

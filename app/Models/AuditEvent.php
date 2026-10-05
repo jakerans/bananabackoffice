@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use LogicException;
 
 /**
+ * @property string|null $actor_name
+ * @property string|null $impersonator_name
  * @property array<string, mixed>|null $values_before
  * @property array<string, mixed>|null $values_after
  */
@@ -60,6 +62,35 @@ class AuditEvent extends Model
     public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actor_id');
+    }
+
+    /**
+     * The Owner who was really signed in, when the change was made while viewing
+     * Backoffice as the actor. Empty for an ordinary change.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function impersonator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'impersonator_id');
+    }
+
+    public function wasImpersonated(): bool
+    {
+        return $this->getAttribute('impersonator_id') !== null || $this->impersonator_name !== null;
+    }
+
+    /**
+     * Who made the change, in words, never crediting an impersonated change to
+     * the staff member alone: "Jacob Ransom, impersonating Roseanne Smith".
+     */
+    public function madeBy(): string
+    {
+        $actor = $this->actor_name ?? __('The command line');
+
+        return $this->wasImpersonated()
+            ? __(':owner, impersonating :staff', ['owner' => $this->impersonator_name, 'staff' => $actor])
+            : $actor;
     }
 
     /**

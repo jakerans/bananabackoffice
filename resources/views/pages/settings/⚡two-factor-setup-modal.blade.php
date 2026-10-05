@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Access\Impersonation;
 use Laravel\Fortify\Actions\ConfirmTwoFactorAuthentication;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use Livewire\Attributes\Computed;
@@ -24,6 +25,15 @@ new class extends Component {
 
     #[Validate('required|string|size:6', onUpdate: false)]
     public string $code = '';
+
+    /**
+     * Runs on every request to this page. A person's own sign-in details are
+     * never shown or changed while an Owner is viewing Backoffice as them.
+     */
+    public function boot(): void
+    {
+        app(Impersonation::class)->refuseAccountChanges();
+    }
 
     /**
      * Mount the component.

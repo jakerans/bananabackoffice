@@ -17,6 +17,8 @@ enum AuditAction: string
     case StaffAccessRevoked = 'staff.access_revoked';
     case StaffDeactivated = 'staff.deactivated';
     case StaffReactivated = 'staff.reactivated';
+    case StaffImpersonationStarted = 'staff.impersonation_started';
+    case StaffImpersonationStopped = 'staff.impersonation_stopped';
     case LocationCreated = 'location.created';
     case LocationRenamed = 'location.renamed';
     case LocationDeactivated = 'location.deactivated';

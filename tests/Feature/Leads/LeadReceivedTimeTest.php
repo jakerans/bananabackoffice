@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Leads\RouteLead;
 use App\Enums\Role;
 use App\Models\AuditEvent;
 use App\Models\Lead;
@@ -83,4 +84,100 @@ test('someone who may not correct the lead cannot correct its received time', fu
         ->assertForbidden();
 
     expect($lead->fresh()->received_at->toDateTimeString())->toBe('2026-10-05 17:00:00');
+});
+
+/*
+|--------------------------------------------------------------------------
+| A lead is received before anything else happens to it
+|--------------------------------------------------------------------------
+*/
+
+test('the received time cannot be moved after something already recorded about the lead', function (Closure $lead, string $named) {
+    $lakeview = Location::factory()->create();
+    $manager = User::factory()->withRoleAt(Role::LocationManager, $lakeview)->create();
+
+    // Everything about this lead happened on or after 11:00 AM on October 2, New York time.
+    $lead = $lead($lakeview, $manager);
+    $before = $lead->fresh()->getAttributes();
+
+    $page = Livewire::actingAs($manager)
+        ->test('pages::leads.show', ['lead' => $lead])
+        ->call('openReceivedTime')
+        ->set('correctedReceivedAt', '2026-10-02T11:30')
+        ->set('receivedTimeReason', 'It actually arrived later that morning.')
+        ->call('correctReceivedTime')
+        ->assertHasErrors('correctedReceivedAt')
+        ->assertSee("The received time cannot be after the lead was {$named} (Oct 2, 2026 11:00 AM EDT).");
+
+    // Refused outright: nothing was moved to make it fit, and nothing was recorded.
+    expect($lead->fresh()->getAttributes())->toBe($before);
+    expect(AuditEvent::query()->count())->toBe(0);
+
+    // Up to that moment is still allowed, and changes only the received time.
+    $page->set('correctedReceivedAt', '2026-10-02T11:00')->call('correctReceivedTime')->assertHasNoErrors();
+
+    $corrected = $lead->fresh();
+
+    expect($corrected->received_at->toDateTimeString())->toBe('2026-10-02 15:00:00');
+    expect(array_diff_key($corrected->getAttributes(), ['received_at' => true, 'updated_at' => true]))
+        ->toBe(array_diff_key($before, ['received_at' => true, 'updated_at' => true]));
+})->with([
+    'first routed' => [
+        fn (Location $lakeview) => Lead::factory()->at($lakeview)->create([
+            'received_at' => '2026-10-01 14:00:00', 'first_routed_at' => '2026-10-02 15:00:00', 'routed_at' => '2026-10-04 09:00:00', 'created_at' => '2026-10-03 09:00:00',
+        ]),
+        'first routed to a location',
+    ],
+    'entered in backoffice' => [
+        fn (Location $lakeview) => Lead::factory()->at($lakeview)->create([
+            'received_at' => '2026-10-01 14:00:00', 'created_at' => '2026-10-02 15:00:00', 'first_routed_at' => '2026-10-03 09:00:00', 'routed_at' => '2026-10-03 09:00:00',
+        ]),
+        'entered in Backoffice',
+    ],
+    'first assigned, even to someone who no longer has it' => [
+        function (Location $lakeview, User $manager) {
+            $lead = Lead::factory()->at($lakeview)->create([
+                'received_at' => '2026-10-01 14:00:00', 'created_at' => '2026-10-03 09:00:00', 'first_routed_at' => '2026-10-03 09:00:00', 'routed_at' => '2026-10-03 09:00:00',
+            ]);
+
+            $lead->assignments()->forceCreate(['user_id' => $manager->id, 'assigned_at' => '2026-10-02 15:00:00', 'ended_at' => '2026-10-02 16:00:00', 'end_reason' => 'released']);
+
+            return $lead;
+        },
+        'first assigned',
+    ],
+    'first worked' => [
+        fn (Location $lakeview) => Lead::factory()->at($lakeview)->working()->create([
+            'received_at' => '2026-10-01 14:00:00', 'work_started_at' => '2026-10-02 15:00:00', 'created_at' => '2026-10-03 09:00:00', 'first_routed_at' => '2026-10-03 09:00:00', 'routed_at' => '2026-10-03 09:00:00',
+        ]),
+        'first worked',
+    ],
+]);
+
+test('a routed lead\'s received time cannot be corrected to after it was routed', function () {
+    $lakeview = Location::factory()->create();
+    $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
+
+    // Recorded centrally on October 1, routed on October 3, and it is now October 5.
+    $this->travelTo('2026-10-01 14:00:00');
+    $lead = Lead::factory()->create(['received_at' => '2026-10-01 13:00:00']);
+
+    $this->travelTo('2026-10-03 14:00:00');
+    app(RouteLead::class)->handle($lead, $lakeview, null, $agent);
+
+    $this->travelTo('2026-10-05 18:30:00');
+
+    Livewire::actingAs($agent)
+        ->test('pages::leads.show', ['lead' => $lead])
+        ->call('openReceivedTime')
+        ->set('correctedReceivedAt', '2026-10-04T09:00')
+        ->set('receivedTimeReason', 'Mistyped the day.')
+        ->call('correctReceivedTime')
+        ->assertHasErrors('correctedReceivedAt');
+
+    $unchanged = $lead->fresh();
+
+    expect($unchanged->received_at->toDateTimeString())->toBe('2026-10-01 13:00:00');
+    expect($unchanged->first_routed_at->toDateTimeString())->toBe('2026-10-03 14:00:00');
+    expect($unchanged->routed_at->toDateTimeString())->toBe('2026-10-03 14:00:00');
 });

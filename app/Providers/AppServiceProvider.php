@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Actions\Staff\StopImpersonation;
+use App\Enums\ImpersonationEndReason;
 use App\Enums\Permission;
 use App\Models\Lead;
 use App\Models\LeadChannel;
@@ -14,6 +16,7 @@ use App\Models\SalesLossReason;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
+use App\Support\Access\Impersonation;
 use App\Support\Addresses\AddressLookup;
 use App\Support\Addresses\MapboxAddressLookup;
 use App\Support\Addresses\UnavailableAddressLookup;
@@ -21,9 +24,11 @@ use App\Support\Navigation\Navigation;
 use App\Support\ServiceAreas\PostalCodeServiceAreas;
 use App\Support\ServiceAreas\ServiceAreaResolver;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -36,6 +41,9 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(Navigation::class);
+
+        // One per request: it notes who the request is being served as.
+        $this->app->scoped(Impersonation::class);
 
         // Address lookup is offered only when a provider's token has been set up.
         // Without one, staff type addresses by hand and nothing else changes.
@@ -58,6 +66,20 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configureRecordNames();
         $this->configureAuthorization();
+        $this->configureImpersonation();
+    }
+
+    /**
+     * Signing out ends the whole session, so it also ends viewing Backoffice as
+     * someone else. That is recorded like any other stop.
+     */
+    protected function configureImpersonation(): void
+    {
+        Event::listen(function (Logout $event): void {
+            if ($this->app->make('request')->hasSession()) {
+                $this->app->make(StopImpersonation::class)->handle(ImpersonationEndReason::SignedOut);
+            }
+        });
     }
 
     /**

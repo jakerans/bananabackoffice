@@ -44,4 +44,19 @@ class UserPolicy
     {
         return $user->hasPermissionAcrossAllLocations(Permission::ManageUsers) && $user->isNot($staff);
     }
+
+    /**
+     * Determine whether the user can view Backoffice as a staff member.
+     *
+     * This belongs to the Owner role itself, not to a permission another role
+     * could be given. An Owner cannot do it as themselves, nor as someone who is
+     * deactivated or has not accepted their invitation.
+     */
+    public function impersonate(User $user, User $staff): bool
+    {
+        return $user->isUsableOwner()
+            && $user->isNot($staff)
+            && $staff->isActive()
+            && ! $staff->invitationIsPending();
+    }
 }

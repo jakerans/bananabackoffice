@@ -800,6 +800,115 @@ Choices made while building, for the owner to confirm:
   suite outgrew PHP's 128 MB default on a development machine. Nothing in the
   application changed.
 
+## 45. B4 approved; Received Time cannot break the order of events
+
+The owner approved B4 on 2026-10-05 and confirmed the choices listed under 44:
+Sales Consultants cannot release their own Leads; they may see unassigned Leads
+at their Locations and correct ordinary Lead details there, but may not claim,
+assign, start, release or reassign unless another role they hold allows it; no
+"Take it" button; `leads.transfer` with its both-ends check; authorization-scoped
+open-Lead counts; Received Time in its own dialog; the multi-role
+auto-assignment.
+
+One correction was required and is built:
+
+- **A Received Time correction may not create an impossible order of events.**
+  It may not be later than when the Lead was first routed, nor later than any
+  other moment already recorded about the Lead whose order is fixed: when it was
+  entered in Backoffice, first assigned (including to someone who no longer has
+  it), or first worked.
+- **Nothing downstream is rewritten.** A correction that does not fit is refused
+  with a message naming the earliest of those moments and its time.
+- In practice a Lead is entered before anything else is recorded, so "entered in
+  Backoffice" is normally the limit. The other moments are still checked, so the
+  rule holds for any Lead however its times came about.
+
+## 46. Owner impersonation
+
+Requested by the owner on 2026-10-05, to review and troubleshoot each role's
+experience during development and for support afterwards. Built the same day.
+
+**What it is.** An Owner can view Backoffice exactly as another active staff
+member sees it, from Settings > Users and Access > the staff member >
+Impersonate.
+
+**How it works**
+
+- **The session stays the Owner's.** It only remembers who is being viewed as.
+  On every request that choice is checked again, and the request is then served
+  as the staff member and nobody else. Every permission, policy, location and
+  menu is worked out for the staff member alone; none of the Owner's access is
+  added. The Owner's identity is put back when the response is ready.
+- **Nothing of the staff member's sign-in is involved.** Their password is not
+  asked for, shown, changed or reset, and their "remember me" sign-ins on their
+  own devices are untouched.
+- **It is applied by middleware on every web request,** including Livewire
+  updates and pages that were already open. A page the Owner opened as
+  themselves cannot be used with the Owner's permissions once impersonating.
+- **The session gets a new ID on entering and on leaving.** A recent password
+  confirmation, and the location and center last worked in, are not carried from
+  one identity to the other.
+
+**Who and whom**
+
+- Only the Owner role may start it. It is not a permission another role could be
+  given. Someone holding Owner alongside other roles may.
+- Not as yourself, not as a deactivated person, and not as someone who has not
+  yet accepted their invitation (they have never signed in, and every page would
+  send them to email verification).
+- Another Owner may be impersonated.
+- It cannot be started while already impersonating.
+
+**While impersonating**
+
+- A red bar stays at the top of every signed-in page: "Viewing Backoffice as
+  [Name]", with a "Return to [Owner]" button. It stays in view when the page
+  scrolls and is also shown on "Not authorized" pages.
+- **Account and security settings are closed:** name and email, password,
+  two-factor codes and recovery codes, passkeys, password confirmation and email
+  verification. This covers the Backoffice pages, pages that were already open,
+  and the sign-in packages' own addresses.
+- **Staff accounts and access are closed,** even when impersonating another
+  Owner: inviting, granting, revoking, deactivating, reactivating and resending
+  invitations. An Owner manages staff as themselves, so such a change is always
+  made, and recorded, in their own name.
+- Everything else behaves exactly as it does for the staff member.
+
+**Ending**
+
+- "Return to [Owner]" restores the Owner at once and goes back to the staff
+  member's page.
+- Signing out ends the whole session. No Owner session is left behind.
+- If the staff member is deactivated, impersonation ends on the next request and
+  the Owner is back as themselves with a notice. A Livewire action in flight is
+  not carried out as the Owner; its page is reloaded.
+- If the staff member's access changes, the next request simply reflects it.
+- If the Owner is deactivated, the session is signed out. If they are no longer
+  an Owner, impersonation ends and they continue with their own reduced access.
+
+**Audit**
+
+- Starting and stopping are audit events in the Owner's own name, about the
+  staff member. A stop records why: returned, signed out, the staff member became
+  unavailable, or the Owner was no longer authorized.
+- **A change made while impersonating records both people.** The actor is the
+  staff identity the change was made as. The event also carries the real Owner
+  (`impersonator_id` and a copy of their name). The audit recorder adds this
+  itself for every event, so no caller can leave it out.
+- It reads as "Jacob Ransom, impersonating Roseanne Smith". Ordinary screens do
+  not show this; the audit history will, when it is built (B11).
+
+**Known limits**
+
+- A record created while impersonating belongs to the staff identity, exactly as
+  if they had made it: a Lead they record shows them as the person who recorded
+  it and is assigned to them. Only the audit event names the Owner.
+- If the session simply expires while impersonating, no "stopped" event is
+  recorded, because nothing runs at that moment.
+- Impersonation is available wherever the code is deployed, including production
+  later. Whether production should restrict or announce it is a question for the
+  production-readiness checkpoint.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

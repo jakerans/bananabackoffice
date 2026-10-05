@@ -4,6 +4,7 @@ use App\Actions\Staff\InviteStaffMember;
 use App\Concerns\ProfileValidationRules;
 use App\Exceptions\InvitationNotSent;
 use App\Models\User;
+use App\Support\Access\Impersonation;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
@@ -16,6 +17,15 @@ new #[Title('Users and Access')] class extends Component {
     public string $name = '';
 
     public string $email = '';
+
+    /**
+     * Runs on every request to this page. Staff accounts and access are managed
+     * by an Owner as themselves, never while viewing Backoffice as someone else.
+     */
+    public function boot(): void
+    {
+        app(Impersonation::class)->refuseStaffAdministration();
+    }
 
     /**
      * Mount the component.

@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Access\Impersonation;
 use Laravel\Fortify\Actions\GenerateNewRecoveryCodes;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -7,6 +8,15 @@ use Livewire\Component;
 new class extends Component {
     #[Locked]
     public array $recoveryCodes = [];
+
+    /**
+     * Runs on every request to this page. A person's own sign-in details are
+     * never shown or changed while an Owner is viewing Backoffice as them.
+     */
+    public function boot(): void
+    {
+        app(Impersonation::class)->refuseAccountChanges();
+    }
 
     /**
      * Mount the component.

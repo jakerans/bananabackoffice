@@ -5,6 +5,7 @@ use App\Http\Controllers\CenterController;
 use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\PasswordResetLinkController;
 use App\Http\Controllers\SectionController;
+use App\Http\Controllers\StopImpersonationController;
 use App\Http\Controllers\SwitchLocationController;
 use App\Models\Lead;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +24,9 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:password-reset-link')
         ->name('password.email');
 });
+
+// Always handled as the person who is really signed in, whoever they are viewing Backoffice as.
+Route::post('impersonation/stop', StopImpersonationController::class)->middleware('auth')->name('impersonation.stop');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');

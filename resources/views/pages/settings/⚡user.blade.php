@@ -5,6 +5,7 @@ use App\Actions\Staff\GrantAccess;
 use App\Actions\Staff\ReactivateStaffMember;
 use App\Actions\Staff\ResendStaffInvitation;
 use App\Actions\Staff\RevokeAccess;
+use App\Actions\Staff\StartImpersonation;
 use App\Enums\GrantScope;
 use App\Enums\Role;
 use App\Exceptions\InvitationNotSent;
@@ -12,6 +13,7 @@ use App\Models\AccessGrant;
 use App\Models\Location;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
+use App\Support\Access\Impersonation;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +30,15 @@ new #[Title('Manage access')] class extends Component {
     public string $scope = GrantScope::Location->value;
 
     public ?int $locationId = null;
+
+    /**
+     * Runs on every request to this page. Staff accounts and access are managed
+     * by an Owner as themselves, never while viewing Backoffice as someone else.
+     */
+    public function boot(): void
+    {
+        app(Impersonation::class)->refuseStaffAdministration();
+    }
 
     /**
      * Mount the component.
@@ -141,6 +152,22 @@ new #[Title('Manage access')] class extends Component {
     }
 
     /**
+     * View Backoffice exactly as this staff member sees it.
+     *
+     * Only an Owner may, never as themselves, and only as someone who is active.
+     * Their password is not asked for, shown, or changed.
+     */
+    public function impersonate(StartImpersonation $startImpersonation): void
+    {
+        $this->authorize('impersonate', $this->staff);
+
+        $startImpersonation->handle(Auth::user(), $this->staff);
+
+        // A full page load, so everything on screen is drawn again as the staff member.
+        $this->redirectRoute('dashboard');
+    }
+
+    /**
      * Email a fresh invitation link, which replaces any earlier one.
      */
     public function resendInvitation(ResendStaffInvitation $resendStaffInvitation): void
@@ -196,6 +223,10 @@ new #[Title('Manage access')] class extends Component {
             @if ($staff->isActive() && $staff->invitationIsPending())
                 <flux:button wire:click="resendInvitation" icon="envelope">{{ __('Resend invitation') }}</flux:button>
             @endif
+
+            @can('impersonate', $staff)
+                <flux:button wire:click="impersonate" icon="eye" data-test="impersonate">{{ __('Impersonate') }}</flux:button>
+            @endcan
 
             @can('deactivate', $staff)
                 @if ($staff->isActive())

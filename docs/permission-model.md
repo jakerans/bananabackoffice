@@ -178,6 +178,24 @@ cannot differ only by capital letters.
 - Only the Owner role contains `settings.users.manage` today. If another role is
   ever given it, add a rule that only an Owner may grant or remove the Owner role.
 
+## Owner impersonation
+
+An Owner can view Backoffice as another active staff member, to support them or
+to check what a role sees. See decision 46 in [decisions.md](decisions.md).
+
+- **Only the Owner role may start it.** It is tied to the role itself, not to a
+  permission, so no other role can be given it.
+- **The staff member's access is used alone.** While impersonating, every gate,
+  policy, location and menu is worked out for the staff member. The Owner's
+  access is never added to it.
+- **It is checked on every request.** The Owner must still be an active Owner and
+  the staff member must still be active. A change to either takes effect on the
+  next request.
+- **Sign-in details are out of reach.** The staff member's name, email, password,
+  two-factor codes and passkeys cannot be seen or changed while impersonating.
+- **Staff accounts and access cannot be managed while impersonating.**
+- **Both people are recorded** on every audit event made while impersonating.
+
 ## Homeowners
 
 Homeowners will never be rows in the staff `users` table and will never sign in

@@ -10,6 +10,8 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-cream text-ink antialiased">
+        @include('partials.impersonation-banner')
+
         {{-- The Ink header is the only dark region, so Flux renders its controls for a dark surface here. --}}
         <header class="dark bg-ink text-white">
             <div class="flex h-14 items-stretch">
