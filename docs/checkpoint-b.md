@@ -470,7 +470,7 @@ Two separate questions, kept as separate actions and separate data:
 | View | Shows | Order | Who has it |
 | --- | --- | --- | --- |
 | Assigned to me | The person's Leads that need action now, at every Location they can see, whatever Location is selected: New, Working, Qualified, and Nurture once its follow-up is due (B7) | Oldest first | Everyone |
-| Follow-ups (B7) | Leads in Nurture: the person's own anywhere, plus everyone's at the current Location for someone who may assign there. The count is of those due or overdue. | Soonest follow-up first | Everyone |
+| Follow-ups (B7) | Leads in Nurture. A Sales Consultant sees only their own. Someone who may assign at the current Location also sees every Nurture Lead there, **including those with no assignee** (a move clears the assignee), shown as Unassigned. Someone who may see unrouted Leads also sees Nurture Leads that were returned to central. The count is of those due or overdue. | Soonest follow-up first | Everyone |
 | Unassigned | Leads at the current Location with no assignee | Longest at that Location first | People who may assign there |
 | All leads | Every Lead at the current Location | Newest first | Everyone |
 | Unrouted | Leads not yet sent to a Location | Oldest first | People who may see unrouted Leads |

@@ -1,6 +1,8 @@
 <?php
 
 use App\Actions\Leads\MoveLeadToNurture;
+use App\Actions\Leads\ReturnLeadToCentral;
+use App\Actions\Leads\RouteLead;
 use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
 use App\Enums\Role;
@@ -330,6 +332,88 @@ test('someone who hands out leads sees every follow-up at the location they are 
     'location manager' => [fn (Location $lakeview) => User::factory()->withRoleAt(Role::LocationManager, $lakeview)->create()],
     'call center agent at the location' => [fn (Location $lakeview) => User::factory()->withRoleAt(Role::CallCenterAgent, $lakeview)->create()],
     'owner working in that location' => [fn () => User::factory()->withRoleEverywhere(Role::Owner)->create()],
+]);
+
+test('a nurture lead left unassigned by a transfer stays in the follow-ups of the people who hand out leads there', function (Closure $distributor) {
+    $lakeview = Location::factory()->create(['name' => 'Lakeview']);
+    $northside = Location::factory()->create(['name' => 'Northside']);
+
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $sam = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create(['name' => 'Sam Sales']);
+    $lead = Lead::factory()->at($lakeview)->nurture('2026-10-01')->assignedTo($sam)->create(['inquiry_name' => 'Transferred Tara']);
+
+    // The move clears who has it. It is still in nurture, with its follow-up.
+    app(RouteLead::class)->handle($lead, $northside, 'The house is on the north side.', $owner);
+
+    expect($lead->fresh()->assigned_user_id)->toBeNull();
+    expect($lead->fresh()->status)->toBe(LeadStatus::Nurture);
+
+    session([CurrentLocation::SESSION_KEY => $northside->id]);
+
+    Livewire::actingAs($distributor($northside, $owner))
+        ->test('pages::leads.index')
+        // Overdue, so it counts as waiting.
+        ->assertSeeInOrder(['Follow-ups', '(1)'])
+        ->call('show', 'follow-ups')
+        // Listed, and plainly with nobody on it.
+        ->assertSeeInOrder(['Transferred Tara', 'Unassigned', 'Overdue by 5 days'])
+        ->assertDontSee('Sam Sales');
+})->with([
+    'location manager' => [fn (Location $northside) => User::factory()->withRoleAt(Role::LocationManager, $northside)->create()],
+    'call center agent at the location' => [fn (Location $northside) => User::factory()->withRoleAt(Role::CallCenterAgent, $northside)->create()],
+    'company-wide call center agent' => [fn () => User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create()],
+    'leadership' => [fn () => User::factory()->withRoleEverywhere(Role::Leadership)->create()],
+    'owner' => [fn (Location $northside, User $owner) => $owner],
+]);
+
+test('a sales consultant\'s follow-ups never include a nurture lead that is not theirs, assigned or not', function () {
+    $lakeview = Location::factory()->create();
+    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+    $colleague = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+
+    Lead::factory()->at($lakeview)->nurture('2026-10-01')->create(['inquiry_name' => 'Unassigned Una']);
+    Lead::factory()->at($lakeview)->nurture('2026-10-01')->assignedTo($colleague)->create(['inquiry_name' => 'Colleague Cara']);
+    Lead::factory()->at($lakeview)->nurture('2026-10-01')->assignedTo($consultant)->create(['inquiry_name' => 'Mine Mia']);
+
+    Livewire::actingAs($consultant)
+        ->test('pages::leads.index')
+        ->assertSeeInOrder(['Follow-ups', '(1)'])
+        ->call('show', 'follow-ups')
+        ->assertSee('Mine Mia')
+        ->assertDontSee('Unassigned Una')
+        ->assertDontSee('Colleague Cara');
+});
+
+test('a nurture lead returned to central stays in the follow-ups of people who can see unrouted leads', function (Closure $viewer, bool $sees) {
+    $lakeview = Location::factory()->create(['name' => 'Lakeview']);
+
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $sam = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+    $lead = Lead::factory()->at($lakeview)->nurture('2026-10-01')->assignedTo($sam)->create(['inquiry_name' => 'Returned Rita']);
+
+    // Back to central: no location, and so nobody assigned.
+    app(ReturnLeadToCentral::class)->handle($lead, 'Outside what Lakeview covers.', $owner);
+
+    expect($lead->fresh()->location_id)->toBeNull();
+    expect($lead->fresh()->assigned_user_id)->toBeNull();
+    expect($lead->fresh()->status)->toBe(LeadStatus::Nurture);
+
+    session([CurrentLocation::SESSION_KEY => $lakeview->id]);
+
+    $page = Livewire::actingAs($viewer($lakeview, $owner))
+        ->test('pages::leads.index')
+        ->call('show', 'follow-ups');
+
+    $sees
+        ? $page->assertSeeInOrder(['Follow-ups', '(1)'])->assertSeeInOrder(['Returned Rita', 'Unrouted', 'Unassigned'])
+        : $page->assertSeeInOrder(['Follow-ups', '(0)'])->assertDontSee('Returned Rita');
+})->with([
+    'owner' => [fn (Location $lakeview, User $owner) => $owner, true],
+    'leadership' => [fn () => User::factory()->withRoleEverywhere(Role::Leadership)->create(), true],
+    'company-wide call center agent' => [fn () => User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create(), true],
+    // An unrouted lead belongs to no location, so no location grant reaches it.
+    'location manager' => [fn (Location $lakeview) => User::factory()->withRoleAt(Role::LocationManager, $lakeview)->create(), false],
+    'call center agent at one location' => [fn (Location $lakeview) => User::factory()->withRoleAt(Role::CallCenterAgent, $lakeview)->create(), false],
 ]);
 
 test('the workload shown when assigning counts what a person has to act on now', function () {

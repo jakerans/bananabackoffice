@@ -1167,6 +1167,22 @@ Choices made while building, for the owner to confirm:
   already refuse while "active" Leads exist, and active now includes Qualified
   and Nurture and excludes Disqualified.
 
+**The owner confirmed all of these on 2026-10-06** and approved B7 in principle,
+pending a browser review: the separate `leads.waive_contact_wait` permission and
+who holds it; reopening and correcting through the existing authority to assign;
+the markers on the two special reasons; "Unable to Contact" for Working Leads
+only; category snapshots that never change, with a genuinely corrected reason
+taking the new reason's current category; "Open leads" as the filter's default;
+and no status history on the Lead page until B11.
+
+The owner also required that **Follow-ups never loses an unassigned Nurture
+Lead.** For someone who may assign Leads at the current Location, the view lists
+every Nurture Lead there, assigned or not, with "Unassigned" shown. A Sales
+Consultant still sees only their own. That was already how it worked for a Lead
+moved between Locations. One gap was closed: a Nurture Lead **returned to
+central** has no Location as well as no assignee, and was missing from the view.
+It is now listed for the people who may see unrouted Leads (Owner, Leadership and
+a company-wide Call Center Agent).
 ## Future decisions already constrained by the brief
 - Estimates hold any number of named, ordered options. No fixed tiers.
 - Accepted proposals are stored as versioned snapshots.

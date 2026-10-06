@@ -201,8 +201,12 @@ new #[Title('Leads')] class extends Component {
 
     /**
      * Limit a query to the Leads in Nurture this person follows: their own
-     * wherever they are, and, for someone who hands out Leads in the location
-     * being worked in, everyone's there.
+     * wherever they are; for someone who hands out Leads in the location being
+     * worked in, every one there, with or without an assignee; and for someone
+     * who may see unrouted Leads, those too.
+     *
+     * A move or a return to central clears the assignee, so a Nurture Lead can
+     * have nobody on it. It must stay in front of the people who can hand it out.
      *
      * @param  Builder<Lead>  $query
      * @return Builder<Lead>
@@ -216,6 +220,10 @@ new #[Title('Leads')] class extends Component {
 
                 if ($this->canDistribute) {
                     $query->orWhere(fn (Builder $here) => $this->atCurrentLocation($here));
+                }
+
+                if ($this->canSeeUnrouted) {
+                    $query->orWhereNull('location_id');
                 }
             });
     }
@@ -277,8 +285,10 @@ new #[Title('Leads')] class extends Component {
                         {{ __('Leads waiting on you, at every location you work in. Oldest first. A follow-up appears here once its date arrives.') }}
                         @break
                     @case($this::FOLLOW_UPS)
-                        @if ($this->canDistribute)
-                            {{ __('Leads in nurture for :location, and your own anywhere. Soonest follow-up first.', ['location' => $this->context?->label()]) }}
+                        @if ($this->canDistribute && $this->canSeeUnrouted)
+                            {{ __('Every lead in nurture for :location, assigned or not, those not yet sent to a location, and your own anywhere. Soonest follow-up first.', ['location' => $this->context?->label()]) }}
+                        @elseif ($this->canDistribute)
+                            {{ __('Every lead in nurture for :location, assigned or not, and your own anywhere. Soonest follow-up first.', ['location' => $this->context?->label()]) }}
                         @else
                             {{ __('Your leads in nurture. Soonest follow-up first.') }}
                         @endif
