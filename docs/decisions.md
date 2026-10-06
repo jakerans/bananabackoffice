@@ -953,6 +953,50 @@ above.
 - **The Production Manager role holds `notes.write`,** as the approved matrix
   says, but cannot see Leads, so it has no effect until Projects exist.
 
+## 48. Customers: the B6 decisions, and how B6a is built
+
+The owner approved the B6 plan on 2026-10-06 with these decisions. They are set
+out in full under "Customers: decisions for step B6" in
+[checkpoint-b.md](checkpoint-b.md).
+
+- B6 is built in three separately reviewed steps: B6a, B6b, B6c.
+- A customer with no Lead is created by company-wide staff only.
+- **A Contact may hold several roles for the same Account.** Primary Contact is a
+  separate mark, not a role.
+- A Residential Account needs a primary Contact; a Commercial Account may start
+  without a Contact. Compound names are not split automatically.
+- Location staff may link a Lead to a customer they cannot see only on an exact
+  normalized phone or email match, shown masked, never on an address alone.
+  Every such link is audited.
+- No notes on customers.
+- Archiving shared customer data is for Owner and Leadership through an
+  all-locations grant. This narrows the earlier matrix, which let a Location
+  Manager archive.
+- A Lead needs an Account, Contact, Property and Location before it can become a
+  Project (B8).
+- Phone and email are matching signals, never unique identity.
+- A Property never stores a Location.
+
+Choices made while building B6a, for the owner to confirm:
+
+- **Roles are their own table,** one row per role on a connection, rather than a
+  list packed into one column. The database can then refuse a duplicate, and a
+  later report can ask "who are our billing contacts?" directly.
+- **A connection between a Contact and an Account is archived, not deleted,** so
+  "removed from this customer" can be restored like everything else.
+- **Location staff need both permissions at the same Location** to see a customer
+  through a Lead: the lead permission and the customer permission. Every role
+  that works Leads holds both, so this only matters for unusual mixes of grants.
+- **The location filter is offered only for Locations where the person can see
+  Leads,** because "a customer at a Location" means "with a Lead there". Someone
+  who sees customers but not Leads (Finance, Production with an all-locations
+  grant) gets no location filter and no Lead count.
+- **Customers appears in the Marketing, Sales, Production and Finance menus,** the
+  four places the approved navigation map already listed it.
+- **Company-wide customer creation is not in any of the three steps as listed.**
+  It needs the Contact form, so it is assumed to belong to B6b unless the owner
+  says otherwise. Until then no screen creates a customer.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

@@ -3,6 +3,8 @@
 namespace Database\Factories;
 
 use App\Enums\LeadStatus;
+use App\Models\Account;
+use App\Models\Contact;
 use App\Models\Lead;
 use App\Models\LeadAssignment;
 use App\Models\LeadChannel;
@@ -10,6 +12,7 @@ use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
 use App\Models\ProjectSize;
+use App\Models\Property;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\Contact\PhoneNumber;
@@ -106,6 +109,19 @@ class LeadFactory extends Factory
             'location_id' => $location->id,
             'first_routed_at' => now(),
             'routed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Indicate the customer the Lead has been linked to, and optionally the
+     * person and the property at that customer.
+     */
+    public function from(Account $account, ?Contact $contact = null, ?Property $property = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'account_id' => $account->id,
+            'contact_id' => $contact?->id,
+            'property_id' => $property?->id,
         ]);
     }
 

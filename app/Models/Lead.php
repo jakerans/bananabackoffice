@@ -70,6 +70,12 @@ use Illuminate\Support\Carbon;
  * @property-read Location|null $location
  * @property-read User|null $capturedBy
  * @property-read User|null $assignee
+ * @property int|null $account_id
+ * @property int|null $contact_id
+ * @property int|null $property_id
+ * @property-read Account|null $account
+ * @property-read Contact|null $contact
+ * @property-read Property|null $property
  */
 class Lead extends Model
 {
@@ -203,6 +209,37 @@ class Lead extends Model
     public function assignments(): HasMany
     {
         return $this->hasMany(LeadAssignment::class);
+    }
+
+    /**
+     * The customer this inquiry turned out to be from. Empty until someone has
+     * worked that out. Linking never changes the inquiry as it was received.
+     *
+     * @return BelongsTo<Account, $this>
+     */
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
+    }
+
+    /**
+     * The person at that customer the inquiry is from.
+     *
+     * @return BelongsTo<Contact, $this>
+     */
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class);
+    }
+
+    /**
+     * The customer's property the inquiry is about.
+     *
+     * @return BelongsTo<Property, $this>
+     */
+    public function property(): BelongsTo
+    {
+        return $this->belongsTo(Property::class);
     }
 
     /**

@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Actions\Staff\StopImpersonation;
 use App\Enums\ImpersonationEndReason;
 use App\Enums\Permission;
+use App\Models\Account;
+use App\Models\Contact;
 use App\Models\Lead;
 use App\Models\LeadChannel;
 use App\Models\LeadDisqualificationReason;
@@ -12,6 +14,7 @@ use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
 use App\Models\ProjectSize;
+use App\Models\Property;
 use App\Models\SalesLossReason;
 use App\Models\Service;
 use App\Models\User;
@@ -102,6 +105,9 @@ class AppServiceProvider extends ServiceProvider
             'lead' => Lead::class,
             'service' => Service::class,
             'project_size' => ProjectSize::class,
+            'account' => Account::class,
+            'contact' => Contact::class,
+            'property' => Property::class,
         ]);
     }
 

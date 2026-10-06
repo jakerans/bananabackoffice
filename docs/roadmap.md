@@ -377,7 +377,9 @@ outcome, because Backoffice is to be the system of record from launch.
 | B4 | Lead routing and assignment: route, move, return to central; one assignee with history; the four Leads views; correcting the Received time; refusing to deactivate a Location with active Leads | Built and approved (2026-10-05), with the Received Time chronology rule the approval required. |
 | — | **Owner impersonation** (not a Checkpoint B step; added at the owner's request to review each role's experience) | Built and approved (2026-10-05). See decision 46. |
 | B5 | Lead notes: add, read and remove from view on the Lead page | Built and approved (2026-10-05). |
-| B6 | Accounts, Contacts and Properties; the Customers pages | Not started |
+| B6a | Customers: the Account, Contact and Property records; who may see a customer; the Customers list and page (read only) | Built (2026-10-06). Awaiting the owner's browser review. |
+| B6b | Managing Contacts and Properties, with address lookup | Not started |
+| B6c | Resolving a Lead into a customer; duplicate suggestions; shared Contacts; "New lead for this customer"; archive and restore | Not started |
 | B7 | Qualification, disqualification and nurture | Not started |
 | — | **Production-readiness checkpoint** (around B7 or B8) | Not started |
 | B8 | Projects; the shared Projects page | Not started |

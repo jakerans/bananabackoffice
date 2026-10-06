@@ -55,9 +55,11 @@ enum Role: string
                 Permission::AssignLeads,
                 Permission::WriteNotes,
                 Permission::RemoveNotes,
+                Permission::ViewAccounts,
             ],
             self::Finance => [
                 Permission::FinanceAccess,
+                Permission::ViewAccounts,
             ],
             self::LocationManager => [
                 Permission::MarketingAccess,
@@ -74,6 +76,7 @@ enum Role: string
                 Permission::WriteNotes,
                 // A manager may remove anyone's note from view. Everyone else only their own.
                 Permission::RemoveNotes,
+                Permission::ViewAccounts,
             ],
             self::CallCenterAgent => [
                 Permission::MarketingAccess,
@@ -84,6 +87,7 @@ enum Role: string
                 Permission::ReturnLeads,
                 Permission::AssignLeads,
                 Permission::WriteNotes,
+                Permission::ViewAccounts,
             ],
             self::SalesConsultant => [
                 Permission::SalesAccess,
@@ -91,11 +95,13 @@ enum Role: string
                 Permission::ViewLeads,
                 Permission::ManageLeads,
                 Permission::WriteNotes,
+                Permission::ViewAccounts,
             ],
             self::ProductionManager => [
                 Permission::ProductionAccess,
                 // For Projects, when they are built. A Production Manager cannot see Leads.
                 Permission::WriteNotes,
+                Permission::ViewAccounts,
             ],
         };
     }

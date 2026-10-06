@@ -39,6 +39,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('leads/new', 'pages::leads.create')->can('create', Lead::class)->name('leads.create');
     Route::livewire('leads/{lead}', 'pages::leads.show')->can('view', 'lead')->name('leads.show');
 
+    // Customers is one shared page too. A customer has no location: each one is authorized by
+    // what the person can already see of it, never by the location that happens to be selected.
+    Route::livewire('customers', 'pages::customers.index')->can(Permission::ViewAccounts)->name('customers');
+    Route::livewire('customers/{account}', 'pages::customers.show')->can('view', 'account')->name('customers.show');
+
     // A center has no page of its own: its address opens the center's primary section.
     Route::get('company', CenterController::class)->defaults('center', 'company')->name('company.home');
     Route::get('marketing', CenterController::class)->defaults('center', 'marketing')->name('marketing.home');

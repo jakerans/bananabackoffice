@@ -51,14 +51,20 @@ There is no existing customer or lead data to bring in. No import tooling is bui
 ### Contact
 
 - A Contact is a person: name, email, phone, alternate phone.
-- A Contact is connected to an Account through a relationship that carries a
-  **role**: Owner, Spouse / Partner, Property Manager, Tenant, Business Contact,
-  Billing Contact, Other.
-- One Contact may be connected to several Accounts, with a different role on each.
+- A Contact is connected to an Account through a relationship that carries one or
+  **more roles**: Owner, Spouse / Partner, Property Manager, Tenant, Business
+  Contact, Billing Contact, Other. A person may be several at once, such as Owner
+  and Billing Contact; nobody has to pick one "best" role.
+- One Contact may be connected to several Accounts, with different roles on each.
   A property manager who looks after ten owners is one Contact with ten
   relationships, never ten copies of the same person.
-- One Contact may be marked **primary** for an Account.
+- One Contact may be marked **primary** for an Account. Primary is a separate
+  mark, not a role. A Residential Account must have a primary Contact. A
+  Commercial Account may exist without any Contact at first.
 - A Contact is always created in the context of an Account.
+- **Phone and email are matching signals, not identity.** Neither is unique:
+  households share an email address and offices share a phone. A match is a
+  question for a person, never an automatic link.
 
 ### Property
 
@@ -531,6 +537,105 @@ never see or pick a category.
 Proceed · Project Postponed / Cancelled · Timing / Scheduling · Scope / Solution
 Not a Fit · Financing / Payment · Unable to Re-Engage / No Decision · Other
 
+## Customers: decisions for step B6
+
+Approved by the owner on 2026-10-06. B6 is built in three separately reviewed
+steps.
+
+| Step | Delivers |
+| --- | --- |
+| **B6a** | The Account, Contact and Property records; who may see a customer; the Customers list; the customer page (read only). **Built.** |
+| **B6b** | Managing Contacts and Properties, with address lookup and manual entry. |
+| **B6c** | Resolving a Lead into a customer; duplicate suggestions; linking a shared Contact; "New lead for this customer"; archive and restore. |
+
+- **A customer is not created at capture.** Lead capture stays as fast as it is.
+  Matching and linking happen after the Lead is saved.
+- **A customer with no Lead may be created by company-wide staff only.** Location
+  staff establish their relationship through a Lead, and later a Project. Nobody
+  creates a fake Lead to make a customer.
+- **Compound names are not split.** "John & Mary Smith" is pre-filled as one
+  Contact; staff add a second person deliberately.
+- **Masked matches.** When a likely match is a customer the person cannot see,
+  they are shown only the Account type, which detail matched, and a limited
+  masked value such as "phone ending in 44". Location staff may link a Lead to
+  such a match only on an exact normalized phone or email, never on an address
+  alone. After they confirm, their own Lead legitimately shows them the shared
+  customer, Contacts and Properties, and still never another location's Leads or
+  Projects. Every such link is audited.
+- **No notes on customers.** Notes stay on Leads, and later Projects, where the
+  boundary is clear.
+- **Archiving shared customer data is a company-wide management action:** Owner
+  and Leadership, through an all-locations grant. A single-location manager
+  cannot archive an Account, a Contact or its connection, or a Property. A
+  refusal never reveals another location's work.
+- **Before a Lead can become a Project (B8):** an Account, a Contact, a Property
+  and a Location are required, and the Project's own Services and Project Size.
+  A Project may still be created directly, with no originating Lead.
+- **A Property never stores a Location.** Where it is may inform a routing
+  suggestion later; it never grants or restricts access.
+
+### Customers, as built in step B6a
+
+**The records**
+
+| Record | Holds |
+| --- | --- |
+| Account | Type (Residential or Commercial); business name; the name it is shown by; archived at, by |
+| Contact | First and last name; email, phone, alternate phone, each with a normalized form; archived at, by |
+| Connection | One per Account and Contact pair: the primary mark; archived at, by |
+| Roles | One row per role a person holds on a connection, so several can be true |
+| Property | The Account; a label; type; the same address parts a Lead keeps; archived at, by |
+| Lead (added) | Account, Contact, Property: each empty until known |
+
+- The database refuses a second primary Contact for an Account, the same person
+  connected to an Account twice, and the same role twice on a connection.
+- None of these records can be deleted. The application refuses, and the
+  database refuses to remove one a Lead points at.
+- A household is shown by its primary Contact's name, a business by its business
+  name.
+
+**Who may see a customer.** An Account has no Location, so there are two ways:
+
+1. Holding the customer permission through an **all-locations grant**: every
+   customer, including ones with no Lead.
+2. Being able to see **at least one of the customer's Leads**, at a Location
+   where the person also holds the customer permission.
+
+- A customer whose only Lead is unrouted, or that has no Lead, is seen by
+  company-wide staff alone.
+- When the last Lead a person can see moves away, returns to central or is
+  unlinked, the customer goes out of their sight with it, including on a page
+  they already had open.
+- Location staff in roles that cannot see Leads (Production Manager, Finance) see
+  no customers until Projects exist.
+- Every list, search, filter and count starts from this rule, so a search cannot
+  reach a customer the person may not see.
+
+**The Customers page** is one shared page, shown in the Marketing, Sales,
+Production and Finance menus to whoever holds the customer permission.
+
+- Columns: the customer with its type; primary Contact; phone and email;
+  Properties; open Leads.
+- Search: customer name, business name, any Contact's name, phone, alternate
+  phone, email, street or ZIP code.
+- Filters: type; "with a lead at" a Location; show archived.
+- **The location selector only sets where the location filter starts.** It never
+  decides what may be seen. Only Locations where the person can see Leads are
+  offered, and "Any location" shows every customer they can see.
+- The open-Lead count includes only Leads the viewer may see. Someone who cannot
+  see Leads is shown no count at all.
+
+**The customer page** shows the customer's name and type, its Contacts (primary
+first, with every role), its Properties, and its Leads.
+
+- **Only the Leads the viewer may see are listed.** Leads at another Location are
+  not shown, not counted and not hinted at.
+- For a person who is a contact of several customers, "Also a contact of" lists
+  only the other customers the viewer may see. Whether there are others is never
+  shown, so a shared person with none visible looks like any other contact.
+- Archived Contacts, connections and Properties are not shown.
+- Nothing can be changed from this page yet. That is B6b and B6c.
+
 ## Location, routing and assignment
 
 - **Location is the primary authorization boundary.**
@@ -597,7 +702,9 @@ Not a Fit · Financing / Payment · Unable to Re-Engage / No Decision · Other
 - Archiving records who and when. Archived records are hidden from lists and
   choices by default, can be shown with a filter, and can be restored.
 - An Account cannot be archived while it has a Lead that is New, Working or
-  Nurture, or a Project whose sales outcome is Open. (Proposed)
+  Nurture, or a Project whose sales outcome is Open.
+- Archiving and restoring Accounts, Contacts, connections and Properties is done
+  by Owner and Leadership through an all-locations grant only.
 - Relationships and list values on archived records stay intact.
 - Leads are not archived; they have their lifecycle.
 
@@ -703,7 +810,8 @@ Proposed tables and their important fields. "Optional" means it may be empty.
 | --- | --- |
 | `accounts` | type; business name (commercial); display name; archived at, by |
 | `contacts` | first name; last name; email; phone; alternate phone; normalized forms of each for matching; archived at, by |
-| `account_contacts` | account; contact; role; primary flag. One row per pair. |
+| `account_contacts` | account; contact; primary flag; archived at, by. One row per pair. |
+| `account_contact_roles` | the connection; role. One row per role held. |
 | `properties` | account; label; type; address lines, city, state, postal code; archived at, by |
 | `marketing_sources`, `lead_sources`, `lead_channels` | name; position; active |
 | `lead_disqualification_reasons` | name; position; active; category; whether a note is required |
@@ -759,7 +867,7 @@ first; photos and history presentation come last.
 | **B3** | Lead capture: the inquiry as received, the three attribution fields, New and Working, the shared Leads page shown in Marketing and Sales, the Lead page. |
 | **B4** | Routing and assignment: the unrouted queue, route and re-route, return to central with a reason, assign a person, "Assigned to me". |
 | **B5** | Notes on a Lead. (Extended to Accounts and Projects as those arrive.) |
-| **B6** | Accounts, Contacts and Properties: create them from a Lead or link an existing one with duplicate suggestions; the Customers list and page with the visibility rules; archive and restore. |
+| **B6** | Accounts, Contacts and Properties, in three reviewed steps. **B6a:** the records, who may see a customer, the Customers list and page. **B6b:** managing Contacts and Properties. **B6c:** resolving a Lead into a customer with duplicate suggestions, shared Contacts, "New lead for this customer", archive and restore. |
 | **B7** | Qualification: Qualified, Disqualified with managed reasons, Nurture with a follow-up date, reopening. |
 | **B8** | Projects: create one or more from a Qualified Lead, or directly; the Project page; responsibilities; transfer between locations; archive and restore; the shared Projects page shown in Sales and Production. |
 | **B9** | Sales outcome: Open, Won with its Sold Amount, Lost with managed Sales Loss Reasons; correcting a Sold Amount. |

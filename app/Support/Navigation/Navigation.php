@@ -372,13 +372,23 @@ class Navigation
     /**
      * Customers and Inbox each exist once and are reached from several centers.
      *
+     * Customers is one page with one address. It is opened by the customer
+     * permission, not by access to the center whose menu shows it. Inbox is not
+     * built yet and is still shown to whoever can open the center.
+     *
      * @param  list<Permission>  $permissions
      * @return list<NavigationItem>
      */
     private function shared(array $permissions): array
     {
         return [
-            new NavigationItem('shared.customers', 'Customers', $permissions),
+            new NavigationItem(
+                id: 'shared.customers',
+                label: 'Customers',
+                permissions: [Permission::ViewAccounts],
+                state: NavigationState::Live,
+                route: 'customers',
+            ),
             new NavigationItem('shared.inbox', 'Inbox', $permissions),
         ];
     }

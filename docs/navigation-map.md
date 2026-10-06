@@ -231,7 +231,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | ID | Label | State |
 | --- | --- | --- |
 | `shared.leads` | Leads | Live (step B3). Shown in Marketing > Call Center and in Sales. |
-| `shared.customers` | Customers | CS |
+| `shared.customers` | Customers | Live (step B6a). Shown in Marketing, Sales, Production and Finance. Opened by the customer permission. |
 | `shared.inbox` | Inbox | CS |
 
 Customers and Inbox each exist once, with one route. They appear inside the
@@ -248,7 +248,7 @@ All approved by the owner on 2026-10-05.
 | --- | --- | --- |
 | `settings.lists` — Lead & Sales Lists | A new Settings page holding the five managed lists. Opened by its own permission, held by Owner and Leadership. Leadership sees Settings with this page only. | B2 — **built** |
 | `shared.leads` — Leads | One shared Leads page with one address, shown in **both** the Marketing Center and the Sales Center to anyone holding the lead permission. There is no separate Marketing Leads and Sales Leads. Marketing > Call Center > Leads points at it. | B3 â **built** |
-| `shared.customers` — Customers | Becomes live. Lists Accounts. | B6 |
+| `shared.customers` — Customers | Becomes live. Lists Accounts. | B6a — **built** |
 | `shared.projects` — Projects | One shared Projects page with one address, shown in the Sales Center and the Production Center as appropriate. There are no separate Sales Projects and Production Projects. | B8 |
 
 Shared pages are opened by their own permission, not by access to the center whose

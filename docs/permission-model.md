@@ -208,7 +208,8 @@ Status: **Approved by the owner (2026-10-05). Not built yet.** Each permission i
 added to the code in the step that builds what it guards. Built so far:
 `settings.lists.manage` (B2); `leads.view`, `leads.manage` and
 `leads.view_unrouted` (B3); `leads.route`, `leads.transfer`, `leads.return` and
-`leads.assign` (B4); `notes.write` and `notes.remove` (B5). The records and their
+`leads.assign` (B4); `notes.write` and `notes.remove` (B5); `accounts.view`
+(B6a). The records and their
 rules are described in [checkpoint-b.md](checkpoint-b.md).
 
 ### The rules Checkpoint B adds
@@ -239,13 +240,27 @@ rules are described in [checkpoint-b.md](checkpoint-b.md).
 10. **Starting work follows assignment.** The assignee may start their Lead.
     Someone who may assign may start an unassigned Lead, which assigns it to them.
     Nobody else may: starting work is never a way to take a Lead.
-### Permissions
+### How someone sees a customer, which has no Location
 
+`accounts.view` is granted like any other permission, at a Location or across all
+Locations. Because an Account has no Location, it is applied like this:
+
+- **Through an all-locations grant:** every customer.
+- **Through a location grant:** only customers with at least one Lead (later, a
+  Project) that the person can see at that Location.
+
+So a Sales Consultant, Location Manager or Call Center agent at one Location sees
+the customers with a Lead there. A Production Manager or Finance person at one
+Location sees none until Projects exist, because they cannot see Leads. Seeing a
+customer never shows another Location's Leads; those are filtered wherever they
+are listed or counted.
+
+### Permissions
 | Permission | Scope | Allows |
 | --- | --- | --- |
 | `accounts.view` | Location | See Accounts, Contacts and Properties, under rule 3 |
 | `accounts.manage` | Location | Create and edit Accounts, Contacts and Properties |
-| `accounts.archive` | Location | Archive and restore Accounts, Contacts and Properties |
+| `accounts.archive` | Company | Archive and restore Accounts, Contacts, their connections and Properties |
 | `leads.view` | Location | See Leads routed to the location |
 | `leads.manage` | Location | Capture, edit and work Leads; qualify, disqualify, reopen |
 | `leads.view_unrouted` | Company | See and work Leads that have no location yet |
@@ -281,7 +296,7 @@ The owner approved this matrix at the final review on 2026-10-05.
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | See Accounts, Contacts, Properties | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
 | Create and edit Accounts, Contacts, Properties | Yes | Yes | Yes | Yes | Yes | No | No |
-| Archive Accounts, Contacts, Properties | Yes | Yes | Yes | No | No | No | No |
+| Archive Accounts, Contacts, Properties (all-locations grant only) | Yes | Yes | No | No | No | No | No |
 | See routed Leads | Yes | Yes | Yes | Yes | Yes | No | No |
 | Capture, edit, work, qualify and disqualify Leads | Yes | Yes | Yes | Yes | Yes | No | No |
 | See unrouted Leads (all-locations grant only) | Yes | Yes | No | Yes | No | No | No |
