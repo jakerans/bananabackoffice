@@ -372,7 +372,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
     {
         return $this->lead->notes()
             ->visible()
-            ->with(['author', 'impersonator'])
+            ->with('author')
             ->latest()
             ->orderByDesc('id')
             ->get()
@@ -832,12 +832,6 @@ new #[Title('Lead')] class extends AddressCapturePage {
                                     </flux:button>
                                 @endcan
                             </div>
-
-                            @if ($note->impersonator)
-                                <div class="text-xs text-zinc-500" data-test="note-impersonated">
-                                    {{ __('Written by :owner while viewing Backoffice as :staff.', ['owner' => $note->impersonator->name, 'staff' => $note->author?->name ?? __('them')]) }}
-                                </div>
-                            @endif
 
                             <div class="whitespace-pre-line break-words text-ink">{{ $note->body }}</div>
                         </li>

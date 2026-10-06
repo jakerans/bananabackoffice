@@ -688,8 +688,11 @@ History view are step B11 and are not part of this.
 - **Notes stay with the Lead.** When a Lead moves, its notes go with it, and are
   read under the new Location's access.
 - **Impersonation:** a note an Owner writes while viewing Backoffice as a staff
-  member records both people, and says so on the note for everyone who reads it,
-  because nobody should be shown as the author of words they did not write.- Managers get a "History" view of a record's audit events. The company-wide Audit
+  member is shown as that staff member's, like any other note. Nothing on the
+  Lead page mentions the Owner. An audit event is recorded with the note, naming
+  the real Owner, the staff identity, the Lead and the note; it does not copy
+  what the note says. Removing a note while impersonating works the same way:
+  screens show the staff member, the audit history holds the Owner.- Managers get a "History" view of a record's audit events. The company-wide Audit
   Log screen in Settings stays Coming Soon.
 
 ## Tables

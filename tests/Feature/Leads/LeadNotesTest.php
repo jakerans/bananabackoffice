@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Notes\AddNote;
 use App\Enums\AuditAction;
 use App\Enums\LeadStatus;
@@ -9,6 +10,7 @@ use App\Models\Lead;
 use App\Models\Location;
 use App\Models\Note;
 use App\Models\User;
+use App\Support\Access\Impersonation;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
@@ -394,8 +396,10 @@ test('removing a note is recorded as an audit event about the lead', function ()
 |--------------------------------------------------------------------------
 */
 
-test('a note written while impersonating names the owner who wrote it as well as the staff identity', function () {
-    $lakeview = Location::factory()->create();
+test('a note written while impersonating reads as the staff member\'s, and the audit history keeps the real owner', function () {
+    $this->travelTo('2026-10-05 18:30:00');
+
+    $lakeview = Location::factory()->create(['name' => 'Lakeview']);
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create(['name' => 'Jacob Ransom']);
     $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create(['name' => 'Roseanne Smith']);
     $lead = Lead::factory()->at($lakeview)->assignedTo($consultant)->create();
@@ -404,21 +408,72 @@ test('a note written while impersonating names the owner who wrote it as well as
 
     $page = $this->get(route('leads.show', $lead))->assertOk();
 
-    sendLivewireAction(livewireSnapshot($page), 'addNote', updates: ['noteBody' => 'Testing the consultant view.'])->assertOk();
+    sendLivewireAction(livewireSnapshot($page), 'addNote', updates: ['noteBody' => 'Customer prefers Tuesdays.'])->assertOk();
 
     $note = Note::query()->sole();
 
     expect($note->author->is($consultant))->toBeTrue();
-    expect($note->impersonator->is($owner))->toBeTrue();
 
-    // Everyone reading the lead is told the consultant did not write it.
+    // The history: the real Owner, the staff identity, the lead, the note, and when.
+    $event = AuditEvent::query()->where('action', AuditAction::NoteAddedWhileImpersonating)->sole();
+
+    expect($event->actor->is($consultant))->toBeTrue();
+    expect($event->impersonator->is($owner))->toBeTrue();
+    expect($event->madeBy())->toBe('Jacob Ransom, impersonating Roseanne Smith');
+    expect($event->subject->is($lead))->toBeTrue();
+    expect($event->location->is($lakeview))->toBeTrue();
+    expect($event->after())->toBe(['note_id' => $note->id]);
+    expect($event->created_at->toDateTimeString())->toBe('2026-10-05 18:30:00');
+    // What the note says stays on the note. The event does not copy it.
+    expect($event->before())->toBe([]);
+    expect(json_encode($event->getAttributes()))->not->toContain('Tuesdays');
+
+    // The lead page: an ordinary note from the staff member, to the Owner while impersonating...
+    $this->get(route('leads.show', $lead))
+        ->assertSeeInOrder(['Notes', 'Roseanne Smith', 'Customer prefers Tuesdays.'])
+        ->assertDontSee('while viewing Backoffice as')
+        ->assertDontSee('Written by');
+
+    // ...and to everyone else afterwards. The Owner is not mentioned anywhere on it.
     $this->post(route('impersonation.stop'));
     $this->post(route('logout'));
 
-    $this->actingAs($consultant)
-        ->get(route('leads.show', $lead))
-        ->assertSee('Testing the consultant view.')
-        ->assertSee('Written by Jacob Ransom while viewing Backoffice as Roseanne Smith.');
+    // (Readers who do not hand out leads, so the Owner's name is not on the page for any other reason.)
+    foreach ([$consultant, User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create()] as $reader) {
+        $this->actingAs($reader)
+            ->get(route('leads.show', $lead))
+            ->assertSeeInOrder(['Notes', 'Roseanne Smith', 'Customer prefers Tuesdays.'])
+            ->assertDontSee('Jacob Ransom')
+            ->assertDontSee('impersonat')
+            ->assertDontSee('while viewing Backoffice as');
+    }
+});
+
+test('a note written while impersonating is not kept if its audit event cannot be recorded', function () {
+    $lakeview = Location::factory()->create();
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+    $lead = Lead::factory()->at($lakeview)->create();
+
+    $this->mock(RecordAuditEvent::class)
+        ->shouldReceive('handle')
+        ->andThrow(new RuntimeException('The audit event could not be recorded.'));
+
+    // As the request is while an Owner is viewing Backoffice as the consultant.
+    app(Impersonation::class)->serveAs($owner, $consultant);
+
+    try {
+        expect(fn () => app(AddNote::class)->handle($lead, $consultant, 'Customer prefers Tuesdays.'))->toThrow(RuntimeException::class);
+    } finally {
+        app(Impersonation::class)->forgetRequest();
+    }
+
+    expect(Note::query()->count())->toBe(0);
+
+    // An ordinary note needs no audit event, so it is saved regardless.
+    app(AddNote::class)->handle($lead, $consultant, 'Customer prefers Tuesdays.');
+
+    expect(Note::query()->count())->toBe(1);
 });
 
 test('removing a note while impersonating records both people', function () {
@@ -445,14 +500,21 @@ test('removing a note while impersonating records both people', function () {
     expect($event->madeBy())->toBe('Jacob Ransom, impersonating Roseanne Smith');
 });
 
-test('an ordinary note names nobody but its author', function () {
+test('an ordinary note names nobody but its author, and records no audit event', function () {
     $lakeview = Location::factory()->create();
-    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create(['name' => 'Roseanne Smith']);
     $lead = Lead::factory()->at($lakeview)->create();
 
-    Note::factory()->about($lead)->by($consultant)->create();
+    Livewire::actingAs($consultant)
+        ->test('pages::leads.show', ['lead' => $lead])
+        ->set('noteBody', 'Customer prefers Tuesdays.')
+        ->call('addNote')
+        ->assertHasNoErrors()
+        ->assertSeeInOrder(['Roseanne Smith', 'Customer prefers Tuesdays.'])
+        ->assertDontSee('while viewing Backoffice as');
 
-    $this->actingAs($consultant)->get(route('leads.show', $lead))->assertOk()->assertDontSee('while viewing Backoffice as');
+    expect(Note::query()->sole()->impersonator_id)->toBeNull();
+    expect(AuditEvent::query()->count())->toBe(0);
 });
 
 /*

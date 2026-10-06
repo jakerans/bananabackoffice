@@ -18,8 +18,8 @@ return new class extends Migration
      * which case who removed it and when are kept here.
      *
      * "impersonator_id" is filled only when an Owner wrote the note while viewing
-     * Backoffice as the author, so a note is never credited to someone who did
-     * not write it.
+     * Backoffice as the author. Screens do not show it; an audit event recorded
+     * with the note is what the history relies on.
      *
      * Each foreign key gets an index of its own (see docs/decisions.md, 21).
      */

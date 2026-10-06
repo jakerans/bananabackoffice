@@ -91,6 +91,9 @@ class Note extends Model
      * The Owner who actually typed the note, when it was written while viewing
      * Backoffice as the author. Empty for an ordinary note.
      *
+     * Screens never show this: a note reads as its author's. It is kept so the
+     * note agrees with the audit event recorded when it was written.
+     *
      * @return BelongsTo<User, $this>
      */
     public function impersonator(): BelongsTo

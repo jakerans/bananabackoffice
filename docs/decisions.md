@@ -939,11 +939,17 @@ Choices made while building, for the owner to confirm:
 - **No reason is asked for when removing a note.** Who and when are recorded.
 - **A removed note is hidden from everyone,** managers included, until the History
   view is built in B11. Nothing on the Lead page says a note was removed.
-- **A note written while impersonating shows a line saying so** to everyone who
-  reads it ("Written by Jacob Ransom while viewing Backoffice as Roseanne
-  Smith"). The owner asked that impersonation not be exposed unnecessarily in
-  operational screens; this one case is kept visible because a note is a person's
-  own words and adding one leaves no audit event to hold the truth.
+- **A note written while impersonating is shown as the staff member's.** The
+  first build added a line on the note naming the Owner. The owner removed it on
+  review: impersonation is not exposed in ordinary screens. Instead, a note
+  created while impersonating records an audit event ("note added while
+  impersonating") that holds the real Owner, the staff identity, the Lead, the
+  note and the time, without copying the note's text. The note and that event
+  are saved together or not at all. An ordinary note still records no audit
+  event. The note also keeps the Owner's ID in a column that no screen shows.
+
+The owner approved B5 with that correction, and confirmed the other choices
+above.
 - **The Production Manager role holds `notes.write`,** as the approved matrix
   says, but cannot see Leads, so it has no effect until Projects exist.
 
