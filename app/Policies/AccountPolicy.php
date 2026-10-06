@@ -58,4 +58,15 @@ class AccountPolicy
             && $user->hasPermissionAcrossAllLocations(Permission::ArchiveAccounts)
             && $account->isVisibleTo($user);
     }
+
+    /**
+     * Determine whether the user can restore an archived customer. The same
+     * company-wide management action as archiving one.
+     */
+    public function restore(User $user, Account $account): bool
+    {
+        return $account->isArchived()
+            && $user->hasPermissionAcrossAllLocations(Permission::ArchiveAccounts)
+            && $account->isVisibleTo($user);
+    }
 }

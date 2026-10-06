@@ -260,8 +260,18 @@ Location sees none until Projects exist, because they cannot see Leads. Seeing a
 customer never shows another Location's Leads; those are filtered wherever they
 are listed or counted.
 
-### Permissions
-| Permission | Scope | Allows |
+### Linking a Lead to a customer
+
+- **Who:** someone who may work the Lead and holds `accounts.manage` where the
+  Lead is (company-wide for an unrouted Lead).
+- **To which customer:** one they can see, or a new one. A customer they cannot
+  see can be linked only through a masked match on the Lead's exact phone or
+  email, which the server works out itself; the browser never names it.
+- **What that gives them:** sight of the customer, its Contacts and Properties,
+  through their own Lead. Never sight of another Location's Leads or Projects.
+- Archiving and restoring a customer needs `accounts.archive`, company-wide.
+
+### Permissions| Permission | Scope | Allows |
 | --- | --- | --- |
 | `accounts.view` | Location | See Accounts, Contacts and Properties, under rule 3 |
 | `accounts.manage` | Location | Add and edit a customer's Contacts and Properties. Through an all-locations grant: every customer, and creating one that has no Lead |

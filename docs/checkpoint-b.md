@@ -546,7 +546,7 @@ steps.
 | --- | --- |
 | **B6a** | The Account, Contact and Property records; who may see a customer; the Customers list; the customer page (read only). **Built.** |
 | **B6b** | Managing Contacts and Properties, with address lookup and manual entry; creating a customer directly. **Built.** |
-| **B6c** | Resolving a Lead into a customer; duplicate suggestions; linking a shared Contact; "New lead for this customer"; archive and restore. |
+| **B6c** | Resolving a Lead into a customer; duplicate suggestions; linking a shared Contact; "New lead for this customer"; archive and restore; editing a customer's name and kind. **Built.** |
 
 - **A customer is not created at capture.** Lead capture stays as fast as it is.
   Matching and linking happen after the Lead is saved.
@@ -648,7 +648,7 @@ first, with every role), its Properties, and its Leads.
 
 - Every action is checked again on the server each time, so a page left open
   stops working once the person can no longer see or change the customer.
-- An archived customer cannot be changed until it is restored (B6c).
+- An archived customer cannot be changed until it is restored.
 - A Contact or Property of another customer can never be reached through this
   customer's page.
 
@@ -678,8 +678,9 @@ first, with every role), its Properties, and its Leads.
   last Contact of a household; removing a Contact an active Lead of this
   customer points at.
 
-Automatic duplicate suggestions, including matches the viewer cannot see, are
-B6c. Until then a new Contact is never compared with existing ones.
+Automatic suggestions, including matches the viewer cannot see, happen when a
+Lead is resolved into a customer: see B6c below. Adding a Contact by hand on a
+customer's page does not compare them with existing people.
 
 **Properties**
 
@@ -712,6 +713,109 @@ B6c. Until then a new Contact is never compared with existing ones.
 **The Customers list** names a customer's first Property by its label and short
 street ("Home — 123 Oak St") with "+1 more" for the rest. The city, state and ZIP
 code are on the customer's page.
+### Resolving a lead into a customer, as built in step B6c
+
+**Where.** The Lead page has a Customer panel. "Resolve customer" opens one page
+with three parts: the customer, the person, the place. Everything is started from
+what the Lead already holds, so nothing is typed twice.
+
+**What it never does**
+
+- It never changes the inquiry. The name, phone, email, address and message on
+  the Lead stay exactly as received.
+- It never links or merges anything by itself. A match is a suggestion a person
+  accepts or ignores.
+- It never saves part of a decision. The customer, person, property and link are
+  all made together, or none are.
+- New Lead capture is unchanged: matching happens after the Lead is saved.
+
+**1. Customer**
+
+- **Suggested:** customers the person can already see, where a Contact has
+  exactly the Lead's phone or email, a Property is at the Lead's address, or the
+  business name is the same. Each shows why, and the strongest match is first.
+- With exactly one suggestion it is chosen to start with; with several, the
+  person must choose; with none, "New customer" is chosen.
+- **Search:** by name, phone or email, among customers the person can see.
+- **New customer:** Residential, or Commercial when the inquiry named a business.
+- Archived customers are never suggested, found or chosen.
+
+**2. Contact**
+
+- For an existing customer: its people, with the one who matches the inquiry
+  first and chosen. Or a new Contact, started from the inquiry.
+- **The same person, known elsewhere:** someone the viewer can already see with
+  exactly the Lead's phone or email is offered to be connected to this customer,
+  rather than entered again. They stay one person.
+- A compound name ("John & Mary Smith") is kept whole as one Contact.
+- A business may be linked with no Contact yet. A household may not.
+
+**3. Property**
+
+- For an existing customer: its Properties, with the one at the Lead's address
+  chosen. If it has one there, adding another is not offered.
+- Or a new Property made from the Lead's address exactly as the Lead holds it,
+  map position included. No new lookup is made.
+- Or none yet. A Lead with no address cannot make a Property.
+
+**A match outside the viewer's sight**
+
+Shown only when a Contact of a customer the viewer cannot see has **exactly** the
+Lead's phone or email. What is shown, and nothing else:
+
+- the kind of customer ("An existing residential customer");
+- which detail matched;
+- a masked value: a phone "ending in 44", or an email "like m•••@•••.com".
+
+Not shown: the customer's name, the full phone or email, any address, Contact,
+Location, Lead, Project, or how many of anything.
+
+- It is never shown for an address or business name alone.
+- It is not shown when the matching person is also a contact of a customer the
+  viewer can see, because that would reveal they have others.
+- It is not shown when it would point to more than one hidden customer, because
+  that would reveal a count and nobody could say which was meant.
+- The customer is never named by the browser. When the person confirms, the
+  server works the match out again and links the Lead to that customer and the
+  matching Contact.
+- After linking, the person's own Lead shows them the customer, its Contacts and
+  Properties under the ordinary rule. It never shows another Location's Leads.
+- The link is audited as made outside the person's sight.
+- One person is shown at most 20 such matches in an hour.
+
+Company-wide staff see every match plainly, since nothing is hidden from them.
+
+**Changing and removing.** While the Lead is active, the link can be changed
+(the page starts from the current choice) or removed. Removing clears all three
+links and touches neither the customer nor the inquiry. A page that is out of
+date saves nothing.
+
+**Who.** Anyone who may work the Lead and holds the customer manage permission
+where the Lead is. Adding a person or a property to an existing customer also
+needs permission to change that customer.
+
+**New lead for this customer.** The customer's page has "New lead". It opens the
+ordinary new lead form with the customer named at the top, the primary Contact
+and (when there is only one) the Property chosen, and the inquiry started from
+them. Everything can still be typed over, and the Lead is linked as it is saved.
+The Property's address suggests a Location like any other address.
+
+**Archiving a customer.** Owner and Leadership through an all-locations grant.
+
+- Refused while the customer has an active Lead, at any Location, with the count.
+- An archived customer is kept whole. It is hidden from the list unless asked
+  for, never suggested or chosen, cannot be changed, and cannot be given a Lead.
+- Restoring brings it back exactly as it was.
+- Every Lead is active today, so in practice only a customer with no Lead can be
+  archived until Leads can be closed (B7).
+
+**Editing a customer.** Anyone who may change the customer can correct a
+business's name, or change the kind of customer.
+
+- Becoming a business needs a business name.
+- Becoming a household needs a primary Contact, and it is then named after them.
+- Contacts, Properties, Leads and history are untouched either way.
+
 ## Location, routing and assignment
 
 - **Location is the primary authorization boundary.**

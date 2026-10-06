@@ -6,12 +6,15 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Enums\LeadStatus;
 use App\Enums\Role;
+use App\Models\Account;
+use App\Models\Contact;
 use App\Models\Lead;
 use App\Models\LeadChannel;
 use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
 use App\Models\ProjectSize;
+use App\Models\Property;
 use App\Models\User;
 use App\Support\Addresses\StructuredAddress;
 use App\Support\Contact\PhoneNumber;
@@ -49,8 +52,14 @@ class CaptureLead
      * is assigned to them, as an assignment like any other: the inquiry came to
      * them. Anyone else's capture is left unassigned.
      *
+     * A Lead recorded for a customer who is already known (a repeat inquiry) is
+     * linked to that customer as it is saved, with the person and property it is
+     * about when those are given. Both must belong to that customer. The inquiry
+     * is still recorded as it was received.
+     *
      * The caller is responsible for checking that the person may capture a Lead
-     * for this location; this action enforces what makes a Lead valid.
+     * for this location, and may see the customer it is recorded for; this action
+     * enforces what makes a Lead valid.
      *
      * @param  array{name?: string|null, phone?: string|null, email?: string|null, business_name?: string|null, address?: string|null, message?: string|null}  $inquiry
      *
@@ -68,6 +77,9 @@ class CaptureLead
         ?CarbonInterface $receivedAt = null,
         ?StructuredAddress $address = null,
         ?Location $suggestedLocation = null,
+        ?Account $account = null,
+        ?Contact $contact = null,
+        ?Property $property = null,
     ): Lead {
         $inquiry = self::clean($inquiry);
 
@@ -81,6 +93,29 @@ class CaptureLead
             throw ValidationException::withMessages([
                 'locationId' => __('Choose an active location.'),
             ]);
+        }
+
+        if ($account === null) {
+            $contact = null;
+            $property = null;
+        } else {
+            if ($account->isArchived()) {
+                throw ValidationException::withMessages([
+                    'customer' => __('That customer is archived. Restore it before recording a lead for it.'),
+                ]);
+            }
+
+            if ($contact !== null && $account->contactLinks()->notArchived()->where('contact_id', $contact->id)->doesntExist()) {
+                throw ValidationException::withMessages([
+                    'customerContactId' => __('Choose one of this customer\'s contacts.'),
+                ]);
+            }
+
+            if ($property !== null && ($property->account_id !== $account->id || $property->isArchived())) {
+                throw ValidationException::withMessages([
+                    'customerPropertyId' => __('Choose one of this customer\'s properties.'),
+                ]);
+            }
         }
 
         $services->ensureComplete();
@@ -104,7 +139,7 @@ class CaptureLead
             }
         }
 
-        return DB::transaction(function () use ($capturedBy, $channel, $inquiry, $projectSize, $services, $location, $leadSource, $marketingSource, $receivedAt, $address, $suggestedLocation): Lead {
+        return DB::transaction(function () use ($capturedBy, $channel, $inquiry, $projectSize, $services, $location, $leadSource, $marketingSource, $receivedAt, $address, $suggestedLocation, $account, $contact, $property): Lead {
             $lead = new Lead;
 
             $lead->forceFill([
@@ -128,6 +163,9 @@ class CaptureLead
                 'first_routed_at' => $location === null ? null : now(),
                 'routed_at' => $location === null ? null : now(),
                 'captured_by' => $capturedBy->id,
+                'account_id' => $account?->id,
+                'contact_id' => $contact?->id,
+                'property_id' => $property?->id,
                 ...($address?->toLeadAttributes() ?? []),
             ])->save();
 
@@ -148,6 +186,7 @@ class CaptureLead
                     'suggested_location' => $suggestedLocation?->name,
                     'location' => $location?->name,
                     'received_at' => $lead->received_at->toIso8601String(),
+                    'customer' => $account?->display_name,
                 ],
                 location: $location,
             );

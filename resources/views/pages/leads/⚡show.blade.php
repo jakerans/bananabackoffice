@@ -6,6 +6,7 @@ use App\Actions\Leads\ReturnLeadToCentral;
 use App\Actions\Leads\RouteLead;
 use App\Actions\Leads\StartWorkingLead;
 use App\Actions\Leads\UnassignLead;
+use App\Actions\Leads\UnlinkLeadCustomer;
 use App\Actions\Leads\UpdateLeadDetails;
 use App\Actions\Notes\AddNote;
 use App\Actions\Notes\RemoveNote;
@@ -321,6 +322,19 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
         Flux::modal('received-time')->close();
         Flux::toast(variant: 'success', text: __('Received time corrected.'));
+    }
+
+    /**
+     * Take the Lead off the customer it was linked to, when the link was wrong.
+     * The customer and the inquiry are both left as they are.
+     */
+    public function unlinkCustomer(UnlinkLeadCustomer $unlinkLeadCustomer): void
+    {
+        $this->authorize('resolveCustomer', $this->lead);
+
+        $unlinkLeadCustomer->handle($this->lead);
+
+        Flux::toast(variant: 'success', text: __('This lead is no longer linked to a customer.'));
     }
 
     /**
@@ -842,6 +856,69 @@ new #[Title('Lead')] class extends AddressCapturePage {
         </div>
 
         <div class="flex flex-col gap-6">
+        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="lead-customer">
+            <flux:heading size="lg" level="2">{{ __('Customer') }}</flux:heading>
+
+            @error('customerChoice')
+                <div role="alert" class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-ink">{{ $message }}</div>
+            @enderror
+
+            @if ($lead->account)
+                <dl class="flex flex-col gap-3">
+                    <div>
+                        <dt class="text-sm text-zinc-500">{{ __('Customer') }}</dt>
+                        <dd class="flex flex-wrap items-center gap-2 text-ink" data-test="lead-customer-name">
+                            @can('view', $lead->account)
+                                <a href="{{ route('customers.show', $lead->account) }}" wire:navigate class="font-semibold underline decoration-zinc-300 underline-offset-2 hover:decoration-ink">{{ $lead->account->display_name }}</a>
+                                <x-account-type :type="$lead->account->type" />
+                            @else
+                                {{ __('Linked to a customer') }}
+                            @endcan
+                        </dd>
+                    </div>
+
+                    @can('view', $lead->account)
+                        <div>
+                            <dt class="text-sm text-zinc-500">{{ __('Contact') }}</dt>
+                            <dd class="text-ink">{{ $lead->contact?->fullName() ?? __('No contact yet') }}</dd>
+                        </div>
+
+                        <div>
+                            <dt class="text-sm text-zinc-500">{{ __('Property') }}</dt>
+                            <dd class="text-ink">{{ $lead->property?->summary() ?? __('No property yet') }}</dd>
+                        </div>
+                    @endcan
+                </dl>
+
+                @if ($lead->isActive())
+                    @can('resolveCustomer', $lead)
+                        <div class="flex flex-wrap gap-2">
+                            <flux:button size="sm" :href="route('leads.customer', $lead)" wire:navigate data-test="change-customer">{{ __('Change') }}</flux:button>
+                            <flux:button
+                                size="sm"
+                                variant="ghost"
+                                wire:click="unlinkCustomer"
+                                wire:confirm="{{ __('Remove this lead\'s link to the customer? The customer and the inquiry are both kept as they are.') }}"
+                                data-test="unlink-customer"
+                            >
+                                {{ __('Remove link') }}
+                            </flux:button>
+                        </div>
+                    @endcan
+                @endif
+            @else
+                <flux:text data-test="lead-customer-none">{{ __('Not linked to a customer yet.') }}</flux:text>
+
+                @if ($lead->isActive())
+                    @can('resolveCustomer', $lead)
+                        <div>
+                            <flux:button size="sm" variant="primary" :href="route('leads.customer', $lead)" wire:navigate data-test="resolve-customer">{{ __('Resolve customer') }}</flux:button>
+                        </div>
+                    @endcan
+                @endif
+            @endif
+        </div>
+
         <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="lead-ownership">
             <flux:heading size="lg" level="2">{{ __('Who has it') }}</flux:heading>
 

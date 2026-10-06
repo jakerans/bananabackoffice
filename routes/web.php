@@ -39,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('leads', 'pages::leads.index')->can(Permission::ViewLeads)->name('leads');
     Route::livewire('leads/new', 'pages::leads.create')->can('create', Lead::class)->name('leads.create');
     Route::livewire('leads/{lead}', 'pages::leads.show')->can('view', 'lead')->name('leads.show');
+    Route::livewire('leads/{lead}/customer', 'pages::leads.customer')->can('resolveCustomer', 'lead')->name('leads.customer');
 
     // Customers is one shared page too. A customer has no location: each one is authorized by
     // what the person can already see of it, never by the location that happens to be selected.

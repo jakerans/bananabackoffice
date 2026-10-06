@@ -24,6 +24,7 @@ use LogicException;
  * @property int $id
  * @property AccountType $type
  * @property string|null $business_name
+ * @property string|null $business_name_normalized
  * @property string $display_name
  * @property Carbon|null $archived_at
  * @property int|null $archived_by
@@ -177,6 +178,19 @@ class Account extends Model
         ));
 
         return $this->leads()->whereIn('location_id', $locationIds)->exists();
+    }
+
+    /**
+     * A simplified form of a business's name, for noticing the same business
+     * written another way: case, punctuation and words like "LLC" are ignored.
+     */
+    public static function normalizeBusinessName(?string $name): ?string
+    {
+        $words = preg_split('/[^a-z0-9]+/', mb_strtolower(trim((string) $name)), flags: PREG_SPLIT_NO_EMPTY) ?: [];
+
+        $words = array_values(array_diff($words, ['the', 'inc', 'incorporated', 'llc', 'ltd', 'limited', 'co', 'company', 'corp', 'corporation']));
+
+        return $words === [] ? null : implode(' ', $words);
     }
 
     public function isArchived(): bool

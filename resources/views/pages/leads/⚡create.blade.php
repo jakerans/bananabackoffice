@@ -3,14 +3,18 @@
 use App\Actions\Leads\CaptureLead;
 use App\Support\Addresses\AddressCapturePage;
 use App\Enums\Permission;
+use App\Models\Account;
+use App\Models\AccountContact;
 use App\Models\Lead;
 use App\Models\LeadChannel;
 use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
 use App\Models\ProjectSize;
+use App\Models\Property;
 use App\Models\Service;
 use App\Support\Access\CurrentLocation;
+use App\Support\Addresses\StructuredAddress;
 use App\Support\Contact\PhoneNumber;
 use App\Support\Leads\ServiceSelection;
 use App\Support\ServiceAreas\PostalCode;
@@ -71,6 +75,13 @@ new #[Title('New lead')] class extends AddressCapturePage {
     #[Locked]
     public string $submissionKey = '';
 
+    /** The existing customer this Lead is being recorded for, when it was started from that customer's page. */
+    #[Locked]
+    public ?int $customerId = null;
+
+    public ?int $customerContactId = null;
+
+    public ?int $customerPropertyId = null;
     /**
      * Mount the component.
      */
@@ -85,8 +96,110 @@ new #[Title('New lead')] class extends AddressCapturePage {
         $this->locationId = $this->defaultLocationId();
 
         $this->startAddressCapture();
+
+        $this->startFromCustomer(request()->query('customer'));
     }
 
+    /**
+     * The existing customer this Lead is for. It must be one the person can see.
+     */
+    #[Computed]
+    public function customer(): ?Account
+    {
+        return $this->customerId === null
+            ? null
+            : Account::query()->visibleTo(Auth::user())->notArchived()->find($this->customerId);
+    }
+
+    /**
+     * @return Collection<int, AccountContact>
+     */
+    #[Computed]
+    public function customerContacts(): Collection
+    {
+        return $this->customer === null
+            ? new Collection
+            : $this->customer->contactLinks()
+                ->notArchived()
+                ->whereHas('contact', fn ($contact) => $contact->whereNull('archived_at'))
+                ->with('contact')
+                ->orderByDesc('is_primary')
+                ->orderBy('id')
+                ->get();
+    }
+
+    /**
+     * @return Collection<int, Property>
+     */
+    #[Computed]
+    public function customerProperties(): Collection
+    {
+        return $this->customer === null ? new Collection : $this->customer->properties()->notArchived()->orderBy('id')->get();
+    }
+
+    /**
+     * Start the inquiry from the person chosen, so nothing already known is typed again. It can still be changed.
+     */
+    public function updatedCustomerContactId(): void
+    {
+        $contact = $this->customerContacts->firstWhere('contact_id', $this->customerContactId)?->contact;
+
+        if ($contact === null) {
+            $this->customerContactId = null;
+
+            return;
+        }
+
+        $this->name = (string) $contact->fullName();
+        $this->phone = (string) $contact->phone;
+        $this->email = (string) $contact->email;
+    }
+
+    /**
+     * Start the address from the property chosen, exactly as that property holds it.
+     */
+    public function updatedCustomerPropertyId(): void
+    {
+        $property = $this->customerProperties->firstWhere('id', $this->customerPropertyId);
+
+        if ($property === null) {
+            $this->customerPropertyId = null;
+
+            return;
+        }
+
+        $this->fillAddress(StructuredAddress::ofProperty($property));
+        $this->propertyAddressChanged();
+    }
+
+    /**
+     * When the form was opened from a customer's page, start it from that customer.
+     */
+    private function startFromCustomer(mixed $requested): void
+    {
+        if (! is_numeric($requested)) {
+            return;
+        }
+
+        $this->customerId = (int) $requested;
+
+        // A customer the person cannot see is refused, exactly as its own page would be.
+        abort_if($this->customer === null, 403);
+
+        $this->businessName = (string) $this->customer->business_name;
+
+        $primary = $this->customerContacts->first();
+
+        if ($primary !== null) {
+            $this->customerContactId = $primary->contact_id;
+            $this->updatedCustomerContactId();
+        }
+
+        if ($this->customerProperties->count() === 1) {
+            $this->customerPropertyId = $this->customerProperties[0]->id;
+            $this->updatedCustomerPropertyId();
+        }
+    }
     /**
      * @return Collection<int, LeadChannel>
      */
@@ -358,8 +471,11 @@ new #[Title('New lead')] class extends AddressCapturePage {
                 address: $address,
                 // Worked out again here, on the server, from the address being saved.
                 suggestedLocation: $address === null ? null : app(ServiceAreaResolver::class)->locationFor($address),
-            );
-        } catch (Throwable $exception) {
+                // Only ever a customer this person can see, with one of its own people and places.
+                account: $this->customerForCapture(),
+                contact: $this->customerContacts->firstWhere('contact_id', $this->customerContactId)?->contact,
+                property: $this->customerProperties->firstWhere('id', $this->customerPropertyId),
+            );        } catch (Throwable $exception) {
             // Nothing was recorded, so the form may be submitted again.
             Cache::forget('lead-capture:'.$this->submissionKey);
 
@@ -374,6 +490,22 @@ new #[Title('New lead')] class extends AddressCapturePage {
      * and each location are authorized here, on the server, every time. A
      * suggestion changes nothing about that.
      */
+    /**
+     * The customer the Lead is being recorded for, checked again as it is saved.
+     */
+    private function customerForCapture(): ?Account
+    {
+        if ($this->customerId === null) {
+            return null;
+        }
+
+        unset($this->customer, $this->customerContacts, $this->customerProperties);
+
+        abort_if($this->customer === null, 403);
+
+        return $this->customer;
+    }
+
     private function chosenLocation(): ?Location
     {
         if ($this->locationId === '') {
@@ -415,9 +547,37 @@ new #[Title('New lead')] class extends AddressCapturePage {
     </div>
 
     <form wire:submit="save" class="flex flex-col gap-6">
+        @if ($this->customer !== null)
+            <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="lead-for-customer">
+                <div>
+                    <flux:heading size="lg" level="2">{{ __('For :customer', ['customer' => $this->customer->display_name]) }}</flux:heading>
+                    <flux:subheading>{{ __('This lead will be linked to this customer. The inquiry below starts from what is already known and can be changed.') }}</flux:subheading>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <flux:select wire:model.live="customerContactId" :label="__('Contact')" data-test="customer-contact">
+                        <flux:select.option value="">{{ __('No contact chosen') }}</flux:select.option>
+                        @foreach ($this->customerContacts as $link)
+                            <flux:select.option :value="$link->contact_id" wire:key="customer-contact-{{ $link->contact_id }}">{{ $link->contact->fullName() ?? __('No name given') }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+
+                    <flux:select wire:model.live="customerPropertyId" :label="__('Property')" data-test="customer-property">
+                        <flux:select.option value="">{{ __('No property chosen') }}</flux:select.option>
+                        @foreach ($this->customerProperties as $property)
+                            <flux:select.option :value="$property->id" wire:key="customer-property-{{ $property->id }}">{{ $property->summary() }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                </div>
+
+                <flux:error name="customer" />
+                <flux:error name="customerContactId" />
+                <flux:error name="customerPropertyId" />
+            </div>
+        @endif
+
         <div class="flex flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-5">
             <flux:heading size="lg" level="2">{{ __('Quick capture') }}</flux:heading>
-
             <flux:input wire:model="name" :label="__('Name')" type="text" autofocus autocomplete="off" data-test="lead-name" />
 
             <div class="grid gap-5 sm:grid-cols-2">

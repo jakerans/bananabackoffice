@@ -118,6 +118,24 @@ class LeadPolicy
     }
 
     /**
+     * Determine whether the user can say which customer the Lead is from: link
+     * it to a customer, create one from it, or change or remove that link.
+     *
+     * It needs the Lead to be theirs to work, and the customer permission where
+     * the Lead is. For an unrouted Lead that means company-wide.
+     */
+    public function resolveCustomer(User $user, Lead $lead): bool
+    {
+        if (! $this->update($user, $lead)) {
+            return false;
+        }
+
+        return $lead->location === null
+            ? $user->hasPermissionAcrossAllLocations(Permission::ManageAccounts)
+            : $user->hasPermissionAt(Permission::ManageAccounts, $lead->location);
+    }
+
+    /**
      * Determine whether the user can start working the Lead.
      *
      * The person it is assigned to can. So can someone who may assign Leads,

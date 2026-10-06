@@ -41,6 +41,7 @@ class AccountFactory extends Factory
             return [
                 'type' => AccountType::Commercial,
                 'business_name' => $businessName,
+                'business_name_normalized' => Account::normalizeBusinessName($businessName),
                 'display_name' => $businessName,
             ];
         });

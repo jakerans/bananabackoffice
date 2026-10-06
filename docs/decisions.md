@@ -1039,6 +1039,45 @@ Choices made while building, for the owner to confirm:
   or switching a household to a business was not in the B6b list. It is raised
   with the owner for B6c.
 
+## 50. Resolving a lead into a customer (step B6c)
+
+Built on 2026-10-06 from the approved B6 plan, with customer editing added at
+the owner's request. Described under "Resolving a lead into a customer, as built
+in step B6c" in [checkpoint-b.md](checkpoint-b.md).
+
+The owner also confirmed the B6b choices (decision 49) and reworded the note on
+editing a shared Contact: "Changes update this person's contact information
+wherever they're used in Backoffice."
+
+Choices made while building, for the owner to confirm:
+
+- **Resolving has its own page,** opened from the Lead, with the customer, the
+  person and the place on one screen. It is not a pop-up over the Lead.
+- **A masked match is shown only when it points to exactly one hidden customer,**
+  and never for a person who is also a contact of a customer the viewer can see.
+  In those cases nothing is shown and staff may create a new customer. This is
+  what keeps "do not reveal counts" and "never reveal hidden relationships"
+  true. A company-wide person sees the real match.
+- **A masked link attaches the Lead to the customer and the matching Contact
+  only.** The Property is chosen afterwards, once the person can see the
+  customer.
+- **20 masked matches an hour per person.** Seeing the same one again does not
+  count. This limits guessing phone numbers by editing a Lead. Every link and
+  every correction of a Lead's phone or email is also audited.
+- **Business names are matched** after ignoring case, punctuation and words such
+  as "The", "Inc" and "LLC". Only ever among customers the viewer can see.
+- **People are not matched by name.**
+- **An archived customer is never offered as a match,** even to someone who could
+  restore it. They would find it under "Show archived" on Customers.
+- **Removing a link clears the customer, Contact and Property together.**
+- **The new lead form shows no match hints while typing.** The approved plan
+  allowed an optional subtle hint; none was added, so intake is unchanged.
+- **A household that becomes a business keeps its primary Contact; a business
+  that becomes a household loses its business name,** which stays in the audit
+  history.
+- **A customer can be archived only when it has no active Lead.** Since every
+  Lead is active until B7, that means no Lead at all for now.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

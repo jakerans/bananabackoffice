@@ -44,6 +44,12 @@ enum AuditAction: string
     case LeadUnassigned = 'lead.unassigned';
     case LeadReceivedTimeCorrected = 'lead.received_time_corrected';
     case AccountCreated = 'account.created';
+    case AccountEdited = 'account.edited';
+    case AccountArchived = 'account.archived';
+    case AccountRestored = 'account.restored';
+    case LeadCustomerLinked = 'lead.customer_linked';
+    case LeadCustomerLinkChanged = 'lead.customer_link_changed';
+    case LeadCustomerUnlinked = 'lead.customer_unlinked';
     case ContactCreated = 'contact.created';
     case ContactDetailsEdited = 'contact.details_edited';
     case ContactConnected = 'account.contact_connected';

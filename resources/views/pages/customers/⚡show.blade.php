@@ -1,13 +1,16 @@
 <?php
 
 use App\Actions\Customers\AddContactToAccount;
+use App\Actions\Customers\ArchiveAccount;
 use App\Actions\Customers\ArchiveProperty;
 use App\Actions\Customers\LinkContactToAccount;
 use App\Actions\Customers\MakePrimaryContact;
 use App\Actions\Customers\RemoveContactFromAccount;
 use App\Actions\Customers\RestoreContactToAccount;
 use App\Actions\Customers\SaveProperty;
+use App\Actions\Customers\UpdateAccount;
 use App\Actions\Customers\UpdateAccountContact;
+use App\Enums\AccountType;
 use App\Enums\ContactRole;
 use App\Enums\Permission;
 use App\Enums\PropertyType;
@@ -75,6 +78,10 @@ new #[Title('Customer')] class extends AddressCapturePage {
 
     public bool $showRemoved = false;
 
+    public string $accountType = '';
+
+    public string $accountBusinessName = '';
+
     /**
      * Mount the component.
      */
@@ -85,6 +92,74 @@ new #[Title('Customer')] class extends AddressCapturePage {
         $this->account = $account;
 
         $this->startAddressCapture();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | The customer itself
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Open the form for correcting what kind of customer this is, or a business's name.
+     */
+    public function editAccount(): void
+    {
+        $this->authorize('update', $this->account);
+
+        $this->accountType = $this->account->type->value;
+        $this->accountBusinessName = (string) $this->account->business_name;
+
+        $this->resetValidation();
+
+        Flux::modal('account-form')->show();
+    }
+
+    /**
+     * Save the correction. Contacts, properties, leads and history are untouched.
+     */
+    public function saveAccount(UpdateAccount $updateAccount): void
+    {
+        $this->authorize('update', $this->account);
+
+        $this->validate([
+            'accountType' => ['required', Rule::enum(AccountType::class)],
+            'accountBusinessName' => ['nullable', 'string', 'max:255'],
+        ], attributes: [
+            'accountType' => 'kind of customer',
+            'accountBusinessName' => 'business name',
+        ]);
+
+        $updateAccount->handle($this->account, AccountType::from($this->accountType), $this->accountBusinessName);
+
+        $this->account->refresh();
+
+        Flux::modal('account-form')->close();
+        Flux::toast(variant: 'success', text: __('Saved.'));
+    }
+
+    /**
+     * Archive the customer. A company-wide management action.
+     */
+    public function archiveAccount(ArchiveAccount $archiveAccount): void
+    {
+        $this->authorize('archive', $this->account);
+
+        $archiveAccount->archive($this->account, Auth::user());
+
+        Flux::toast(variant: 'success', text: __('Customer archived.'));
+    }
+
+    /**
+     * Restore the archived customer. A company-wide management action.
+     */
+    public function restoreAccount(ArchiveAccount $archiveAccount): void
+    {
+        $this->authorize('restore', $this->account);
+
+        $archiveAccount->restore($this->account);
+
+        Flux::toast(variant: 'success', text: __('Customer restored.'));
     }
 
     /*
@@ -681,10 +756,46 @@ new #[Title('Customer')] class extends AddressCapturePage {
             </flux:subheading>
         </div>
 
-        @can('archive', $account)
-            <flux:checkbox wire:model.live="showRemoved" :label="__('Show removed contacts and archived properties')" data-test="show-removed" />
-        @endcan
+        <div class="flex flex-col items-end gap-3">
+            <div class="flex flex-wrap justify-end gap-2">
+                @can('update', $account)
+                    <flux:button size="sm" icon="pencil-square" wire:click="editAccount" data-test="edit-customer">{{ __('Edit customer') }}</flux:button>
+                @endcan
+
+                @if (! $account->isArchived())
+                    @can('create', Lead::class)
+                        <flux:button size="sm" variant="primary" icon="plus" :href="route('leads.create', ['customer' => $account->id])" wire:navigate data-test="new-lead-for-customer">
+                            {{ __('New lead') }}
+                        </flux:button>
+                    @endcan
+                @endif
+
+                @can('archive', $account)
+                    <flux:button
+                        size="sm"
+                        variant="ghost"
+                        wire:click="archiveAccount"
+                        wire:confirm="{{ __('Archive this customer? It is hidden from lists and choices, and can be restored later.') }}"
+                        data-test="archive-customer"
+                    >
+                        {{ __('Archive customer') }}
+                    </flux:button>
+                @endcan
+
+                @can('restore', $account)
+                    <flux:button size="sm" variant="primary" wire:click="restoreAccount" data-test="restore-customer">{{ __('Restore customer') }}</flux:button>
+                @endcan
+            </div>
+
+            @can('archive', $account)
+                <flux:checkbox wire:model.live="showRemoved" :label="__('Show removed contacts and archived properties')" data-test="show-removed" />
+            @endcan
+        </div>
     </div>
+
+    @error('account')
+        <div role="alert" class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-ink" data-test="customer-refused">{{ $message }}</div>
+    @enderror
 
     @if ($account->isArchived())
         <div role="status" class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-ink" data-test="customer-archived">
@@ -924,12 +1035,53 @@ new #[Title('Customer')] class extends AddressCapturePage {
     @endif
 
     @can('update', $account)
+        <flux:modal name="account-form" class="w-full max-w-xl">
+            <form wire:submit="saveAccount" class="flex flex-col gap-5">
+                <div>
+                    <flux:heading size="lg">{{ __('Edit customer') }}</flux:heading>
+                    <flux:subheading>{{ __('Changing the kind of customer keeps its contacts, properties, leads and history exactly as they are.') }}</flux:subheading>
+                </div>
+
+                <fieldset class="flex flex-col gap-2" data-test="account-type-choice">
+                    <legend class="text-sm font-medium text-ink">{{ __('Kind of customer') }}</legend>
+
+                    <div class="grid gap-2 sm:grid-cols-2">
+                        @foreach (AccountType::cases() as $option)
+                            <label wire:key="account-type-{{ $option->value }}" class="cursor-pointer">
+                                <input type="radio" wire:model.live="accountType" name="accountType" value="{{ $option->value }}" class="peer sr-only" />
+                                <span class="flex min-h-14 flex-col justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-ink peer-checked:border-ink peer-checked:bg-banana peer-focus-visible:ring-2 peer-focus-visible:ring-wall-teal">
+                                    <span class="font-nav text-sm font-bold">{{ $option->label() }}</span>
+                                    <span class="text-xs text-zinc-700">
+                                        {{ $option === AccountType::Residential ? __('Named after its primary contact') : __('Named by its business name') }}
+                                    </span>
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+
+                    <flux:error name="accountType" />
+                </fieldset>
+
+                @if ($accountType === AccountType::Commercial->value)
+                    <flux:input wire:model="accountBusinessName" :label="__('Business name')" type="text" autocomplete="off" />
+                @endif
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-customer-edit">{{ __('Save') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
         <flux:modal name="contact-form" class="w-full max-w-xl">
             <form wire:submit="saveContact" class="flex flex-col gap-5">
                 <div>
                     <flux:heading size="lg">{{ $editingLinkId === null ? __('Add contact') : __('Edit contact') }}</flux:heading>
                     <flux:subheading>
-                        {{ __('These details belong to the person. If they are a contact of another customer, a change here applies there too.') }}
+                        {{ __('Changes update this person\'s contact information wherever they\'re used in Backoffice.') }}
                     </flux:subheading>
                 </div>
 

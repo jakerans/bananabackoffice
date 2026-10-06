@@ -231,7 +231,7 @@ test('editing a contact changes the person and their roles at this customer', fu
         ->assertSet('contactFirstName', 'Maria')
         ->assertSet('contactLastName', 'Lopes')
         ->assertSet('contactRoles', ['owner'])
-        ->assertSee('These details belong to the person.')
+        ->assertSee("Changes update this person's contact information wherever they're used in Backoffice.")
         ->set('contactLastName', 'Lopez')
         ->set('contactPhone', '555-999-0000')
         ->set('contactRoles', ['owner', 'billing_contact'])
@@ -304,7 +304,7 @@ test('correcting a shared contact applies wherever they are a contact, and revea
         ->call('editContact', $mine->contactLinks()->sole()->id);
 
     // The same sentence is shown for every contact, shared or not.
-    $shared->assertSee('If they are a contact of another customer, a change here applies there too.')
+    $shared->assertSee("Changes update this person's contact information wherever they're used in Backoffice.")
         ->assertDontSee('Paula Manger is also')
         ->assertDontSee('Northside');
 
@@ -322,7 +322,7 @@ test('correcting a shared contact applies wherever they are a contact, and revea
     Livewire::actingAs($consultant)
         ->test('pages::customers.show', ['account' => $solo])
         ->call('editContact', $solo->contactLinks()->sole()->id)
-        ->assertSee('If they are a contact of another customer, a change here applies there too.');
+        ->assertSee("Changes update this person's contact information wherever they're used in Backoffice.");
 });
 
 /*

@@ -65,6 +65,8 @@ test('capturing a lead records who received it, how, and where it was routed', f
         'suggested_location' => null,
         'location' => 'Lakeview',
         'received_at' => '2026-10-05T18:30:00+00:00',
+        // Not recorded for an existing customer. That is said when it is.
+        'customer' => null,
     ]));
 });
 

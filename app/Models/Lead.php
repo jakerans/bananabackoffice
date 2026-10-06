@@ -252,6 +252,19 @@ class Lead extends Model
         return $this->morphMany(Note::class, 'notable');
     }
 
+    /**
+     * Whether the Lead still needs someone's attention. Its customer links can be changed only while it does.
+     */
+    public function isActive(): bool
+    {
+        return in_array($this->status, [LeadStatus::New, LeadStatus::Working], true);
+    }
+
+    public function isLinkedToCustomer(): bool
+    {
+        return $this->account_id !== null;
+    }
+
     public function isAssigned(): bool
     {
         return $this->assigned_user_id !== null;
