@@ -1057,6 +1057,10 @@ first; photos and history presentation come last.
 
 B1 to B9 are the operational target for launch. See "Launch and production".
 
+**Where it stands (2026-10-06):** B1 to B6 are approved, merged into `main` and
+verified on staging. B7 to B12 are not built; they continue on the
+`checkpoint-b-continuation` branch.
+
 ## Not in Checkpoint B
 
 The call board, call cadence, auto-dialling and alarms; the Inbox; appointments;

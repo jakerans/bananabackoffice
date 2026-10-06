@@ -5,9 +5,15 @@
 **Checkpoint A — Secure branded foundation — is approved and merged into `main`
 (2026-10-04).**
 **Current: Checkpoint B.** Its plan was approved on 2026-10-05 (step B0) and is in
-[checkpoint-b.md](checkpoint-b.md). It is built one small step at a time on the
-`checkpoint-b` branch, stopping for the owner's review after each step. The table
-under "Checkpoint B" below shows how far it has got.
+[checkpoint-b.md](checkpoint-b.md). It is built one small step at a time, stopping
+for the owner's review after each step. The table under "Checkpoint B" below shows
+how far it has got.
+
+**Steps B1 to B6 are approved, merged into `main` and deployed to staging
+(2026-10-06).** That merge was an integration checkpoint, not the end of
+Checkpoint B: see "Integration checkpoint" below. **B7 to B12 are not built.** The
+remaining steps are built on the `checkpoint-b-continuation` branch, which starts
+from the verified `main`.
 
 Banana Painting launches about a week after that approval. The operational target
 for launch is steps B1 to B9, with a production-readiness checkpoint around B7 or
@@ -16,7 +22,7 @@ B8.
 | Checkpoint | Scope | State |
 | --- | --- | --- |
 | A | Secure branded foundation | Approved and merged (2026-10-04) |
-| B | Leads, customers and projects: lead capture and attribution, routing, accounts, contacts, properties, qualification, projects, sales outcome, notes, private attachments, timeline | Plan approved (2026-10-05); being built step by step |
+| B | Leads, customers and projects: lead capture and attribution, routing, accounts, contacts, properties, qualification, projects, sales outcome, notes, private attachments, timeline | B1 to B6 approved, merged and on staging (2026-10-06). B7 to B12 not built. |
 | C | First Color Studio workflow | Not started |
 | Later | Estimating and proposals, homeowner portal, production, finance, reporting | Not started |
 
@@ -379,7 +385,8 @@ outcome, because Backoffice is to be the system of record from launch.
 | B5 | Lead notes: add, read and remove from view on the Lead page | Built and approved (2026-10-05). |
 | B6a | Customers: the Account, Contact and Property records; who may see a customer; the Customers list and page (read only) | Built and approved (2026-10-06). |
 | B6b | Managing Contacts and Properties, with address lookup; creating a customer directly | Built and approved (2026-10-06). |
-| B6c | Resolving a Lead into a customer; duplicate suggestions, including masked matches; shared Contacts; "New lead for this customer"; archive and restore; editing a customer | Built (2026-10-06). Awaiting the owner's browser review. |
+| B6c | Resolving a Lead into a customer; duplicate suggestions, including masked matches; shared Contacts; "New lead for this customer"; archive and restore; editing a customer | Built and approved (2026-10-06). |
+| — | **Integration checkpoint:** B1 to B6 merged into `main` and verified on staging | Complete (2026-10-06). See below. |
 | B7 | Qualification, disqualification and nurture | Not started |
 | — | **Production-readiness checkpoint** (around B7 or B8) | Not started |
 | B8 | Projects; the shared Projects page | Not started |
@@ -392,7 +399,45 @@ Each step stops for the owner's review before the next begins. B1 to B9 are the
 operational target for launch. Authorization, data integrity, tests and
 auditability are not traded for the date.
 
+### Integration checkpoint: B1 to B6 on staging (2026-10-06)
+
+Steps B1 to B6, with Owner impersonation, were merged into `main` with an
+ordinary merge that keeps each step's commits, and deployed to staging by Forge.
+This is a point where everything approved so far is known to work together on the
+real server. It is not the end of Checkpoint B.
+
+What was checked:
+
+- The complete local check and both GitHub jobs (SQLite and MySQL 8.4) passed on
+  the merge.
+- Forge deployed it automatically. All 36 database changes are applied on staging
+  MySQL 8.4, 23 of them new in this deployment, with none pending. Every new table
+  is present and the starting list values are in place.
+- **Mapbox is configured on staging and works.** One real lookup from the staging
+  server returned suggestions and a permanent structured address with a map
+  position. The token is set, is not printed anywhere, does not appear in any
+  page, and is not in the log.
+- Signed in as the Owner (checked inside the application, without the Owner's
+  password): the home page, Lead & Sales Lists, Locations with service areas,
+  Users and Access, the Leads list with its views, New lead with address lookup,
+  the Customers list and New customer all load.
+- Someone with no access is refused every one of those pages, and someone signed
+  out is sent to the sign-in page.
+- Email is still set to Resend, sessions are still kept in the database, debug
+  mode is off, and no errors were logged after the deployment.
+- Nothing was added to staging by these checks: no location, lead, customer or
+  staff member.
+
+One thing to know: **staging has no locations yet.** Until one exists, Leads and
+Customers are refused even to the Owner and are not shown in the menus, because
+nobody has a location to work in. This is the Checkpoint A rule that a missing
+location never means "all locations". Adding a location in Settings > Locations
+makes both appear. The two lists were checked on staging with a location that
+existed only inside a database transaction that was rolled back.
+
 ### Production readiness
+
+The production-readiness checkpoint is still planned around B7 or B8.
 
 Production is prepared before the operational steps are finished, not after B12.
 Production does not reuse staging, and **real customer data is never entered into

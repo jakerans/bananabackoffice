@@ -1078,6 +1078,30 @@ Choices made while building, for the owner to confirm:
 - **A customer can be archived only when it has no active Lead.** Since every
   Lead is active until B7, that means no Lead at all for now.
 
+## 51. B1 to B6 merged and verified on staging; the rest continues on a new branch
+
+On 2026-10-06 the owner approved B6 and asked for an integration checkpoint.
+
+- **B1 to B6 are approved and merged into `main`,** with Owner impersonation, by
+  an ordinary merge that keeps each step's commits.
+- **The staging integration checkpoint is complete.** What was checked is in
+  [roadmap.md](roadmap.md) under "Integration checkpoint".
+- **Mapbox is the approved address provider** (decisions 42 and 43), and its
+  staging integration is configured and verified with a real lookup from the
+  staging server. The owner entered the staging token in Forge; it exists only
+  there.
+- **B7 to B12 remain unbuilt.** They are built on the
+  `checkpoint-b-continuation` branch, started from the verified `main`, one
+  reviewed step at a time as before.
+- **The production-readiness checkpoint is still planned around B7 or B8.**
+  Production does not exist yet and real customer data is still never entered
+  into staging.
+
+Why merge before Checkpoint B is finished: six approved steps had built up on one
+branch, none of it yet proven on the real server and database. Merging at a point
+where every step has been reviewed keeps the remaining work small and means a
+problem that only appears on staging is found now, not at the end.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
