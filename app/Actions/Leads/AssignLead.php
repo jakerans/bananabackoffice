@@ -31,6 +31,12 @@ class AssignLead
      */
     public function handle(Lead $lead, User $assignee, ?User $actor = null): void
     {
+        if (! $lead->isActive()) {
+            throw ValidationException::withMessages([
+                'lead' => __('This lead is disqualified. Reopen it before assigning it.'),
+            ]);
+        }
+
         if (! $assignee->canBeAssigned($lead)) {
             throw ValidationException::withMessages([
                 'assigneeId' => __(':name cannot work leads here, so cannot be assigned this one.', ['name' => $assignee->name]),

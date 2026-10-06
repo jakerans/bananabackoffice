@@ -18,8 +18,11 @@ use Livewire\WithPagination;
 new #[Title('Leads')] class extends Component {
     use WithPagination;
 
-    /** The Leads this person is responsible for, at every location they can see. */
+    /** The Leads this person has to act on now, at every location they can see. */
     public const string MINE = 'mine';
+
+    /** Leads in Nurture, by the date they are to be followed up. */
+    public const string FOLLOW_UPS = 'follow-ups';
 
     /** Leads at the current location that nobody is responsible for yet. */
     public const string UNASSIGNED = 'unassigned';
@@ -84,6 +87,7 @@ new #[Title('Leads')] class extends Component {
     {
         return array_values(array_filter([
             self::MINE,
+            self::FOLLOW_UPS,
             $this->canDistribute ? self::UNASSIGNED : null,
             self::ALL,
             $this->canSeeUnrouted ? self::UNROUTED : null,
@@ -122,9 +126,11 @@ new #[Title('Leads')] class extends Component {
         $user = Auth::user();
 
         return [
-            self::MINE => Lead::query()->visibleTo($user)->where('assigned_user_id', $user->id)->count(),
+            self::MINE => Lead::query()->visibleTo($user)->where('assigned_user_id', $user->id)->actionable()->count(),
+            // Only the follow-ups whose date has arrived are waiting on anyone.
+            self::FOLLOW_UPS => $this->followUps(Lead::query()->visibleTo($user))->whereDate('follow_up_on', '<=', Lead::today())->count(),
             self::UNASSIGNED => $this->canDistribute ? $this->atCurrentLocation(Lead::query()->visibleTo($user))->unassigned()->active()->count() : 0,
-            self::UNROUTED => $this->canSeeUnrouted ? Lead::query()->visibleTo($user)->unrouted()->count() : 0,
+            self::UNROUTED => $this->canSeeUnrouted ? Lead::query()->visibleTo($user)->unrouted()->active()->count() : 0,
         ];
     }
 
@@ -137,19 +143,25 @@ new #[Title('Leads')] class extends Component {
         $user = Auth::user();
 
         // Always start from what the person is allowed to see, whatever is selected.
-        $query = Lead::query()->visibleTo($user)->with(['channel', 'leadSource', 'location', 'services', 'projectSize', 'assignee']);
+        $query = Lead::query()->visibleTo($user)->with(['channel', 'leadSource', 'location', 'services', 'projectSize', 'assignee', 'disqualificationReason']);
 
         match ($this->currentView) {
             // Their own work wherever it is, whatever location is selected: oldest first.
-            self::MINE => $query->where('assigned_user_id', $user->id)->orderBy('received_at')->orderBy('id'),
+            // A follow-up joins it once its date arrives, and not before.
+            self::MINE => $query->where('assigned_user_id', $user->id)->actionable()->orderBy('received_at')->orderBy('id'),
+            // Soonest, and so most overdue, first.
+            self::FOLLOW_UPS => $this->followUps($query)->orderBy('follow_up_on')->orderBy('id'),
             // Longest at this location without anyone responsible first.
             self::UNASSIGNED => $this->atCurrentLocation($query)->unassigned()->active()->orderBy('routed_at')->orderBy('id'),
             self::UNROUTED => $query->unrouted()->orderBy('received_at')->orderBy('id'),
             default => $this->atCurrentLocation($query)->orderByDesc('received_at')->orderByDesc('id'),
         };
 
-        if (LeadStatus::tryFrom($this->status) !== null) {
-            $query->where('status', $this->status);
+        if ($this->currentView !== self::FOLLOW_UPS) {
+            // Disqualified Leads are closed. They are listed only when asked for by status.
+            LeadStatus::tryFrom($this->status) !== null
+                ? $query->where('status', $this->status)
+                : $query->active();
         }
 
         $this->applySearch($query);
@@ -180,10 +192,32 @@ new #[Title('Leads')] class extends Component {
     {
         return match ($view) {
             self::MINE => __('Assigned to me'),
+            self::FOLLOW_UPS => __('Follow-ups'),
             self::UNASSIGNED => __('Unassigned'),
             self::UNROUTED => __('Unrouted'),
             default => __('All leads'),
         };
+    }
+
+    /**
+     * Limit a query to the Leads in Nurture this person follows: their own
+     * wherever they are, and, for someone who hands out Leads in the location
+     * being worked in, everyone's there.
+     *
+     * @param  Builder<Lead>  $query
+     * @return Builder<Lead>
+     */
+    private function followUps(Builder $query): Builder
+    {
+        return $query
+            ->where('status', LeadStatus::Nurture)
+            ->where(function (Builder $query): void {
+                $query->where('assigned_user_id', Auth::id());
+
+                if ($this->canDistribute) {
+                    $query->orWhere(fn (Builder $here) => $this->atCurrentLocation($here));
+                }
+            });
     }
 
     /**
@@ -240,7 +274,14 @@ new #[Title('Leads')] class extends Component {
             <flux:subheading data-test="leads-scope">
                 @switch($this->currentView)
                     @case($this::MINE)
-                        {{ __('Leads you are responsible for, at every location you work in. Oldest first.') }}
+                        {{ __('Leads waiting on you, at every location you work in. Oldest first. A follow-up appears here once its date arrives.') }}
+                        @break
+                    @case($this::FOLLOW_UPS)
+                        @if ($this->canDistribute)
+                            {{ __('Leads in nurture for :location, and your own anywhere. Soonest follow-up first.', ['location' => $this->context?->label()]) }}
+                        @else
+                            {{ __('Your leads in nurture. Soonest follow-up first.') }}
+                        @endif
                         @break
                     @case($this::UNASSIGNED)
                         {{ __('Leads for :location that nobody is responsible for yet. Longest waiting first.', ['location' => $this->context?->label()]) }}
@@ -293,14 +334,16 @@ new #[Title('Leads')] class extends Component {
             />
         </div>
 
-        <div class="sm:w-48">
-            <flux:select wire:model.live="status" :label="__('Status')">
-                <flux:select.option value="">{{ __('Any status') }}</flux:select.option>
-                @foreach (LeadStatus::cases() as $option)
-                    <flux:select.option :value="$option->value">{{ $option->label() }}</flux:select.option>
-                @endforeach
-            </flux:select>
-        </div>
+        @if ($this->currentView !== $this::FOLLOW_UPS)
+            <div class="sm:w-48">
+                <flux:select wire:model.live="status" :label="__('Status')" data-test="status-filter">
+                    <flux:select.option value="">{{ __('Open leads') }}</flux:select.option>
+                    @foreach (LeadStatus::cases() as $option)
+                        <flux:select.option :value="$option->value">{{ $option->label() }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            </div>
+        @endif
     </div>
 
     @if ($this->leads->isEmpty())
@@ -309,11 +352,13 @@ new #[Title('Leads')] class extends Component {
             <flux:heading size="lg">{{ __('No leads here') }}</flux:heading>
             <flux:text class="max-w-md">
                 @if (trim($search) !== '' || $status !== '')
-                    {{ __('Nothing matches that search. Try fewer words, or clear the status.') }}
+                    {{ __('Nothing matches that search. Try fewer words, or clear the status. Disqualified leads are listed only when that status is chosen.') }}
+                @elseif ($this->currentView === $this::FOLLOW_UPS)
+                    {{ __('No leads are in nurture here.') }}
                 @elseif ($this->currentView === $this::UNROUTED)
                     {{ __('Every lead received centrally has been sent to a location.') }}
                 @elseif ($this->currentView === $this::MINE)
-                    {{ __('No leads are assigned to you right now.') }}
+                    {{ __('Nothing is waiting on you right now.') }}
                 @elseif ($this->currentView === $this::UNASSIGNED)
                     {{ __('Every lead here has someone responsible for it.') }}
                 @else
@@ -393,6 +438,7 @@ new #[Title('Leads')] class extends Component {
 
                             <flux:table.cell>
                                 <x-lead-status :status="$lead->status" />
+                                <x-lead-follow-up :lead="$lead" class="mt-1" />
                             </flux:table.cell>
                         </flux:table.row>
                     @endforeach
@@ -431,6 +477,7 @@ new #[Title('Leads')] class extends Component {
                             <x-local-time :at="$lead->received_at" relative />
                         </div>
                         <div>{{ $lead->assignee?->name ?? __('Unassigned') }}</div>
+                        <x-lead-follow-up :lead="$lead" />
                     </dl>
                 </li>
             @endforeach

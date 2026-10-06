@@ -5,6 +5,7 @@ namespace App\Actions\Leads;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Enums\LeadStatus;
+use App\Enums\LeadStatusEvent;
 use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,7 @@ class StartWorkingLead
     public function __construct(
         private RecordAuditEvent $recordAuditEvent,
         private AssignLead $assignLead,
+        private RecordLeadStatusChange $recordLeadStatusChange,
     ) {}
 
     /**
@@ -47,8 +49,11 @@ class StartWorkingLead
 
             $lead->forceFill([
                 'status' => LeadStatus::Working,
+                'status_changed_at' => now(),
                 'work_started_at' => $lead->work_started_at ?? now(),
             ])->save();
+
+            $this->recordLeadStatusChange->handle($lead, LeadStatusEvent::StartedWorking, LeadStatus::New, $worker, $lead->assigned_user_id);
 
             $this->recordAuditEvent->handle(
                 AuditAction::LeadWorkStarted,

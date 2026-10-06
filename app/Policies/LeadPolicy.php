@@ -68,7 +68,7 @@ class LeadPolicy
      */
     public function route(User $user, Lead $lead, Location $destination): bool
     {
-        if (! $destination->is_active || $lead->location_id === $destination->id) {
+        if (! $lead->isActive() || ! $destination->is_active || $lead->location_id === $destination->id) {
             return false;
         }
 
@@ -87,6 +87,11 @@ class LeadPolicy
      */
     public function routeAnywhere(User $user, Lead $lead): bool
     {
+        // A disqualified Lead is reopened before it is routed anywhere.
+        if (! $lead->isActive()) {
+            return false;
+        }
+
         if ($user->hasPermissionAcrossAllLocations(Permission::RouteLeads)) {
             return $this->view($user, $lead);
         }
@@ -101,13 +106,62 @@ class LeadPolicy
      */
     public function returnToCentral(User $user, Lead $lead): bool
     {
-        return $lead->location !== null && $user->hasPermissionAt(Permission::ReturnLeads, $lead->location);
+        return $lead->isActive() && $lead->location !== null && $user->hasPermissionAt(Permission::ReturnLeads, $lead->location);
     }
 
     /**
      * Determine whether the user can decide who is responsible for the Lead.
+     *
+     * Nobody is responsible for a disqualified Lead, so it is reopened first.
      */
     public function assign(User $user, Lead $lead): bool
+    {
+        return $lead->isActive() && $this->distributes($user, $lead);
+    }
+
+    /**
+     * Determine whether the user can move the Lead through its lifecycle:
+     * qualify it, move it to or from nurture, or disqualify it.
+     *
+     * The person it is assigned to can. So can anyone who hands out Leads where
+     * it is. Nobody else, so a Sales Consultant acts only on their own Leads.
+     */
+    public function changeStatus(User $user, Lead $lead): bool
+    {
+        if (! $lead->isActive() || ! $this->update($user, $lead)) {
+            return false;
+        }
+
+        return $lead->isAssignedTo($user) || $this->distributes($user, $lead);
+    }
+
+    /**
+     * Determine whether the user can reopen a disqualified Lead, or correct why
+     * it was disqualified.
+     *
+     * A disqualified Lead has nobody assigned, and a reopened one comes back
+     * unassigned, so this belongs to the people who hand out Leads.
+     */
+    public function reopen(User $user, Lead $lead): bool
+    {
+        return ! $lead->isActive() && $this->update($user, $lead) && $this->distributes($user, $lead);
+    }
+
+    /**
+     * Determine whether the user can let a Lead be closed as "unable to contact"
+     * before the usual waiting period has passed.
+     */
+    public function waiveContactWait(User $user, Lead $lead): bool
+    {
+        return $lead->location === null
+            ? $user->hasPermissionAcrossAllLocations(Permission::WaiveContactWait)
+            : $user->hasPermissionAt(Permission::WaiveContactWait, $lead->location);
+    }
+
+    /**
+     * Whether the user hands out Leads where this Lead is, whatever its status.
+     */
+    private function distributes(User $user, Lead $lead): bool
     {
         if ($lead->isUnrouted()) {
             return $user->hasPermissionAcrossAllLocations(Permission::AssignLeads)

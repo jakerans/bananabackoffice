@@ -260,8 +260,8 @@ decides which menu surrounds the page; it never grants access to a center.
 
 Until Central Inbox is built, Call Center opens on Leads.
 
-The Leads page has up to four views, chosen with buttons at the top (step B4):
-Assigned to me, Unassigned, All leads and Unrouted. A person is shown only the
+The Leads page has up to five views, chosen with buttons at the top (steps B4
+and B7): Assigned to me, Follow-ups, Unassigned, All leads and Unrouted. A person is shown only the
 views they may use, and the page opens on the one that suits their job. See
 "Routing and assignment, as built in step B4" in
 [checkpoint-b.md](checkpoint-b.md). The views are not separate pages and add

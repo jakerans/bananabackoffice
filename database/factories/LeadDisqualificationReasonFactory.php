@@ -30,6 +30,16 @@ class LeadDisqualificationReasonFactory extends Factory
     }
 
     /**
+     * Indicate that an explanation must be given with this reason.
+     */
+    public function requiringNote(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'requires_note' => true,
+        ]);
+    }
+
+    /**
      * Indicate that the option is no longer offered for new records.
      */
     public function inactive(): static

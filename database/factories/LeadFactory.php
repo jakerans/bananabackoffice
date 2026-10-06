@@ -8,6 +8,7 @@ use App\Models\Contact;
 use App\Models\Lead;
 use App\Models\LeadAssignment;
 use App\Models\LeadChannel;
+use App\Models\LeadDisqualificationReason;
 use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
@@ -153,6 +154,52 @@ class LeadFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => LeadStatus::Working,
+            'work_started_at' => now(),
         ]);
+    }
+
+    /**
+     * Indicate that the Lead has been marked Qualified.
+     */
+    public function qualified(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => LeadStatus::Qualified,
+            'work_started_at' => now(),
+            'first_qualified_at' => now(),
+            'status_changed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Indicate that the Lead is in Nurture, to be followed up on a date (in a week by default).
+     */
+    public function nurture(?string $followUpOn = null, string $note = 'Call back about the exterior.'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => LeadStatus::Nurture,
+            'work_started_at' => now(),
+            'status_changed_at' => now(),
+            'follow_up_on' => $followUpOn ?? now()->addWeek()->toDateString(),
+            'follow_up_note' => $note,
+        ]);
+    }
+
+    /**
+     * Indicate that the Lead has been disqualified, for the given reason or the first one offered.
+     */
+    public function disqualified(?LeadDisqualificationReason $reason = null): static
+    {
+        return $this->state(function (array $attributes) use ($reason) {
+            $reason ??= LeadDisqualificationReason::query()->ordered()->firstOrFail();
+
+            return [
+                'status' => LeadStatus::Disqualified,
+                'status_changed_at' => now(),
+                'last_disqualified_at' => now(),
+                'disqualification_reason_id' => $reason->id,
+                'disqualification_category' => $reason->category,
+            ];
+        });
     }
 }

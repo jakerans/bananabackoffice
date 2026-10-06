@@ -209,7 +209,8 @@ added to the code in the step that builds what it guards. Built so far:
 `settings.lists.manage` (B2); `leads.view`, `leads.manage` and
 `leads.view_unrouted` (B3); `leads.route`, `leads.transfer`, `leads.return` and
 `leads.assign` (B4); `notes.write` and `notes.remove` (B5); `accounts.view`
-(B6a); `accounts.manage` and `accounts.archive` (B6b). The records and their
+(B6a); `accounts.manage` and `accounts.archive` (B6b);
+`leads.waive_contact_wait` (B7). The records and their
 rules are described in [checkpoint-b.md](checkpoint-b.md).
 
 ### The rules Checkpoint B adds
@@ -240,7 +241,16 @@ rules are described in [checkpoint-b.md](checkpoint-b.md).
 10. **Starting work follows assignment.** The assignee may start their Lead.
     Someone who may assign may start an unassigned Lead, which assigns it to them.
     Nobody else may: starting work is never a way to take a Lead.
-### How someone sees a customer, which has no Location
+11. **Changing a Lead's status follows assignment too (B7).** The assignee may
+    qualify, nurture or disqualify their Lead. So may anyone who may assign Leads
+    at its Location. A Sales Consultant cannot change the status of a colleague's
+    Lead, though they can see it.
+12. **Reopening belongs to the people who hand out Leads (B7).** A disqualified
+    Lead has no assignee, and a reopened one comes back unassigned, so reopening
+    it, or correcting why it was disqualified, needs `leads.assign` at its
+    Location. A Sales Consultant cannot, even for a Lead they disqualified.
+13. **A disqualified Lead is closed (B7).** It cannot be routed, returned,
+    assigned or have its status changed until it is reopened.### How someone sees a customer, which has no Location
 
 `accounts.view` is granted like any other permission, at a Location or across all
 Locations. Because an Account has no Location, it is applied like this:
@@ -277,12 +287,13 @@ are listed or counted.
 | `accounts.manage` | Location | Add and edit a customer's Contacts and Properties. Through an all-locations grant: every customer, and creating one that has no Lead |
 | `accounts.archive` | Company | Archive and restore Accounts, Contacts, their connections and Properties |
 | `leads.view` | Location | See Leads routed to the location |
-| `leads.manage` | Location | Capture, edit and work Leads; qualify, disqualify, reopen |
+| `leads.manage` | Location | Capture, edit and work Leads; qualify, nurture and disqualify a Lead assigned to them |
 | `leads.view_unrouted` | Company | See and work Leads that have no location yet |
 | `leads.route` | Company | Send a Lead to any location, or move it to any other |
 | `leads.transfer` | Location | Move a Lead directly between two locations, when held at both |
 | `leads.return` | Location | Return a Lead to the central queue, with a reason |
-| `leads.assign` | Location | Assign, reassign or unassign a Lead; start working an unassigned one |
+| `leads.assign` | Location | Assign, reassign or unassign a Lead; start working an unassigned one; change the status of a Lead that is not theirs; reopen a disqualified Lead or correct its reason |
+| `leads.waive_contact_wait` | Location | Disqualify a Lead as "Unable to Contact" before the waiting period has passed |
 | `leads.convert` | Location | Create a Project from a Qualified Lead |
 | `projects.view` | Location | See Projects at the location |
 | `projects.create` | Location | Create a Project, from a Lead or directly |
@@ -319,7 +330,10 @@ The owner approved this matrix at the final review on 2026-10-05.
 | Move a Lead between two locations where they hold this role | Yes | Yes | Yes | No | No | No | No |
 | Return a Lead to the central queue | Yes | Yes | Yes | Yes | No | No | No |
 | Assign, reassign or unassign a Lead | Yes | Yes | Yes | Yes | No | No | No |
-| Be assigned a Lead, and work a Lead assigned to them | Yes | Yes | Yes | Yes | Yes | No | No |
+| Qualify, nurture or disqualify a Lead assigned to them | Yes | Yes | Yes | Yes | Yes | No | No |
+| Qualify, nurture or disqualify a Lead assigned to someone else, or to nobody | Yes | Yes | Yes | Yes | No | No | No |
+| Reopen a disqualified Lead, or correct its reason | Yes | Yes | Yes | Yes | No | No | No |
+| Waive the "Unable to Contact" waiting period | Yes | Yes | Yes | No | No | No | No || Be assigned a Lead, and work a Lead assigned to them | Yes | Yes | Yes | Yes | Yes | No | No |
 | Create a Project from a Qualified Lead | Yes | Yes | Yes | No | Yes | No | No |
 | See Projects | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
 | Create a Project directly | Yes | Yes | Yes | No | Yes | No | No |

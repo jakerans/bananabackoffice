@@ -1102,8 +1102,72 @@ branch, none of it yet proven on the real server and database. Merging at a poin
 where every step has been reviewed keeps the remaining work small and means a
 problem that only appears on staging is found now, not at the end.
 
-## Future decisions already constrained by the brief
+## 52. Qualification, disqualification and nurture (step B7)
 
+Built on 2026-10-06 from the B7 plan as the owner approved it with 18 decisions.
+Described under "Qualification, disqualification and nurture, as built in step
+B7" in [checkpoint-b.md](checkpoint-b.md).
+
+What the owner decided:
+
+- **Qualified requires a Property** as well as a Location, an assignee, a
+  customer, a Contact, a Service with a main one and a Project Size.
+- **Disqualification from New is allowed** (spam never needs to be "worked").
+  Nothing returns to New.
+- **Disqualifying clears the assignment** and keeps it in the assignment history.
+  **A reopened Lead is Working and unassigned**; the previous assignee is not
+  restored.
+- **"Unable to Contact"** needs a Working Lead, 3 days since work started and a
+  note. Only Owner, Leadership and a Location Manager may waive the wait, and a
+  waiver is audited.
+- **Nurture** needs an assignee, a date and a note, has no maximum date, and
+  nothing happens automatically when the date passes.
+- **Reopening** needs a reason and is for Owner, Leadership, Location Manager
+  and Call Center, not a Sales Consultant.
+- **The reason's category is recorded as it was at the time.**
+- **A duplicate names its original** where one can be identified among Leads the
+  person can see; otherwise an explanation. Never merged, never deleted, no
+  chains.
+- **A dedicated, append-only status history,** not the audit log, carries
+  lifecycle reporting.
+- **Active** means every status but Disqualified, so Qualified still blocks
+  archiving and deactivation until B8.
+- **All leads hides Disqualified** unless that status is chosen. No Disqualified
+  queue.
+
+Choices made while building, for the owner to confirm:
+
+- **One new permission, `leads.waive_contact_wait`,** held by Owner, Leadership
+  and Location Manager. It is the only way to express "managers but not the Call
+  Center" without naming roles in the code. It is a location-level permission.
+- **Reopening and correcting a reason use the existing "may assign Leads here"
+  rule,** which is exactly Owner, Leadership, Location Manager and Call Center.
+  No new permission was needed. It also fits: a reopened Lead has to be handed
+  out again.
+- **The two special reasons are recognized by a marker** on the reason, set by
+  the migration on the starting values "Unable to Contact" and "Duplicate Lead".
+  Renaming them keeps the rule. A newly added reason never has one. The marker is
+  not editable in Settings, like "note required".
+- **Correcting a reason is limited to the people who may reopen,** since a
+  disqualified Lead has no assignee.
+- **Correcting only the note keeps the category the Lead was disqualified
+  under.** Choosing a different reason takes that reason's category as it is now.
+- **Possible originals for a duplicate** are other visible Leads with the same
+  phone, the same email or the same customer, newest first, at most eight.
+- **The follow-up note is separate from Lead notes** (B5). It says what the
+  follow-up is about and is replaced when the follow-up is rescheduled; each
+  version stays in the status history.
+- **A Qualified Lead can be disqualified.** The plan listed it and nothing
+  replaces it until Projects exist.
+- **The Leads page gained a fifth view, Follow-ups,** and its Status filter now
+  starts on "Open leads" in every view.
+- **The Lead page does not show the status history yet.** It is recorded; showing
+  it belongs to the timeline (B11).
+- **Location deactivation and customer archiving needed no new rule:** they
+  already refuse while "active" Leads exist, and active now includes Qualified
+  and Nurture and excludes Disqualified.
+
+## Future decisions already constrained by the brief
 - Estimates hold any number of named, ordered options. No fixed tiers.
 - Accepted proposals are stored as versioned snapshots.
 - Projects carry several narrow states (sales, production, payment), not one

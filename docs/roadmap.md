@@ -11,7 +11,8 @@ how far it has got.
 
 **Steps B1 to B6 are approved, merged into `main` and deployed to staging
 (2026-10-06).** That merge was an integration checkpoint, not the end of
-Checkpoint B: see "Integration checkpoint" below. **B7 to B12 are not built.** The
+Checkpoint B: see "Integration checkpoint" below. **B7 is built and awaiting
+review; B8 to B12 are not built.** The
 remaining steps are built on the `checkpoint-b-continuation` branch, which starts
 from the verified `main`.
 
@@ -387,7 +388,7 @@ outcome, because Backoffice is to be the system of record from launch.
 | B6b | Managing Contacts and Properties, with address lookup; creating a customer directly | Built and approved (2026-10-06). |
 | B6c | Resolving a Lead into a customer; duplicate suggestions, including masked matches; shared Contacts; "New lead for this customer"; archive and restore; editing a customer | Built and approved (2026-10-06). |
 | — | **Integration checkpoint:** B1 to B6 merged into `main` and verified on staging | Complete (2026-10-06). See below. |
-| B7 | Qualification, disqualification and nurture | Not started |
+| B7 | Qualification, disqualification and nurture; the lead status history; the Follow-ups view | Built (2026-10-06) on `checkpoint-b-continuation`. Awaiting the owner's review. |
 | — | **Production-readiness checkpoint** (around B7 or B8) | Not started |
 | B8 | Projects; the shared Projects page | Not started |
 | B9 | Sales outcome: Won with Sold Amount, Lost | Not started |

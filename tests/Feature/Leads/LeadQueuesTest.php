@@ -21,7 +21,7 @@ test('the leads page opens on the view that suits the job', function (Closure $u
         ->assertSee($opensOn);
 })->with([
     'company-wide call center agent: unrouted' => [fn () => User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create(), 'Received centrally and not yet sent to a location.'],
-    'sales consultant: assigned to me' => [fn (Location $lakeview) => User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create(), 'Leads you are responsible for'],
+    'sales consultant: assigned to me' => [fn (Location $lakeview) => User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create(), 'Leads waiting on you'],
     'location manager: unassigned' => [fn (Location $lakeview) => User::factory()->withRoleAt(Role::LocationManager, $lakeview)->create(), 'Leads for Lakeview that nobody is responsible for yet.'],
     'call center agent at one location: unassigned' => [fn (Location $lakeview) => User::factory()->withRoleAt(Role::CallCenterAgent, $lakeview)->create(), 'Leads for Lakeview that nobody is responsible for yet.'],
     'owner: all leads' => [fn () => User::factory()->withRoleEverywhere(Role::Owner)->create(), 'Inquiries for'],
@@ -75,7 +75,7 @@ test('assigned to me never shows a lead at a location the person cannot see', fu
         ->assertSeeInOrder(['Assigned to me', '(0)'])
         ->assertDontSee('Northside Nora')
         ->assertDontSee('Unrouted Una')
-        ->assertSee('No leads are assigned to you right now.');
+        ->assertSee('Nothing is waiting on you right now.');
 });
 
 /*
@@ -122,10 +122,10 @@ test('sales consultants have no unassigned queue to pick from', function () {
         ->withQueryParams(['view' => 'unassigned'])
         ->test('pages::leads.index')
         ->assertDontSeeHtml('data-test="unassigned-tab"')
-        ->assertSee('Leads you are responsible for')
+        ->assertSee('Leads waiting on you')
         ->assertDontSee('Unassigned Una')
         ->call('show', 'unassigned')
-        ->assertSee('Leads you are responsible for')
+        ->assertSee('Leads waiting on you')
         ->assertDontSee('Unassigned Una');
 });
 

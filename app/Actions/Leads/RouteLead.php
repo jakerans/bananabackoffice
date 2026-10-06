@@ -43,6 +43,12 @@ class RouteLead
         $reason = trim((string) $reason) === '' ? null : trim((string) $reason);
         $origin = $lead->location;
 
+        if (! $lead->isActive()) {
+            throw ValidationException::withMessages([
+                'destinationId' => __('This lead is disqualified. Reopen it before sending it anywhere.'),
+            ]);
+        }
+
         if (! $destination->is_active) {
             throw ValidationException::withMessages([
                 'destinationId' => __('Choose an active location.'),

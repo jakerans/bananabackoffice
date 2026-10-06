@@ -39,6 +39,12 @@ class ReturnLeadToCentral
             ]);
         }
 
+        if (! $lead->isActive()) {
+            throw ValidationException::withMessages([
+                'reason' => __('This lead is disqualified. Reopen it before sending it anywhere.'),
+            ]);
+        }
+
         if (trim($reason) === '') {
             throw ValidationException::withMessages([
                 'reason' => __('Say why this lead is being returned to central.'),

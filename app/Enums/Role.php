@@ -53,6 +53,7 @@ enum Role: string
                 Permission::TransferLeads,
                 Permission::ReturnLeads,
                 Permission::AssignLeads,
+                Permission::WaiveContactWait,
                 Permission::WriteNotes,
                 Permission::RemoveNotes,
                 Permission::ViewAccounts,
@@ -76,6 +77,8 @@ enum Role: string
                 Permission::TransferLeads,
                 Permission::ReturnLeads,
                 Permission::AssignLeads,
+                // Managers, not the Call Center, may let a lead be closed as "unable to contact" early.
+                Permission::WaiveContactWait,
                 Permission::WriteNotes,
                 // A manager may remove anyone's note from view. Everyone else only their own.
                 Permission::RemoveNotes,

@@ -1,8 +1,14 @@
 <?php
 
 use App\Actions\Leads\AssignLead;
+use App\Actions\Leads\CorrectLeadDisqualification;
 use App\Actions\Leads\CorrectLeadReceivedTime;
+use App\Actions\Leads\DisqualifyLead;
+use App\Actions\Leads\MoveLeadToNurture;
+use App\Actions\Leads\QualifyLead;
+use App\Actions\Leads\ReopenLead;
 use App\Actions\Leads\ReturnLeadToCentral;
+use App\Actions\Leads\ReturnLeadToWorking;
 use App\Actions\Leads\RouteLead;
 use App\Actions\Leads\StartWorkingLead;
 use App\Actions\Leads\UnassignLead;
@@ -16,6 +22,7 @@ use App\Enums\LeadStatus;
 use App\Enums\Permission;
 use App\Models\Lead;
 use App\Models\LeadChannel;
+use App\Models\LeadDisqualificationReason;
 use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\ManagedListOption;
@@ -84,6 +91,29 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
     public string $noteBody = '';
 
+    /** The Lead's status when a lifecycle dialog was opened, so an out-of-date dialog saves nothing. */
+    #[Locked]
+    public string $knownStatus = '';
+
+    public string $followUpOn = '';
+
+    public string $followUpNote = '';
+
+    public ?int $disqualificationReasonId = null;
+
+    public string $disqualificationNote = '';
+
+    /** The Lead this one repeats. Empty means "the original cannot be identified or opened". */
+    public ?int $duplicateOfId = null;
+
+    public bool $waiveContactWait = false;
+
+    /** Whether the disqualify dialog is correcting an existing disqualification rather than making one. */
+    #[Locked]
+    public bool $correctingDisqualification = false;
+
+    public string $reopenReason = '';
+
     /**
      * Mount the component.
      */
@@ -109,6 +139,287 @@ new #[Title('Lead')] class extends AddressCapturePage {
         $startWorkingLead->handle($this->lead, Auth::user());
 
         Flux::toast(variant: 'success', text: __('You are now working this lead.'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lifecycle: qualify, nurture, disqualify, reopen
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Open the dialog that shows what a Lead needs before it can be qualified.
+     */
+    public function openQualify(): void
+    {
+        $this->authorize('changeStatus', $this->lead);
+
+        $this->startLifecycleDialog('qualify-lead');
+    }
+
+    /**
+     * Mark the Lead Qualified: a legitimate opportunity with what its Project will need.
+     */
+    public function qualify(QualifyLead $qualifyLead): void
+    {
+        $this->authorize('changeStatus', $this->lead);
+
+        if ($this->statusHasChangedSinceTheDialogOpened('qualify-lead')) {
+            return;
+        }
+
+        $qualifyLead->handle($this->lead, Auth::user());
+
+        Flux::modal('qualify-lead')->close();
+        Flux::toast(variant: 'success', text: __('This lead is qualified.'));
+    }
+
+    /**
+     * Open the dialog for moving the Lead to nurture, or for changing its follow-up.
+     */
+    public function openNurture(): void
+    {
+        $this->authorize('changeStatus', $this->lead);
+
+        $this->followUpOn = (string) $this->lead->follow_up_on?->toDateString();
+        $this->followUpNote = (string) $this->lead->follow_up_note;
+
+        $this->startLifecycleDialog('nurture-lead');
+    }
+
+    /**
+     * Move the Lead to nurture with a follow-up date, or reschedule a follow-up.
+     */
+    public function saveNurture(MoveLeadToNurture $moveLeadToNurture): void
+    {
+        $this->authorize('changeStatus', $this->lead);
+
+        if ($this->statusHasChangedSinceTheDialogOpened('nurture-lead')) {
+            return;
+        }
+
+        $this->validate([
+            'followUpOn' => ['required', 'date_format:Y-m-d'],
+            'followUpNote' => ['required', 'string', 'max:2000'],
+        ], [
+            'followUpOn.required' => __('Choose the date to follow up.'),
+            'followUpNote.required' => __('Say what to follow up about.'),
+        ], [
+            'followUpOn' => 'follow-up date',
+            'followUpNote' => 'note',
+        ]);
+
+        $moveLeadToNurture->handle($this->lead, $this->followUpOn, $this->followUpNote, Auth::user());
+
+        Flux::modal('nurture-lead')->close();
+        Flux::toast(variant: 'success', text: __('Follow-up set for :date.', ['date' => $this->lead->follow_up_on?->format('M j, Y')]));
+    }
+
+    /**
+     * Bring a Lead in nurture, or a qualified one, back to Working. Whoever has it keeps it.
+     */
+    public function resumeWorking(ReturnLeadToWorking $returnLeadToWorking): void
+    {
+        $this->authorize('changeStatus', $this->lead);
+
+        $returnLeadToWorking->handle($this->lead, Auth::user());
+
+        Flux::toast(variant: 'success', text: __('This lead is being worked again.'));
+    }
+
+    /**
+     * Open the dialog for disqualifying the Lead.
+     */
+    public function openDisqualify(): void
+    {
+        $this->authorize('changeStatus', $this->lead);
+
+        $this->reset('disqualificationReasonId', 'disqualificationNote', 'duplicateOfId', 'waiveContactWait');
+
+        $this->correctingDisqualification = false;
+
+        $this->startLifecycleDialog('disqualify-lead');
+    }
+
+    /**
+     * Open the same dialog to correct why a Lead was disqualified, while it still is.
+     */
+    public function openCorrectDisqualification(): void
+    {
+        $this->authorize('reopen', $this->lead);
+
+        $this->disqualificationReasonId = $this->lead->disqualification_reason_id;
+        $this->disqualificationNote = (string) $this->lead->disqualification_note;
+        $this->duplicateOfId = $this->lead->duplicate_of_lead_id;
+        $this->waiveContactWait = false;
+
+        $this->correctingDisqualification = true;
+
+        $this->startLifecycleDialog('disqualify-lead');
+    }
+
+    /**
+     * Disqualify the Lead, or correct its disqualification, with the reason given.
+     */
+    public function disqualify(DisqualifyLead $disqualifyLead, CorrectLeadDisqualification $correctLeadDisqualification): void
+    {
+        $this->authorize($this->correctingDisqualification ? 'reopen' : 'changeStatus', $this->lead);
+
+        if ($this->statusHasChangedSinceTheDialogOpened('disqualify-lead')) {
+            return;
+        }
+
+        $this->validate([
+            'disqualificationReasonId' => ['required', 'integer'],
+            'disqualificationNote' => ['nullable', 'string', 'max:2000'],
+            'duplicateOfId' => ['nullable', 'integer'],
+        ], [
+            'disqualificationReasonId.required' => __('Choose why this lead is being disqualified.'),
+        ], [
+            'disqualificationNote' => 'note',
+        ]);
+
+        $reason = $this->disqualificationReasons->firstWhere('id', $this->disqualificationReasonId);
+
+        if ($reason === null) {
+            $this->addError('disqualificationReasonId', __('Choose one of the reasons listed.'));
+
+            return;
+        }
+
+        // Only a Lead this person can already see may be named as the original.
+        $original = $reason->isDuplicate() && $this->duplicateOfId !== null
+            ? ($this->possibleOriginals->firstWhere('id', $this->duplicateOfId) ?? abort(404))
+            : null;
+
+        // Asking to skip the waiting period counts only for someone allowed to.
+        $waive = $this->waiveContactWait && Auth::user()->can('waiveContactWait', $this->lead);
+
+        if ($this->correctingDisqualification) {
+            $correctLeadDisqualification->handle($this->lead, $reason, $this->disqualificationNote, Auth::user(), $original, $waive);
+        } else {
+            $disqualifyLead->handle($this->lead, $reason, $this->disqualificationNote, Auth::user(), $original, $waive);
+        }
+
+        unset($this->possibleOriginals, $this->eligibleAssignees, $this->openLeadCounts);
+
+        Flux::modal('disqualify-lead')->close();
+        Flux::toast(variant: 'success', text: $this->correctingDisqualification ? __('Reason corrected.') : __('This lead is disqualified.'));
+    }
+
+    /**
+     * From the disqualify dialog: set a follow-up instead of giving up on the Lead.
+     */
+    public function tryAgainLater(): void
+    {
+        Flux::modal('disqualify-lead')->close();
+
+        $this->openNurture();
+    }
+
+    /**
+     * Open the dialog for reopening a disqualified Lead.
+     */
+    public function openReopen(): void
+    {
+        $this->authorize('reopen', $this->lead);
+
+        $this->reopenReason = '';
+
+        $this->startLifecycleDialog('reopen-lead');
+    }
+
+    /**
+     * Reopen the Lead. It comes back as Working with nobody assigned.
+     */
+    public function reopen(ReopenLead $reopenLead): void
+    {
+        $this->authorize('reopen', $this->lead);
+
+        if ($this->statusHasChangedSinceTheDialogOpened('reopen-lead')) {
+            return;
+        }
+
+        $this->validate(
+            ['reopenReason' => ['required', 'string', 'max:2000']],
+            ['reopenReason.required' => __('Say why this lead is being reopened.')],
+            ['reopenReason' => 'reason'],
+        );
+
+        $reopenLead->handle($this->lead, $this->reopenReason, Auth::user());
+
+        Flux::modal('reopen-lead')->close();
+        Flux::toast(variant: 'success', text: __('Reopened. Assign it to someone to work.'));
+    }
+
+    /**
+     * The reasons on offer, plus the one this Lead already has even if since deactivated.
+     *
+     * @return Collection<int, LeadDisqualificationReason>
+     */
+    #[Computed]
+    public function disqualificationReasons(): Collection
+    {
+        return LeadDisqualificationReason::query()
+            ->where(fn ($query) => $query->where('is_active', true)->orWhere('id', $this->lead->disqualification_reason_id))
+            ->ordered()
+            ->get();
+    }
+
+    #[Computed]
+    public function chosenReason(): ?LeadDisqualificationReason
+    {
+        return $this->disqualificationReasons->firstWhere('id', $this->disqualificationReasonId);
+    }
+
+    /**
+     * Other Leads this person can see that this one may repeat.
+     *
+     * @return Collection<int, Lead>
+     */
+    #[Computed]
+    public function possibleOriginals(): Collection
+    {
+        return DisqualifyLead::possibleOriginals($this->lead, Auth::user());
+    }
+
+    /**
+     * What the Lead still needs before it can be qualified, in words.
+     *
+     * @return list<string>
+     */
+    #[Computed]
+    public function qualificationGaps(): array
+    {
+        return array_map(fn (string $gap): string => QualifyLead::REQUIREMENTS[$gap], $this->lead->qualificationGaps());
+    }
+
+    private function startLifecycleDialog(string $dialog): void
+    {
+        $this->knownStatus = $this->lead->status->value;
+
+        unset($this->chosenReason, $this->qualificationGaps);
+
+        $this->resetValidation();
+
+        Flux::modal($dialog)->show();
+    }
+
+    /**
+     * Refuse to act on a dialog that is out of date: if the Lead's status was
+     * changed by someone else after it was opened, nothing is saved.
+     */
+    private function statusHasChangedSinceTheDialogOpened(string $dialog): bool
+    {
+        if ($this->lead->status->value === $this->knownStatus) {
+            return false;
+        }
+
+        Flux::modal($dialog)->close();
+
+        $this->addError('stale', __('This lead was just changed by someone else, so nothing was saved. Check where it stands now and try again.'));
+
+        return true;
     }
 
     /**
@@ -451,7 +762,8 @@ new #[Title('Lead')] class extends AddressCapturePage {
     {
         return Lead::query()
             ->visibleTo(Auth::user())
-            ->active()
+            // New, Working and Qualified, and Nurture once its follow-up is due. Not Nurture still ahead.
+            ->actionable()
             ->whereIn('assigned_user_id', $this->eligibleAssignees->modelKeys())
             ->toBase()
             ->selectRaw('assigned_user_id, count(*) as open_leads')
@@ -693,8 +1005,92 @@ new #[Title('Lead')] class extends AddressCapturePage {
                     </flux:button>
                 @endcan
             @endif
+
+            @can('changeStatus', $lead)
+                @if ($lead->status === LeadStatus::Working)
+                    <flux:button variant="primary" wire:click="openQualify" data-test="qualify-lead">{{ __('Qualify') }}</flux:button>
+                @endif
+
+                @if ($lead->status === LeadStatus::Nurture)
+                    <flux:button variant="primary" wire:click="resumeWorking" data-test="resume-working">{{ __('Resume working') }}</flux:button>
+                    <flux:button wire:click="openNurture" data-test="reschedule-follow-up">{{ __('Reschedule follow-up') }}</flux:button>
+                @endif
+
+                @if ($lead->status === LeadStatus::Qualified)
+                    <flux:button
+                        wire:click="resumeWorking"
+                        wire:confirm="{{ __('Return this lead to working? It will no longer count as qualified now, though it stays on record as having been qualified.') }}"
+                        data-test="return-to-working"
+                    >
+                        {{ __('Return to working') }}
+                    </flux:button>
+                @endif
+
+                @if ($lead->status === LeadStatus::Working || $lead->status === LeadStatus::Qualified)
+                    <flux:button wire:click="openNurture" data-test="nurture-lead">{{ __('Move to nurture') }}</flux:button>
+                @endif
+
+                <flux:button variant="ghost" wire:click="openDisqualify" data-test="disqualify-lead">{{ __('Disqualify') }}</flux:button>
+            @endcan
+
+            @can('reopen', $lead)
+                <flux:button variant="primary" wire:click="openReopen" data-test="reopen-lead">{{ __('Reopen') }}</flux:button>
+                <flux:button wire:click="openCorrectDisqualification" data-test="correct-disqualification">{{ __('Correct reason') }}</flux:button>
+            @endcan
         </div>
     </div>
+
+    @if ($lead->status === LeadStatus::Qualified)
+        <div class="rounded-lg border border-green-300 bg-green-50 p-4 text-sm text-ink" data-test="lead-qualified">
+            <span class="font-semibold">{{ __('Qualified') }}</span>
+            @if ($lead->first_qualified_at)
+                &middot; {{ __('first qualified') }} <x-local-time :at="$lead->first_qualified_at" />
+            @endif
+        </div>
+    @elseif ($lead->status === LeadStatus::Nurture)
+        <div class="rounded-lg border p-4 text-sm text-ink {{ $lead->followUpIsDue() ? 'border-amber-300 bg-amber-50' : 'border-zinc-200 bg-card' }}" data-test="lead-follow-up">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="font-semibold">{{ __('Follow up on :date', ['date' => $lead->follow_up_on?->format('M j, Y')]) }}</span>
+
+                @if ($lead->daysOverdue() > 0)
+                    <flux:badge size="sm" color="red" data-test="follow-up-overdue">{{ trans_choice('{1} Overdue by 1 day|[2,*] Overdue by :count days', $lead->daysOverdue()) }}</flux:badge>
+                @elseif ($lead->followUpIsDue())
+                    <flux:badge size="sm" color="amber" data-test="follow-up-due">{{ __('Follow-up due') }}</flux:badge>
+                @endif
+            </div>
+
+            <div class="mt-1 whitespace-pre-line">{{ $lead->follow_up_note }}</div>
+        </div>
+    @elseif ($lead->status === LeadStatus::Disqualified)
+        <div class="rounded-lg border border-zinc-300 bg-card p-4 text-sm text-ink" data-test="lead-disqualified">
+            <div>
+                <span class="font-semibold">{{ __('Disqualified: :reason', ['reason' => $lead->disqualificationReason?->name ?? __('no reason recorded')]) }}</span>
+                @if ($lead->last_disqualified_at)
+                    &middot; <x-local-time :at="$lead->last_disqualified_at" />
+                @endif
+            </div>
+
+            @if ($lead->duplicateOf)
+                <div class="mt-1" data-test="lead-duplicate-of">
+                    {{ __('A duplicate of') }}
+                    @can('view', $lead->duplicateOf)
+                        <a href="{{ route('leads.show', $lead->duplicateOf) }}" wire:navigate class="underline decoration-zinc-300 underline-offset-2 hover:decoration-ink">{{ $lead->duplicateOf->displayName() ?? __('another lead') }}</a>
+                        ({{ __('received') }} <x-local-time :at="$lead->duplicateOf->received_at" />)
+                    @else
+                        {{ __('a lead you cannot open') }}
+                    @endcan
+                </div>
+            @endif
+
+            @if ($lead->disqualification_note)
+                <div class="mt-1 whitespace-pre-line">{{ $lead->disqualification_note }}</div>
+            @endif
+        </div>
+    @endif
+
+    @error('status')
+        <div role="alert" class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-ink" data-test="status-refused">{{ $message }}</div>
+    @enderror
 
     @error('stale')
         <div role="alert" class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-ink" data-test="lead-stale">{{ $message }}</div>
@@ -1229,5 +1625,185 @@ new #[Title('Lead')] class extends AddressCapturePage {
             </div>
         </form>
     </flux:modal>
+    @endcan
+    @can('changeStatus', $lead)
+        <flux:modal name="qualify-lead" class="w-full max-w-lg">
+            <form wire:submit="qualify" class="flex flex-col gap-5">
+                <div>
+                    <flux:heading size="lg">{{ __('Qualify this lead') }}</flux:heading>
+                    <flux:subheading>{{ __('A legitimate opportunity, with what is needed to create its project.') }}</flux:subheading>
+                </div>
+
+                @if ($this->qualificationGaps === [])
+                    <flux:text data-test="qualification-ready">{{ __('Everything needed is here: a location, someone assigned, a customer with a contact and a property, a service and a project size.') }}</flux:text>
+                @else
+                    <div class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-ink" data-test="qualification-gaps">
+                        <div class="font-semibold">{{ __('This lead cannot be qualified yet. It still needs:') }}</div>
+                        <ul class="mt-2 list-disc ps-5">
+                            @foreach ($this->qualificationGaps as $gap)
+                                <li wire:key="gap-{{ $loop->index }}">{{ $gap }}</li>
+                            @endforeach
+                        </ul>
+
+                        @if (array_intersect(['customer', 'contact', 'property'], $lead->qualificationGaps()) !== [])
+                            @can('resolveCustomer', $lead)
+                                <div class="mt-3">
+                                    <a href="{{ route('leads.customer', $lead) }}" wire:navigate class="font-semibold underline underline-offset-2" data-test="qualification-link-customer">{{ __('Link this lead to a customer, contact and property') }}</a>
+                                </div>
+                            @endcan
+                        @endif
+                    </div>
+                @endif
+
+                <flux:error name="qualification" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    @if ($this->qualificationGaps === [])
+                        <flux:button type="submit" variant="primary" data-test="qualify-submit">{{ __('Qualify') }}</flux:button>
+                    @endif
+                </div>
+            </form>
+        </flux:modal>
+
+        <flux:modal name="nurture-lead" class="w-full max-w-lg">
+            <form wire:submit="saveNurture" class="flex flex-col gap-5">
+                <div>
+                    <flux:heading size="lg">{{ $lead->status === LeadStatus::Nurture ? __('Reschedule follow-up') : __('Move to nurture') }}</flux:heading>
+                    <flux:subheading>{{ __('For an opportunity that is real but not ready now. It stays with whoever is assigned, and shows as due on the date.') }}</flux:subheading>
+                </div>
+
+                <flux:input wire:model="followUpOn" type="date" :label="__('Follow up on')" :min="\App\Models\Lead::today()" />
+
+                <flux:textarea wire:model="followUpNote" rows="3" :label="__('What to follow up about')" :placeholder="__('For example: wants a quote once the roof is finished in March')" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="nurture-submit">{{ __('Save') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+    @endcan
+
+    @canany(['changeStatus', 'reopen'], $lead)
+        <flux:modal name="disqualify-lead" class="w-full max-w-xl">
+            <form wire:submit="disqualify" class="flex flex-col gap-5">
+                <div>
+                    <flux:heading size="lg">{{ $correctingDisqualification ? __('Correct the reason') : __('Disqualify this lead') }}</flux:heading>
+                    <flux:subheading>
+                        @if ($correctingDisqualification)
+                            {{ __('The lead will show the corrected reason. What was recorded first stays in its history.') }}
+                        @else
+                            {{ __('For an inquiry that is not a real opportunity. The inquiry, where it came from and its customer are all kept. Nobody stays assigned to it.') }}
+                        @endif
+                    </flux:subheading>
+                </div>
+
+                <flux:select wire:model.live="disqualificationReasonId" :label="__('Reason')" data-test="disqualification-reason">
+                    <flux:select.option value="">{{ __('Choose a reason') }}</flux:select.option>
+                    @foreach ($this->disqualificationReasons as $reason)
+                        <flux:select.option :value="$reason->id" wire:key="reason-{{ $reason->id }}">{{ $reason->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                @if ($this->chosenReason?->isUnableToContact())
+                    <div class="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4 text-sm text-ink" data-test="unable-to-contact-rule">
+                        <div>
+                            {{ __('This is for a lead that has been followed up properly, not one missed call. It can be used :days days after work on the lead started, with a note of what was tried.', ['days' => DisqualifyLead::CONTACT_WAIT_DAYS]) }}
+                        </div>
+
+                        @if (! $correctingDisqualification && ($lead->status === LeadStatus::Working || $lead->status === LeadStatus::Qualified))
+                            <div>
+                                <flux:button size="sm" type="button" wire:click="tryAgainLater" data-test="try-again-later">{{ __('Try again later instead') }}</flux:button>
+                            </div>
+                        @endif
+
+                        @can('waiveContactWait', $lead)
+                            <flux:checkbox wire:model="waiveContactWait" :label="__('Allow it before the :days days have passed', ['days' => DisqualifyLead::CONTACT_WAIT_DAYS])" data-test="waive-contact-wait" />
+                        @endcan
+                    </div>
+                @endif
+
+                @if ($this->chosenReason?->isDuplicate())
+                    <fieldset class="flex flex-col gap-2" data-test="duplicate-originals">
+                        <legend class="text-sm font-medium text-ink">{{ __('Which lead does this one repeat?') }}</legend>
+
+                        <flux:text class="text-sm">{{ __('A duplicate is the same inquiry recorded twice. A new inquiry from an existing customer is not a duplicate.') }}</flux:text>
+
+                        @foreach ($this->possibleOriginals as $original)
+                            <label wire:key="original-{{ $original->id }}" class="cursor-pointer">
+                                <input type="radio" wire:model="duplicateOfId" name="duplicateOfId" value="{{ $original->id }}" class="peer sr-only" />
+                                <span class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-ink peer-checked:border-ink peer-checked:bg-banana peer-focus-visible:ring-2 peer-focus-visible:ring-wall-teal">
+                                    <span>
+                                        <span class="font-semibold">{{ $original->displayName() ?? __('No name given') }}</span>
+                                        <span class="text-sm text-zinc-700">{{ $original->primaryService()?->name }}</span>
+                                    </span>
+                                    <span class="text-sm text-zinc-700">
+                                        {{ __('received') }} <x-local-time :at="$original->received_at" />
+                                        &middot; {{ $original->location?->name ?? __('Unrouted') }}
+                                        &middot; {{ $original->status->label() }}
+                                    </span>
+                                </span>
+                            </label>
+                        @endforeach
+
+                        <label class="cursor-pointer">
+                            <input type="radio" wire:model="duplicateOfId" name="duplicateOfId" value="" class="peer sr-only" />
+                            <span class="flex flex-col rounded-lg border border-zinc-300 bg-white px-4 py-2 text-ink peer-checked:border-ink peer-checked:bg-banana peer-focus-visible:ring-2 peer-focus-visible:ring-wall-teal">
+                                <span class="font-semibold">{{ __('The original cannot be identified, or I cannot open it') }}</span>
+                                <span class="text-sm text-zinc-700">{{ __('Explain in the note below.') }}</span>
+                            </span>
+                        </label>
+
+                        <flux:error name="duplicateOfId" />
+                    </fieldset>
+                @endif
+
+                <flux:textarea
+                    wire:model="disqualificationNote"
+                    rows="3"
+                    :label="match (true) {
+                        (bool) $this->chosenReason?->isUnableToContact() => __('What was tried (required)'),
+                        (bool) $this->chosenReason?->needsNote() => __('Explanation (required)'),
+                        default => __('Note (optional)'),
+                    }"
+                />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="disqualify-submit">{{ $correctingDisqualification ? __('Save') : __('Disqualify') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+    @endcanany
+
+    @can('reopen', $lead)
+        <flux:modal name="reopen-lead" class="w-full max-w-lg">
+            <form wire:submit="reopen" class="flex flex-col gap-5">
+                <div>
+                    <flux:heading size="lg">{{ __('Reopen this lead') }}</flux:heading>
+                    <flux:subheading>{{ __('It comes back as Working with nobody assigned, and is handed out again in the usual way. Why it was disqualified stays in its history.') }}</flux:subheading>
+                </div>
+
+                <flux:textarea wire:model="reopenReason" rows="3" :label="__('Why it is being reopened')" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="reopen-submit">{{ __('Reopen') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
     @endcan
 </section>

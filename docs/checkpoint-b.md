@@ -111,6 +111,105 @@ There is no existing customer or lead data to bring in. No import tooling is bui
   date are the foundation for it.
 - Leads are never archived as a substitute for their lifecycle.
 
+#### Qualification, disqualification and nurture, as built in step B7
+
+Built on 2026-10-06 from the approved B7 plan (decision 52).
+
+**The moves that exist.** Nothing else is possible, and nothing returns to New.
+
+| From | To | How |
+| --- | --- | --- |
+| New | Working | Start working (B4) |
+| Working | Qualified | Qualify |
+| Working, Qualified | Nurture | Move to nurture |
+| Nurture | Working | Resume working |
+| Qualified | Working | Return to working |
+| New, Working, Qualified, Nurture | Disqualified | Disqualify |
+| Disqualified | Working | Reopen |
+
+**Qualified** means a legitimate opportunity has been identified and the core
+information needed to create its Project is there. A Lead can be qualified only
+when it has all of: a Location; an assignee; a customer (Account) that is not
+archived; a Contact; a Property that is not archived; at least one Service with
+a main one; and a Project Size. The Qualify dialog lists whatever is missing and
+offers nothing to submit until it is all there. Creating the Project (B8) checks
+again.
+
+**Nurture** needs an assignee, a follow-up date (today or later, with no upper
+limit) and a short note. The Lead stays with its assignee. On the date it shows
+"Follow-up due"; afterwards "Overdue by N days". Nothing happens automatically:
+no reassignment, no escalation, no closing. The date can be rescheduled without
+leaving Nurture. A follow-up date is a calendar day in the company's time zone.
+
+**Disqualified** needs a reason from the managed list that is still offered.
+
+- It ends anyone's responsibility: the current assignment is closed with the
+  reason "lead disqualified" and kept in the assignment history, and the Lead is
+  left unassigned.
+- Everything else stays exactly as it was: the inquiry, attribution, Services,
+  Project Size and the links to a customer.
+- The reason's **reporting category is copied** onto the Lead and into its
+  history at that moment. Recategorizing a reason later changes nothing that
+  already happened.
+- "Other" requires an explanation.
+- **"Unable to Contact"** may be used only on a Working Lead, at least 3 days
+  after work on it started, with a note of what was tried. The dialog offers
+  "Try again later instead", which opens Nurture. The 3 days may be waived by an
+  Owner, Leadership or a Location Manager (not the Call Center, not a Sales
+  Consultant); a waiver is written into the audit event. The 3 days stand in for
+  real contact-attempt tracking, which is not built.
+- **"Duplicate Lead"** asks which Lead this one repeats. Only Leads the person
+  can already see are offered (same phone, email or customer), and naming any
+  other is refused. If the original cannot be identified or opened, an
+  explanation is required instead. Nothing is merged or deleted. A Lead cannot
+  be a duplicate of itself, of a duplicate, or become one while others point to
+  it.
+- These two rules are tied to a marker on the reason, not its name, so renaming
+  the reason in Settings does not remove the rule.
+- The reason, its note and the original can be **corrected** while the Lead is
+  still Disqualified. The Lead shows the corrected reason; the first history
+  entry is left as written and a new entry records the correction.
+
+**Reopening** needs a reason. The Lead comes back as Working with nobody
+assigned; the previous assignee is not restored. The current reason, note and
+"duplicate of" are cleared from the Lead. The earlier disqualification stays in
+its history, and the Lead keeps the date it was last disqualified.
+
+**Who may do what** (on top of being able to work Leads at the Lead's Location):
+
+| Action | Who |
+| --- | --- |
+| Qualify, nurture, reschedule, resume, return to working, disqualify | The Lead's assignee, or anyone who may assign Leads there |
+| Reopen, or correct a disqualification | Anyone who may assign Leads there: Owner, Leadership, Location Manager, Call Center. Not a Sales Consultant. |
+| Waive the "Unable to Contact" wait | Owner, Leadership, Location Manager (`leads.waive_contact_wait`) |
+
+**Active and inactive.** A Lead is active in every status but Disqualified. A
+Qualified Lead stays active until Projects exist, so it still blocks archiving
+its customer and deactivating its Location. A Disqualified Lead blocks neither.
+
+**Routing.** A lifecycle change never changes the Location. New, Working,
+Nurture and Qualified Leads can be routed, transferred and returned as before,
+and a move still clears the assignee (so a Nurture or Qualified Lead can be
+unassigned after a move, and appears in Unassigned). A Disqualified Lead cannot
+be routed or assigned until it is reopened.
+
+**Status history.** Every change is a row in `lead_status_changes`, which is
+only ever added to: the event, the status it came from and went to, who made it
+(the staff identity), when, the Lead's Location and assignee at that moment, and
+for a disqualification the reason, the category it had then, the original Lead
+and the note; for Nurture, the follow-up date and note. Starting work is its
+first entry. Lifecycle reporting reads this table, not the audit log. The Lead
+also keeps `first_qualified_at` (set once, never cleared), `last_disqualified_at`
+and `status_changed_at`.
+
+This supports, without any dashboard being built: received to first routed,
+routed to assigned, assigned to first worked, received or working to qualified,
+time to disqualification, time in Nurture, overdue follow-ups, qualification and
+disqualification rates, and reasons by category as they were at the time.
+
+**Not built here:** a visible history on the Lead page (the timeline is B11),
+reminders or notifications for follow-ups, contact-attempt tracking, and
+Projects.
 #### Attribution: three separate questions
 
 Each Lead records three things. They belong to that Lead, not to the Account: the
@@ -370,14 +469,20 @@ Two separate questions, kept as separate actions and separate data:
 
 | View | Shows | Order | Who has it |
 | --- | --- | --- | --- |
-| Assigned to me | The person's Leads at every Location they can see, whatever Location is selected | Oldest first | Everyone |
+| Assigned to me | The person's Leads that need action now, at every Location they can see, whatever Location is selected: New, Working, Qualified, and Nurture once its follow-up is due (B7) | Oldest first | Everyone |
+| Follow-ups (B7) | Leads in Nurture: the person's own anywhere, plus everyone's at the current Location for someone who may assign there. The count is of those due or overdue. | Soonest follow-up first | Everyone |
 | Unassigned | Leads at the current Location with no assignee | Longest at that Location first | People who may assign there |
 | All leads | Every Lead at the current Location | Newest first | Everyone |
 | Unrouted | Leads not yet sent to a Location | Oldest first | People who may see unrouted Leads |
 
 The page opens on: All leads for Owner and Leadership; Unrouted for company-wide
 Call Center; Unassigned for a Location Manager (and a Call Center agent at one
-Location); Assigned to me for a Sales Consultant. Nurture arrives with B7.
+Location); Assigned to me for a Sales Consultant.
+
+Since B7, every view leaves out Disqualified Leads unless that status is chosen in
+the Status filter. There is no Disqualified queue. The workload shown beside each
+person in the Assign dialog counts their New, Working and Qualified Leads and
+their Nurture Leads that are due, not Nurture still ahead.
 
 A Sales Consultant can still see unassigned Leads in All leads, because the
 Location, not assignment, decides what may be seen. They cannot take one.

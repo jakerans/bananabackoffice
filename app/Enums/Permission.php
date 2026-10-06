@@ -24,6 +24,7 @@ enum Permission: string
     case TransferLeads = 'leads.transfer';
     case ReturnLeads = 'leads.return';
     case AssignLeads = 'leads.assign';
+    case WaiveContactWait = 'leads.waive_contact_wait';
     case WriteNotes = 'notes.write';
     case RemoveNotes = 'notes.remove';
     case ViewAccounts = 'accounts.view';
