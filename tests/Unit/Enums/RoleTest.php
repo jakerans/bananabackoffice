@@ -23,6 +23,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::TransferLeads,
         Permission::ReturnLeads,
         Permission::AssignLeads,
+        Permission::WriteNotes,
+        Permission::RemoveNotes,
     ]],
     'leadership' => [Role::Leadership, [
         Permission::CompanyOverviewAccess,
@@ -38,6 +40,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::TransferLeads,
         Permission::ReturnLeads,
         Permission::AssignLeads,
+        Permission::WriteNotes,
+        Permission::RemoveNotes,
     ]],
     'finance' => [Role::Finance, [
         Permission::FinanceAccess,
@@ -52,6 +56,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::TransferLeads,
         Permission::ReturnLeads,
         Permission::AssignLeads,
+        Permission::WriteNotes,
+        Permission::RemoveNotes,
     ]],
     'call center agent' => [Role::CallCenterAgent, [
         Permission::MarketingAccess,
@@ -61,15 +67,18 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::RouteLeads,
         Permission::ReturnLeads,
         Permission::AssignLeads,
+        Permission::WriteNotes,
     ]],
     'sales consultant' => [Role::SalesConsultant, [
         Permission::SalesAccess,
         Permission::ColorStudioAccess,
         Permission::ViewLeads,
         Permission::ManageLeads,
+        Permission::WriteNotes,
     ]],
     'production manager' => [Role::ProductionManager, [
         Permission::ProductionAccess,
+        Permission::WriteNotes,
     ]],
 ]);
 
@@ -93,6 +102,8 @@ test('company overview and settings are company-level permissions', function (Pe
     'transfer leads' => [Permission::TransferLeads, false],
     'return leads' => [Permission::ReturnLeads, false],
     'assign leads' => [Permission::AssignLeads, false],
+    'write notes' => [Permission::WriteNotes, false],
+    'remove notes' => [Permission::RemoveNotes, false],
     'view leads' => [Permission::ViewLeads, false],
     'manage leads' => [Permission::ManageLeads, false],
     'marketing' => [Permission::MarketingAccess, false],

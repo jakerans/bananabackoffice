@@ -16,55 +16,11 @@ use App\Support\Access\Impersonation;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Testing\TestResponse;
-use Livewire\Drawer\Utils;
 use Livewire\Livewire;
-
-/**
- * Sign in as the Owner and start viewing Backoffice as a staff member, the way
- * the Owner does it: from the staff member's page in Settings.
- */
-function impersonate(User $owner, User $staff): void
-{
-    Livewire::actingAs($owner)
-        ->test('pages::settings.user', ['user' => $staff])
-        ->call('impersonate')
-        ->assertRedirect(route('dashboard'));
-}
 
 function owner(string $name = 'Olive Owner'): User
 {
     return User::factory()->withRoleEverywhere(Role::Owner)->create(['name' => $name]);
-}
-
-/**
- * The state of the Livewire page in a response, as the browser holds it.
- *
- * @return array<string, mixed>
- */
-function livewireSnapshot(TestResponse $response): array
-{
-    return Utils::extractAttributeDataFromHtml((string) $response->getContent(), 'wire:snapshot');
-}
-
-/**
- * Send a Livewire action the way a browser does: a real request through every
- * middleware. Livewire's own test helper skips middleware, and impersonation is
- * applied by middleware, so these tests must not use it once impersonating.
- *
- * @param  array<string, mixed>  $snapshot
- * @param  array<int, mixed>  $params
- * @param  array<string, mixed>  $updates
- */
-function sendLivewireAction(array $snapshot, string $method, array $params = [], array $updates = []): TestResponse
-{
-    return test()->withHeaders(['X-Livewire' => 'true'])->postJson(app('livewire')->getUpdateUri(), [
-        'components' => [[
-            'snapshot' => json_encode($snapshot),
-            'updates' => $updates,
-            'calls' => [['method' => $method, 'params' => $params, 'path' => '']],
-        ]],
-    ]);
 }
 
 /*

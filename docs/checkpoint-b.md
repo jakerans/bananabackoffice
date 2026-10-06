@@ -662,8 +662,34 @@ never disagree. This is deliberately not a compliance product.
 
 - Audit events are never edited or deleted by the application.
 - A note can be removed from view by its author or a manager. It is kept, and its
-  removal is an audit event. Notes are not edited after saving. (Proposed)
-- Managers get a "History" view of a record's audit events. The company-wide Audit
+  removal is an audit event. Notes are not edited after saving.
+
+### Lead notes, as built in step B5
+
+Notes exist on Leads. Projects, Accounts and Properties get them when those
+records are built; the `notes` table already allows for it. The timeline and the
+History view are step B11 and are not part of this.
+
+- **Where:** a Notes panel on the Lead page, under the inquiry. Newest first,
+  each with who it is from and when.
+- **Who can read:** anyone who can see the Lead.
+- **Who can add:** anyone who can see the Lead and may write notes where the Lead
+  is: Owner, Leadership, Location Manager, Call Center, Sales Consultant. For an
+  unrouted Lead that means company-wide staff. Assignment is not a boundary: a
+  Sales Consultant can add a note to a Lead assigned to a colleague.
+- **A note changes nothing else.** Not the Lead's status, not its assignee. Adding
+  one is not an audit event: the note is the record.
+- **Never edited, never deleted.** The application refuses both. Up to 5,000
+  characters; what is typed is always shown as plain text.
+- **Removing from view:** the person a note is from, while they can still write
+  notes there, or a manager there (Owner, Leadership, Location Manager). The note
+  is kept with who removed it and when, and the removal is an audit event about
+  the Lead. A removed note is hidden from everyone until the History view exists.
+- **Notes stay with the Lead.** When a Lead moves, its notes go with it, and are
+  read under the new Location's access.
+- **Impersonation:** a note an Owner writes while viewing Backoffice as a staff
+  member records both people, and says so on the note for everyone who reads it,
+  because nobody should be shown as the author of words they did not write.- Managers get a "History" view of a record's audit events. The company-wide Audit
   Log screen in Settings stays Coming Soon.
 
 ## Tables
@@ -682,7 +708,7 @@ Proposed tables and their important fields. "Optional" means it may be empty.
 | `leads` | received at; marketing source; lead source; lead channel; inquiry name, phone, email, address, message (as received); account, contact, property (each optional); location (optional: empty is unrouted); assigned staff member (optional); status; follow-up date; first qualified at, by; disqualified at, by; disqualification reason and note |
 | `projects` | property; location; originating lead (optional); primary contact (optional); title; description; sales outcome; outcome set at, by; sold amount; sales loss reason and note; competitor name (optional); archived at, by |
 | `project_responsibilities` | project; responsibility type; staff member; assigned by. One person per type per project. |
-| `notes` | the record it belongs to (Lead, Project, Account or Property); text; author; removed at, by |
+| `notes` | the record it belongs to (Lead, Project, Account or Property); text; author; the Owner who wrote it when impersonating (optional); removed at, by |
 | `attachments` | the record it belongs to; kind; storage key; original filename; file type; size; checksum; caption; uploaded by; removed at, by; purged at |
 | `audit_events` | when; who (and their name at the time); action; the record concerned; location (optional); before and after values; reason (optional) |
 

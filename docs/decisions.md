@@ -912,6 +912,41 @@ Impersonate.
   later. Whether production should restrict or announce it is a question for the
   production-readiness checkpoint.
 
+## 47. Lead notes (step B5)
+
+Built on 2026-10-05, limited to notes on a Lead. The timeline and History view
+remain step B11.
+
+- **One `notes` table for every kind of record,** pointing at the record the note
+  is about. Only Leads use it today.
+- **A note has no location of its own.** Reading, adding and removing are decided
+  by the record it is about, so a note can never be seen by someone who cannot
+  see its Lead.
+- **Adding a note is not an audit event.** The note is the record. Removing one
+  is an audit event about the Lead, which names the note, its author and when it
+  was written, and does not copy what it said.
+- **Notes are never edited or deleted.** Both are refused by the application, not
+  only left out of the screens.
+
+Choices made while building, for the owner to confirm:
+
+- **A new permission, `notes.remove`,** for removing anyone's note: Owner,
+  Leadership and Location Manager. The plan said "its author or a manager"
+  without naming who a manager is. Everyone else removes only their own.
+- **An author can remove their own note only while they can still write notes
+  where the Lead is.** After a Lead moves away, or their access changes, they can
+  no longer reach it.
+- **No reason is asked for when removing a note.** Who and when are recorded.
+- **A removed note is hidden from everyone,** managers included, until the History
+  view is built in B11. Nothing on the Lead page says a note was removed.
+- **A note written while impersonating shows a line saying so** to everyone who
+  reads it ("Written by Jacob Ransom while viewing Backoffice as Roseanne
+  Smith"). The owner asked that impersonation not be exposed unnecessarily in
+  operational screens; this one case is kept visible because a note is a person's
+  own words and adding one leaves no audit event to hold the truth.
+- **The Production Manager role holds `notes.write`,** as the approved matrix
+  says, but cannot see Leads, so it has no effect until Projects exist.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

@@ -208,7 +208,7 @@ Status: **Approved by the owner (2026-10-05). Not built yet.** Each permission i
 added to the code in the step that builds what it guards. Built so far:
 `settings.lists.manage` (B2); `leads.view`, `leads.manage` and
 `leads.view_unrouted` (B3); `leads.route`, `leads.transfer`, `leads.return` and
-`leads.assign` (B4). The records and their
+`leads.assign` (B4); `notes.write` and `notes.remove` (B5). The records and their
 rules are described in [checkpoint-b.md](checkpoint-b.md).
 
 ### The rules Checkpoint B adds
@@ -262,7 +262,8 @@ rules are described in [checkpoint-b.md](checkpoint-b.md).
 | `projects.archive` | Location | Archive and restore Projects |
 | `projects.sales_outcome` | Location | Mark a Project Won (with its Sold Amount) or Lost |
 | `projects.correct_sold_amount` | Location | Correct the Sold Amount of a Won Project |
-| `notes.write` | Location | Add notes to a record the person can see |
+| `notes.write` | Location | Add notes to a record the person can see, and remove their own from view |
+| `notes.remove` | Location | Remove anyone's note from view |
 | `attachments.manage` | Location | Upload and remove attachments |
 | `history.view` | Location | See a record's audit history |
 | `settings.lists.manage` | Company | Manage the Lead & Sales Lists page in Settings, and nothing else there |
@@ -298,7 +299,8 @@ The owner approved this matrix at the final review on 2026-10-05.
 | Archive and restore Projects | Yes | Yes | Yes | No | No | No | No |
 | Mark a Project Won or Lost | Yes | Yes | Yes | No | Yes | No | No |
 | Correct a Sold Amount | Yes | Yes | No | No | No | No | No |
-| Add notes | Yes | Yes | Yes | Yes | Yes | Yes | No |
+| Add notes, and remove their own from view | Yes | Yes | Yes | Yes | Yes | Yes | No |
+| Remove anyone's note from view | Yes | Yes | Yes | No | No | No | No |
 | Upload and remove attachments | Yes | Yes | Yes | No | Yes | Yes | No |
 | See a record's audit history | Yes | Yes | Yes | No | No | No | No |
 | Manage Lead & Sales Lists (all-locations grant only) | Yes | Yes | No | No | No | No | No |

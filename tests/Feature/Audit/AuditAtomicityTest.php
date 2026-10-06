@@ -14,6 +14,7 @@ use App\Actions\Lists\MoveListOption;
 use App\Actions\Lists\SetListOptionActive;
 use App\Actions\Lists\UpdateListOption;
 use App\Actions\Lists\UpdateProjectSizeRanges;
+use App\Actions\Notes\RemoveNote;
 use App\Actions\Staff\CreateOwner;
 use App\Actions\Staff\DeactivateStaffMember;
 use App\Actions\Staff\GrantAccess;
@@ -30,6 +31,7 @@ use App\Models\Lead;
 use App\Models\LeadAssignment;
 use App\Models\LeadChannel;
 use App\Models\Location;
+use App\Models\Note;
 use App\Models\ProjectSize;
 use App\Models\User;
 use App\Support\Leads\ServiceSelection;
@@ -216,3 +218,14 @@ test('a location change is not kept when its audit event cannot be recorded', fu
         fn (Location $location) => $location->is_active,
     ],
 ]);
+
+test('a note is not removed when its audit event cannot be recorded', function () {
+    $lakeview = Location::factory()->create();
+    $manager = User::factory()->withRoleAt(Role::LocationManager, $lakeview)->create();
+    $note = Note::factory()->about(Lead::factory()->at($lakeview)->create())->create();
+
+    expect(fn () => app(RemoveNote::class)->handle($note, $manager))->toThrow(RuntimeException::class);
+
+    expect($note->fresh()->isRemoved())->toBeFalse();
+    expect($note->fresh()->removed_by)->toBeNull();
+});

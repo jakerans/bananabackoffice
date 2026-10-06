@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -202,6 +203,16 @@ class Lead extends Model
     public function assignments(): HasMany
     {
         return $this->hasMany(LeadAssignment::class);
+    }
+
+    /**
+     * What staff have written about the Lead, including notes since removed from view.
+     *
+     * @return MorphMany<Note, $this>
+     */
+    public function notes(): MorphMany
+    {
+        return $this->morphMany(Note::class, 'notable');
     }
 
     public function isAssigned(): bool

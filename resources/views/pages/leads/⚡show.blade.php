@@ -7,6 +7,8 @@ use App\Actions\Leads\RouteLead;
 use App\Actions\Leads\StartWorkingLead;
 use App\Actions\Leads\UnassignLead;
 use App\Actions\Leads\UpdateLeadDetails;
+use App\Actions\Notes\AddNote;
+use App\Actions\Notes\RemoveNote;
 use App\Support\Addresses\AddressCapturePage;
 use App\Enums\AssignmentEndReason;
 use App\Enums\LeadStatus;
@@ -17,6 +19,7 @@ use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\ManagedListOption;
 use App\Models\MarketingSource;
+use App\Models\Note;
 use App\Models\ProjectSize;
 use App\Models\Service;
 use App\Models\User;
@@ -77,6 +80,8 @@ new #[Title('Lead')] class extends AddressCapturePage {
     public string $correctedReceivedAt = '';
 
     public string $receivedTimeReason = '';
+
+    public string $noteBody = '';
 
     /**
      * Mount the component.
@@ -316,6 +321,62 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
         Flux::modal('received-time')->close();
         Flux::toast(variant: 'success', text: __('Received time corrected.'));
+    }
+
+    /**
+     * Add a note to the Lead. It changes nothing else about the Lead.
+     */
+    public function addNote(AddNote $addNote): void
+    {
+        $this->authorize('create', [Note::class, $this->lead]);
+
+        $this->validate(
+            ['noteBody' => ['required', 'string', 'max:'.AddNote::MAX_LENGTH]],
+            ['noteBody.required' => __('Write the note before adding it.')],
+            ['noteBody' => 'note'],
+        );
+
+        $addNote->handle($this->lead, Auth::user(), $this->noteBody);
+
+        $this->noteBody = '';
+
+        unset($this->notes);
+
+        Flux::toast(variant: 'success', text: __('Note added.'));
+    }
+
+    /**
+     * Remove a note from view. Its author may, and so may someone who manages notes here.
+     */
+    public function removeNote(int $noteId, RemoveNote $removeNote): void
+    {
+        // Only a note that belongs to this Lead can be reached from this page.
+        $note = $this->lead->notes()->findOrFail($noteId)->setRelation('notable', $this->lead);
+
+        $this->authorize('remove', $note);
+
+        $removeNote->handle($note, Auth::user());
+
+        unset($this->notes);
+
+        Flux::toast(variant: 'success', text: __('Note removed.'));
+    }
+
+    /**
+     * The Lead's notes that are still in view, newest first.
+     *
+     * @return Collection<int, Note>
+     */
+    #[Computed]
+    public function notes(): Collection
+    {
+        return $this->lead->notes()
+            ->visible()
+            ->with(['author', 'impersonator'])
+            ->latest()
+            ->orderByDesc('id')
+            ->get()
+            ->each(fn (Note $note) => $note->setRelation('notable', $this->lead));
     }
 
     /**
@@ -630,7 +691,8 @@ new #[Title('Lead')] class extends AddressCapturePage {
     @enderror
 
     <div class="grid gap-6 md:grid-cols-3">
-        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5 md:col-span-2">
+        <div class="flex flex-col gap-6 md:col-span-2">
+        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5">
             <div>
                 <flux:heading size="lg" level="2">{{ __('The inquiry') }}</flux:heading>
                 <flux:subheading>{{ __('As it was received. Linking this lead to a customer later will not change it.') }}</flux:subheading>
@@ -723,6 +785,66 @@ new #[Title('Lead')] class extends AddressCapturePage {
                     </dd>
                 </div>
             </dl>
+        </div>
+
+        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="lead-notes">
+            <div>
+                <flux:heading size="lg" level="2">{{ __('Notes') }}</flux:heading>
+                <flux:subheading>{{ __('What the team should know, in your own words. A note cannot be edited once it is added.') }}</flux:subheading>
+            </div>
+
+            @can('create', [Note::class, $lead])
+                <form wire:submit="addNote" class="flex flex-col gap-3">
+                    <flux:textarea
+                        wire:model="noteBody"
+                        rows="3"
+                        :label="__('New note')"
+                        :placeholder="__('For example: prefers a call after 5 PM')"
+                    />
+
+                    <div>
+                        <flux:button type="submit" variant="primary" data-test="add-note">{{ __('Add note') }}</flux:button>
+                    </div>
+                </form>
+            @endcan
+
+            @if ($this->notes->isEmpty())
+                <flux:text data-test="no-notes">{{ __('No notes yet.') }}</flux:text>
+            @else
+                <ul class="flex flex-col divide-y divide-zinc-200">
+                    @foreach ($this->notes as $note)
+                        <li wire:key="note-{{ $note->id }}" class="flex flex-col gap-1 py-4 first:pt-0 last:pb-0" data-test="lead-note">
+                            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                                <div class="text-sm">
+                                    <span class="font-semibold text-ink">{{ $note->author?->name ?? __('Unknown') }}</span>
+                                    <span class="text-zinc-500">&middot; <x-local-time :at="$note->created_at" /></span>
+                                </div>
+
+                                @can('remove', $note)
+                                    <flux:button
+                                        size="xs"
+                                        variant="ghost"
+                                        wire:click="removeNote({{ $note->id }})"
+                                        wire:confirm="{{ __('Remove this note? It will no longer be shown on the lead.') }}"
+                                        data-test="remove-note"
+                                    >
+                                        {{ __('Remove') }}
+                                    </flux:button>
+                                @endcan
+                            </div>
+
+                            @if ($note->impersonator)
+                                <div class="text-xs text-zinc-500" data-test="note-impersonated">
+                                    {{ __('Written by :owner while viewing Backoffice as :staff.', ['owner' => $note->impersonator->name, 'staff' => $note->author?->name ?? __('them')]) }}
+                                </div>
+                            @endif
+
+                            <div class="whitespace-pre-line break-words text-ink">{{ $note->body }}</div>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </div>
         </div>
 
         <div class="flex flex-col gap-6">

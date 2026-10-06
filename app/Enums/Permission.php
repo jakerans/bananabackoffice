@@ -24,6 +24,8 @@ enum Permission: string
     case TransferLeads = 'leads.transfer';
     case ReturnLeads = 'leads.return';
     case AssignLeads = 'leads.assign';
+    case WriteNotes = 'notes.write';
+    case RemoveNotes = 'notes.remove';
 
     /**
      * Company-level permissions only count when held through an all-locations grant.
