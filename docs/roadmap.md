@@ -324,7 +324,8 @@ in B10, before the first real file is stored.
 
 ## Automated checks on GitHub
 
-Every push to `main` and every pull request runs two jobs:
+Every push to `main`, every push to a `checkpoint-` branch, and every pull request
+runs two jobs:
 
 | Job | Database | What it runs |
 | --- | --- | --- |
@@ -342,8 +343,9 @@ PHP 8.4.
 ## Known limits of Checkpoint A
 
 - Location names are compared exactly, so "Northside" and "northside" count as different.
-- Changes to access are stamped with who granted them, but there is no audit log
-  screen and removed grants leave no history.
+- Changes to staff, access and locations are recorded as audit events from step B1
+  onwards. Changes made before B1 have no history, and there is no screen for
+  reading the events yet (step B11).
 - Invitation emails are sent immediately rather than queued, so a slow mail server
   slows that one click.
 - Application email is sent through Resend from `mail.bananapainting.com`
@@ -369,12 +371,15 @@ outcome, because Backoffice is to be the system of record from launch.
 | Step | Delivers | State |
 | --- | --- | --- |
 | B0 | The plan and updated documents | Complete |
-| B1 | Audit event recording, including Checkpoint A's staff and access changes | Not started |
-| B2 | Attribution and managed lists: the Lead & Sales Lists page | Not started |
-| B3 | Lead capture with attribution; the shared Leads page | Not started |
-| B4 | Lead routing and assignment | Not started |
-| B5 | Lead notes | Not started |
-| B6 | Accounts, Contacts and Properties; the Customers pages | Not started |
+| B1 | Audit event recording, including Checkpoint A's staff and access changes | Built and approved (2026-10-05) |
+| B2 | Attribution and managed lists: the Lead & Sales Lists page, with all five lists | Built and approved (2026-10-05) |
+| B3 | Lead capture with attribution; the shared Leads page; Services and Project Size; address lookup; service areas | Built and approved (2026-10-05), including the live Mapbox lookup, which the owner tested in a browser. Both GitHub jobs passed on its final commit. |
+| B4 | Lead routing and assignment: route, move, return to central; one assignee with history; the four Leads views; correcting the Received time; refusing to deactivate a Location with active Leads | Built and approved (2026-10-05), with the Received Time chronology rule the approval required. |
+| — | **Owner impersonation** (not a Checkpoint B step; added at the owner's request to review each role's experience) | Built and approved (2026-10-05). See decision 46. |
+| B5 | Lead notes: add, read and remove from view on the Lead page | Built and approved (2026-10-05). |
+| B6a | Customers: the Account, Contact and Property records; who may see a customer; the Customers list and page (read only) | Built and approved (2026-10-06). |
+| B6b | Managing Contacts and Properties, with address lookup; creating a customer directly | Built and approved (2026-10-06). |
+| B6c | Resolving a Lead into a customer; duplicate suggestions, including masked matches; shared Contacts; "New lead for this customer"; archive and restore; editing a customer | Built (2026-10-06). Awaiting the owner's browser review. |
 | B7 | Qualification, disqualification and nurture | Not started |
 | — | **Production-readiness checkpoint** (around B7 or B8) | Not started |
 | B8 | Projects; the shared Projects page | Not started |
@@ -425,6 +430,8 @@ staging.** Before real customer data is entered into production:
 - Whether sensitive roles (Owner, Finance) must use two-factor sign-in. Needed by
   the production-readiness checkpoint.
 - The production domain. Needed by the production-readiness checkpoint.
+- Whether Owner impersonation should be restricted or announced in production.
+  Needed by the production-readiness checkpoint.
 - **How uploaded files are backed up.** Database backups do not cover them. This is
   settled as part of step B10, before the first real file is stored. See "Backups"
   above.

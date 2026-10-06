@@ -72,13 +72,17 @@ built it receives its own specific permission, recorded in
   selector and the user menu.
 - Second row: the sections of the selected center, in the order listed below. The
   current section is heavier with a small Yellow marker.
-- Sub-sections (for example the pages inside Call Center) will get their own row
-  when the first section that has them is built. The registry already holds them.
+- A section that has pages of its own (Call Center is the first) shows them in a
+  third row while you are inside it. In the second row such a section is a link to
+  the first of its pages the person may open. If none of its pages is built, it
+  stays muted like any other unbuilt section.
 - On small screens the center menu scrolls sideways.
 - Company Overview and Settings are company-level: they do not change with the
   selected location. Every other center follows the selected location.
-- Settings opens for anyone who may manage locations or manage users. Its unbuilt
-  pages borrow both of those permissions.
+- Settings opens for anyone who may manage locations, manage users, or manage the
+  Lead & Sales Lists. Its unbuilt pages borrow the first two permissions only, so
+  someone who holds just the lists permission sees that one page and no other
+  Settings item, built or not.
 
 ## Where each center opens
 
@@ -137,7 +141,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | `marketing.performance` | Performance Board | CS, primary |
 | `marketing.call_center` | Call Center | CS |
 | `marketing.call_center.inbox` | Central Inbox | CS |
-| `marketing.call_center.leads` | Leads | CS |
+| `shared.leads` | Leads | Live (step B3). The shared Leads page; see "Shared". It replaced the never-built `marketing.call_center.leads`. |
 | `marketing.call_center.appointments` | Appointments | CS |
 | `marketing.call_center.close_assist` | Close Assist | CS |
 | `marketing.call_center.canceled` | Canceled Appointments | CS |
@@ -159,6 +163,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | --- | --- | --- |
 | `sales.home` | Shortcut: opens Performance Board | — |
 | `sales.performance` | Performance Board | CS, primary |
+| `shared.leads` | Leads | Live (step B3). The shared Leads page; see "Shared". |
 | `sales.appointments` | Appointments | CS |
 | `sales.estimates` | Estimates | CS |
 | `sales.proposals` | Proposals | CS |
@@ -211,8 +216,9 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | --- | --- | --- |
 | `settings.home` | Shortcut: opens Locations | — |
 | `settings.company` | Company | CS |
-| `settings.locations` | Locations | Live, primary |
+| `settings.locations` | Locations | Live, primary. Each location's service area (its ZIP codes) is managed here. |
 | `settings.users` | Users and Access | Live |
+| `settings.lists` | Lead & Sales Lists | Live (step B2). Opened by its own permission; see below. |
 | `settings.service_areas` | Service Areas | CS |
 | `settings.services` | Services and Products | CS |
 | `settings.pricing` | Pricing Settings | CS |
@@ -224,7 +230,8 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 
 | ID | Label | State |
 | --- | --- | --- |
-| `shared.customers` | Customers | CS |
+| `shared.leads` | Leads | Live (step B3). Shown in Marketing > Call Center and in Sales. |
+| `shared.customers` | Customers | Live (step B6a). Shown in Marketing, Sales, Production and Finance. Opened by the customer permission. |
 | `shared.inbox` | Inbox | CS |
 
 Customers and Inbox each exist once, with one route. They appear inside the
@@ -239,14 +246,26 @@ All approved by the owner on 2026-10-05.
 
 | Item | Change | Step |
 | --- | --- | --- |
-| `settings.lists` — Lead & Sales Lists | A new Settings page holding the five managed lists. Opened by its own permission, held by Owner and Leadership. Leadership sees Settings with this page only. | B2 |
-| `shared.leads` — Leads | One shared Leads page with one address, shown in **both** the Marketing Center and the Sales Center to anyone holding the lead permission. There is no separate Marketing Leads and Sales Leads. Marketing > Call Center > Leads points at it. | B3 |
-| `shared.customers` — Customers | Becomes live. Lists Accounts. | B6 |
+| `settings.lists` — Lead & Sales Lists | A new Settings page holding the five managed lists. Opened by its own permission, held by Owner and Leadership. Leadership sees Settings with this page only. | B2 — **built** |
+| `shared.leads` — Leads | One shared Leads page with one address, shown in **both** the Marketing Center and the Sales Center to anyone holding the lead permission. There is no separate Marketing Leads and Sales Leads. Marketing > Call Center > Leads points at it. | B3 â **built** |
+| `shared.customers` — Customers | Becomes live. Lists Accounts. | B6a — **built** |
 | `shared.projects` — Projects | One shared Projects page with one address, shown in the Sales Center and the Production Center as appropriate. There are no separate Sales Projects and Production Projects. | B8 |
 
 Shared pages are opened by their own permission, not by access to the center whose
 menu happens to show them.
 
+A shared page is drawn inside the menu of a center the person may open. When they
+may open more than one, it is the center they were last in. That choice only
+decides which menu surrounds the page; it never grants access to a center.
+
+Until Central Inbox is built, Call Center opens on Leads.
+
+The Leads page has up to four views, chosen with buttons at the top (step B4):
+Assigned to me, Unassigned, All leads and Unrouted. A person is shown only the
+views they may use, and the page opens on the one that suits their job. See
+"Routing and assignment, as built in step B4" in
+[checkpoint-b.md](checkpoint-b.md). The views are not separate pages and add
+nothing to the menus.
 - The first live section that has sub-sections brings the third row (sub-sections)
   into the shell, as already described under "Shell layout".
 - Every other item on this page keeps its current state through Checkpoint B.

@@ -93,6 +93,7 @@ always limited to what the person's grants allow, in every view.
 | `color_studio.access` | Location | Open Color Studio |
 | `settings.locations.manage` | Company | Manage locations |
 | `settings.users.manage` | Company | Manage staff and access grants |
+| `settings.lists.manage` | Company | Manage the Lead & Sales Lists page (added in step B2; held by Owner and Leadership) |
 
 Only permissions that guard something real are defined. Finer permissions (view
 job costs, approve commissions, edit leads) are added when the feature is built.
@@ -102,7 +103,7 @@ job costs, approve commissions, edit leads) are added when the feature is built.
 | Role | Company Overview | Marketing | Sales | Production | Finance | Color Studio | Settings |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | Owner | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
-| Leadership | Yes | Yes | Yes | Yes | No | Yes | No |
+| Leadership | Yes | Yes | Yes | Yes | No | Yes | Lead & Sales Lists only |
 | Finance | No | No | No | No | Yes | No | No |
 | Location Manager | No | Yes | Yes | Yes | No | Yes | No |
 | Call Center Agent | No | Yes | No | No | No | No | No |
@@ -177,6 +178,24 @@ cannot differ only by capital letters.
 - Only the Owner role contains `settings.users.manage` today. If another role is
   ever given it, add a rule that only an Owner may grant or remove the Owner role.
 
+## Owner impersonation
+
+An Owner can view Backoffice as another active staff member, to support them or
+to check what a role sees. See decision 46 in [decisions.md](decisions.md).
+
+- **Only the Owner role may start it.** It is tied to the role itself, not to a
+  permission, so no other role can be given it.
+- **The staff member's access is used alone.** While impersonating, every gate,
+  policy, location and menu is worked out for the staff member. The Owner's
+  access is never added to it.
+- **It is checked on every request.** The Owner must still be an active Owner and
+  the staff member must still be active. A change to either takes effect on the
+  next request.
+- **Sign-in details are out of reach.** The staff member's name, email, password,
+  two-factor codes and passkeys cannot be seen or changed while impersonating.
+- **Staff accounts and access cannot be managed while impersonating.**
+- **Both people are recorded** on every audit event made while impersonating.
+
 ## Homeowners
 
 Homeowners will never be rows in the staff `users` table and will never sign in
@@ -186,7 +205,11 @@ account table and its own access rules.
 ## Checkpoint B
 
 Status: **Approved by the owner (2026-10-05). Not built yet.** Each permission is
-added to the code in the step that builds what it guards. The records and their
+added to the code in the step that builds what it guards. Built so far:
+`settings.lists.manage` (B2); `leads.view`, `leads.manage` and
+`leads.view_unrouted` (B3); `leads.route`, `leads.transfer`, `leads.return` and
+`leads.assign` (B4); `notes.write` and `notes.remove` (B5); `accounts.view`
+(B6a); `accounts.manage` and `accounts.archive` (B6b). The records and their
 rules are described in [checkpoint-b.md](checkpoint-b.md).
 
 ### The rules Checkpoint B adds
@@ -208,20 +231,58 @@ rules are described in [checkpoint-b.md](checkpoint-b.md).
    access at that Location, or the assignment is refused.
 7. **Routing, returning to central and transferring are their own permissions,**
    separate from being able to edit the record.
+8. **A direct move by a Location Manager is checked at both ends.** They must hold
+   `leads.transfer` at the Location the Lead is leaving and at the one it is going
+   to. Without the company-wide `leads.route`, no other destination is accepted.
+9. **Only someone who can already work a Lead may be assigned it.** For an
+   unrouted Lead that means company-wide lead staff. When a person loses that
+   access, the Leads they can no longer work are unassigned.
+10. **Starting work follows assignment.** The assignee may start their Lead.
+    Someone who may assign may start an unassigned Lead, which assigns it to them.
+    Nobody else may: starting work is never a way to take a Lead.
+### How someone sees a customer, which has no Location
 
-### Permissions
+`accounts.view` is granted like any other permission, at a Location or across all
+Locations. Because an Account has no Location, it is applied like this:
 
-| Permission | Scope | Allows |
+- **Through an all-locations grant:** every customer.
+- **Through a location grant:** only customers with at least one Lead (later, a
+  Project) that the person can see at that Location.
+
+`accounts.manage` is applied the same way: every customer through an
+all-locations grant, otherwise the customers with a Lead the person can see at a
+Location where they hold it. Creating a customer with no Lead needs the
+all-locations grant, because nobody else could see it afterwards.
+
+So a Sales Consultant, Location Manager or Call Center agent at one Location sees
+the customers with a Lead there. A Production Manager or Finance person at one
+Location sees none until Projects exist, because they cannot see Leads. Seeing a
+customer never shows another Location's Leads; those are filtered wherever they
+are listed or counted.
+
+### Linking a Lead to a customer
+
+- **Who:** someone who may work the Lead and holds `accounts.manage` where the
+  Lead is (company-wide for an unrouted Lead).
+- **To which customer:** one they can see, or a new one. A customer they cannot
+  see can be linked only through a masked match on the Lead's exact phone or
+  email, which the server works out itself; the browser never names it.
+- **What that gives them:** sight of the customer, its Contacts and Properties,
+  through their own Lead. Never sight of another Location's Leads or Projects.
+- Archiving and restoring a customer needs `accounts.archive`, company-wide.
+
+### Permissions| Permission | Scope | Allows |
 | --- | --- | --- |
 | `accounts.view` | Location | See Accounts, Contacts and Properties, under rule 3 |
-| `accounts.manage` | Location | Create and edit Accounts, Contacts and Properties |
-| `accounts.archive` | Location | Archive and restore Accounts, Contacts and Properties |
+| `accounts.manage` | Location | Add and edit a customer's Contacts and Properties. Through an all-locations grant: every customer, and creating one that has no Lead |
+| `accounts.archive` | Company | Archive and restore Accounts, Contacts, their connections and Properties |
 | `leads.view` | Location | See Leads routed to the location |
 | `leads.manage` | Location | Capture, edit and work Leads; qualify, disqualify, reopen |
 | `leads.view_unrouted` | Company | See and work Leads that have no location yet |
-| `leads.route` | Company | Send a Lead to a location, or change it |
+| `leads.route` | Company | Send a Lead to any location, or move it to any other |
+| `leads.transfer` | Location | Move a Lead directly between two locations, when held at both |
 | `leads.return` | Location | Return a Lead to the central queue, with a reason |
-| `leads.assign` | Location | Assign a Lead to a staff member |
+| `leads.assign` | Location | Assign, reassign or unassign a Lead; start working an unassigned one |
 | `leads.convert` | Location | Create a Project from a Qualified Lead |
 | `projects.view` | Location | See Projects at the location |
 | `projects.create` | Location | Create a Project, from a Lead or directly |
@@ -231,7 +292,8 @@ rules are described in [checkpoint-b.md](checkpoint-b.md).
 | `projects.archive` | Location | Archive and restore Projects |
 | `projects.sales_outcome` | Location | Mark a Project Won (with its Sold Amount) or Lost |
 | `projects.correct_sold_amount` | Location | Correct the Sold Amount of a Won Project |
-| `notes.write` | Location | Add notes to a record the person can see |
+| `notes.write` | Location | Add notes to a record the person can see, and remove their own from view |
+| `notes.remove` | Location | Remove anyone's note from view |
 | `attachments.manage` | Location | Upload and remove attachments |
 | `history.view` | Location | See a record's audit history |
 | `settings.lists.manage` | Company | Manage the Lead & Sales Lists page in Settings, and nothing else there |
@@ -249,13 +311,15 @@ The owner approved this matrix at the final review on 2026-10-05.
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | See Accounts, Contacts, Properties | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
 | Create and edit Accounts, Contacts, Properties | Yes | Yes | Yes | Yes | Yes | No | No |
-| Archive Accounts, Contacts, Properties | Yes | Yes | Yes | No | No | No | No |
+| Archive Accounts, Contacts, Properties (all-locations grant only) | Yes | Yes | No | No | No | No | No |
 | See routed Leads | Yes | Yes | Yes | Yes | Yes | No | No |
 | Capture, edit, work, qualify and disqualify Leads | Yes | Yes | Yes | Yes | Yes | No | No |
 | See unrouted Leads (all-locations grant only) | Yes | Yes | No | Yes | No | No | No |
-| Route a Lead to a location | Yes | Yes | No | Yes | No | No | No |
+| Route a Lead to a location, or move it to any other (all-locations grant only) | Yes | Yes | No | Yes | No | No | No |
+| Move a Lead between two locations where they hold this role | Yes | Yes | Yes | No | No | No | No |
 | Return a Lead to the central queue | Yes | Yes | Yes | Yes | No | No | No |
-| Assign a Lead to a staff member | Yes | Yes | Yes | Yes | No | No | No |
+| Assign, reassign or unassign a Lead | Yes | Yes | Yes | Yes | No | No | No |
+| Be assigned a Lead, and work a Lead assigned to them | Yes | Yes | Yes | Yes | Yes | No | No |
 | Create a Project from a Qualified Lead | Yes | Yes | Yes | No | Yes | No | No |
 | See Projects | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
 | Create a Project directly | Yes | Yes | Yes | No | Yes | No | No |
@@ -265,7 +329,8 @@ The owner approved this matrix at the final review on 2026-10-05.
 | Archive and restore Projects | Yes | Yes | Yes | No | No | No | No |
 | Mark a Project Won or Lost | Yes | Yes | Yes | No | Yes | No | No |
 | Correct a Sold Amount | Yes | Yes | No | No | No | No | No |
-| Add notes | Yes | Yes | Yes | Yes | Yes | Yes | No |
+| Add notes, and remove their own from view | Yes | Yes | Yes | Yes | Yes | Yes | No |
+| Remove anyone's note from view | Yes | Yes | Yes | No | No | No | No |
 | Upload and remove attachments | Yes | Yes | Yes | No | Yes | Yes | No |
 | See a record's audit history | Yes | Yes | Yes | No | No | No | No |
 | Manage Lead & Sales Lists (all-locations grant only) | Yes | Yes | No | No | No | No | No |

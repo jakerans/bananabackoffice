@@ -2,14 +2,36 @@
 
 namespace App\Providers;
 
+use App\Actions\Staff\StopImpersonation;
+use App\Enums\ImpersonationEndReason;
 use App\Enums\Permission;
+use App\Models\Account;
+use App\Models\Contact;
+use App\Models\Lead;
+use App\Models\LeadChannel;
+use App\Models\LeadDisqualificationReason;
+use App\Models\LeadSource;
 use App\Models\Location;
+use App\Models\MarketingSource;
+use App\Models\ProjectSize;
+use App\Models\Property;
+use App\Models\SalesLossReason;
+use App\Models\Service;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
+use App\Support\Access\Impersonation;
+use App\Support\Addresses\AddressLookup;
+use App\Support\Addresses\MapboxAddressLookup;
+use App\Support\Addresses\UnavailableAddressLookup;
 use App\Support\Navigation\Navigation;
+use App\Support\ServiceAreas\PostalCodeServiceAreas;
+use App\Support\ServiceAreas\ServiceAreaResolver;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -22,6 +44,21 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(Navigation::class);
+
+        // One per request: it notes who the request is being served as.
+        $this->app->scoped(Impersonation::class);
+
+        // Address lookup is offered only when a provider's token has been set up.
+        // Without one, staff type addresses by hand and nothing else changes.
+        $this->app->bind(AddressLookup::class, function (): AddressLookup {
+            $token = config('services.mapbox.token');
+
+            return is_string($token) && $token !== ''
+                ? new MapboxAddressLookup($token)
+                : new UnavailableAddressLookup;
+        });
+
+        $this->app->bind(ServiceAreaResolver::class, PostalCodeServiceAreas::class);
     }
 
     /**
@@ -30,7 +67,48 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureRecordNames();
         $this->configureAuthorization();
+        $this->configureImpersonation();
+    }
+
+    /**
+     * Signing out ends the whole session, so it also ends viewing Backoffice as
+     * someone else. That is recorded like any other stop.
+     */
+    protected function configureImpersonation(): void
+    {
+        Event::listen(function (Logout $event): void {
+            if ($this->app->make('request')->hasSession()) {
+                $this->app->make(StopImpersonation::class)->handle(ImpersonationEndReason::SignedOut);
+            }
+        });
+    }
+
+    /**
+     * Give each kind of record a short, fixed name for wherever one record points at "any kind of record".
+     *
+     * Audit events store these names, not PHP class names, so they stay
+     * readable if a class is ever moved or renamed. Every kind of record that
+     * can be pointed at this way must be listed here; an unlisted one is refused.
+     */
+    protected function configureRecordNames(): void
+    {
+        Relation::enforceMorphMap([
+            'user' => User::class,
+            'location' => Location::class,
+            'marketing_source' => MarketingSource::class,
+            'lead_source' => LeadSource::class,
+            'lead_channel' => LeadChannel::class,
+            'lead_disqualification_reason' => LeadDisqualificationReason::class,
+            'sales_loss_reason' => SalesLossReason::class,
+            'lead' => Lead::class,
+            'service' => Service::class,
+            'project_size' => ProjectSize::class,
+            'account' => Account::class,
+            'contact' => Contact::class,
+            'property' => Property::class,
+        ]);
     }
 
     /**

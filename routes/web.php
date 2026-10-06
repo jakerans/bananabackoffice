@@ -1,10 +1,14 @@
 <?php
 
+use App\Enums\Permission;
 use App\Http\Controllers\CenterController;
 use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\PasswordResetLinkController;
 use App\Http\Controllers\SectionController;
+use App\Http\Controllers\StopImpersonationController;
 use App\Http\Controllers\SwitchLocationController;
+use App\Models\Account;
+use App\Models\Lead;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', 'dashboard')->name('home');
@@ -22,10 +26,26 @@ Route::middleware('guest')->group(function () {
         ->name('password.email');
 });
 
+// Always handled as the person who is really signed in, whoever they are viewing Backoffice as.
+Route::post('impersonation/stop', StopImpersonationController::class)->middleware('auth')->name('impersonation.stop');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
 
     Route::post('location', SwitchLocationController::class)->name('location.switch');
+
+    // Leads is one shared page, shown in the Marketing and Sales menus. It is opened by the
+    // lead permission; each Lead is then authorized by its own location, not the selected one.
+    Route::livewire('leads', 'pages::leads.index')->can(Permission::ViewLeads)->name('leads');
+    Route::livewire('leads/new', 'pages::leads.create')->can('create', Lead::class)->name('leads.create');
+    Route::livewire('leads/{lead}', 'pages::leads.show')->can('view', 'lead')->name('leads.show');
+    Route::livewire('leads/{lead}/customer', 'pages::leads.customer')->can('resolveCustomer', 'lead')->name('leads.customer');
+
+    // Customers is one shared page too. A customer has no location: each one is authorized by
+    // what the person can already see of it, never by the location that happens to be selected.
+    Route::livewire('customers', 'pages::customers.index')->can(Permission::ViewAccounts)->name('customers');
+    Route::livewire('customers/new', 'pages::customers.create')->can('create', Account::class)->name('customers.create');
+    Route::livewire('customers/{account}', 'pages::customers.show')->can('view', 'account')->name('customers.show');
 
     // A center has no page of its own: its address opens the center's primary section.
     Route::get('company', CenterController::class)->defaults('center', 'company')->name('company.home');

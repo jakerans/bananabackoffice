@@ -234,6 +234,61 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Get the active locations where the staff member may use a location-level permission.
+     *
+     * @return Collection<int, Location>
+     */
+    public function locationsWhere(Permission $permission): Collection
+    {
+        return $this->authorizedLocations()
+            ->filter(fn (Location $location): bool => $this->hasPermissionAt($permission, $location))
+            ->values();
+    }
+
+    /**
+     * The Leads this staff member is responsible for working now.
+     *
+     * @return HasMany<Lead, $this>
+     */
+    public function assignedLeads(): HasMany
+    {
+        return $this->hasMany(Lead::class, 'assigned_user_id');
+    }
+
+    /**
+     * Determine whether one of the staff member's grants gives them a role at a location.
+     */
+    public function holdsRoleAt(Role $role, Location $location): bool
+    {
+        return $this->isActive()
+            && $location->is_active
+            && $this->accessGrants->contains(
+                fn (AccessGrant $grant): bool => $grant->role === $role && $grant->covers($location),
+            );
+    }
+
+    /**
+     * Determine whether the staff member may be made responsible for a Lead.
+     *
+     * Only someone who can already work the Lead may be assigned it: assignment
+     * never grants access. An unrouted Lead can only be worked by company-wide
+     * lead staff. An account that cannot sign in yet cannot hold work.
+     */
+    public function canBeAssigned(Lead $lead): bool
+    {
+        if (! $this->isActive() || $this->invitationIsPending()) {
+            return false;
+        }
+
+        if ($lead->isUnrouted()) {
+            return $this->hasPermissionAcrossAllLocations(Permission::ViewUnroutedLeads)
+                && $this->hasPermissionAcrossAllLocations(Permission::ManageLeads);
+        }
+
+        return $lead->location !== null && $this->hasPermissionAt(Permission::ManageLeads, $lead->location);
+    }
+
+    /**
      * Get the user's initials
      */
     public function initials(): string

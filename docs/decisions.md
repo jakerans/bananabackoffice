@@ -531,6 +531,553 @@ Why: leaving production to the end would put the first real customer data into a
 environment nobody had time to check. Authorization, data integrity, tests and
 auditability are not traded for the date.
 
+## 38. How audit events are recorded (step B1)
+
+Built in step B1 (2026-10-05).
+
+- **Saved together with the change.** The change and its audit event are written in
+  one database transaction. If either cannot be saved, neither is. Tests make the
+  audit event fail on purpose and check the change is not kept.
+- **Explicit, not automatic.** Each action that makes an important change asks for
+  its event to be recorded. Nothing is recorded behind the scenes whenever a row
+  changes, so the list of what is audited is the list in checkpoint-b.md, and a
+  change that did nothing (renaming to the same name, deactivating someone already
+  inactive) records nothing.
+- **Who acted.** The signed-in person, unless another is named. Accepting an
+  invitation is recorded as done by the person accepting. A change from the command
+  line, such as creating the first Owner, has no actor.
+- **Readable later.** The actor's name is copied onto the event, and so is a
+  location's name inside the values, because both can change afterwards.
+- **Before and after are stored separately,** each holding only the fields that
+  matter for that change. MySQL does not keep the order the fields were stored in,
+  so nothing may depend on that order. (The first run of the checks on MySQL 8.4
+  caught four tests that did; SQLite had hidden it.)
+- **Append-only in the application.** An event refuses to be changed or deleted
+  through the application. Someone with direct access to the database could still
+  alter it; preventing that is part of giving production a least-privilege
+  database account.
+- **Records are named, not addressed by class.** An event points at "user 5" or
+  "location 2", using a short fixed name for each kind of record. Every kind of
+  record that can be pointed at must be given a name first; an unnamed one is
+  refused. This also applies to Livewire pages that hold a record.
+- **Resending an invitation is recorded** (added at the owner's review): it cancels
+  the earlier link and issues a new one, so it is an account-access action. The
+  event holds who resent it, for whom and when, and never the link or its token.
+- **Recorded before an email goes out.** Where a change sends an email, the audit
+  event is written first, because an email cannot be taken back if something later
+  fails.
+- **Not recorded, deliberately:** profile and password changes, sign-ins, and
+  anything viewed or searched. These stay outside this business audit history.
+
+Also in B1: the GitHub checks now run on `checkpoint-` branches as well as `main`,
+so each step's database changes are run on MySQL 8.4 before review, not only when
+merged.
+
+## 39. How the managed lists are built (step B2)
+
+Built in step B2 (2026-10-05).
+
+- **Five small tables, one per list,** not one shared table with a "which list"
+  column. Each record that later uses a list can then point at exactly the right
+  kind of option, and the database itself refuses a lead whose "marketing source"
+  is really a sales loss reason. The five share their behavior in code.
+- **The five lists are fixed in code.** There is no way to create a sixth list or
+  to add fields from the page. That is what keeps this from becoming a general
+  "configure your CRM" tool.
+- **The starting values are created with the tables,** in the same database change,
+  not by a separate seeding step. Every environment, including a brand new
+  production database and the test runs, has them without anyone remembering to
+  load them.
+- **No delete, even for an unused option.** One rule with no exceptions is easier
+  to trust than "deleted if unused". Deactivating does everything deleting would.
+- **At least one active option per list,** enforced when deactivating.
+- **Order is a simple position,** renumbered 1, 2, 3 each time something moves.
+- **"A note is required" and "ask which competitor" are stored on the option,** not
+  tied to its name, so renaming "Other" does not switch the behavior off. They are
+  not yet changeable from the page.
+- **Leadership's access is a permission of its own.** The Settings center opens
+  for anyone holding it, but the unbuilt Settings pages do not borrow it, so
+  Leadership sees exactly one page there.
+- **One list's page cannot touch another's options.** An option is always looked up
+  inside the list being shown, never by its number alone.
+
+## 40. How lead capture is built (step B3)
+
+Built in step B3 (2026-10-05). The behavior was approved by the owner beforehand;
+these are the choices made while building it.
+
+- **A Lead is authorized by its own location, never the selected one.** Opening,
+  correcting and working a Lead check the Lead's location against the person's
+  grants. The list starts from "what this person may see" and only then narrows to
+  the location they are working in. An unrouted Lead has no location, so only its
+  own company-wide permission reaches it.
+- **Capturing for a location and leaving a Lead unrouted are checked on the
+  server every time.** The location on the form comes from the browser and is not
+  trusted.
+- **Times are stored in UTC and shown in one company timezone.** It is a setting
+  (`APP_DISPLAY_TIMEZONE`), defaulting to US Eastern. It is one value for the whole
+  company until locations in different timezones need their own. The owner
+  confirmed `America/New_York` on 2026-10-05.
+- **Phone numbers are stored twice:** as typed, and in international notation for
+  matching. Recognition is tuned for U.S. numbers but the stored form is not
+  U.S.-only, so it can be improved later without changing the data.
+- **The "unknown" source is identified by a marker, not its name,** so renaming it
+  cannot break the default. The marker also stops it being deactivated.
+- **Pressing Save twice records one Lead.** Each filling-in of the form carries an
+  identifier that can be used once.
+- **A shared page is drawn inside a center the person may open,** the one they
+  were last in when there is a choice. That is remembered in the session and only
+  chooses which menu surrounds the page. It grants nothing.
+- **The third menu row now exists,** for sections with pages of their own. Call
+  Center is the first.
+- **`marketing.call_center.leads` was retired** in favor of `shared.leads`, the one
+  entry used in both menus. It had never been built, so nothing referred to it.
+- **Not built in B3:** correcting the received time after saving, and showing a
+  Lead's earlier inquiries on its own page.
+
+Known limit: a Lead at a location that is later deactivated cannot be seen by
+anyone, because a deactivated location is covered by no grant (permission model,
+rule 3). Step B4 adds re-routing, which is the way to move such Leads; whether
+deactivating a location with open Leads should be refused is for that step.
+
+## 41. Services and Project Size on a Lead (B3, after the owner's browser review)
+
+Decided by the owner on 2026-10-05 and built the same day.
+
+- **Services are a managed list;** a Lead may have several, one primary. They are
+  stored as rows linking a Lead to a Service, so reporting and later routing can
+  ask "all Leads for Cabinet Painting" or "primary Service only" directly. The
+  database refuses a second primary on one Lead.
+- **Project Size is Small, Medium or Large, and required at intake.** It is the
+  intake person's informed classification, not an estimate, and is stored apart
+  from any estimate or sold amount so the two can be compared later.
+- **The value each size covers is data and can change. The three sizes cannot.**
+  They are fixed because behavior and reporting will depend on them, and because
+  the staff-facing choice should stay simple.
+- **A Lead copies the range its size covered when it was classified.** Changing
+  the ranges later therefore never rewrites history, and nothing has to be
+  redesigned when the average job changes.
+- **The ranges are edited as two numbers** (where Medium starts, where Large
+  starts), not three independent ranges, so they can never overlap or leave a gap.
+- **Staff must choose a size; the data allows none.** That is for Leads recorded
+  before sizes existed and for inquiries that will one day arrive automatically.
+- **No salesperson routing is built.** Location, primary and additional Services
+  and Project Size are captured from the first Lead so a later recommendation has
+  the history it needs.
+- **At least one Service is required** (decided by the owner on 2026-10-05, after
+  it was first built as optional). With several, the person must name the primary;
+  it is never taken from list order, because the Primary Service is meant to be
+  the dominant opportunity and a silent default would not be.
+
+## 42. Address lookup provider: Mapbox
+
+Status: **Approved by the owner (2026-10-05) and built.** What follows is the
+evaluation that led to the choice; decision 43 records how it was built.
+
+The owner wants real address autocomplete that keeps a structured address, with
+latitude and longitude, for Property records, duplicate detection, mapping,
+service-area routing, distance and geographic reporting.
+
+**The finding that decides it:** Google Places, the leading candidate, publishes
+terms that do not allow keeping what it returns. Its policy says Places content
+must not be pre-fetched, cached or stored, with one exception: the place ID may be
+stored indefinitely. Latitude and longitude may be cached for up to 30 days. Read
+plainly, that rules out keeping coordinates and address parts for the uses above.
+This is a reading of Google's published terms on 2026-10-05, not legal advice.
+
+| | Google Places (New) | Mapbox | Smarty |
+| --- | --- | --- | --- |
+| Finds addresses | Best, including many new builds | Good for US addresses | Good; US only; postal-service based |
+| May we keep the result? | Place ID only; coordinates 30 days | **Yes, with "permanent" results** | Yes |
+| Coordinates | Yes | Yes | A separate product |
+| Cost at our size | Likely free (10,000 a month free, then about $5 per 1,000) | Suggestions within a free allowance; about $5 per 1,000 addresses kept | From about $21 a month; every keystroke counts |
+
+**Recommendation: Mapbox,** using its "permanent" results for the address that is
+saved, because it is the option whose terms plainly allow what the owner asked
+for. Google remains the better matcher; choosing it would mean either accepting
+its storage limits or getting advice that our use is permitted.
+
+How it would be built, whichever provider is chosen:
+
+- **Through our own server, not from the browser.** The page asks Backoffice,
+  Backoffice asks the provider. The provider's key never reaches the browser, the
+  number of requests per person is limited, and it can be tested without the
+  provider. No new package is needed; Laravel's built-in HTTP client is enough.
+- **Credentials:** one secret access token, entered by the owner directly in each
+  server's environment settings, as the Resend key was. A separate token for
+  staging and production.
+- **What leaves Backoffice:** only the address text being typed. No names, phone
+  numbers or anything else about the Lead.
+- **If the provider is slow or down,** the form falls back to typing the address.
+
+## 43. How address lookup and service areas are built
+
+Built on 2026-10-05, after the owner approved Mapbox and ZIP-code service areas.
+
+- **Two kinds of request.** Suggestions while typing are Mapbox "temporary"
+  results: shown, never stored. The address a person selects is requested again
+  as a "permanent" result, which Mapbox allows to be stored indefinitely. That is
+  one paid request per address kept, and it is why coordinates may be kept.
+- **Server-side only.** Backoffice calls Mapbox from the server with Laravel's
+  built-in HTTP client. No package was added. The token is read from the server's
+  environment (`MAPBOX_ACCESS_TOKEN`) and is never sent to a browser.
+- **Lookup is behind one boundary.** The rest of Backoffice asks for suggestions
+  and for a structured address, and does not know that Mapbox answers. With no
+  token set, lookup is simply off and addresses are typed.
+- **Lookup can never block a Lead.** No suggestion, a refused token, a timeout or
+  a nonsense answer all end the same way: the address is typed by hand. Failures
+  are reported to the log without the token in the message.
+- **Requests are limited:** five characters before the first request, a short
+  pause after typing, and 60 lookups a minute per person.
+- **Coordinates come only from the provider.** The selected address is held where
+  the browser cannot alter it, and a hand-typed address never has coordinates.
+- **A service area is a list of ZIP codes per Location,** managed with the
+  Location. A Location is suggested only when exactly one active Location lists
+  the address's ZIP code. Distance is never used.
+- **One question, answered behind a boundary:** "which Location serves this
+  address?" Territories drawn on a map can answer it later without changing Leads,
+  which store only the Location they were given.
+- **A suggestion grants nothing.** It pre-selects a Location only where the person
+  may capture a Lead, and the saved Location is authorized on the server as before.
+- **Tests never reach an outside service.** The test suite refuses any real
+  outgoing request, and the lookup tests use a stand-in for Mapbox.
+
+## 44. Lead routing and assignment (step B4)
+
+Approved by the owner on 2026-10-05 and built the same day.
+
+- **Routing and assignment are separate.** Routing answers "which Location owns
+  this Lead?"; assignment answers "who is responsible for working it?". They are
+  separate actions and separate data, even if automation later does both at once.
+- **One assignee, plus a history.** A Lead has one current assignee. Every
+  assignment is also kept as a row with its start, end and the reason it ended, so
+  workload, response times, performance and fair distribution can be measured
+  later. No report was built.
+- **A change of Location always clears the assignee,** even when that person also
+  works at the destination. A transfer is an operational handoff.
+- **Sales Consultants do not claim Leads.** Distribution stays with management and
+  the Call Center, because future routing will weigh Service, Project Size,
+  performance and workload. There is no way for a Sales Consultant to take an
+  unassigned Lead: not by assigning, not by starting work, and they have no
+  Unassigned queue.
+- **A Sales Consultant who records a Lead at their own Location is assigned it.**
+  That covers a referral, a repeat customer or a field-generated opportunity
+  coming to them directly. Anyone else's capture is left unassigned.
+- **A Location Manager may move a Lead between two Locations they both manage.**
+  Otherwise they may only return it to central. Authorization is checked at both
+  ends.
+- **Correcting the Received time needs a reason,** because it changes response
+  times. Anyone who may correct the Lead may do it. Future times are refused.
+- **A Location with active Leads cannot be deactivated.** Refusal only, with the
+  count; no override and no bulk action. Active Projects will block it too (B8).
+- **Role-appropriate starting view:** Unrouted for company-wide Call Center,
+  Assigned to me for Sales Consultants, Unassigned for Location Managers, All
+  leads for Owner and Leadership.
+- **No recommendation engine.** The Assign dialog shows eligible people and their
+  open-Lead count. A recommendation can later be added as a marker in that same
+  dialog, with management still choosing.
+- **Projects will carry their own Services and Project Size (B8),** copied from
+  the Lead when there is one.
+
+Choices made while building, for the owner to confirm:
+
+- **Only people who may assign can leave a Lead unassigned.** A Sales Consultant
+  cannot release their own Lead; they ask a manager. This follows the decision
+  that distribution is controlled by management.
+- **A Sales Consultant still sees unassigned Leads in "All leads",** and may still
+  correct the details of any Lead at their Location, because Location is the
+  security boundary and assignment is not. They cannot take or start one.
+- **The open-Lead count in the Assign dialog counts only Leads the viewer may
+  see,** so a Location Manager does not learn about work at other Locations.
+- **An unrouted Lead can be assigned only to company-wide lead staff,** since
+  nobody else can open it.
+- **A new permission, `leads.transfer`,** carries the Location Manager's direct
+  move. `leads.route` stays company-wide and covers routing and any move.
+- **Received time is corrected from its own small dialog on the Lead page,** not
+  inside "Correct details", so the required reason is only asked for when the
+  time is what is being changed.
+- **The test run's memory limit was raised to 512 MB** in `phpunit.xml`. The
+  suite outgrew PHP's 128 MB default on a development machine. Nothing in the
+  application changed.
+
+## 45. B4 approved; Received Time cannot break the order of events
+
+The owner approved B4 on 2026-10-05 and confirmed the choices listed under 44:
+Sales Consultants cannot release their own Leads; they may see unassigned Leads
+at their Locations and correct ordinary Lead details there, but may not claim,
+assign, start, release or reassign unless another role they hold allows it; no
+"Take it" button; `leads.transfer` with its both-ends check; authorization-scoped
+open-Lead counts; Received Time in its own dialog; the multi-role
+auto-assignment.
+
+One correction was required and is built:
+
+- **A Received Time correction may not create an impossible order of events.**
+  It may not be later than when the Lead was first routed, first assigned
+  (including to someone who no longer has it), or first worked. Any of those
+  would produce a negative response time.
+- **Nothing downstream is rewritten.** A correction that does not fit is refused
+  with a message naming the earliest of those moments and its time.
+- **When the Lead's record was created is not a limit.** The first build also
+  refused a Received Time later than the record's creation time. The owner
+  removed that on review: the creation time is a database-record timestamp, not
+  business chronology, and a legitimate corrected Received Time can be later.
+- The required reason and the audit event are unchanged.
+
+With that correction, B4 is approved.
+
+## 46. Owner impersonation
+
+Requested by the owner on 2026-10-05, to review and troubleshoot each role's
+experience during development and for support afterwards. Built the same day.
+
+**What it is.** An Owner can view Backoffice exactly as another active staff
+member sees it, from Settings > Users and Access > the staff member >
+Impersonate.
+
+**How it works**
+
+- **The session stays the Owner's.** It only remembers who is being viewed as.
+  On every request that choice is checked again, and the request is then served
+  as the staff member and nobody else. Every permission, policy, location and
+  menu is worked out for the staff member alone; none of the Owner's access is
+  added. The Owner's identity is put back when the response is ready.
+- **Nothing of the staff member's sign-in is involved.** Their password is not
+  asked for, shown, changed or reset, and their "remember me" sign-ins on their
+  own devices are untouched.
+- **It is applied by middleware on every web request,** including Livewire
+  updates and pages that were already open. A page the Owner opened as
+  themselves cannot be used with the Owner's permissions once impersonating.
+- **The session gets a new ID on entering and on leaving.** A recent password
+  confirmation, and the location and center last worked in, are not carried from
+  one identity to the other.
+
+**Who and whom**
+
+- Only the Owner role may start it. It is not a permission another role could be
+  given. Someone holding Owner alongside other roles may.
+- Not as yourself, not as a deactivated person, and not as someone who has not
+  yet accepted their invitation (they have never signed in, and every page would
+  send them to email verification).
+- Another Owner may be impersonated.
+- It cannot be started while already impersonating.
+
+**While impersonating**
+
+- A red bar stays at the top of every signed-in page: "Viewing Backoffice as
+  [Name]", with a "Return to [Owner]" button. It stays in view when the page
+  scrolls and is also shown on "Not authorized" pages.
+- **Account and security settings are closed:** name and email, password,
+  two-factor codes and recovery codes, passkeys, password confirmation and email
+  verification. This covers the Backoffice pages, pages that were already open,
+  and the sign-in packages' own addresses.
+- **Staff accounts and access are closed,** even when impersonating another
+  Owner: inviting, granting, revoking, deactivating, reactivating and resending
+  invitations. An Owner manages staff as themselves, so such a change is always
+  made, and recorded, in their own name.
+- Everything else behaves exactly as it does for the staff member.
+
+**Ending**
+
+- "Return to [Owner]" restores the Owner at once and goes back to the staff
+  member's page.
+- Signing out ends the whole session. No Owner session is left behind.
+- If the staff member is deactivated, impersonation ends on the next request and
+  the Owner is back as themselves with a notice. A Livewire action in flight is
+  not carried out as the Owner; its page is reloaded.
+- If the staff member's access changes, the next request simply reflects it.
+- If the Owner is deactivated, the session is signed out. If they are no longer
+  an Owner, impersonation ends and they continue with their own reduced access.
+
+**Audit**
+
+- Starting and stopping are audit events in the Owner's own name, about the
+  staff member. A stop records why: returned, signed out, the staff member became
+  unavailable, or the Owner was no longer authorized.
+- **A change made while impersonating records both people.** The actor is the
+  staff identity the change was made as. The event also carries the real Owner
+  (`impersonator_id` and a copy of their name). The audit recorder adds this
+  itself for every event, so no caller can leave it out.
+- It reads as "Jacob Ransom, impersonating Roseanne Smith". Ordinary screens do
+  not show this; the audit history will, when it is built (B11).
+
+**Known limits**
+
+- A record created while impersonating belongs to the staff identity, exactly as
+  if they had made it: a Lead they record shows them as the person who recorded
+  it and is assigned to them. Only the audit event names the Owner.
+- If the session simply expires while impersonating, no "stopped" event is
+  recorded, because nothing runs at that moment.
+- Impersonation is available wherever the code is deployed, including production
+  later. Whether production should restrict or announce it is a question for the
+  production-readiness checkpoint.
+
+## 47. Lead notes (step B5)
+
+Built on 2026-10-05, limited to notes on a Lead. The timeline and History view
+remain step B11.
+
+- **One `notes` table for every kind of record,** pointing at the record the note
+  is about. Only Leads use it today.
+- **A note has no location of its own.** Reading, adding and removing are decided
+  by the record it is about, so a note can never be seen by someone who cannot
+  see its Lead.
+- **Adding a note is not an audit event.** The note is the record. Removing one
+  is an audit event about the Lead, which names the note, its author and when it
+  was written, and does not copy what it said.
+- **Notes are never edited or deleted.** Both are refused by the application, not
+  only left out of the screens.
+
+Choices made while building, for the owner to confirm:
+
+- **A new permission, `notes.remove`,** for removing anyone's note: Owner,
+  Leadership and Location Manager. The plan said "its author or a manager"
+  without naming who a manager is. Everyone else removes only their own.
+- **An author can remove their own note only while they can still write notes
+  where the Lead is.** After a Lead moves away, or their access changes, they can
+  no longer reach it.
+- **No reason is asked for when removing a note.** Who and when are recorded.
+- **A removed note is hidden from everyone,** managers included, until the History
+  view is built in B11. Nothing on the Lead page says a note was removed.
+- **A note written while impersonating is shown as the staff member's.** The
+  first build added a line on the note naming the Owner. The owner removed it on
+  review: impersonation is not exposed in ordinary screens. Instead, a note
+  created while impersonating records an audit event ("note added while
+  impersonating") that holds the real Owner, the staff identity, the Lead, the
+  note and the time, without copying the note's text. The note and that event
+  are saved together or not at all. An ordinary note still records no audit
+  event. The note also keeps the Owner's ID in a column that no screen shows.
+
+The owner approved B5 with that correction, and confirmed the other choices
+above.
+- **The Production Manager role holds `notes.write`,** as the approved matrix
+  says, but cannot see Leads, so it has no effect until Projects exist.
+
+## 48. Customers: the B6 decisions, and how B6a is built
+
+The owner approved the B6 plan on 2026-10-06 with these decisions. They are set
+out in full under "Customers: decisions for step B6" in
+[checkpoint-b.md](checkpoint-b.md).
+
+- B6 is built in three separately reviewed steps: B6a, B6b, B6c.
+- A customer with no Lead is created by company-wide staff only.
+- **A Contact may hold several roles for the same Account.** Primary Contact is a
+  separate mark, not a role.
+- A Residential Account needs a primary Contact; a Commercial Account may start
+  without a Contact. Compound names are not split automatically.
+- Location staff may link a Lead to a customer they cannot see only on an exact
+  normalized phone or email match, shown masked, never on an address alone.
+  Every such link is audited.
+- No notes on customers.
+- Archiving shared customer data is for Owner and Leadership through an
+  all-locations grant. This narrows the earlier matrix, which let a Location
+  Manager archive.
+- A Lead needs an Account, Contact, Property and Location before it can become a
+  Project (B8).
+- Phone and email are matching signals, never unique identity.
+- A Property never stores a Location.
+
+Choices made while building B6a, for the owner to confirm:
+
+- **Roles are their own table,** one row per role on a connection, rather than a
+  list packed into one column. The database can then refuse a duplicate, and a
+  later report can ask "who are our billing contacts?" directly.
+- **A connection between a Contact and an Account is archived, not deleted,** so
+  "removed from this customer" can be restored like everything else.
+- **Location staff need both permissions at the same Location** to see a customer
+  through a Lead: the lead permission and the customer permission. Every role
+  that works Leads holds both, so this only matters for unusual mixes of grants.
+- **The location filter is offered only for Locations where the person can see
+  Leads,** because "a customer at a Location" means "with a Lead there". Someone
+  who sees customers but not Leads (Finance, Production with an all-locations
+  grant) gets no location filter and no Lead count.
+- **Customers appears in the Marketing, Sales, Production and Finance menus,** the
+  four places the approved navigation map already listed it.
+- **Company-wide customer creation is not in any of the three steps as listed.**
+  It needs the Contact form, so it is assumed to belong to B6b unless the owner
+  says otherwise. Until then no screen creates a customer.
+
+## 49. Managing customers (step B6b)
+
+Built on 2026-10-06, after the owner approved B6a and asked for a more
+identifying Properties column, Contact and Property management, and company-wide
+customer creation. Described under "Managing customers, as built in step B6b" in
+[checkpoint-b.md](checkpoint-b.md).
+
+- **Two permissions.** `accounts.manage` is a location permission, applied the
+  same way as seeing a customer: through an all-locations grant it covers every
+  customer; through a location grant it covers customers with a Lead the person
+  can see there. `accounts.archive` is a company permission held by Owner and
+  Leadership, and counts only through an all-locations grant.
+- **A refusal cannot leak,** because the people who can remove or archive are
+  company-wide and can already see every Lead that might be in the way.
+- **Every change is an audit event saved with it,** and records the real Owner
+  when made while impersonating. A person's details and their roles at a customer
+  are recorded as separate events, and only what actually changed is recorded.
+
+Choices made while building, for the owner to confirm:
+
+- **"Link existing" searches only contacts the viewer can already see.** It is a
+  deliberate lookup, not an automatic suggestion. Matching a new Contact against
+  existing ones, including masked matches outside the viewer's sight, stays in
+  B6c as approved.
+- **A customer's first Contact becomes primary, business or household.** A
+  business may have no Contact; once it has one, somebody is primary.
+- **Removing a person's last connection archives the person.** Restoring the
+  connection restores the person with it.
+- **A Contact needs at least one role.** "Other" exists for when nothing fits.
+- **A Property needs a street address.** The city, state and ZIP code are
+  optional when typed by hand.
+- **"The same address" means the same Mapbox place, or the same street, unit and
+  ZIP code** after ignoring case, punctuation and the usual abbreviations
+  (Street and St, North and N, Apartment and Apt). A different unit or ZIP code
+  is a different address.
+- **Any company-wide holder of the manage permission may create a customer
+  directly,** including a Location Manager or Sales Consultant who has been given
+  an all-locations grant, not only Owner and Leadership.
+- **The customer's own name and type cannot be edited yet.** Renaming a business
+  or switching a household to a business was not in the B6b list. It is raised
+  with the owner for B6c.
+
+## 50. Resolving a lead into a customer (step B6c)
+
+Built on 2026-10-06 from the approved B6 plan, with customer editing added at
+the owner's request. Described under "Resolving a lead into a customer, as built
+in step B6c" in [checkpoint-b.md](checkpoint-b.md).
+
+The owner also confirmed the B6b choices (decision 49) and reworded the note on
+editing a shared Contact: "Changes update this person's contact information
+wherever they're used in Backoffice."
+
+Choices made while building, for the owner to confirm:
+
+- **Resolving has its own page,** opened from the Lead, with the customer, the
+  person and the place on one screen. It is not a pop-up over the Lead.
+- **A masked match is shown only when it points to exactly one hidden customer,**
+  and never for a person who is also a contact of a customer the viewer can see.
+  In those cases nothing is shown and staff may create a new customer. This is
+  what keeps "do not reveal counts" and "never reveal hidden relationships"
+  true. A company-wide person sees the real match.
+- **A masked link attaches the Lead to the customer and the matching Contact
+  only.** The Property is chosen afterwards, once the person can see the
+  customer.
+- **20 masked matches an hour per person.** Seeing the same one again does not
+  count. This limits guessing phone numbers by editing a Lead. Every link and
+  every correction of a Lead's phone or email is also audited.
+- **Business names are matched** after ignoring case, punctuation and words such
+  as "The", "Inc" and "LLC". Only ever among customers the viewer can see.
+- **People are not matched by name.**
+- **An archived customer is never offered as a match,** even to someone who could
+  restore it. They would find it under "Show archived" on Customers.
+- **Removing a link clears the customer, Contact and Property together.**
+- **The new lead form shows no match hints while typing.** The approved plan
+  allowed an optional subtle hint; none was added, so intake is unchanged.
+- **A household that becomes a business keeps its primary Contact; a business
+  that becomes a household loses its business name,** which stays in the audit
+  history.
+- **A customer can be archived only when it has no active Lead.** Since every
+  Lead is active until B7, that means no Lead at all for now.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

@@ -16,12 +16,18 @@
         @foreach ($center->children as $section)
             @continue(! $shell->user()->canAny($section->permissions))
 
-            @if ($section->isReachable())
+            @php
+                // A section with pages of its own opens on the first of them the person may open.
+                $landing = $shell->landingFor($section);
+                $isCurrent = $shell->isWithin($section);
+            @endphp
+
+            @if ($landing)
                 <a
-                    href="{{ route($section->route) }}"
+                    href="{{ route($landing->route) }}"
                     wire:navigate
-                    @if ($shell->isCurrent($section)) aria-current="page" @endif
-                    class="{{ $itemClasses }} {{ $shell->isCurrent($section) ? $currentClasses : $idleClasses }}"
+                    @if ($isCurrent) aria-current="page" @endif
+                    class="{{ $itemClasses }} {{ $isCurrent ? $currentClasses : $idleClasses }}"
                 >
                     {{ $section->label }}
                 </a>

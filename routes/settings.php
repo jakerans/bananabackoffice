@@ -25,6 +25,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('settings/users/{user}', 'pages::settings.user')
         ->can(Permission::ManageUsers)
         ->name('settings.users.show');
+
+    Route::livewire('settings/lists', 'pages::settings.lists')
+        ->can(Permission::ManageLeadSalesLists)
+        ->name('settings.lists');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {

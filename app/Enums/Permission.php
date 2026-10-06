@@ -16,6 +16,19 @@ enum Permission: string
     case ColorStudioAccess = 'color_studio.access';
     case ManageLocations = 'settings.locations.manage';
     case ManageUsers = 'settings.users.manage';
+    case ManageLeadSalesLists = 'settings.lists.manage';
+    case ViewLeads = 'leads.view';
+    case ManageLeads = 'leads.manage';
+    case ViewUnroutedLeads = 'leads.view_unrouted';
+    case RouteLeads = 'leads.route';
+    case TransferLeads = 'leads.transfer';
+    case ReturnLeads = 'leads.return';
+    case AssignLeads = 'leads.assign';
+    case WriteNotes = 'notes.write';
+    case RemoveNotes = 'notes.remove';
+    case ViewAccounts = 'accounts.view';
+    case ManageAccounts = 'accounts.manage';
+    case ArchiveAccounts = 'accounts.archive';
 
     /**
      * Company-level permissions only count when held through an all-locations grant.
@@ -25,7 +38,11 @@ enum Permission: string
         return match ($this) {
             self::CompanyOverviewAccess,
             self::ManageLocations,
-            self::ManageUsers => true,
+            self::ManageUsers,
+            self::ManageLeadSalesLists,
+            self::ViewUnroutedLeads,
+            self::RouteLeads,
+            self::ArchiveAccounts => true,
             default => false,
         };
     }

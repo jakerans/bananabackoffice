@@ -83,9 +83,49 @@ that would mean deactivating the only account there. The passkey tests replace t
 passkey's own cryptographic check with one that accepts it, and test everything
 the application decides after that.
 
-### Open: must be handled before real staff use the system
+### Owner impersonation (added 2026-10-05)
 
-These are not blocking for development, but they must be closed before Backoffice
+An Owner can view Backoffice as another staff member. The points that matter for
+security:
+
+- The session never stops being the Owner's; it only remembers a choice, which is
+  re-checked on every request. Signing out ends everything.
+- The request is served as the staff member alone. The Owner's permissions are
+  not combined with theirs, on page loads, Livewire updates or already-open pages.
+- The staff member's password, email, two-factor codes, passkeys and "remember
+  me" sign-ins are never read, changed or reset, and the pages and addresses that
+  manage them are refused while impersonating.
+- Staff accounts and access cannot be changed while impersonating.
+- The session ID changes on entering and leaving, and a recent password
+  confirmation is not carried across.
+- Every audit event made while impersonating names the real Owner as well as the
+  staff identity. Starting and stopping are audit events.
+- Tests send real requests for these checks, because Livewire's test helper skips
+  middleware and impersonation is applied by middleware.
+
+To decide at the production-readiness checkpoint: whether impersonation should be
+restricted or announced in production.
+
+### Matching a lead to a customer the viewer cannot see (added 2026-10-06)
+
+Customers are shared between locations, and a lead may be from a customer only
+another location has dealt with. Staff are told so without being shown who.
+
+- A hidden customer is suggested only on an exact normalized phone or email match
+  with one of its Contacts. Never on an address or a business name.
+- Only the kind of customer, which detail matched and a masked value are shown.
+- Nothing is shown if it would reveal that a visible Contact has other customers,
+  or how many hidden customers match.
+- The hidden customer's ID is never sent to the browser. Confirming re-runs the
+  match on the server.
+- **What remains possible:** someone who knows a customer's exact phone or email
+  can learn that some customer has it, and by linking a lead gain sight of that
+  customer's Contacts and Properties. This is the approved behaviour: it is what
+  lets two locations share one customer record. It is limited to 20 masked
+  matches an hour per person, and every link, and every correction of a lead's
+  phone or email, is an audit event. It never exposes another location's leads.
+
+### Open: must be handled before real staff use the systemThese are not blocking for development, but they must be closed before Backoffice
 is used with real accounts on a server.
 
 **Two-factor sign-in is optional for every role.**

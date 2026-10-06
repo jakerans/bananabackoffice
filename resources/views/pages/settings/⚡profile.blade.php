@@ -2,6 +2,7 @@
 
 use App\Concerns\ProfileValidationRules;
 use App\Models\User;
+use App\Support\Access\Impersonation;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,15 @@ new #[Title('Profile settings')] class extends Component {
 
     public string $name = '';
     public string $email = '';
+
+    /**
+     * Runs on every request to this page. A person's own sign-in details are
+     * never shown or changed while an Owner is viewing Backoffice as them.
+     */
+    public function boot(): void
+    {
+        app(Impersonation::class)->refuseAccountChanges();
+    }
 
     /**
      * Mount the component.

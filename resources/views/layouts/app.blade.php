@@ -10,6 +10,8 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-cream text-ink antialiased">
+        @include('partials.impersonation-banner')
+
         {{-- The Ink header is the only dark region, so Flux renders its controls for a dark surface here. --}}
         <header class="dark bg-ink text-white">
             <div class="flex h-14 items-stretch">
@@ -30,6 +32,10 @@
 
         @if ($currentCenter)
             <x-shell.center-nav :center="$currentCenter" :shell="$shell" />
+
+            @if ($currentSection = $shell->currentSection($currentCenter))
+                <x-shell.section-nav :section="$currentSection" :shell="$shell" />
+            @endif
         @endif
 
         <main class="px-4 py-6 lg:px-8 lg:py-8">

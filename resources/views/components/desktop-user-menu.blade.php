@@ -1,3 +1,5 @@
+@inject('impersonation', \App\Support\Access\Impersonation::class)
+
 <flux:dropdown position="bottom" align="end">
     <flux:profile
         :initials="auth()->user()->initials()"
@@ -17,9 +19,12 @@
         </div>
         <flux:menu.separator />
         <flux:menu.radio.group>
-            <flux:menu.item :href="route('profile.edit')" icon="user-circle" wire:navigate>
-                {{ __('My account') }}
-            </flux:menu.item>
+            {{-- A person's own account settings are closed while someone else is viewing Backoffice as them. --}}
+            @unless ($impersonation->isActive())
+                <flux:menu.item :href="route('profile.edit')" icon="user-circle" wire:navigate>
+                    {{ __('My account') }}
+                </flux:menu.item>
+            @endunless
             <form method="POST" action="{{ route('logout') }}" class="w-full">
                 @csrf
                 <flux:menu.item

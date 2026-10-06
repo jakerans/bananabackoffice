@@ -56,6 +56,26 @@ class Location extends Model
     }
 
     /**
+     * The postal codes this location normally serves: its service area.
+     *
+     * @return HasMany<ServiceAreaPostalCode, $this>
+     */
+    public function servicePostalCodes(): HasMany
+    {
+        return $this->hasMany(ServiceAreaPostalCode::class);
+    }
+
+    /**
+     * The Leads that belong to this location.
+     *
+     * @return HasMany<Lead, $this>
+     */
+    public function leads(): HasMany
+    {
+        return $this->hasMany(Lead::class);
+    }
+
+    /**
      * Limit the query to locations that are currently operating.
      *
      * @param  Builder<Location>  $query

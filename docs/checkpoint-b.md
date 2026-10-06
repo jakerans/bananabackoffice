@@ -51,14 +51,20 @@ There is no existing customer or lead data to bring in. No import tooling is bui
 ### Contact
 
 - A Contact is a person: name, email, phone, alternate phone.
-- A Contact is connected to an Account through a relationship that carries a
-  **role**: Owner, Spouse / Partner, Property Manager, Tenant, Business Contact,
-  Billing Contact, Other.
-- One Contact may be connected to several Accounts, with a different role on each.
+- A Contact is connected to an Account through a relationship that carries one or
+  **more roles**: Owner, Spouse / Partner, Property Manager, Tenant, Business
+  Contact, Billing Contact, Other. A person may be several at once, such as Owner
+  and Billing Contact; nobody has to pick one "best" role.
+- One Contact may be connected to several Accounts, with different roles on each.
   A property manager who looks after ten owners is one Contact with ten
   relationships, never ten copies of the same person.
-- One Contact may be marked **primary** for an Account.
+- One Contact may be marked **primary** for an Account. Primary is a separate
+  mark, not a role. A Residential Account must have a primary Contact. A
+  Commercial Account may exist without any Contact at first.
 - A Contact is always created in the context of an Account.
+- **Phone and email are matching signals, not identity.** Neither is unique:
+  households share an email address and offices share a phone. A match is a
+  question for a person, never an automatic link.
 
 ### Property
 
@@ -129,6 +135,282 @@ same customer may answer differently on a later inquiry.
   "Unknown" value, so that "unknown" is recorded one way only. Lead Channel is
   always chosen, because the person taking the inquiry knows how it arrived.
 
+#### Lead capture, as built in step B3
+
+- **To save a Lead:** a Lead Channel, at least one Service, a Project Size, and at
+  least one of name, phone or email. Nothing else is required.
+- **The form is one page in two groups.** Quick capture: name, phone and email,
+  business name, channel, service(s), project size, "Tell us about what we're
+  painting today", property address. Attribution and routing: marketing source,
+  lead source, location, received time. Typing starts in the name. The channel and
+  the project size are each one tap and are never chosen for you.
+- **Services.** At least one is required. With one, it is the primary without
+  anyone saying so. With several, the intake person must say which is the main
+  one; it is never chosen for them by list order. The Primary Service is the
+  dominant opportunity, for reporting and later routing. The database itself
+  refuses a second primary on one Lead.
+- **Project Size** is required: Small, Medium or Large, shown with the expected
+  value each covers. It is the intake person's judgment from the conversation, not
+  an estimate, and it is stored apart from any estimate or sold amount.
+- **The free-text field stays,** labelled "Tell us about what we're painting
+  today". The structured choices do not replace what a person can describe.
+- **Property address** is looked up, or typed by hand. See "Property address, as
+  built" below.
+- **Both sources start on their "unknown" option,** so a Lead can be saved without
+  touching them. That option is marked in the data, may be renamed, and can never
+  be deactivated.
+- **Location.** Company-wide lead staff start on "Not yet routed" and may choose a
+  location while creating. Location staff create the Lead at one of their own
+  locations and cannot leave it unrouted. Changing the location afterward,
+  returning it to central and assigning a person are step B4.
+- **Phone.** What was typed is kept, beside a matching form in international
+  notation ("+15552013344"). Ordinary U.S. numbers are recognized; a number that is
+  not is saved as typed with a gentle hint and simply cannot be matched. Nothing in
+  the data limits it to U.S. numbers.
+- **Email.** Kept as typed, beside a lowercase form for matching. A malformed
+  address is refused.
+- **Address.** Kept as typed. It is not parsed or looked up.
+- **Earlier inquiries.** When a phone or email matches earlier Leads the person is
+  already allowed to see, they are listed on the form. It never blocks saving.
+  Nothing at all is shown about a match the person may not see.
+- **Received time** is typed and shown in the company's timezone and stored in UTC.
+  It may be set earlier, never in the future.
+- **Statuses built:** New and Working. "Start working" is the only way a Lead
+  becomes Working. Correcting or adding information never changes the status.
+- **Correcting.** Anyone who may work the Lead may correct the inquiry details and
+  change its attribution. A Lead keeps an option that was deactivated after it was
+  chosen, but cannot be moved to a deactivated one.
+- **Save and add another,** and pressing Save twice records one Lead.
+- **The list** shows the Leads of the location the person is working in, newest
+  first, with an "Unrouted" queue beside it for those allowed to see it. It can be
+  searched by name, business, phone or email and narrowed by status. On a narrow
+  screen it becomes cards.
+- **Audit events:** Lead received; inquiry details corrected (old and new values
+  of each changed field); attribution changed; services changed; project size
+  changed; work started.
+
+#### Services
+
+- A managed list like the others, on the Lead & Sales Lists page: Owner and
+  Leadership add, rename, reorder, activate and deactivate; nothing is deleted.
+- Starting values: Interior Painting · Exterior Painting · Cabinet Painting ·
+  Deck / Fence · Commercial Interior · Commercial Exterior · Other.
+- A Lead has at least one, and exactly one is primary. A Lead keeps a service
+  that was deactivated after it was chosen, but cannot be given a deactivated one.
+- Services stay on the Lead & Sales Lists page for now.
+- "Services and Products" in the Settings menu is a different, unbuilt page (for
+  products and pricing later). It is unchanged.
+
+#### Project Size
+
+- Three sizes, fixed: **Small, Medium, Large.** Those are the business values;
+  nothing is named Minnow, Fish or Whale underneath.
+- Each covers a range of expected project value. Starting ranges: Small under
+  $2,000; Medium $2,000 to $9,999; Large $10,000 or more.
+- **The ranges are data, not code.** Owner and Leadership change where Medium and
+  Large begin on the Project Sizes tab of the Lead & Sales Lists page. The three
+  always cover every value with no gap and no overlap. Each change is audited.
+- **A Lead keeps the range it was classified under.** The range is copied onto the
+  Lead when it is classified, so a Lead called "Medium" last year can still be
+  compared fairly with what was estimated and sold after the ranges move.
+  Choosing the same size again does not re-copy it; choosing a different size does.
+- Staff must choose a size to save or correct a Lead. The data allows a Lead to
+  have none, for Leads recorded before sizes existed and for inquiries that will
+  one day arrive automatically and cannot be classified by a person.
+
+#### What this preserves for future salesperson routing
+
+Nothing here recommends a salesperson, and step B4 built no algorithm. The data a
+later recommendation would need is kept from the first Lead:
+
+| Factor | Where it comes from |
+| --- | --- |
+| Location eligibility | Access grants |
+| Primary and additional Services | The Lead's services |
+| Project Size | The Lead's size, with the range it meant |
+| Current workload, fair distribution | The current assignee and the assignment history (B4) |
+| Speed: received → routed → assigned → first worked | Four times kept on the Lead (B4) |
+| Qualification performance | Who held the Lead when it was qualified (history, with B7) |
+| Close rate by Service and by Size, sold revenue | The Project's own services, size, responsibilities, outcome and Sold Amount (B8, B9) |
+| Availability and capacity | Not modelled yet; a later addition |
+
+A recommendation, when it is built, appears as a marker beside a person in the
+same Assign dialog ("Recommended: Roseanne"). Management still chooses, and may
+choose someone else. Whether an assignment followed a recommendation is added
+with the recommender: every assignment before then was made by a person.
+
+#### Property address, as built
+
+- **Looked up or typed.** With an address provider set up, staff start typing and
+  choose from suggestions. Without one, or whenever it has nothing to offer, they
+  type the address in parts. Either way a Lead can be saved; an address is optional
+  and any part may be left empty.
+- **What is stored:**
+
+| Field | Notes |
+| --- | --- |
+| Display address | The whole address on one line |
+| Line 1, line 2 | Street number and name; unit, suite or lot |
+| City, state, postal code, country | |
+| Latitude, longitude, accuracy | Only when the address was looked up |
+| Provider and place identifier | Only when the address was looked up |
+| How it was entered | "lookup" or "manual" |
+
+- **Nothing is invented.** An address typed by hand has no coordinates and no
+  provider. The lead page says which way an address was entered.
+- **The provider is Mapbox** (decisions.md, 42). Suggestions while typing are
+  temporary results that are shown and never kept. The one address a person selects
+  is requested again as a permanent result, the kind Mapbox allows to be stored.
+- **Requests are held back:** nothing is asked until five characters are typed,
+  typing is debounced, and each person is limited to 60 lookups a minute.
+- **The access token stays on the server.** The browser talks to Backoffice and
+  Backoffice talks to Mapbox. Only the address text is sent.
+- **Failure is quiet for staff and loud in the log.** If Mapbox is down, refuses
+  the token or answers nonsense, no suggestions appear and the address is typed.
+  The failure is reported, without the token in the message.
+- **Correcting a Lead** can replace or remove its address. An unchanged address is
+  left exactly as it was, coordinates included. Replacing a looked-up address by
+  hand clears its coordinates, because they belonged to the other address.
+- These parts are the same ones a Property will have in step B6.
+
+#### Service areas and the suggested location, as built
+
+- **A service area is a list of ZIP codes for a Location.** It is managed with the
+  Location, on Settings > Locations ("Service area"), by whoever may manage
+  locations. Every change is audited with what was added and removed.
+- **The suggestion is one question:** given an address, which Location normally
+  serves it? It is answered only from those lists. **It is never worked out from
+  which office is nearest**, and an address's coordinates play no part.
+- **Exactly one active Location must list the ZIP code.** If none does, or more than
+  one does, or the only one is deactivated, there is no suggestion and nothing is
+  guessed. The Locations page points out ZIP codes that two locations both list.
+- **On the new-lead form,** when the address has a ZIP code (looked up or typed),
+  the suggested Location is selected and the form says why. With no suggestion,
+  company-wide staff leave the Lead unrouted or choose, exactly as before.
+- **A person's own choice wins.** Once someone picks a Location themselves, no
+  later suggestion replaces it. Anyone allowed to capture for another Location may
+  override the suggestion.
+- **A suggestion never grants anything.** It selects a Location only if the person
+  may capture a Lead there, and the Location actually saved is authorized on the
+  server like any other. Location staff whose address falls in another Location's
+  area keep their own Location and are simply told where it is normally served.
+- **The Lead records what was suggested** in its "Lead received" audit event,
+  beside the Location it was actually given.
+- **Correcting a Lead's address later does not move it.** Changing a Lead's
+  Location after creation is step B4.
+- **Room for territories drawn on a map.** The rest of Backoffice asks the one
+  question above and does not know how it is answered. A map-based answer can be
+  added behind the same question later; Leads store only the Location they end up
+  with, so they do not change.
+#### Routing and assignment, as built in step B4
+
+Two separate questions, kept as separate actions and separate data:
+
+- **Routing: which Location owns this Lead?**
+- **Assignment: who is responsible for working it?**
+
+**Routing**
+
+| Action | From → to | Who | Reason |
+| --- | --- | --- | --- |
+| Route | Unrouted → a Location | Owner, Leadership, company-wide Call Center | Optional |
+| Move | Location → another Location | The same people; and a Location Manager when they manage **both** Locations | Required |
+| Return to central | Location → Unrouted | Owner, Leadership, Location Manager, Call Center | Required |
+
+- The dialog pre-selects the Location whose service area lists the Lead's ZIP
+  code, and says why. Choosing another is the manual override. Both the suggestion
+  and the choice are recorded.
+- There is no suggestion when the Lead has no ZIP code, when no Location lists it,
+  or when two do.
+- A Location Manager is offered only the other Locations they manage. The
+  permission is checked at both ends on the server. A manager of one Location can
+  only return a Lead to central.
+- The destination must be an active Location, and not the one the Lead is at.
+- Routing never changes a Lead's status.
+- **A dialog that is out of date saves nothing.** If someone else moved or
+  reassigned the Lead after the dialog was opened, the action is refused.
+- Changing a service area, or correcting a Lead's address, never moves a Lead.
+- Someone who returns a Lead they can then no longer see is taken back to the list.
+
+**Assignment**
+
+- **A Lead has one assignee, or none.** The history of everyone who has held it is
+  kept in `lead_assignments`: who, who assigned them, at which Location, from when
+  to when, and why it ended (reassigned, released, the Lead changed Location,
+  access was removed). The database allows one open assignment per Lead and no
+  assignment is ever deleted.
+- **Who may assign, reassign or leave a Lead unassigned:** Owner, Leadership,
+  Location Manager and Call Center, where they hold that role.
+- **Who may be assigned:** anyone who can already work Leads where the Lead is.
+  For an unrouted Lead that is company-wide lead staff only. A deactivated person,
+  or one who has not accepted their invitation, cannot be assigned. **Assignment
+  never grants access.**
+- **Sales Consultants do not pick up Leads.** They cannot assign, reassign or
+  release, and they have no Unassigned queue. They work the Leads given to them.
+- **Every change of Location clears the assignee,** even when that person also
+  works at the destination. A move is a handoff; the new Location decides.
+- **Losing access clears assignments.** When a grant is removed or an account is
+  deactivated, any Lead the person holds and can no longer work becomes
+  unassigned, in the same transaction. Reactivating does not give them back.
+- **Recording a Lead:** a Sales Consultant who records a Lead at a Location where
+  they are a Sales Consultant is assigned it, recorded as an assignment like any
+  other. A Lead recorded by anyone else is left unassigned.
+- **The Assign dialog** lists the eligible people with how many open Leads each
+  has. The count includes only Leads the person looking may see.
+
+**Start working**
+
+- The assignee may start working their Lead.
+- Someone who may assign Leads may start an unassigned one, which assigns it to
+  them. The button says so.
+- Nobody may start a Lead assigned to someone else; it must be reassigned first.
+- A Sales Consultant cannot acquire an unassigned Lead by starting it.
+
+**Views on the Leads page**
+
+| View | Shows | Order | Who has it |
+| --- | --- | --- | --- |
+| Assigned to me | The person's Leads at every Location they can see, whatever Location is selected | Oldest first | Everyone |
+| Unassigned | Leads at the current Location with no assignee | Longest at that Location first | People who may assign there |
+| All leads | Every Lead at the current Location | Newest first | Everyone |
+| Unrouted | Leads not yet sent to a Location | Oldest first | People who may see unrouted Leads |
+
+The page opens on: All leads for Owner and Leadership; Unrouted for company-wide
+Call Center; Unassigned for a Location Manager (and a Call Center agent at one
+Location); Assigned to me for a Sales Consultant. Nurture arrives with B7.
+
+A Sales Consultant can still see unassigned Leads in All leads, because the
+Location, not assignment, decides what may be seen. They cannot take one.
+
+**Times kept on a Lead** (no report uses them yet): received, first routed, arrived
+at its current Location, assigned to its current assignee, work first started.
+
+**Correcting the Received time**
+
+- Anyone who may correct the Lead may correct it, from the Lead page.
+- A reason is required, because response times are measured from it.
+- A future time is refused. The time before and after, who and why are recorded.
+- **A Lead is received before anyone acts on it.** The corrected time may not be
+  later than when the Lead was first routed, first assigned, or first worked,
+  because that would make a response time negative. The earliest of those is the
+  limit, and the refusal names it. Those other times are never adjusted to make
+  a correction fit: the correction is refused and nothing changes.
+- **When the Lead's record was created is not a limit.** That is a fact about the
+  database row, not about the inquiry. A correct Received time can be later.
+**Deactivating a Location**
+
+- A Location with active Leads cannot be deactivated. The refusal says how many.
+- They must first be moved to another Location or returned to central.
+- Nothing overrides this, and there is no bulk "close a Location" action.
+- **For B8:** active Projects must block deactivation the same way.
+
+#### Recorded for step B8
+
+- **Projects carry their own Services and Project Size.** When a Project is
+  created from a Lead they are copied from the Lead as a starting point. A
+  Project created directly captures them itself. Sales-performance reporting then
+  reads the Project, not a Lead that may be corrected later or may not exist.
+
 ### Project
 
 - A Project represents a specific qualified potential or actual scope of work at a
@@ -172,13 +454,17 @@ same customer may answer differently on a later inquiry.
 
 ## Managed lists
 
-Five lists are data that Owner and Leadership manage, not values fixed in code:
+Six lists are data that Owner and Leadership manage, not values fixed in code.
+(Services was added during the B3 review. Project Sizes sit on the same Settings
+page but are not a list of options: there are always three, and only the value
+each covers can change. See "Project Size".)
 
 | List | Used on |
 | --- | --- |
 | Marketing Sources | Lead |
 | Lead Sources | Lead |
 | Lead Channels | Lead |
+| Services | Lead |
 | Disqualification Reasons | Lead |
 | Sales Loss Reasons | Project |
 
@@ -193,6 +479,26 @@ deactivate** an option.
 - Leadership's permission is for this page alone. It opens no other Settings page.
 - Lifecycle statuses, Account types, Contact roles and responsibility types are
   **not** managed lists. They carry behavior, so they stay in code.
+
+As built in step B2:
+
+- **There is no delete at all,** for used and unused options alike. An option is
+  deactivated. The application also refuses to delete one if asked.
+- **Reordering** is by moving an option up or down one place.
+- **A list always keeps at least one active option,** or staff would have nothing
+  to pick.
+- **A name must be unique within its list.** The same name may appear in two
+  different lists, as "Referral" does.
+- **Renaming an option renames it everywhere,** because records point at the
+  option and do not keep a copy of its name.
+- **The reporting category** of a disqualification reason is chosen when it is
+  added and can be changed later.
+- **Two behaviours are set on the starting values and cannot be changed from the
+  page yet:** "a note is required" (on "Other" in both reason lists) and "ask which
+  competitor" (on "Chose Another Contractor"). A reason added later has neither.
+  The page shows which reasons have them.
+- Every add, rename, change of category, move, deactivation and reactivation is an
+  audit event.
 
 ### Starting values
 
@@ -231,6 +537,285 @@ never see or pick a category.
 Proceed · Project Postponed / Cancelled · Timing / Scheduling · Scope / Solution
 Not a Fit · Financing / Payment · Unable to Re-Engage / No Decision · Other
 
+## Customers: decisions for step B6
+
+Approved by the owner on 2026-10-06. B6 is built in three separately reviewed
+steps.
+
+| Step | Delivers |
+| --- | --- |
+| **B6a** | The Account, Contact and Property records; who may see a customer; the Customers list; the customer page (read only). **Built.** |
+| **B6b** | Managing Contacts and Properties, with address lookup and manual entry; creating a customer directly. **Built.** |
+| **B6c** | Resolving a Lead into a customer; duplicate suggestions; linking a shared Contact; "New lead for this customer"; archive and restore; editing a customer's name and kind. **Built.** |
+
+- **A customer is not created at capture.** Lead capture stays as fast as it is.
+  Matching and linking happen after the Lead is saved.
+- **A customer with no Lead may be created by company-wide staff only.** Location
+  staff establish their relationship through a Lead, and later a Project. Nobody
+  creates a fake Lead to make a customer.
+- **Compound names are not split.** "John & Mary Smith" is pre-filled as one
+  Contact; staff add a second person deliberately.
+- **Masked matches.** When a likely match is a customer the person cannot see,
+  they are shown only the Account type, which detail matched, and a limited
+  masked value such as "phone ending in 44". Location staff may link a Lead to
+  such a match only on an exact normalized phone or email, never on an address
+  alone. After they confirm, their own Lead legitimately shows them the shared
+  customer, Contacts and Properties, and still never another location's Leads or
+  Projects. Every such link is audited.
+- **No notes on customers.** Notes stay on Leads, and later Projects, where the
+  boundary is clear.
+- **Archiving shared customer data is a company-wide management action:** Owner
+  and Leadership, through an all-locations grant. A single-location manager
+  cannot archive an Account, a Contact or its connection, or a Property. A
+  refusal never reveals another location's work.
+- **Before a Lead can become a Project (B8):** an Account, a Contact, a Property
+  and a Location are required, and the Project's own Services and Project Size.
+  A Project may still be created directly, with no originating Lead.
+- **A Property never stores a Location.** Where it is may inform a routing
+  suggestion later; it never grants or restricts access.
+
+### Customers, as built in step B6a
+
+**The records**
+
+| Record | Holds |
+| --- | --- |
+| Account | Type (Residential or Commercial); business name; the name it is shown by; archived at, by |
+| Contact | First and last name; email, phone, alternate phone, each with a normalized form; archived at, by |
+| Connection | One per Account and Contact pair: the primary mark; archived at, by |
+| Roles | One row per role a person holds on a connection, so several can be true |
+| Property | The Account; a label; type; the same address parts a Lead keeps; archived at, by |
+| Lead (added) | Account, Contact, Property: each empty until known |
+
+- The database refuses a second primary Contact for an Account, the same person
+  connected to an Account twice, and the same role twice on a connection.
+- None of these records can be deleted. The application refuses, and the
+  database refuses to remove one a Lead points at.
+- A household is shown by its primary Contact's name, a business by its business
+  name.
+
+**Who may see a customer.** An Account has no Location, so there are two ways:
+
+1. Holding the customer permission through an **all-locations grant**: every
+   customer, including ones with no Lead.
+2. Being able to see **at least one of the customer's Leads**, at a Location
+   where the person also holds the customer permission.
+
+- A customer whose only Lead is unrouted, or that has no Lead, is seen by
+  company-wide staff alone.
+- When the last Lead a person can see moves away, returns to central or is
+  unlinked, the customer goes out of their sight with it, including on a page
+  they already had open.
+- Location staff in roles that cannot see Leads (Production Manager, Finance) see
+  no customers until Projects exist.
+- Every list, search, filter and count starts from this rule, so a search cannot
+  reach a customer the person may not see.
+
+**The Customers page** is one shared page, shown in the Marketing, Sales,
+Production and Finance menus to whoever holds the customer permission.
+
+- Columns: the customer with its type; primary Contact; phone and email;
+  Properties; open Leads.
+- Search: customer name, business name, any Contact's name, phone, alternate
+  phone, email, street or ZIP code.
+- Filters: type; "with a lead at" a Location; show archived.
+- **The location selector only sets where the location filter starts.** It never
+  decides what may be seen. Only Locations where the person can see Leads are
+  offered, and "Any location" shows every customer they can see.
+- The open-Lead count includes only Leads the viewer may see. Someone who cannot
+  see Leads is shown no count at all.
+
+**The customer page** shows the customer's name and type, its Contacts (primary
+first, with every role), its Properties, and its Leads.
+
+- **Only the Leads the viewer may see are listed.** Leads at another Location are
+  not shown, not counted and not hinted at.
+- For a person who is a contact of several customers, "Also a contact of" lists
+  only the other customers the viewer may see. Whether there are others is never
+  shown, so a shared person with none visible looks like any other contact.
+- Archived Contacts, connections and Properties are not shown.
+- Changing a customer from this page arrived in B6b, below.
+
+### Managing customers, as built in step B6b
+
+**Who may change a customer**
+
+| Action | Who |
+| --- | --- |
+| Add or edit a Contact; link an existing Contact; change the primary Contact; add or edit a Property | Anyone who can see the customer and holds the manage permission where they see it: Owner, Leadership, Location Manager, Call Center, Sales Consultant |
+| Remove a Contact from a customer, or restore one; archive or restore a Property | Owner and Leadership through an all-locations grant only |
+| Create a customer that has no Lead | Anyone holding the manage permission through an all-locations grant |
+
+- Every action is checked again on the server each time, so a page left open
+  stops working once the person can no longer see or change the customer.
+- An archived customer cannot be changed until it is restored.
+- A Contact or Property of another customer can never be reached through this
+  customer's page.
+
+**Contacts**
+
+- **Add:** first and last name (at least one), phone, alternate phone, email, and
+  every role that is true. Phone and email are kept as typed with a matching form
+  beside them. Neither is unique: a second person with the same phone or email is
+  simply added.
+- **Roles:** one or more of the approved list. A role can be taken away as well
+  as added.
+- **Primary:** a customer's first Contact becomes primary. After that it changes
+  only when someone says so, in one step. A household is renamed with it; a
+  business keeps its name. Primary is not a role.
+- **Edit:** a person's details belong to the person, so a correction applies
+  wherever they are a contact, and any household named after them is renamed.
+  The form says this in the same words for every contact, shared or not, so it
+  reveals nothing. Their roles belong to this customer's connection only.
+- **Link existing:** for someone who is already a contact of another customer.
+  The search covers only contacts of customers the viewer can already see, by
+  name, phone or email. The person stays one record; their roles are set for
+  this customer. They cannot be connected to the same customer twice.
+- **Remove:** the connection is archived, not deleted, and the person stays a
+  contact of any other customer. When it was their last connection the person is
+  archived too, and both come back on restore, with the same roles.
+- **Refused:** removing the primary Contact while there are others; removing the
+  last Contact of a household; removing a Contact an active Lead of this
+  customer points at.
+
+Automatic suggestions, including matches the viewer cannot see, happen when a
+Lead is resolved into a customer: see B6c below. Adding a Contact by hand on a
+customer's page does not compare them with existing people.
+
+**Properties**
+
+- **Add or edit:** a label, a type and an address. The label is free text with
+  one-tap picks (Home, Rental, Office, Shop, Other) and may be left empty. The
+  type starts as the customer's kind and can be changed.
+- **Address:** looked up or typed, with the same controls as a Lead. A street is
+  required. A looked-up address keeps its map position; a typed one has none and
+  none is invented. If the lookup fails, the address is typed instead.
+- **The same address:** when the customer already has a property at that address
+  (the same place according to the lookup, or the same street, unit and ZIP code
+  however they were typed), the person is told which one and may save anyway if
+  it is a separate place. An archived match says it can be restored instead.
+- The same address under a **different** customer is ordinary and is not
+  questioned or mentioned.
+- **A Property has no Location,** and where it is changes nothing about who may
+  see the customer.
+- **Archive and restore** are company-wide. A Property an active Lead points at
+  cannot be archived. An archived Property cannot be edited until restored.
+
+**Creating a customer directly** (the "New customer" button on Customers)
+
+- For a customer with no Lead. Company-wide staff only, because nobody else
+  could see it afterwards.
+- A household needs its primary Contact: one person, as typed. "John & Mary" is
+  kept as one Contact; a second person is added afterwards.
+- A business needs its business name and may be created with no Contact.
+- Pressing Save twice creates one customer.
+
+**The Customers list** names a customer's first Property by its label and short
+street ("Home — 123 Oak St") with "+1 more" for the rest. The city, state and ZIP
+code are on the customer's page.
+### Resolving a lead into a customer, as built in step B6c
+
+**Where.** The Lead page has a Customer panel. "Resolve customer" opens one page
+with three parts: the customer, the person, the place. Everything is started from
+what the Lead already holds, so nothing is typed twice.
+
+**What it never does**
+
+- It never changes the inquiry. The name, phone, email, address and message on
+  the Lead stay exactly as received.
+- It never links or merges anything by itself. A match is a suggestion a person
+  accepts or ignores.
+- It never saves part of a decision. The customer, person, property and link are
+  all made together, or none are.
+- New Lead capture is unchanged: matching happens after the Lead is saved.
+
+**1. Customer**
+
+- **Suggested:** customers the person can already see, where a Contact has
+  exactly the Lead's phone or email, a Property is at the Lead's address, or the
+  business name is the same. Each shows why, and the strongest match is first.
+- With exactly one suggestion it is chosen to start with; with several, the
+  person must choose; with none, "New customer" is chosen.
+- **Search:** by name, phone or email, among customers the person can see.
+- **New customer:** Residential, or Commercial when the inquiry named a business.
+- Archived customers are never suggested, found or chosen.
+
+**2. Contact**
+
+- For an existing customer: its people, with the one who matches the inquiry
+  first and chosen. Or a new Contact, started from the inquiry.
+- **The same person, known elsewhere:** someone the viewer can already see with
+  exactly the Lead's phone or email is offered to be connected to this customer,
+  rather than entered again. They stay one person.
+- A compound name ("John & Mary Smith") is kept whole as one Contact.
+- A business may be linked with no Contact yet. A household may not.
+
+**3. Property**
+
+- For an existing customer: its Properties, with the one at the Lead's address
+  chosen. If it has one there, adding another is not offered.
+- Or a new Property made from the Lead's address exactly as the Lead holds it,
+  map position included. No new lookup is made.
+- Or none yet. A Lead with no address cannot make a Property.
+
+**A match outside the viewer's sight**
+
+Shown only when a Contact of a customer the viewer cannot see has **exactly** the
+Lead's phone or email. What is shown, and nothing else:
+
+- the kind of customer ("An existing residential customer");
+- which detail matched;
+- a masked value: a phone "ending in 44", or an email "like m•••@•••.com".
+
+Not shown: the customer's name, the full phone or email, any address, Contact,
+Location, Lead, Project, or how many of anything.
+
+- It is never shown for an address or business name alone.
+- It is not shown when the matching person is also a contact of a customer the
+  viewer can see, because that would reveal they have others.
+- It is not shown when it would point to more than one hidden customer, because
+  that would reveal a count and nobody could say which was meant.
+- The customer is never named by the browser. When the person confirms, the
+  server works the match out again and links the Lead to that customer and the
+  matching Contact.
+- After linking, the person's own Lead shows them the customer, its Contacts and
+  Properties under the ordinary rule. It never shows another Location's Leads.
+- The link is audited as made outside the person's sight.
+- One person is shown at most 20 such matches in an hour.
+
+Company-wide staff see every match plainly, since nothing is hidden from them.
+
+**Changing and removing.** While the Lead is active, the link can be changed
+(the page starts from the current choice) or removed. Removing clears all three
+links and touches neither the customer nor the inquiry. A page that is out of
+date saves nothing.
+
+**Who.** Anyone who may work the Lead and holds the customer manage permission
+where the Lead is. Adding a person or a property to an existing customer also
+needs permission to change that customer.
+
+**New lead for this customer.** The customer's page has "New lead". It opens the
+ordinary new lead form with the customer named at the top, the primary Contact
+and (when there is only one) the Property chosen, and the inquiry started from
+them. Everything can still be typed over, and the Lead is linked as it is saved.
+The Property's address suggests a Location like any other address.
+
+**Archiving a customer.** Owner and Leadership through an all-locations grant.
+
+- Refused while the customer has an active Lead, at any Location, with the count.
+- An archived customer is kept whole. It is hidden from the list unless asked
+  for, never suggested or chosen, cannot be changed, and cannot be given a Lead.
+- Restoring brings it back exactly as it was.
+- Every Lead is active today, so in practice only a customer with no Lead can be
+  archived until Leads can be closed (B7).
+
+**Editing a customer.** Anyone who may change the customer can correct a
+business's name, or change the kind of customer.
+
+- Becoming a business needs a business name.
+- Becoming a household needs a primary Contact, and it is then named after them.
+- Contacts, Properties, Leads and history are untouched either way.
+
 ## Location, routing and assignment
 
 - **Location is the primary authorization boundary.**
@@ -241,6 +826,11 @@ Not a Fit · Financing / Payment · Unable to Re-Engage / No Decision · Other
   own permission. Each change is an audit event.
 - **A Location Manager may return a Lead to the central queue.** A reason is
   required and an audit event is recorded. They then no longer see it.
+- **A Location Manager who manages both Locations may move a Lead directly between
+  them.** The permission is checked at both ends.
+- **Any change of a Lead's Location clears its assignee.**
+- Routing and assignment as built are described under "Routing and assignment, as
+  built in step B4".
 - **Transferring** a Project to another Location is an explicit action reserved for
   Owner and Leadership, and is an audit event.
 - **Assignment drives responsibility, queues and "Assigned to me" views, and nothing
@@ -292,7 +882,9 @@ Not a Fit · Financing / Payment · Unable to Re-Engage / No Decision · Other
 - Archiving records who and when. Archived records are hidden from lists and
   choices by default, can be shown with a filter, and can be restored.
 - An Account cannot be archived while it has a Lead that is New, Working or
-  Nurture, or a Project whose sales outcome is Open. (Proposed)
+  Nurture, or a Project whose sales outcome is Open.
+- Archiving and restoring Accounts, Contacts, connections and Properties is done
+  by Owner and Leadership through an all-locations grant only.
 - Relationships and list values on archived records stay intact.
 - Leads are not archived; they have their lifecycle.
 
@@ -348,7 +940,7 @@ never disagree. This is deliberately not a compliance product.
 | Contact connected, disconnected, role changed, primary changed | Yes | No |
 | Note removed | Yes | No |
 | Managed list option added, renamed, reordered, activated, deactivated | Yes | No |
-| Staff invited; invitation accepted | Yes | No |
+| Staff invited; invitation resent; invitation accepted | Yes | No |
 | Staff access granted or revoked | Yes | No |
 | Staff deactivated or reactivated | Yes | No |
 | Location created, renamed, deactivated, reactivated | Yes | No |
@@ -357,8 +949,37 @@ never disagree. This is deliberately not a compliance product.
 
 - Audit events are never edited or deleted by the application.
 - A note can be removed from view by its author or a manager. It is kept, and its
-  removal is an audit event. Notes are not edited after saving. (Proposed)
-- Managers get a "History" view of a record's audit events. The company-wide Audit
+  removal is an audit event. Notes are not edited after saving.
+
+### Lead notes, as built in step B5
+
+Notes exist on Leads. Projects, Accounts and Properties get them when those
+records are built; the `notes` table already allows for it. The timeline and the
+History view are step B11 and are not part of this.
+
+- **Where:** a Notes panel on the Lead page, under the inquiry. Newest first,
+  each with who it is from and when.
+- **Who can read:** anyone who can see the Lead.
+- **Who can add:** anyone who can see the Lead and may write notes where the Lead
+  is: Owner, Leadership, Location Manager, Call Center, Sales Consultant. For an
+  unrouted Lead that means company-wide staff. Assignment is not a boundary: a
+  Sales Consultant can add a note to a Lead assigned to a colleague.
+- **A note changes nothing else.** Not the Lead's status, not its assignee. Adding
+  one is not an audit event: the note is the record.
+- **Never edited, never deleted.** The application refuses both. Up to 5,000
+  characters; what is typed is always shown as plain text.
+- **Removing from view:** the person a note is from, while they can still write
+  notes there, or a manager there (Owner, Leadership, Location Manager). The note
+  is kept with who removed it and when, and the removal is an audit event about
+  the Lead. A removed note is hidden from everyone until the History view exists.
+- **Notes stay with the Lead.** When a Lead moves, its notes go with it, and are
+  read under the new Location's access.
+- **Impersonation:** a note an Owner writes while viewing Backoffice as a staff
+  member is shown as that staff member's, like any other note. Nothing on the
+  Lead page mentions the Owner. An audit event is recorded with the note, naming
+  the real Owner, the staff identity, the Lead and the note; it does not copy
+  what the note says. Removing a note while impersonating works the same way:
+  screens show the staff member, the audit history holds the Owner.- Managers get a "History" view of a record's audit events. The company-wide Audit
   Log screen in Settings stays Coming Soon.
 
 ## Tables
@@ -369,7 +990,8 @@ Proposed tables and their important fields. "Optional" means it may be empty.
 | --- | --- |
 | `accounts` | type; business name (commercial); display name; archived at, by |
 | `contacts` | first name; last name; email; phone; alternate phone; normalized forms of each for matching; archived at, by |
-| `account_contacts` | account; contact; role; primary flag. One row per pair. |
+| `account_contacts` | account; contact; primary flag; archived at, by. One row per pair. |
+| `account_contact_roles` | the connection; role. One row per role held. |
 | `properties` | account; label; type; address lines, city, state, postal code; archived at, by |
 | `marketing_sources`, `lead_sources`, `lead_channels` | name; position; active |
 | `lead_disqualification_reasons` | name; position; active; category; whether a note is required |
@@ -377,7 +999,7 @@ Proposed tables and their important fields. "Optional" means it may be empty.
 | `leads` | received at; marketing source; lead source; lead channel; inquiry name, phone, email, address, message (as received); account, contact, property (each optional); location (optional: empty is unrouted); assigned staff member (optional); status; follow-up date; first qualified at, by; disqualified at, by; disqualification reason and note |
 | `projects` | property; location; originating lead (optional); primary contact (optional); title; description; sales outcome; outcome set at, by; sold amount; sales loss reason and note; competitor name (optional); archived at, by |
 | `project_responsibilities` | project; responsibility type; staff member; assigned by. One person per type per project. |
-| `notes` | the record it belongs to (Lead, Project, Account or Property); text; author; removed at, by |
+| `notes` | the record it belongs to (Lead, Project, Account or Property); text; author; the Owner who wrote it when impersonating (optional); removed at, by |
 | `attachments` | the record it belongs to; kind; storage key; original filename; file type; size; checksum; caption; uploaded by; removed at, by; purged at |
 | `audit_events` | when; who (and their name at the time); action; the record concerned; location (optional); before and after values; reason (optional) |
 
@@ -421,11 +1043,11 @@ first; photos and history presentation come last.
 | --- | --- |
 | **B0** | This plan and the updated documents. No code. **Complete.** |
 | **B1** | Audit event recording, and audit events for the Checkpoint A changes: staff invited, access granted and revoked, staff deactivated and reactivated, location changes. |
-| **B2** | Attribution and managed lists: the Lead & Sales Lists page in Settings for Owner and Leadership, with the three attribution lists and their starting values. The two reason lists join the same page in B7 and B9. |
+| **B2** | Attribution and managed lists: the Lead & Sales Lists page in Settings for Owner and Leadership, with all five lists and their starting values. (The two reason lists were first planned for B7 and B9; the owner moved them into B2. They are used from B7 and B9.) |
 | **B3** | Lead capture: the inquiry as received, the three attribution fields, New and Working, the shared Leads page shown in Marketing and Sales, the Lead page. |
 | **B4** | Routing and assignment: the unrouted queue, route and re-route, return to central with a reason, assign a person, "Assigned to me". |
 | **B5** | Notes on a Lead. (Extended to Accounts and Projects as those arrive.) |
-| **B6** | Accounts, Contacts and Properties: create them from a Lead or link an existing one with duplicate suggestions; the Customers list and page with the visibility rules; archive and restore. |
+| **B6** | Accounts, Contacts and Properties, in three reviewed steps. **B6a:** the records, who may see a customer, the Customers list and page. **B6b:** managing Contacts and Properties. **B6c:** resolving a Lead into a customer with duplicate suggestions, shared Contacts, "New lead for this customer", archive and restore. |
 | **B7** | Qualification: Qualified, Disqualified with managed reasons, Nurture with a follow-up date, reopening. |
 | **B8** | Projects: create one or more from a Qualified Lead, or directly; the Project page; responsibilities; transfer between locations; archive and restore; the shared Projects page shown in Sales and Production. |
 | **B9** | Sales outcome: Open, Won with its Sold Amount, Lost with managed Sales Loss Reasons; correcting a Sold Amount. |
@@ -493,3 +1115,5 @@ None blocks the next step. These are settled in the step that needs them:
   role should. Needed by the production-readiness checkpoint.
 - How uploaded files are backed up and restored. Needed by B10.
 - The production domain. Needed by the production-readiness checkpoint.
+- **Whether a Property address should become required** once address lookup has
+  been used for a while. It is optional today so a Lead can always be saved.
