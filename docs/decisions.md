@@ -813,15 +813,18 @@ auto-assignment.
 One correction was required and is built:
 
 - **A Received Time correction may not create an impossible order of events.**
-  It may not be later than when the Lead was first routed, nor later than any
-  other moment already recorded about the Lead whose order is fixed: when it was
-  entered in Backoffice, first assigned (including to someone who no longer has
-  it), or first worked.
+  It may not be later than when the Lead was first routed, first assigned
+  (including to someone who no longer has it), or first worked. Any of those
+  would produce a negative response time.
 - **Nothing downstream is rewritten.** A correction that does not fit is refused
   with a message naming the earliest of those moments and its time.
-- In practice a Lead is entered before anything else is recorded, so "entered in
-  Backoffice" is normally the limit. The other moments are still checked, so the
-  rule holds for any Lead however its times came about.
+- **When the Lead's record was created is not a limit.** The first build also
+  refused a Received Time later than the record's creation time. The owner
+  removed that on review: the creation time is a database-record timestamp, not
+  business chronology, and a legitimate corrected Received Time can be later.
+- The required reason and the audit event are unchanged.
+
+With that correction, B4 is approved.
 
 ## 46. Owner impersonation
 

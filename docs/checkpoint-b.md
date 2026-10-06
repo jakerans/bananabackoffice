@@ -384,11 +384,13 @@ at its current Location, assigned to its current assignee, work first started.
 - Anyone who may correct the Lead may correct it, from the Lead page.
 - A reason is required, because response times are measured from it.
 - A future time is refused. The time before and after, who and why are recorded.
-- **A Lead is received before anything else happens to it.** The corrected time
-  may not be later than when the Lead was entered in Backoffice, first routed,
-  first assigned, or first worked. The earliest of those is the limit, and the
-  refusal names it. Those other times are never adjusted to make a correction
-  fit: the correction is refused and nothing changes.
+- **A Lead is received before anyone acts on it.** The corrected time may not be
+  later than when the Lead was first routed, first assigned, or first worked,
+  because that would make a response time negative. The earliest of those is the
+  limit, and the refusal names it. Those other times are never adjusted to make
+  a correction fit: the correction is refused and nothing changes.
+- **When the Lead's record was created is not a limit.** That is a fact about the
+  database row, not about the inquiry. A correct Received time can be later.
 **Deactivating a Location**
 
 - A Location with active Leads cannot be deactivated. The refusal says how many.

@@ -374,8 +374,8 @@ outcome, because Backoffice is to be the system of record from launch.
 | B1 | Audit event recording, including Checkpoint A's staff and access changes | Built and approved (2026-10-05) |
 | B2 | Attribution and managed lists: the Lead & Sales Lists page, with all five lists | Built and approved (2026-10-05) |
 | B3 | Lead capture with attribution; the shared Leads page; Services and Project Size; address lookup; service areas | Built and approved (2026-10-05), including the live Mapbox lookup, which the owner tested in a browser. Both GitHub jobs passed on its final commit. |
-| B4 | Lead routing and assignment: route, move, return to central; one assignee with history; the four Leads views; correcting the Received time; refusing to deactivate a Location with active Leads | Built and approved (2026-10-05). The Received Time chronology rule the approval required is built. |
-| — | **Owner impersonation** (not a Checkpoint B step; added at the owner's request to review each role's experience) | Built (2026-10-05). Awaiting the owner's browser review. See decision 46. |
+| B4 | Lead routing and assignment: route, move, return to central; one assignee with history; the four Leads views; correcting the Received time; refusing to deactivate a Location with active Leads | Built and approved (2026-10-05), with the Received Time chronology rule the approval required. |
+| — | **Owner impersonation** (not a Checkpoint B step; added at the owner's request to review each role's experience) | Built and approved (2026-10-05). See decision 46. |
 | B5 | Lead notes | Not started |
 | B6 | Accounts, Contacts and Properties; the Customers pages | Not started |
 | B7 | Qualification, disqualification and nurture | Not started |

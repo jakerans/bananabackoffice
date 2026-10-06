@@ -20,10 +20,14 @@ class CorrectLeadReceivedTime
      * a reason, and the time before and after are recorded. It can never be in
      * the future. Saving the time it already has changes nothing and records nothing.
      *
-     * A Lead is received before anything else happens to it. The corrected time
-     * may therefore not be later than anything already recorded about the Lead:
-     * when it was entered, first routed, first assigned, or first worked. Those
-     * times are never adjusted to make a correction fit; the correction is refused.
+     * A Lead is received before anyone acts on it. The corrected time may
+     * therefore not be later than when the Lead was first routed, first assigned
+     * or first worked, which would make a response time negative. Those times are
+     * never adjusted to make a correction fit; the correction is refused.
+     *
+     * When the Lead's record was created is deliberately not a limit. That is a
+     * fact about the database row, not about the inquiry, and a correct received
+     * time can be later than it.
      *
      * @throws ValidationException
      */
@@ -65,7 +69,7 @@ class CorrectLeadReceivedTime
     }
 
     /**
-     * Refuse a received time that falls after something already recorded about the Lead.
+     * Refuse a received time that falls after something staff have already done with the Lead.
      *
      * The earliest such moment is the limit, and it is the one named in the message.
      *
@@ -76,7 +80,6 @@ class CorrectLeadReceivedTime
         $firstAssignedAt = $lead->assignments()->oldest('assigned_at')->first()?->assigned_at;
 
         $milestones = array_filter([
-            __('entered in Backoffice') => $lead->created_at,
             __('first routed to a location') => $lead->first_routed_at,
             __('first assigned') => $firstAssignedAt,
             __('first worked') => $lead->work_started_at,
