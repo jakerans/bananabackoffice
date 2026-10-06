@@ -1163,8 +1163,9 @@ first; photos and history presentation come last.
 B1 to B9 are the operational target for launch. See "Launch and production".
 
 **Where it stands (2026-10-06):** B1 to B6 are approved, merged into `main` and
-verified on staging. B7 to B12 are not built; they continue on the
-`checkpoint-b-continuation` branch.
+verified on staging. B7 is built on the `checkpoint-b-continuation` branch and
+awaiting the owner's final review. B8 to B12 are not built; B8's plan is approved
+in principle (decisions.md, 54) and follows the production-readiness checkpoint.
 
 ## Not in Checkpoint B
 

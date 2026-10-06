@@ -18,7 +18,11 @@ from the verified `main`.
 
 Banana Painting launches about a week after that approval. The operational target
 for launch is steps B1 to B9, with a production-readiness checkpoint around B7 or
-B8.
+B8. It is now taken before B8a.
+
+How each step is planned, reviewed and approved is in
+[collaboration.md](collaboration.md). Whatever is waiting on the owner right now is
+in [review/current.md](review/current.md).
 
 | Checkpoint | Scope | State |
 | --- | --- | --- |
@@ -389,8 +393,8 @@ outcome, because Backoffice is to be the system of record from launch.
 | B6c | Resolving a Lead into a customer; duplicate suggestions, including masked matches; shared Contacts; "New lead for this customer"; archive and restore; editing a customer | Built and approved (2026-10-06). |
 | — | **Integration checkpoint:** B1 to B6 merged into `main` and verified on staging | Complete (2026-10-06). See below. |
 | B7 | Qualification, disqualification and nurture; the lead status history; the Follow-ups view | Built (2026-10-06) on `checkpoint-b-continuation`. Approved in principle; awaiting the owner's browser review. |
-| — | **Production-readiness checkpoint** (around B7 or B8) | Not started |
-| B8 | Projects; the shared Projects page | Not started |
+| — | **Production-readiness checkpoint** (before B8a) | Plan prepared (2026-10-06) and awaiting the owner's decisions: see [review/current.md](review/current.md). Nothing has been created. |
+| B8 | Projects; the shared Projects page. Two reviewed steps, B8a and B8b. | Plan approved in principle (2026-10-06, decision 54). Not started. |
 | B9 | Sales outcome: Won with Sold Amount, Lost | Not started |
 | B10 | Attachments and project photos | Not started; may follow launch |
 | B11 | Timeline and record history | Not started; may follow launch |

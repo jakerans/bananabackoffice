@@ -1183,8 +1183,84 @@ moved between Locations. One gap was closed: a Nurture Lead **returned to
 central** has no Location as well as no assignee, and was missing from the view.
 It is now listed for the people who may see unrouted Leads (Owner, Leadership and
 a company-wide Call Center Agent).
-## Future decisions already constrained by the brief
-- Estimates hold any number of named, ordered options. No fixed tiers.
+## 53. How work is planned, reviewed and approved
+
+Decided by the owner on 2026-10-06. The agreement is
+[collaboration.md](collaboration.md).
+
+- Jacob is the product owner and the only source of approval. Claude Code is the
+  implementation engineer. ChatGPT is Jacob's review partner: it advises him,
+  cannot see the repository, and has no authority to change it.
+- **The approved documents in `docs/` are the canonical record.** A conversation
+  stops being the record once its decision is written into them.
+- A step that needs an unrecorded decision stops at a planning report. Built work
+  stops at a report. Both are handed over in one file,
+  [review/current.md](review/current.md), which is temporary and is updated or
+  cleared once the decisions are recorded.
+- The existing discipline is unchanged: one step at a time on the checkpoint
+  branch, the complete local check, both GitHub jobs, a report, and a stop.
+
+Why: every review had been carried between tools as a long pasted prompt, and
+decisions risked living only in a conversation.
+
+How it reaches every session: the rules that must always apply are also in
+`.ai/guidelines/collaboration.md`, which Laravel Boost builds into the generated
+agent instructions (`AGENTS.md`) when `php artisan boost:update` runs. That file
+is generated and not committed, so the committed guideline is the source.
+
+Rules out: treating advice from any AI tool as approval; putting secrets or real
+customer information in a review file; an archive of old handoffs (Git history
+serves).
+
+## 54. Projects (step B8): the plan as approved, not yet built
+
+The owner approved the B8 plan in principle on 2026-10-06 with these decisions.
+**B8 is not started.** The production-readiness checkpoint comes first.
+
+- **Two reviewed steps. B8a:** the Project record, creating one from a Qualified
+  Lead, creating one directly, the Project page, the Projects list, visibility.
+  **B8b:** responsibilities, transfer, archive and restore, notes on a Project,
+  the blocking rules, and clearing responsibilities when access is lost.
+- **Creating from a Lead:** the Lead's assigned Sales Consultant, an Owner,
+  Leadership, or a Location Manager within scope. Not the Call Center. The Project
+  takes the Lead's current Location, and uses the Account, Contact and Property
+  the Lead already resolved (B7).
+- **First Sales Consultant responsibility:** the Lead's assignee, or the creator
+  of a direct Project, when that person is eligible. Otherwise it is left unfilled.
+- **Who may hold a responsibility:** Sales Consultant responsibility needs the
+  Sales Consultant role at the Project's Location; Production Manager
+  responsibility needs the Production Manager role there. Being able to edit
+  Projects is not enough. The person assigning (Owner, Leadership, Location
+  Manager) need not hold that role. A responsibility still grants no access.
+- **Transfer clears every responsibility,** even for someone who also works at the
+  destination, and needs a reason. What was held before stays in the history.
+- **An archived Project does not reverse the Lead's history.** Once a Lead has
+  produced any Project it stays Qualified for good: it cannot return to Working,
+  move to Nurture, be disqualified or be reopened into an earlier stage, even if
+  every Project from it is later archived. A Project created by mistake will get
+  its own deliberate workflow if one is needed; archiving is not that. A Qualified
+  Lead may still produce further Projects. This replaces the first proposal, in
+  which archiving the only Project would have released the Lead.
+- **Sales outcome is added in B8 with the single value Open** and no screen to
+  change it. Won, Lost, Sold Amount and Sales Loss Reasons stay in B9.
+- **A title is required,** pre-filled where possible as "Primary Service — short
+  street address" (for example "Exterior Painting — 123 Oak St"). It is ordinary
+  editable data and is not regenerated when the Service or Property changes. The
+  description is optional.
+- **Menus:** the shared Projects page appears in Sales and Production only. Call
+  Center and Finance get no Projects menu yet; other authorized people reach a
+  Project from the customer page.
+- **Every Project carries its own Services, with exactly one primary, and its own
+  Project Size with the range as it was.** Copied from the Lead when there is one;
+  captured for a direct Project. Reporting on Projects never depends on a Lead's
+  classification, which can change.
+- **Relationships:** Property and Location required; the Account is reached
+  through the Property; the originating Lead is optional; the primary Contact is
+  optional and, when given, must belong to the Account.
+- **No file storage in B8.** Attachments, photos and object storage are B10. No
+  bucket is created and no storage driver installed before then.
+
+## Future decisions already constrained by the brief- Estimates hold any number of named, ordered options. No fixed tiers.
 - Accepted proposals are stored as versioned snapshots.
 - Projects carry several narrow states (sales, production, payment), not one
   combined status.
