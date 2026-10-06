@@ -209,7 +209,7 @@ added to the code in the step that builds what it guards. Built so far:
 `settings.lists.manage` (B2); `leads.view`, `leads.manage` and
 `leads.view_unrouted` (B3); `leads.route`, `leads.transfer`, `leads.return` and
 `leads.assign` (B4); `notes.write` and `notes.remove` (B5); `accounts.view`
-(B6a). The records and their
+(B6a); `accounts.manage` and `accounts.archive` (B6b). The records and their
 rules are described in [checkpoint-b.md](checkpoint-b.md).
 
 ### The rules Checkpoint B adds
@@ -249,6 +249,11 @@ Locations. Because an Account has no Location, it is applied like this:
 - **Through a location grant:** only customers with at least one Lead (later, a
   Project) that the person can see at that Location.
 
+`accounts.manage` is applied the same way: every customer through an
+all-locations grant, otherwise the customers with a Lead the person can see at a
+Location where they hold it. Creating a customer with no Lead needs the
+all-locations grant, because nobody else could see it afterwards.
+
 So a Sales Consultant, Location Manager or Call Center agent at one Location sees
 the customers with a Lead there. A Production Manager or Finance person at one
 Location sees none until Projects exist, because they cannot see Leads. Seeing a
@@ -259,7 +264,7 @@ are listed or counted.
 | Permission | Scope | Allows |
 | --- | --- | --- |
 | `accounts.view` | Location | See Accounts, Contacts and Properties, under rule 3 |
-| `accounts.manage` | Location | Create and edit Accounts, Contacts and Properties |
+| `accounts.manage` | Location | Add and edit a customer's Contacts and Properties. Through an all-locations grant: every customer, and creating one that has no Lead |
 | `accounts.archive` | Company | Archive and restore Accounts, Contacts, their connections and Properties |
 | `leads.view` | Location | See Leads routed to the location |
 | `leads.manage` | Location | Capture, edit and work Leads; qualify, disqualify, reopen |

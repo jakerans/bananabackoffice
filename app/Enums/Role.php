@@ -56,6 +56,9 @@ enum Role: string
                 Permission::WriteNotes,
                 Permission::RemoveNotes,
                 Permission::ViewAccounts,
+                Permission::ManageAccounts,
+                // Archiving shared customer data counts only through an all-locations grant.
+                Permission::ArchiveAccounts,
             ],
             self::Finance => [
                 Permission::FinanceAccess,
@@ -77,6 +80,7 @@ enum Role: string
                 // A manager may remove anyone's note from view. Everyone else only their own.
                 Permission::RemoveNotes,
                 Permission::ViewAccounts,
+                Permission::ManageAccounts,
             ],
             self::CallCenterAgent => [
                 Permission::MarketingAccess,
@@ -88,6 +92,7 @@ enum Role: string
                 Permission::AssignLeads,
                 Permission::WriteNotes,
                 Permission::ViewAccounts,
+                Permission::ManageAccounts,
             ],
             self::SalesConsultant => [
                 Permission::SalesAccess,
@@ -96,6 +101,7 @@ enum Role: string
                 Permission::ManageLeads,
                 Permission::WriteNotes,
                 Permission::ViewAccounts,
+                Permission::ManageAccounts,
             ],
             self::ProductionManager => [
                 Permission::ProductionAccess,

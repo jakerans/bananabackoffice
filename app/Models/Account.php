@@ -158,6 +158,27 @@ class Account extends Model
         return self::query()->visibleTo($user)->whereKey($this->getKey())->exists();
     }
 
+    /**
+     * Whether a staff member may add to and edit this customer.
+     *
+     * The same two ways in as seeing it: the manage permission through an
+     * all-locations grant, or one of the customer's Leads at a location where
+     * the person can see Leads and holds both customer permissions.
+     */
+    public function isManageableBy(User $user): bool
+    {
+        if ($user->hasPermissionAcrossAllLocations(Permission::ManageAccounts)) {
+            return $this->isVisibleTo($user);
+        }
+
+        $locationIds = array_values(array_intersect(
+            self::locationsGivingSightTo($user),
+            $user->locationsWhere(Permission::ManageAccounts)->modelKeys(),
+        ));
+
+        return $this->leads()->whereIn('location_id', $locationIds)->exists();
+    }
+
     public function isArchived(): bool
     {
         return $this->archived_at !== null;

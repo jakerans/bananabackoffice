@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PropertyType;
+use App\Support\Addresses\AddressKey;
 use Database\Factories\PropertyFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -96,6 +97,18 @@ class Property extends Model
     public function wasLookedUp(): bool
     {
         return $this->address_entry === 'lookup';
+    }
+
+    /**
+     * A compact way to name the property in a list: "Home — 14 Oak St".
+     *
+     * The city, state and ZIP code are left for the customer's own page.
+     */
+    public function summary(): string
+    {
+        $street = $this->address_line1 === null ? $this->address : AddressKey::shortStreet($this->address_line1);
+
+        return $this->label === null ? $street : $this->label.' — '.$street;
     }
 
     public function isArchived(): bool

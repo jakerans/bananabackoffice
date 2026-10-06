@@ -4,6 +4,7 @@
     'selected' => null,
     'available' => false,
     'failed' => false,
+    'subject' => 'lead',
 ])
 
 {{--
@@ -26,10 +27,10 @@
     @elseif ($mode === 'manual')
         @if ($failed)
             <flux:text class="text-sm text-amber-700" data-test="address-lookup-failed">
-                {{ __('That address could not be confirmed, so type it here. The lead can still be saved.') }}
+                {{ $subject === 'property' ? __('That address could not be confirmed, so type it here.') : __('That address could not be confirmed, so type it here. The lead can still be saved.') }}
             </flux:text>
         @elseif (! $available)
-            <flux:text class="text-sm">{{ __('Type the address as they gave it. Any part can be left empty.') }}</flux:text>
+            <flux:text class="text-sm">{{ $subject === 'property' ? __('Type the address. The street is needed; the rest can be added later.') : __('Type the address as they gave it. Any part can be left empty.') }}</flux:text>
         @endif
 
         <flux:input wire:model="addressLine1" :label="__('Street address')" type="text" autocomplete="off" />

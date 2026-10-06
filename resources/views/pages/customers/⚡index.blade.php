@@ -185,15 +185,24 @@ new #[Title('Customers')] class extends Component {
 }; ?>
 
 <section class="mx-auto flex w-full max-w-6xl flex-col gap-6">
-    <div>
-        <flux:heading size="xl" level="1">{{ __('Customers') }}</flux:heading>
-        <flux:subheading data-test="customers-scope">
-            @if ($this->filteredLocation !== null)
-                {{ __('Customers with a lead at :location.', ['location' => $this->filteredLocation->name]) }}
-            @else
-                {{ __('Every customer you can see.') }}
-            @endif
-        </flux:subheading>
+    <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <flux:heading size="xl" level="1">{{ __('Customers') }}</flux:heading>
+            <flux:subheading data-test="customers-scope">
+                @if ($this->filteredLocation !== null)
+                    {{ __('Customers with a lead at :location.', ['location' => $this->filteredLocation->name]) }}
+                @else
+                    {{ __('Every customer you can see.') }}
+                @endif
+            </flux:subheading>
+        </div>
+
+        {{-- A customer with no lead is seen by company-wide staff alone, so only they may create one here. --}}
+        @can('create', Account::class)
+            <flux:button variant="primary" icon="plus" :href="route('customers.create')" wire:navigate data-test="new-customer-button">
+                {{ __('New customer') }}
+            </flux:button>
+        @endcan
     </div>
 
     <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
@@ -290,9 +299,10 @@ new #[Title('Customers')] class extends Component {
 
                             <flux:table.cell>
                                 @if ($firstProperty)
-                                    <div>{{ $firstProperty->address_city ?? $firstProperty->address }}</div>
+                                    {{-- The label and street are enough to tell properties apart. The city and ZIP code are on the customer's page. --}}
+                                    <div class="max-w-56 truncate" title="{{ $firstProperty->address }}" data-test="customer-property-summary">{{ $firstProperty->summary() }}</div>
                                     @if ($customer->properties->count() > 1)
-                                        <div class="text-sm text-zinc-500">{{ trans_choice('{1} and 1 more|[2,*] and :count more', $customer->properties->count() - 1) }}</div>
+                                        <div class="text-sm text-zinc-500">+{{ $customer->properties->count() - 1 }} {{ __('more') }}</div>
                                     @endif
                                 @else
                                     —
@@ -334,7 +344,12 @@ new #[Title('Customers')] class extends Component {
                             <div class="break-all">{{ $primary->email }}</div>
                         @endif
                         @if ($customer->properties->isNotEmpty())
-                            <div>{{ $customer->properties->first()->address }}</div>
+                            <div>
+                                {{ $customer->properties->first()->summary() }}
+                                @if ($customer->properties->count() > 1)
+                                    <span class="text-zinc-500">+{{ $customer->properties->count() - 1 }} {{ __('more') }}</span>
+                                @endif
+                            </div>
                         @endif
                         @if ($customer->isArchived())
                             <div>{{ __('Archived') }}</div>

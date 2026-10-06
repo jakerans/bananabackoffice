@@ -26,6 +26,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::WriteNotes,
         Permission::RemoveNotes,
         Permission::ViewAccounts,
+        Permission::ManageAccounts,
+        Permission::ArchiveAccounts,
     ]],
     'leadership' => [Role::Leadership, [
         Permission::CompanyOverviewAccess,
@@ -44,6 +46,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::WriteNotes,
         Permission::RemoveNotes,
         Permission::ViewAccounts,
+        Permission::ManageAccounts,
+        Permission::ArchiveAccounts,
     ]],
     'finance' => [Role::Finance, [
         Permission::FinanceAccess,
@@ -62,6 +66,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::WriteNotes,
         Permission::RemoveNotes,
         Permission::ViewAccounts,
+        Permission::ManageAccounts,
     ]],
     'call center agent' => [Role::CallCenterAgent, [
         Permission::MarketingAccess,
@@ -73,6 +78,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::AssignLeads,
         Permission::WriteNotes,
         Permission::ViewAccounts,
+        Permission::ManageAccounts,
     ]],
     'sales consultant' => [Role::SalesConsultant, [
         Permission::SalesAccess,
@@ -81,6 +87,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ManageLeads,
         Permission::WriteNotes,
         Permission::ViewAccounts,
+        Permission::ManageAccounts,
     ]],
     'production manager' => [Role::ProductionManager, [
         Permission::ProductionAccess,
@@ -112,6 +119,8 @@ test('company overview and settings are company-level permissions', function (Pe
     'write notes' => [Permission::WriteNotes, false],
     'remove notes' => [Permission::RemoveNotes, false],
     'view accounts' => [Permission::ViewAccounts, false],
+    'manage accounts' => [Permission::ManageAccounts, false],
+    'archive accounts' => [Permission::ArchiveAccounts, true],
     'view leads' => [Permission::ViewLeads, false],
     'manage leads' => [Permission::ManageLeads, false],
     'marketing' => [Permission::MarketingAccess, false],

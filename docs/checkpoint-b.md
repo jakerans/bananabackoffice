@@ -545,7 +545,7 @@ steps.
 | Step | Delivers |
 | --- | --- |
 | **B6a** | The Account, Contact and Property records; who may see a customer; the Customers list; the customer page (read only). **Built.** |
-| **B6b** | Managing Contacts and Properties, with address lookup and manual entry. |
+| **B6b** | Managing Contacts and Properties, with address lookup and manual entry; creating a customer directly. **Built.** |
 | **B6c** | Resolving a Lead into a customer; duplicate suggestions; linking a shared Contact; "New lead for this customer"; archive and restore. |
 
 - **A customer is not created at capture.** Lead capture stays as fast as it is.
@@ -634,8 +634,84 @@ first, with every role), its Properties, and its Leads.
   only the other customers the viewer may see. Whether there are others is never
   shown, so a shared person with none visible looks like any other contact.
 - Archived Contacts, connections and Properties are not shown.
-- Nothing can be changed from this page yet. That is B6b and B6c.
+- Changing a customer from this page arrived in B6b, below.
 
+### Managing customers, as built in step B6b
+
+**Who may change a customer**
+
+| Action | Who |
+| --- | --- |
+| Add or edit a Contact; link an existing Contact; change the primary Contact; add or edit a Property | Anyone who can see the customer and holds the manage permission where they see it: Owner, Leadership, Location Manager, Call Center, Sales Consultant |
+| Remove a Contact from a customer, or restore one; archive or restore a Property | Owner and Leadership through an all-locations grant only |
+| Create a customer that has no Lead | Anyone holding the manage permission through an all-locations grant |
+
+- Every action is checked again on the server each time, so a page left open
+  stops working once the person can no longer see or change the customer.
+- An archived customer cannot be changed until it is restored (B6c).
+- A Contact or Property of another customer can never be reached through this
+  customer's page.
+
+**Contacts**
+
+- **Add:** first and last name (at least one), phone, alternate phone, email, and
+  every role that is true. Phone and email are kept as typed with a matching form
+  beside them. Neither is unique: a second person with the same phone or email is
+  simply added.
+- **Roles:** one or more of the approved list. A role can be taken away as well
+  as added.
+- **Primary:** a customer's first Contact becomes primary. After that it changes
+  only when someone says so, in one step. A household is renamed with it; a
+  business keeps its name. Primary is not a role.
+- **Edit:** a person's details belong to the person, so a correction applies
+  wherever they are a contact, and any household named after them is renamed.
+  The form says this in the same words for every contact, shared or not, so it
+  reveals nothing. Their roles belong to this customer's connection only.
+- **Link existing:** for someone who is already a contact of another customer.
+  The search covers only contacts of customers the viewer can already see, by
+  name, phone or email. The person stays one record; their roles are set for
+  this customer. They cannot be connected to the same customer twice.
+- **Remove:** the connection is archived, not deleted, and the person stays a
+  contact of any other customer. When it was their last connection the person is
+  archived too, and both come back on restore, with the same roles.
+- **Refused:** removing the primary Contact while there are others; removing the
+  last Contact of a household; removing a Contact an active Lead of this
+  customer points at.
+
+Automatic duplicate suggestions, including matches the viewer cannot see, are
+B6c. Until then a new Contact is never compared with existing ones.
+
+**Properties**
+
+- **Add or edit:** a label, a type and an address. The label is free text with
+  one-tap picks (Home, Rental, Office, Shop, Other) and may be left empty. The
+  type starts as the customer's kind and can be changed.
+- **Address:** looked up or typed, with the same controls as a Lead. A street is
+  required. A looked-up address keeps its map position; a typed one has none and
+  none is invented. If the lookup fails, the address is typed instead.
+- **The same address:** when the customer already has a property at that address
+  (the same place according to the lookup, or the same street, unit and ZIP code
+  however they were typed), the person is told which one and may save anyway if
+  it is a separate place. An archived match says it can be restored instead.
+- The same address under a **different** customer is ordinary and is not
+  questioned or mentioned.
+- **A Property has no Location,** and where it is changes nothing about who may
+  see the customer.
+- **Archive and restore** are company-wide. A Property an active Lead points at
+  cannot be archived. An archived Property cannot be edited until restored.
+
+**Creating a customer directly** (the "New customer" button on Customers)
+
+- For a customer with no Lead. Company-wide staff only, because nobody else
+  could see it afterwards.
+- A household needs its primary Contact: one person, as typed. "John & Mary" is
+  kept as one Contact; a second person is added afterwards.
+- A business needs its business name and may be created with no Contact.
+- Pressing Save twice creates one customer.
+
+**The Customers list** names a customer's first Property by its label and short
+street ("Home — 123 Oak St") with "+1 more" for the rest. The city, state and ZIP
+code are on the customer's page.
 ## Location, routing and assignment
 
 - **Location is the primary authorization boundary.**

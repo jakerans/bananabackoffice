@@ -27,6 +27,8 @@ enum Permission: string
     case WriteNotes = 'notes.write';
     case RemoveNotes = 'notes.remove';
     case ViewAccounts = 'accounts.view';
+    case ManageAccounts = 'accounts.manage';
+    case ArchiveAccounts = 'accounts.archive';
 
     /**
      * Company-level permissions only count when held through an all-locations grant.
@@ -39,7 +41,8 @@ enum Permission: string
             self::ManageUsers,
             self::ManageLeadSalesLists,
             self::ViewUnroutedLeads,
-            self::RouteLeads => true,
+            self::RouteLeads,
+            self::ArchiveAccounts => true,
             default => false,
         };
     }

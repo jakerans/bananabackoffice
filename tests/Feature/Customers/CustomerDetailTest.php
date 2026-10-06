@@ -194,9 +194,10 @@ test('a shared contact shows only the other customers the viewer may see, and no
         ->assertSeeInOrder(['Paula Manager', 'Also a contact of:', 'Elm Street Owners', '(Property Manager, Billing Contact)'])
         ->assertDontSee('Northside Secret Holdings')
         ->assertDontSee('Archived Owners')
-        ->assertDontSee('Tenant')
-        ->assertDontSee('other customer')
-        ->assertDontSee('more');
+        // Paula is a Tenant only at the hidden customer. (The word alone is also a choice on the contact form.)
+        ->assertDontSee('(Tenant)')
+        ->assertDontSee('other customers')
+        ->assertDontSee('and 1 more');
 
     // The Owner sees all of them that are current.
     $this->actingAs($owner)

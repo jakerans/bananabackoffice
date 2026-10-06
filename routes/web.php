@@ -7,6 +7,7 @@ use App\Http\Controllers\PasswordResetLinkController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StopImpersonationController;
 use App\Http\Controllers\SwitchLocationController;
+use App\Models\Account;
 use App\Models\Lead;
 use Illuminate\Support\Facades\Route;
 
@@ -42,6 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Customers is one shared page too. A customer has no location: each one is authorized by
     // what the person can already see of it, never by the location that happens to be selected.
     Route::livewire('customers', 'pages::customers.index')->can(Permission::ViewAccounts)->name('customers');
+    Route::livewire('customers/new', 'pages::customers.create')->can('create', Account::class)->name('customers.create');
     Route::livewire('customers/{account}', 'pages::customers.show')->can('view', 'account')->name('customers.show');
 
     // A center has no page of its own: its address opens the center's primary section.

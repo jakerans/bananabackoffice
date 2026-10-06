@@ -997,6 +997,48 @@ Choices made while building B6a, for the owner to confirm:
   It needs the Contact form, so it is assumed to belong to B6b unless the owner
   says otherwise. Until then no screen creates a customer.
 
+## 49. Managing customers (step B6b)
+
+Built on 2026-10-06, after the owner approved B6a and asked for a more
+identifying Properties column, Contact and Property management, and company-wide
+customer creation. Described under "Managing customers, as built in step B6b" in
+[checkpoint-b.md](checkpoint-b.md).
+
+- **Two permissions.** `accounts.manage` is a location permission, applied the
+  same way as seeing a customer: through an all-locations grant it covers every
+  customer; through a location grant it covers customers with a Lead the person
+  can see there. `accounts.archive` is a company permission held by Owner and
+  Leadership, and counts only through an all-locations grant.
+- **A refusal cannot leak,** because the people who can remove or archive are
+  company-wide and can already see every Lead that might be in the way.
+- **Every change is an audit event saved with it,** and records the real Owner
+  when made while impersonating. A person's details and their roles at a customer
+  are recorded as separate events, and only what actually changed is recorded.
+
+Choices made while building, for the owner to confirm:
+
+- **"Link existing" searches only contacts the viewer can already see.** It is a
+  deliberate lookup, not an automatic suggestion. Matching a new Contact against
+  existing ones, including masked matches outside the viewer's sight, stays in
+  B6c as approved.
+- **A customer's first Contact becomes primary, business or household.** A
+  business may have no Contact; once it has one, somebody is primary.
+- **Removing a person's last connection archives the person.** Restoring the
+  connection restores the person with it.
+- **A Contact needs at least one role.** "Other" exists for when nothing fits.
+- **A Property needs a street address.** The city, state and ZIP code are
+  optional when typed by hand.
+- **"The same address" means the same Mapbox place, or the same street, unit and
+  ZIP code** after ignoring case, punctuation and the usual abbreviations
+  (Street and St, North and N, Apartment and Apt). A different unit or ZIP code
+  is a different address.
+- **Any company-wide holder of the manage permission may create a customer
+  directly,** including a Location Manager or Sales Consultant who has been given
+  an all-locations grant, not only Owner and Leadership.
+- **The customer's own name and type cannot be edited yet.** Renaming a business
+  or switching a household to a business was not in the B6b list. It is raised
+  with the owner for B6c.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

@@ -33,8 +33,9 @@ test('customers are listed by name with their type, primary contact and properti
 
     $household = Account::factory()->withPrimaryContact($maria)->create();
 
-    Property::factory()->of($household)->create(['address_city' => 'Lakeview']);
-    Property::factory()->of($household)->create(['address_city' => 'Northside']);
+    Property::factory()->of($household)->create(['label' => 'Home', 'address_line1' => '123 Oak Street', 'address' => '123 Oak Street, Lakeview, GA 30301']);
+    Property::factory()->of($household)->create(['label' => 'Rental', 'address_line1' => '456 Main Street']);
+    Property::factory()->of($household)->create(['label' => 'Cabin']);
 
     $business = Account::factory()
         ->commercial('Bakery on Main')
@@ -46,7 +47,9 @@ test('customers are listed by name with their type, primary contact and properti
     allCustomers($this->owner)
         ->assertSeeInOrder(['Bakery on Main', 'Commercial', 'Pat Baker'])
         ->assertSeeInOrder(['Bakery on Main', 'Maria Lopez', 'Zebra Storage'])
-        ->assertSeeInOrder(['Maria Lopez', 'Residential', '(555) 201-3344', 'maria@example.com', 'Lakeview', 'and 1 more']);
+        // The first property by its label and short street; the city and ZIP code are left for the customer's page.
+        ->assertSeeInOrder(['Maria Lopez', 'Residential', '(555) 201-3344', 'maria@example.com', 'Home — 123 Oak St', '+2 more'])
+        ->assertDontSee('456 Main');
 });
 
 test('the list can be searched by what staff know about a customer', function (string $search) {
@@ -135,10 +138,10 @@ test('archived customers are hidden until they are asked for', function () {
 test('an archived property is not counted or shown on the list', function () {
     $account = Account::factory()->commercial('Lopez Bakery')->create();
 
-    Property::factory()->of($account)->create(['address_city' => 'Lakeview', 'type' => PropertyType::Commercial]);
-    Property::factory()->of($account)->archived()->create(['address_city' => 'Soldtown']);
+    Property::factory()->of($account)->create(['label' => 'Shop', 'address_line1' => '1 Main Street', 'type' => PropertyType::Commercial]);
+    Property::factory()->of($account)->archived()->create(['label' => 'Sold', 'address_line1' => '99 Sold Street']);
 
-    allCustomers($this->owner)->assertSee('Lakeview')->assertDontSee('Soldtown')->assertDontSee('more');
+    allCustomers($this->owner)->assertSee('Shop — 1 Main St')->assertDontSee('99 Sold')->assertDontSee('more');
 });
 
 test('open leads are counted, and only open ones', function () {

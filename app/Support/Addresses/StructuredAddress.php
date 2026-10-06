@@ -3,6 +3,7 @@
 namespace App\Support\Addresses;
 
 use App\Models\Lead;
+use App\Models\Property;
 
 /**
  * A property address in parts.
@@ -145,6 +146,54 @@ final readonly class StructuredAddress
             'address_provider' => $this->provider,
             'address_provider_place_id' => $this->providerPlaceId,
             'address_entry' => $this->entry,
+        ];
+    }
+
+    /**
+     * The address a Property has.
+     */
+    public static function ofProperty(Property $property): self
+    {
+        return new self(
+            formatted: $property->address,
+            line1: $property->address_line1,
+            line2: $property->address_line2,
+            city: $property->address_city,
+            state: $property->address_state,
+            postalCode: $property->address_postal_code,
+            country: $property->address_country,
+            latitude: $property->address_latitude === null ? null : (float) $property->address_latitude,
+            longitude: $property->address_longitude === null ? null : (float) $property->address_longitude,
+            accuracy: $property->address_accuracy,
+            provider: $property->address_provider,
+            providerPlaceId: $property->address_provider_place_id,
+            entry: $property->address_entry ?? self::MANUAL,
+        );
+    }
+
+    /**
+     * The values to store on a Property for this address, with the simplified
+     * form used to notice the same address typed another way.
+     *
+     * @return array<string, string|float|null>
+     */
+    public function toPropertyAttributes(): array
+    {
+        return [
+            'address' => $this->formatted,
+            'address_line1' => $this->line1,
+            'address_line2' => $this->line2,
+            'address_city' => $this->city,
+            'address_state' => $this->state,
+            'address_postal_code' => $this->postalCode,
+            'address_country' => $this->country,
+            'address_latitude' => $this->latitude,
+            'address_longitude' => $this->longitude,
+            'address_accuracy' => $this->accuracy,
+            'address_provider' => $this->provider,
+            'address_provider_place_id' => $this->providerPlaceId,
+            'address_entry' => $this->entry,
+            'address_normalized' => AddressKey::for($this->line1 ?? $this->formatted, $this->line2, $this->postalCode),
         ];
     }
 
