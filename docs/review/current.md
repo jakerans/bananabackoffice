@@ -23,8 +23,9 @@ Approve this sequence one bounded slice at a time:
 2. **Shared Customer Activity and unified Notes.** Preserve note context,
    provenance and history; Activity contains major business events, not every
    audit event.
-3. **Contact-attempt evidence foundation.** Durable attempt records only;
-   provider choice is pending and automated penalty policy is deferred.
+3. **Contact-attempt evidence foundation.** Durable attempt records with manager
+   pattern review and no automated punishment. Provider choice remains pending;
+   no personnel policy is introduced.
 4. **Scheduled work and atomic due queue.** Cadence is configurable. Decide
    scheduler, timezone, retry and failure contracts first. Keep manual Deferred
    Follow-up distinct from automated work.

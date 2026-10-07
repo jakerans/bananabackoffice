@@ -1047,7 +1047,13 @@ shows major business events, not every message and not every audit event. The
 append-only audit store remains the evidence source where applicable, but Activity
 is a selected business view rather than an audit-log mirror.
 
-| Change | Audit event | Shown in Activity |
+The table below preserves the original timeline presentation plan as historical
+context. Its "Note added — Yes" row meant the note was visible in the Notes/
+timeline presentation, not that adding a note is itself a target Activity event.
+Slice 2 must review final Activity inclusion; the canonical default keeps Notes
+separate and limits Activity to major business events.
+
+| Change | Audit event | Shown in historical timeline plan |
 | --- | :-: | :-: |
 | Lead received | Yes | Yes |
 | Lead routed, re-routed, returned to central (with reason) | Yes | Yes |
