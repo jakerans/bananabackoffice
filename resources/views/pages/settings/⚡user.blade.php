@@ -145,6 +145,7 @@ new #[Title('Manage access')] class extends Component {
 
         $this->pendingGrantId = $grant->id;
         $this->pendingGrantDescription = $grant->role->label().' · '.($grant->isCompanyWide() ? __('All locations') : $grant->location?->name);
+        $this->resetValidation('grant');
 
         Flux::modal('revoke-access-confirmation')->show();
     }
@@ -178,6 +179,7 @@ new #[Title('Manage access')] class extends Component {
     public function openDeactivate(): void
     {
         $this->authorize('deactivate', $this->staff);
+        $this->resetValidation('staff');
 
         Flux::modal('deactivate-staff-confirmation')->show();
     }
@@ -389,6 +391,7 @@ new #[Title('Manage access')] class extends Component {
         :description="__('They will be signed out and will not be able to sign in again until reactivated.')"
         action="confirmDeactivate"
         :confirm-label="__('Deactivate account')"
+        error="staff"
     />
 
     <x-confirmation-modal
@@ -397,5 +400,6 @@ new #[Title('Manage access')] class extends Component {
         :description="$pendingGrantDescription"
         action="confirmRevoke"
         :confirm-label="__('Remove access')"
+        error="grant"
     />
 </section>

@@ -49,20 +49,28 @@ decision was needed for this bounded patch.
   Confirmation resolves and authorizes the locked record again, then calls the
   existing domain action. The list dialog also locks the list identity, so a
   crafted list switch cannot substitute a same-ID option from another table.
+- Lead-customer unlink also locks the Account, Contact and Property identities.
+  Confirmation refreshes the Lead and refuses a stale dialog if any part of that
+  relationship changed, preserving the newer link. Permission is rechecked too.
+- Domain refusals render inside the open dialog for customer, contact, property,
+  Lead unlink, list option, Location, staff and access-grant actions. Reopening a
+  dialog clears only its own stale error; the existing domain error is not caught,
+  renamed or moved to another scope.
 - The durable prohibition on application-native confirms, alerts and prompts is
   recorded in `.ai/guidelines/collaboration.md`, [../design-system.md](../design-system.md)
-  and decision 57. A repository-wide regression test enforces it.
+  and decision 57. A repository-wide regression test covers view and JavaScript
+  source plus bare, `window`, `globalThis` and `self` call forms.
 
 ## Checks
 
 - Targeted B7 follow-up, qualification, disqualification and concurrency tests:
   **141 passed / 872 assertions**.
 - Confirmation-dialog and affected customer, Lead, list, Location and access
-  suites: **277 passed / 1,529 assertions**. The final cross-list target guard and
-  its nearby list coverage pass with **80 tests / 373 assertions**.
+  suites after review corrections: **293 passed / 1,532 assertions**. The focused
+  confirmation regression file passes **22 tests / 152 assertions**.
 - Dirty PHP formatting: `php vendor/bin/pint --dirty --format agent` passed.
-- Final local `composer test`: **passed**, including Pint, PHPStan and **1,451
-  tests / 6,388 assertions**.
+- Final local `composer test`: **passed**, including Pint, PHPStan and **1,466
+  tests / 6,387 assertions**.
 - [GitHub run 37669939744](https://github.com/jakerans/bananabackoffice/actions/runs/37669939744)
   on implementation commit `d1e60e8`: **both jobs passed**, each with **1,444 tests /
   6,235 assertions**. SQLite ran the full CI checks. MySQL verified an empty
@@ -71,13 +79,17 @@ decision was needed for this bounded patch.
 - [GitHub run 37670526216](https://github.com/jakerans/bananabackoffice/actions/runs/37670526216)
   on remote branch HEAD `61e3c2b` before this browser-review handoff: **both SQLite
   and MySQL 8.4 jobs passed**.
-- `git diff --check`: passed. The implementation is pushed on the checkpoint
-  branch; this final handoff update changes documentation only.
+- `git diff --check`: passed. The earlier B7 implementation through `61e3c2b` is
+  pushed. The browser handoff commit `f1767fe`, confirmation implementation
+  `1f3b115`, and the current review corrections are local-only code and docs;
+  exact-final-SHA CI has not run.
 - Automated coverage includes due/future and central callbacks, location/role
   scoping, search, pagination, dialog authorization and stale confirmation,
   no lifecycle write on opening, validation after changing reasons, every new
   confirmation wrapper's open/confirm boundary, cross-list target substitution,
-  and a source inventory that rejects native application dialogs.
+  stale Lead-customer replacement, locked relationship tampering, permission loss
+  after opening, in-dialog refusal/error clearing, and a source inventory with
+  detection fixtures that reject native application dialogs and aliases.
 
 ## Independent local Chrome re-review
 
@@ -91,8 +103,8 @@ data through Jacob's existing Chrome session:
 - A second fictitious local Location proved cross-location behavior: the callback
   disappeared from Four Corners and appeared/counting as Unassigned at the
   destination, then was returned to central with its callback intact. The temporary
-  Location remains active locally with no Leads or grants; no tracked, staging or
-  production data changed.
+  Location was subsequently deactivated after it had no Leads or grants; no
+  tracked, staging or production data changed.
 - Return to working and Resume working both opened the styled Flux dialog with no
   native confirm. Cancel received initial focus; Tab and Shift+Tab never reached a
   background control (Chrome reports `body` at the native dialog's cycle boundary,
@@ -129,6 +141,11 @@ the current code:
 - The only captured console error was an extension message-channel closure from
   the earlier stale tab, not an application exception. A fresh Chrome tab remained
   connected throughout the completed review.
+- After the independent review corrections, a fresh Chrome tab again showed the
+  customer refusal dialog as styled application UI with Cancel focused and no
+  JavaScript dialog. Its destructive submit was not clicked because computer-use
+  policy requires action-time confirmation even for an expected refusal; the
+  refusal rendering and stale/concurrent paths are covered by Livewire tests.
 
 ## Owner browser scenarios to re-check
 
@@ -179,4 +196,8 @@ Refresh existing local tabs before testing. Use the existing fictitious B7 Leads
   The connected Chrome inventory showed that tab, but access was policy-denied
   because it could expose unrelated private conversation data. It was not read and
   no message was posted.
+- Local note ID `1` on Lead `4`, text `Confirmation dialog browser review fixture
+  (fictitious).`, remains visible. Removal is soft and retains history, but there
+  is no application restore-note workflow; it was not removed without action-time
+  confirmation.
 - No staging or production commands were run. Stop for the owner's merge decision.

@@ -231,6 +231,7 @@ new #[Title('Lead & Sales Lists')] class extends Component {
         $this->pendingDeactivationId = $option->id;
         $this->pendingDeactivationName = $option->name;
         $this->pendingDeactivationList = $this->currentList->value;
+        $this->resetValidation('option');
 
         Flux::modal('deactivate-option-confirmation')->show();
     }
@@ -496,6 +497,7 @@ new #[Title('Lead & Sales Lists')] class extends Component {
         :description="__('Staff will no longer be able to choose it. Records that already use it keep it.')"
         action="confirmDeactivate"
         :confirm-label="__('Deactivate')"
+        error="option"
     />
     @endif
 </section>

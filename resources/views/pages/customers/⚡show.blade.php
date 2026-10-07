@@ -153,6 +153,7 @@ new #[Title('Customer')] class extends AddressCapturePage {
     public function openArchiveAccount(): void
     {
         $this->authorize('archive', $this->account);
+        $this->resetValidation('account');
 
         Flux::modal('archive-customer-confirmation')->show();
     }
@@ -348,6 +349,7 @@ new #[Title('Customer')] class extends AddressCapturePage {
 
         $this->pendingContactLinkId = $link->id;
         $this->pendingContactName = $link->contact?->fullName() ?? __('this person');
+        $this->resetValidation('contact');
 
         Flux::modal('remove-contact-confirmation')->show();
     }
@@ -449,6 +451,7 @@ new #[Title('Customer')] class extends AddressCapturePage {
         $this->authorize('archive', $this->account);
 
         $this->pendingPropertyId = $this->currentProperty($propertyId)->id;
+        $this->resetValidation('property');
 
         Flux::modal('archive-property-confirmation')->show();
     }
@@ -1325,6 +1328,7 @@ new #[Title('Customer')] class extends AddressCapturePage {
             :description="__('It is hidden from lists and choices, and can be restored later.')"
             action="confirmArchiveAccount"
             :confirm-label="__('Archive customer')"
+            error="account"
         />
 
         <x-confirmation-modal
@@ -1333,6 +1337,7 @@ new #[Title('Customer')] class extends AddressCapturePage {
             :description="__('They stay a contact of any other customer.')"
             action="confirmRemoveContact"
             :confirm-label="__('Remove')"
+            error="contact"
         />
 
         <x-confirmation-modal
@@ -1341,6 +1346,7 @@ new #[Title('Customer')] class extends AddressCapturePage {
             :description="__('It is removed from current choices and can be restored later.')"
             action="confirmArchiveProperty"
             :confirm-label="__('Archive property')"
+            error="property"
         />
     @endcan
 </section>

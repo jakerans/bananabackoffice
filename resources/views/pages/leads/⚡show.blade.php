@@ -40,6 +40,7 @@ use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
@@ -93,6 +94,15 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
     #[Locked]
     public ?int $pendingNoteId = null;
+
+    #[Locked]
+    public ?int $pendingUnlinkAccountId = null;
+
+    #[Locked]
+    public ?int $pendingUnlinkContactId = null;
+
+    #[Locked]
+    public ?int $pendingUnlinkPropertyId = null;
 
     /** The lifecycle state shown when the dialog opened, retained across requests. */
     #[Locked]
@@ -695,15 +705,37 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
     public function openUnlinkCustomer(): void
     {
+        $this->lead->refresh();
         $this->authorize('resolveCustomer', $this->lead);
+
+        abort_unless($this->lead->isLinkedToCustomer(), 404);
+
+        $this->pendingUnlinkAccountId = $this->lead->account_id;
+        $this->pendingUnlinkContactId = $this->lead->contact_id;
+        $this->pendingUnlinkPropertyId = $this->lead->property_id;
+        $this->resetValidation('customerChoice');
 
         Flux::modal('unlink-customer-confirmation')->show();
     }
 
     public function confirmUnlinkCustomer(UnlinkLeadCustomer $unlinkLeadCustomer): void
     {
+        $this->lead->refresh();
+        $this->authorize('resolveCustomer', $this->lead);
+
+        if (
+            $this->lead->account_id !== $this->pendingUnlinkAccountId
+            || $this->lead->contact_id !== $this->pendingUnlinkContactId
+            || $this->lead->property_id !== $this->pendingUnlinkPropertyId
+        ) {
+            throw ValidationException::withMessages([
+                'customerChoice' => __('This lead\'s customer link was just changed by someone else. Review the current customer before removing it.'),
+            ]);
+        }
+
         $this->unlinkCustomer($unlinkLeadCustomer);
 
+        $this->reset('pendingUnlinkAccountId', 'pendingUnlinkContactId', 'pendingUnlinkPropertyId');
         Flux::modal('unlink-customer-confirmation')->close();
     }
 
@@ -1916,5 +1948,6 @@ new #[Title('Lead')] class extends AddressCapturePage {
         :description="__('The customer and the inquiry are both kept as they are.')"
         action="confirmUnlinkCustomer"
         :confirm-label="__('Remove link')"
+        error="customerChoice"
     />
 </section>
