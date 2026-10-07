@@ -4,103 +4,82 @@ How this file is used: [../collaboration.md](../collaboration.md), "Review hando
 No secrets or customer information belong here.
 
 **Updated:** 2026-10-07 · **Branch:** `checkpoint-b-continuation`
-**Step:** B7 reconciliation only, approved in decision 55 of
-[../decisions.md](../decisions.md). No B8 or architecture-roadmap work is included.
-**State:** ready for owner review; local checks and both GitHub jobs pass.
-Not merged or deployed. Jacob's browser review and explicit merge decision remain.
+**Step:** B7 owner-review corrections, decision 56 in [../decisions.md](../decisions.md).
+**State:** implementation and local checks complete; GitHub checks pending.
+No merge, deployment, B8 or new architecture work is included.
 
 ## What changed, and why
 
-- **Deferred Follow-up / Schedule follow-up** replaces the product wording
-  "Nurture". It is a deliberate manual callback with a required date and note.
-  Due/overdue dates, assignee responsibility and existing Follow-ups queues keep
-  their behavior. This is separate from future multichannel nurture.
-- **Unable to Contact is historical only.** It cannot close a Lead now, nor be
-  newly selected by a correction, regardless of elapsed time or role. The three-day
-  rule and waiver action are removed, with no replacement threshold. Existing
-  records retain the reason; their notes can be corrected, a legitimate reason can
-  replace it, and authorized people can reopen them.
-- **Qualified is the existing qualification milestone only.** The dialog and Lead
-  page explain that it does not mean booked, Lead Issued, demoed, sold or
-  Project-created. Qualification requirements and first-qualification history stay.
-- **Stale lifecycle changes are rejected atomically**, including same-status
-  follow-up reschedules and disqualification corrections. One additive
-  `lifecycle_version` column starts existing Leads at zero. A conditional update
-  claims the expected revision, status, Location and assignee before validation
-  and writes. Assignment changes, history, audit and revision share the transaction.
-  Unchanged saves do not advance the revision. Dialog revisions are server-locked;
-  immediate Start working/Resume actions retain the rendered page's revision.
-- Stored `nurture` values, event identifiers and historical audit data are not
-  renamed or rewritten. Legitimate disqualification, duplicate handling, reopening
-  and existing authorization remain. Legacy waiver grants are retained but no
-  lifecycle action consumes them.
+- **Follow-ups badge:** the old count added a due/overdue cutoff that the table did
+  not use, so future callbacks appeared as rows without being counted. The badge
+  and rows now share the same eligibility and search helper. It counts the full
+  matching result across pages. Location/authorization rules, transferred
+  unassigned callbacks and central/unrouted callbacks remain intact. Assigned to
+  me and the Assign dialog's workload counts retain their existing due-date rules.
+- **Return/Resume working:** both actions open the existing Flux modal pattern,
+  with an explanation, Cancel (initial focus), and Return to working. There is no
+  native JavaScript confirmation in this flow. Opening or dismissing the dialog
+  does not change the Lead. Submission retains authorization and the atomic
+  lifecycle revision guard, using the revision captured when the dialog opened.
+  Assignee, qualification history and follow-up history behavior stay unchanged.
+- **Reason-switch validation:** changing the disqualification reason clears only
+  its related field errors. Other's old note error no longer lingers on Duplicate
+  Lead. Entered notes are retained; submission still validates the selected reason.
 
-Canonical behavior: [../checkpoint-b.md](../checkpoint-b.md), "Qualification,
-disqualification and deferred follow-up, as built in step B7". The older downstream
-roadmap is not authorization to start new work.
+Canonical behavior: [../checkpoint-b.md](../checkpoint-b.md). No schema, domain
+rules, permissions or audit actions were changed. No deviation or new stakeholder
+decision was needed for this bounded patch.
 
 ## Checks
 
-- `composer test`: passed; Pint and PHPStan passed, **1,440 tests / 6,177 assertions**.
-- Targeted lifecycle and audit tests cover same-second stale writes, same-status
-  dialogs, status returning to its prior value, stale assignment context,
-  historical reasons/audit preservation, duplicate rules, authorization and rollback.
-- `php artisan migrate --no-interaction`: the additive revision migration passed
-  against the existing local SQLite database.
-- Final `composer ci:check`: passed; Pint and PHPStan passed, **1,440 tests /
-  6,178 assertions** after the final UI and historical-audit assertions.
-- [GitHub run 37664221781](https://github.com/jakerans/bananabackoffice/actions/runs/37664221781)
-  on implementation commit `3b0899a`: **both jobs passed**, each with **1,440 tests /
-  6,178 assertions**. SQLite ran the full CI check. MySQL verified an empty
-  **8.4.11** database, applied every migration, ran the full suite, and confirmed
-  **40 migrations** were applied by that suite to MySQL.
-- `git diff --check`: passed. The implementation is committed and pushed on the
-  checkpoint branch; this handoff update changes documentation only.
-- No staging or production commands were run.
+- Targeted B7 follow-up, qualification, disqualification and concurrency tests:
+  **141 passed / 872 assertions**.
+- Dirty PHP formatting: `php vendor/bin/pint --dirty --format agent` passed.
+- Full local `composer ci:check` (invokes `composer test`): **passed**, including
+  Pint, PHPStan and **1,444 tests / 6,235 assertions**.
+- `git diff --check`: passed. GitHub SQLite / MySQL 8.4 results pending push.
+- Automated coverage includes due/future and central callbacks, location/role
+  scoping, search, pagination, dialog authorization and stale confirmation,
+  no lifecycle write on opening, and validation after changing reasons.
 
-## Browser review for Jacob
+## Owner browser scenarios to re-check
 
-At [the local Leads page](http://backoffice.test/leads), refresh existing tabs first.
-Use fictitious local Leads. Settings > Users and Access > a local Sales Consultant
-> Impersonate is available when reviewing as that role.
+Refresh existing local tabs before testing. Use the existing fictitious B7 Leads.
 
-1. On a Working Lead assigned to that consultant, choose **Schedule follow-up**.
-   Empty note/date and a past date must fail. Save a future date and note: the badge
-   reads **Deferred Follow-up**. Set today to see **Follow-up due**. Check Follow-ups,
-   then Resume working: the callback clears and the same person remains assigned.
-2. Open the same deferred Lead in two tabs and open **Reschedule follow-up** in
-   both. Save a changed date or note in tab A, then submit tab B. B must refuse the
-   stale save; reopen its dialog to see A's values. Repeat changing only the note.
-3. **Qualify** a Working Lead: missing required information still blocks it. A
-   complete Lead qualifies, shows the milestone-only explanation and retains its
-   assignee. Return to working and qualify again; first qualified stays unchanged.
-4. As both the consultant and Owner, open **Disqualify** on a Working Lead.
-   **Unable to Contact** and the wait-waiver checkbox must be absent; ordinary
-   nonresponse offers **Schedule follow-up instead**. Legitimate reasons still work;
-   Other requires a note, and Duplicate Lead requires an original or explanation.
-5. As Owner, use **Correct reason** on a disqualified Lead in two tabs. Save tab A,
-   then tab B: B must refuse even though the status is still Disqualified. Reopen
-   the dialog and verify A's correction. Reopen the Lead with a reason: it becomes
-   Working and unassigned.
-6. If a historical Unable to Contact Lead exists locally, verify it remains
-   readable. Its current reason can stay while its note is corrected, including
-   when that managed option is inactive. Correcting a different Lead must not offer
-   Unable to Contact. Historical preservation is also covered by automated tests.
-7. Move a deferred Lead to another Location or return it to central as an authorized
-   distributor. Verify its follow-up remains in the appropriate existing Follow-ups
-   view, labeled Unassigned. A consultant still cannot act on another person's Lead
-   or reopen/correct disqualification; impersonation does not add Owner privileges.
+1. **Badge:** as Owner in All Locations, schedule one callback for today and one
+   for a future date. Follow-ups must show both and count both. Compare the badge
+   with the full result (not only the current page if paginated). Search for one
+   Lead, then no matching Lead, then clear search: counts must match each result.
+2. **Scope:** return a deferred Lead to central. It remains in Follow-ups for
+   people allowed to see unrouted Leads, even with a future date and no assignee.
+   Re-check as the Sales Consultant: only their own eligible follow-ups appear and
+   count. If another local Location exists, move a callback there and verify the
+   destination distributor sees/counts it as Unassigned; the old location does not.
+3. **Styled confirmation:** on a Qualified Lead choose Return to working; on a
+   deferred Lead choose Resume working. Both must open a styled modal, never a
+   browser confirm. Check initial Cancel focus, Tab/Shift+Tab staying in the modal,
+   Escape and Cancel closing it, and focus returning to the triggering button.
+   Cancellation leaves status, assignee and callback unchanged. Confirming returns
+   it to Working with the same assignee; the deferred callback clears and historical
+   qualification/follow-up entries remain.
+4. **Stale confirmation:** open Resume working in tab A. Reschedule that callback
+   in tab B. Confirm in A: it must refuse the stale change and keep B's callback.
+   Reopen the confirmation to act on the current state.
+5. **Reason error:** select Other in Disqualify, submit without a note, then choose
+   Duplicate Lead. The previous Other error must disappear; Duplicate's controls
+   appear. Submit without an original or explanation: its own validation must still
+   fail. Switch back to Other and confirm it still requires an explanation. Also
+   check the same reason switching in Correct reason as Owner.
 
 ## Remaining risks and limits
 
-- Owner browser review remains; automated Livewire tests are not a visual sign-off.
-- The revision guards B7 lifecycle operations, not every other Lead edit. Stale-save
-  tests use competing snapshots and dialogs, not a multiprocess load test.
-- The new column must accompany this code. Rolling it back drops revision tokens;
-  use a forward fix after release rather than retaining this code without it.
-- Existing historical closure reasons are not automatically reclassified or reopened.
-  Internal names still use `nurture` for compatibility. No automation, attempt
-  tracking, reminders, appointments, Projects, Contact Center, Inbox or AI is built.
-- The earlier production-readiness proposal remains unapproved and outside this
-  task; its prior handoff is preserved in Git history. No new product decision is
-  needed to review this bounded reconciliation.
+- Jacob's keyboard/focus and visual re-review remains. Automated Livewire tests do
+  not execute the browser's focus handling; the modal uses the installed Flux
+  implementation and the app's existing dialog pattern.
+- The local review dataset originally had only one Location. Cross-location review
+  needs another existing local Location; no Locations or review data were changed
+  by this patch.
+- The earlier B7 reconciliation and its additive lifecycle revision column remain
+  prerequisites. Historical stored values are preserved. The guard still covers
+  lifecycle mutations rather than every Lead edit.
+- No staging or production commands were run. Stop for owner re-review.

@@ -176,7 +176,7 @@ test('a sales consultant cannot change the status of a colleague\'s lead', funct
         ->assertForbidden();
 
     expect($lead->fresh()->status)->toBe(LeadStatus::Working);
-})->with(['openQualify', 'qualify', 'openNurture', 'saveNurture', 'resumeWorking', 'openDisqualify', 'disqualify']);
+})->with(['openQualify', 'qualify', 'openNurture', 'saveNurture', 'openReturnToWorking', 'resumeWorking', 'openDisqualify', 'disqualify']);
 
 test('a manager of another location cannot change the status of a lead they cannot see', function () {
     $lakeview = Location::factory()->create();
@@ -203,9 +203,19 @@ test('a qualified lead can be returned to working, and stays with whoever has it
     $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
     $lead = leadReadyToQualify($lakeview, $consultant)->qualified()->create();
 
-    Livewire::actingAs($consultant)
+    $page = Livewire::actingAs($consultant)
         ->test('pages::leads.show', ['lead' => $lead])
-        ->call('resumeWorking')
+        ->assertSeeHtml('wire:click="openReturnToWorking"')
+        ->call('openReturnToWorking')
+        ->assertSeeHtml('data-modal="return-to-working"')
+        ->assertSeeHtml('data-test="return-to-working-submit"')
+        ->assertDontSeeHtml('wire:confirm="Return this lead')
+        ->assertSee('It will no longer count as qualified now');
+
+    expect($lead->fresh()->status)->toBe(LeadStatus::Qualified);
+    expect(LeadStatusChange::query()->count())->toBe(0);
+
+    $page->call('resumeWorking')
         ->assertHasNoErrors();
 
     $returned = $lead->fresh();

@@ -206,6 +206,8 @@ test('resuming a lead in nurture returns it to working with the same person', fu
 
     Livewire::actingAs($consultant)
         ->test('pages::leads.show', ['lead' => $lead])
+        ->call('openReturnToWorking')
+        ->assertSee('The scheduled follow-up will clear')
         ->call('resumeWorking')
         ->assertHasNoErrors()
         ->assertDontSeeHtml('data-test="lead-follow-up"');
@@ -307,8 +309,9 @@ test('a sales consultant\'s follow-ups view lists their own nurture leads by fol
     Livewire::actingAs($consultant)
         ->test('pages::leads.index')
         ->call('show', 'follow-ups')
-        // The count is of those whose date has arrived.
-        ->assertSeeInOrder(['Follow-ups', '(2)'])
+        ->assertSet('counts.follow-ups', 3)
+        ->assertSet('leads', fn ($leads) => $leads->total() === 3)
+        ->assertSeeInOrder(['Follow-ups', '(3)'])
         ->assertSeeInOrder(['Overdue Omar', 'Due Dana', 'Later Lena'])
         ->assertDontSee('Colleague Cara')
         ->assertDontSee('Working Wanda');
@@ -329,6 +332,8 @@ test('someone who hands out leads sees every follow-up at the location they are 
     Livewire::actingAs($distributor($lakeview))
         ->test('pages::leads.index')
         ->call('show', 'follow-ups')
+        ->assertSet('counts.follow-ups', 1)
+        ->assertSet('leads', fn ($leads) => $leads->total() === 1)
         ->assertSee('Lakeview Lena')
         ->assertDontSee('Northside Nell');
 })->with([
@@ -355,7 +360,6 @@ test('a nurture lead left unassigned by a transfer stays in the follow-ups of th
 
     Livewire::actingAs($distributor($northside, $owner))
         ->test('pages::leads.index')
-        // Overdue, so it counts as waiting.
         ->assertSeeInOrder(['Follow-ups', '(1)'])
         ->call('show', 'follow-ups')
         // Listed, and plainly with nobody on it.
@@ -392,7 +396,7 @@ test('a nurture lead returned to central stays in the follow-ups of people who c
 
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
     $sam = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
-    $lead = Lead::factory()->at($lakeview)->nurture('2026-10-01')->assignedTo($sam)->create(['inquiry_name' => 'Returned Rita']);
+    $lead = Lead::factory()->at($lakeview)->nurture('2026-10-20')->assignedTo($sam)->create(['inquiry_name' => 'Returned Rita']);
 
     // Back to central: no location, and so nobody assigned.
     app(ReturnLeadToCentral::class)->handle($lead, 'Outside what Lakeview covers.', $owner);
@@ -438,4 +442,48 @@ test('the workload shown when assigning counts what a person has to act on now',
         ->test('pages::leads.show', ['lead' => $lead])
         ->call('openAssign')
         ->assertSeeInOrder(['Sam Sales', '5 open leads']);
+});
+
+test('the All Locations follow-ups badge matches due and future rows including central and search', function () {
+    $lakeview = Location::factory()->create();
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    Lead::factory()->at($lakeview)->nurture('2026-10-06')->create(['inquiry_name' => 'Due Dana']);
+    Lead::factory()->nurture('2026-10-20')->create(['inquiry_name' => 'Central Cora']);
+    Lead::factory()->at($lakeview)->working()->create(['inquiry_name' => 'Working Wanda']);
+    session([CurrentLocation::SESSION_KEY => CurrentLocation::ALL_LOCATIONS]);
+
+    $page = Livewire::actingAs($owner)
+        ->test('pages::leads.index')
+        ->call('show', 'follow-ups')
+        ->assertSet('counts.follow-ups', 2)
+        ->assertSet('leads', fn ($leads) => $leads->total() === 2)
+        ->assertSeeInOrder(['Follow-ups', '(2)'])
+        ->assertSeeInOrder(['Due Dana', 'Central Cora'])
+        ->assertDontSee('Working Wanda');
+
+    $page->set('search', 'Central Cora')
+        ->assertSet('counts.follow-ups', 1)
+        ->assertSet('leads', fn ($leads) => $leads->total() === 1)
+        ->assertSee('Central Cora')
+        ->assertDontSee('Due Dana')
+        ->set('search', 'No matching inquiry')
+        ->assertSet('counts.follow-ups', 0)
+        ->assertSet('leads', fn ($leads) => $leads->total() === 0)
+        ->set('search', '')
+        ->assertSet('counts.follow-ups', 2);
+});
+
+test('the follow-ups badge counts the full eligible result across pages', function () {
+    $lakeview = Location::factory()->create();
+    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+    Lead::factory()->at($lakeview)->nurture('2026-10-20')->assignedTo($consultant)->count(26)->create();
+
+    Livewire::actingAs($consultant)
+        ->test('pages::leads.index')
+        ->call('show', 'follow-ups')
+        ->assertSet('counts.follow-ups', 26)
+        ->assertSet('leads', fn ($leads) => $leads->total() === 26 && $leads->count() === 25)
+        ->call('setPage', 2)
+        ->assertSet('counts.follow-ups', 26)
+        ->assertSet('leads', fn ($leads) => $leads->total() === 26 && $leads->count() === 1);
 });

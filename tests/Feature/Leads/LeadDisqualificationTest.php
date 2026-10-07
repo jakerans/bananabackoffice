@@ -832,3 +832,37 @@ test('a history entry cannot be changed or deleted', function () {
 
     expect(LeadStatusChange::query()->sole()->note)->toBeNull();
 });
+
+test('changing the disqualification reason clears obsolete field errors and validates the new choice', function () {
+    $location = Location::factory()->create();
+    $manager = User::factory()->withRoleAt(Role::LocationManager, $location)->create();
+    $lead = Lead::factory()->at($location)->working()->create();
+
+    $page = Livewire::actingAs($manager)
+        ->test('pages::leads.show', ['lead' => $lead])
+        ->call('openDisqualify')
+        ->set('disqualificationReasonId', reasonNamed('Other')->id)
+        ->call('disqualify')
+        ->assertHasErrors('disqualificationNote')
+        ->set('disqualificationReasonId', reasonNamed('Duplicate Lead')->id)
+        ->assertHasNoErrors()
+        ->assertSeeHtml('data-test="duplicate-originals"')
+        ->call('disqualify')
+        ->assertHasErrors('duplicateOfId')
+        ->set('disqualificationReasonId', reasonNamed('Other')->id)
+        ->assertHasNoErrors()
+        ->call('disqualify')
+        ->assertHasErrors('disqualificationNote');
+
+    expect($lead->fresh()->status)->toBe(LeadStatus::Working);
+    expect(LeadStatusChange::query()->count())->toBe(0);
+
+    $page->set('disqualificationNote', 'A fictitious film set inquiry.')
+        ->set('disqualificationReasonId', reasonNamed('Spam / Solicitation')->id)
+        ->assertSet('disqualificationNote', 'A fictitious film set inquiry.')
+        ->call('disqualify')
+        ->assertHasNoErrors();
+
+    expect($lead->fresh()->disqualificationReason->name)->toBe('Spam / Solicitation');
+    expect(LeadStatusChange::query()->sole()->note)->toBe('A fictitious film set inquiry.');
+});

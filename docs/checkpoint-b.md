@@ -146,6 +146,11 @@ limit) and a short note. The Lead stays with its assignee. On the date it shows
 no reassignment, no escalation, no closing. The date can be rescheduled without
 leaving Deferred Follow-up. A follow-up date is a calendar day in the company's time zone.
 
+**Return to working / Resume working** uses the shared styled confirmation dialog,
+with Cancel and Return to working actions. It keeps the assignee and historical
+qualification/follow-up records; returning from Deferred Follow-up clears the
+current callback. Confirmation rejects lifecycle changes made while it was open.
+
 **Disqualified** needs a reason from the managed list that is still offered.
 
 - It ends anyone's responsibility: the current assignment is closed with the
@@ -480,7 +485,7 @@ Two separate questions, kept as separate actions and separate data:
 | View | Shows | Order | Who has it |
 | --- | --- | --- | --- |
 | Assigned to me | The person's Leads that need action now, at every Location they can see, whatever Location is selected: New, Working, Qualified, and Deferred Follow-up once its follow-up is due (B7) | Oldest first | Everyone |
-| Follow-ups (B7) | Leads in Deferred Follow-up. A Sales Consultant sees only their own. Someone who may assign at the current Location also sees every Deferred Follow-up Lead there, **including those with no assignee** (a move clears the assignee), shown as Unassigned. Someone who may see unrouted Leads also sees Deferred Follow-up Leads that were returned to central. The count is of those due or overdue. | Soonest follow-up first | Everyone |
+| Follow-ups (B7) | Leads in Deferred Follow-up. A Sales Consultant sees only their own. Someone who may assign at the current Location also sees every Deferred Follow-up Lead there, **including those with no assignee** (a move clears the assignee), shown as Unassigned. Someone who may see unrouted Leads also sees Deferred Follow-up Leads that were returned to central. The badge counts every eligible row in this scope, including future dates, central/unrouted Leads and the current search, across all pages. | Soonest follow-up first | Everyone |
 | Unassigned | Leads at the current Location with no assignee | Longest at that Location first | People who may assign there |
 | All leads | Every Lead at the current Location | Newest first | Everyone |
 | Unrouted | Leads not yet sent to a Location | Oldest first | People who may see unrouted Leads |

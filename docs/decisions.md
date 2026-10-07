@@ -1291,6 +1291,22 @@ new roadmap, B8/Projects, Contact Center, appointments, dialer, Inbox, AI, deplo
 or any downstream feature. Decisions 53/54 and other older future plans do not
 provide authorization to start them. Stop for owner review; do not merge or deploy.
 
+## 56. B7 owner-review corrections (2026-10-07)
+
+**Approved by Jacob.** Fix only the B7 review findings before owner re-review:
+
+- The Follow-ups badge must count the same eligible result as the table, including
+  future callbacks, the current search and all pages. Preserve existing location,
+  assignment and unrouted authorization. This supersedes the due/overdue-only
+  badge rule; Assigned to me and assignment workload counts keep their rules.
+- Replace the native Return to working confirmation with the existing Flux modal
+  pattern. Use it for Resume working too, preserve lifecycle authorization,
+  assignment and history, and reject stale dialog submissions.
+- Clear obsolete disqualification field errors when the selected reason changes;
+  the newly selected reason must still be validated on submission.
+
+No new architecture, B8, merge or deployment is authorized.
+
 ## Future decisions already constrained by the brief- Estimates hold any number of named, ordered options. No fixed tiers.
 - Accepted proposals are stored as versioned snapshots.
 - Projects carry several narrow states (sales, production, payment), not one

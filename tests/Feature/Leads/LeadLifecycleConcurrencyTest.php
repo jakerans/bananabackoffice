@@ -93,15 +93,16 @@ test('a lead returning to the same status still invalidates an earlier dialog', 
     expect($lead->fresh()->follow_up_note)->toBe('New callback.');
 });
 
-test('immediate resume cannot discard a follow-up changed since the page was rendered', function () {
+test('return to working confirmation cannot discard a follow-up rescheduled while it is open', function () {
     $lead = Lead::factory()->at($this->location)->nurture()->assignedTo($this->consultant)->create();
-    $page = Livewire::actingAs($this->consultant)->test('pages::leads.show', ['lead' => $lead]);
+    $page = Livewire::actingAs($this->consultant)->test('pages::leads.show', ['lead' => $lead])->call('openReturnToWorking');
 
     app(MoveLeadToNurture::class)->handle($lead, now()->addMonth()->toDateString(), 'Keep this callback.', $this->owner);
 
     $page->call('resumeWorking')->assertHasErrors('stale');
     expect($lead->fresh()->status)->toBe(LeadStatus::Nurture);
     expect($lead->fresh()->follow_up_note)->toBe('Keep this callback.');
+    expect(LeadStatusChange::query()->count())->toBe(1);
 });
 
 test('stale assignment context is rejected before a lifecycle write', function () {

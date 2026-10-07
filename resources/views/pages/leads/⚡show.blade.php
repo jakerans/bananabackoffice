@@ -232,6 +232,13 @@ new #[Title('Lead')] class extends AddressCapturePage {
         Flux::toast(variant: 'success', text: __('Follow-up set for :date.', ['date' => $this->lead->follow_up_on?->format('M j, Y')]));
     }
 
+    public function openReturnToWorking(): void
+    {
+        $this->authorize('changeStatus', $this->lead);
+
+        $this->startLifecycleDialog('return-to-working');
+    }
+
     /**
      * Bring a Lead in nurture, or a qualified one, back to Working. Whoever has it keeps it.
      */
@@ -239,7 +246,13 @@ new #[Title('Lead')] class extends AddressCapturePage {
     {
         $this->authorize('changeStatus', $this->lead);
 
-        $returnLeadToWorking->handle($this->lead, Auth::user(), $this->pageLifecycleVersion);
+        if ($this->lifecycleHasChangedSinceTheDialogOpened('return-to-working')) {
+            return;
+        }
+
+        $returnLeadToWorking->handle($this->lead, Auth::user(), $this->knownLifecycleVersion);
+
+        Flux::modal('return-to-working')->close();
 
         Flux::toast(variant: 'success', text: __('This lead is being worked again.'));
     }
@@ -272,6 +285,13 @@ new #[Title('Lead')] class extends AddressCapturePage {
         $this->correctingDisqualification = true;
 
         $this->startLifecycleDialog('disqualify-lead');
+    }
+
+    public function updatedDisqualificationReasonId(): void
+    {
+        unset($this->chosenReason);
+
+        $this->resetValidation(['disqualificationReasonId', 'disqualificationNote', 'duplicateOfId']);
     }
 
     /**
@@ -1034,14 +1054,13 @@ new #[Title('Lead')] class extends AddressCapturePage {
                 @endif
 
                 @if ($lead->status === LeadStatus::Nurture)
-                    <flux:button variant="primary" wire:click="resumeWorking" data-test="resume-working">{{ __('Resume working') }}</flux:button>
+                    <flux:button variant="primary" wire:click="openReturnToWorking" data-test="resume-working">{{ __('Resume working') }}</flux:button>
                     <flux:button wire:click="openNurture" data-test="reschedule-follow-up">{{ __('Reschedule follow-up') }}</flux:button>
                 @endif
 
                 @if ($lead->status === LeadStatus::Qualified)
                     <flux:button
-                        wire:click="resumeWorking"
-                        wire:confirm="{{ __('Return this lead to working? It will no longer count as qualified now, though it stays on record as having been qualified.') }}"
+                        wire:click="openReturnToWorking"
                         data-test="return-to-working"
                     >
                         {{ __('Return to working') }}
@@ -1689,6 +1708,30 @@ new #[Title('Lead')] class extends AddressCapturePage {
                     @if ($this->qualificationGaps === [])
                         <flux:button type="submit" variant="primary" data-test="qualify-submit">{{ __('Qualify') }}</flux:button>
                     @endif
+                </div>
+            </form>
+        </flux:modal>
+
+        <flux:modal name="return-to-working" class="w-full max-w-lg">
+            <form wire:submit="resumeWorking" class="flex flex-col gap-5">
+                <flux:error name="stale" />
+                <div>
+                    <flux:heading size="lg">{{ __('Return this lead to working?') }}</flux:heading>
+                    <flux:subheading>
+                        @if ($lead->status === LeadStatus::Qualified)
+                            {{ __('It will no longer count as qualified now, though it stays on record as having been qualified. Whoever is assigned keeps it.') }}
+                        @else
+                            {{ __('The scheduled follow-up will clear, and whoever is assigned keeps the lead. The previous follow-up stays in its history.') }}
+                        @endif
+                    </flux:subheading>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost" autofocus>{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="return-to-working-submit">{{ __('Return to working') }}</flux:button>
                 </div>
             </form>
         </flux:modal>

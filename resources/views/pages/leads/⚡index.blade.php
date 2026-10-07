@@ -127,8 +127,8 @@ new #[Title('Leads')] class extends Component {
 
         return [
             self::MINE => Lead::query()->visibleTo($user)->where('assigned_user_id', $user->id)->actionable()->count(),
-            // Only the follow-ups whose date has arrived are waiting on anyone.
-            self::FOLLOW_UPS => $this->followUps(Lead::query()->visibleTo($user))->whereDate('follow_up_on', '<=', Lead::today())->count(),
+            // Match every eligible Follow-ups row, including future dates and search.
+            self::FOLLOW_UPS => $this->followUps(Lead::query()->visibleTo($user))->count(),
             self::UNASSIGNED => $this->canDistribute ? $this->atCurrentLocation(Lead::query()->visibleTo($user))->unassigned()->active()->count() : 0,
             self::UNROUTED => $this->canSeeUnrouted ? Lead::query()->visibleTo($user)->unrouted()->active()->count() : 0,
         ];
@@ -162,9 +162,9 @@ new #[Title('Leads')] class extends Component {
             LeadStatus::tryFrom($this->status) !== null
                 ? $query->where('status', $this->status)
                 : $query->active();
-        }
 
-        $this->applySearch($query);
+            $this->applySearch($query);
+        }
 
         return $query->paginate(25);
     }
@@ -213,6 +213,8 @@ new #[Title('Leads')] class extends Component {
      */
     private function followUps(Builder $query): Builder
     {
+        $this->applySearch($query);
+
         return $query
             ->where('status', LeadStatus::Nurture)
             ->where(function (Builder $query): void {
