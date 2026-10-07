@@ -2,6 +2,7 @@
 
 use App\Actions\Notes\AddNote;
 use App\Actions\Notes\RemoveNote;
+use App\Enums\Permission;
 use App\Models\Account;
 use App\Models\AuditEvent;
 use App\Models\Lead;
@@ -117,17 +118,29 @@ new #[Title('Customer activity & notes')] class extends Component {
     #[Computed]
     public function activity(): LengthAwarePaginator
     {
+        $user = Auth::user();
         $accountType = $this->account->getMorphClass();
         $leadType = (new Lead)->getMorphClass();
         $leadIds = $this->visibleLeadIds();
+        $leadLocationIds = $user->locationsWhere(Permission::ViewLeads)->modelKeys();
+        $seesCentralEvents = $user->hasPermissionAcrossAllLocations(Permission::ViewUnroutedLeads);
 
         $events = AuditEvent::query()
             ->whereIn('action', CustomerActivity::actions())
-            ->where(function (Builder $query) use ($accountType, $leadType, $leadIds): void {
+            ->where(function (Builder $query) use ($accountType, $leadType, $leadIds, $leadLocationIds, $seesCentralEvents): void {
                 $query->where(function (Builder $account) use ($accountType): void {
                     $account->where('subject_type', $accountType)->where('subject_id', $this->account->id);
-                })->orWhere(function (Builder $leads) use ($leadType, $leadIds): void {
-                    $leads->where('subject_type', $leadType)->whereIn('subject_id', $leadIds);
+                })->orWhere(function (Builder $leads) use ($leadType, $leadIds, $leadLocationIds, $seesCentralEvents): void {
+                    $leads
+                        ->where('subject_type', $leadType)
+                        ->whereIn('subject_id', $leadIds)
+                        ->where(function (Builder $eventLocation) use ($leadLocationIds, $seesCentralEvents): void {
+                            $eventLocation->whereIn('location_id', $leadLocationIds);
+
+                            if ($seesCentralEvents) {
+                                $eventLocation->orWhereNull('location_id');
+                            }
+                        });
                 });
             })
             ->with(['location', 'subject'])

@@ -150,6 +150,57 @@ test('activity is a curated chronological feed with provenance and never renders
         ->assertDontSee('Lead inquiry corrected');
 });
 
+test('lead activity is limited by the event location even when the lead is currently visible elsewhere', function () {
+    $lakeview = Location::factory()->create(['name' => 'Lakeview']);
+    $northside = Location::factory()->create(['name' => 'Northside']);
+    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+    $companyWideAgent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
+    $account = Account::factory()->commercial('Transferred Customer')->create();
+    $lead = Lead::factory()->at($lakeview)->from($account)->create();
+
+    AuditEvent::factory()->about($account)->create([
+        'action' => AuditAction::AccountCreated,
+        'actor_name' => 'Customer Recorder',
+    ]);
+    AuditEvent::factory()->about($lead)->create([
+        'action' => AuditAction::LeadUnassigned,
+        'location_id' => $northside->id,
+        'actor_name' => 'Northside Recorder',
+    ]);
+    AuditEvent::factory()->about($lead)->create([
+        'action' => AuditAction::LeadReceived,
+        'location_id' => null,
+        'actor_name' => 'Central Recorder',
+    ]);
+    AuditEvent::factory()->about($lead)->create([
+        'action' => AuditAction::LeadAssigned,
+        'location_id' => $lakeview->id,
+        'actor_name' => 'Lakeview Recorder',
+    ]);
+
+    $locationPage = $this->actingAs($consultant)
+        ->get(route('customers.workspace', $account))
+        ->assertOk()
+        ->assertSee('Customer created')
+        ->assertSee('Lead assigned')
+        ->assertSee('Lakeview Recorder')
+        ->assertDontSee('Lead unassigned')
+        ->assertDontSee('Northside Recorder')
+        ->assertDontSee('Northside')
+        ->assertDontSee('Central Recorder');
+
+    expect(substr_count($locationPage->getContent(), 'data-test="customer-activity-event"'))->toBe(2);
+
+    $companyWidePage = $this->actingAs($companyWideAgent)
+        ->get(route('customers.workspace', $account))
+        ->assertOk()
+        ->assertSee('Northside Recorder')
+        ->assertSee('Central Recorder')
+        ->assertSee('Lakeview Recorder');
+
+    expect(substr_count($companyWidePage->getContent(), 'data-test="customer-activity-event"'))->toBe(4);
+});
+
 test('notes and activity use deterministic newest-first pagination', function () {
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
     $location = Location::factory()->create();
