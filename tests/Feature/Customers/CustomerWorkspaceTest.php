@@ -17,9 +17,11 @@ test('the customer workspace includes only notes and activity from related leads
     $actor = User::factory()->create(['name' => 'Alex Recorder']);
     $account = Account::factory()->commercial('Shared Customer')->create();
     $visible = Lead::factory()->at($lakeview)->from($account)->create();
+    $alsoVisible = Lead::factory()->at($lakeview)->from($account)->create();
     $hidden = Lead::factory()->at($northside)->from($account)->create();
 
     Note::factory()->about($visible)->create(['body' => 'Visible customer note']);
+    Note::factory()->about($alsoVisible)->create(['body' => 'Second visible Lead note']);
     Note::factory()->about($hidden)->create(['body' => 'Northside private note']);
 
     AuditEvent::factory()->about($visible)->create([
@@ -27,6 +29,12 @@ test('the customer workspace includes only notes and activity from related leads
         'actor_name' => $actor->name,
         'location_id' => $lakeview->id,
         'action' => AuditAction::LeadQualified,
+    ]);
+    AuditEvent::factory()->about($alsoVisible)->create([
+        'actor_id' => $actor->id,
+        'actor_name' => $actor->name,
+        'location_id' => $lakeview->id,
+        'action' => AuditAction::LeadWorkStarted,
     ]);
     AuditEvent::factory()->about($hidden)->create([
         'actor_id' => $actor->id,
@@ -39,7 +47,9 @@ test('the customer workspace includes only notes and activity from related leads
         ->get(route('customers.workspace', $account))
         ->assertOk()
         ->assertSee('Visible customer note')
+        ->assertSee('Second visible Lead note')
         ->assertSee('Lead qualified')
+        ->assertSee('Work started')
         ->assertSee('Lakeview')
         ->assertDontSee('Northside private note')
         ->assertDontSee('Lead disqualified')

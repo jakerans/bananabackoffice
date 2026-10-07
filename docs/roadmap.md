@@ -42,13 +42,13 @@ in [review/current.md](review/current.md).
 
 [product-architecture.md](product-architecture.md) is the authority for product
 direction. Jacob approved this planning order on 2026-10-07. Each row requires its
-own reviewed plan and explicit implementation approval; only row 1 has that
-approval.
+own reviewed plan and explicit implementation approval; slices 1 and 2 have now
+received that approval.
 
 | Order | Proposed slice | Product status | Implementation status and boundary |
 | --- | --- | --- | --- |
 | 1 | Five-Center shell alignment | **LOCKED:** Marketing, Sales, Production, Finance and Company; Settings under Company; Color Studio external. | **Approved, built, verified and merged into `main` (2026-10-07).** The current-ID/current-route/access compatibility map is in [navigation-map.md](navigation-map.md). Shell/navigation only; no new workspace behavior or permission expansion. |
-| 2 | Shared Customer Activity and unified Notes | **LOCKED:** shared records, context/provenance/history-preserving Notes, and Activity made from major business events rather than every audit event. | **Order approved; not planned or authorized.** Reuse existing customer, Lead note and audit evidence. Do not expose unrelated records or sensitive finance fields. |
+| 2 | Shared Customer Activity and unified Notes | **LOCKED:** shared records, context/provenance/history-preserving Notes, and Activity made from major business events rather than every audit event. | **Approved, built and verified; integration into `main` authorized (2026-10-07).** Reuses existing customer, Lead note and curated audit evidence; every related Lead, note and event location remains permission-scoped, and no raw audit payload or sensitive finance field is rendered. |
 | 3 | Contact-attempt evidence foundation | **LOCKED:** each attempt is durable evidence with actor, channel, time and outcome; suspicious patterns go to manager review, with no automated punishment. **PENDING:** provider choice. | **Order approved; not planned or authorized.** No provider selection, cadence enforcement or personnel policy is introduced. |
 | 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow. **CONFIGURABLE:** cadence. **PENDING:** scheduler, timezone, retry and failure contracts. | **Order approved; not planned or authorized.** Specify those pending contracts before implementation; do not reinterpret B7 follow-ups as automated nurture. |
 | 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales. **PENDING:** exact Project creation transition and Pending ownership/validity policy. | **Order approved; not planned or authorized.** Contract/design slice only; do not implement Projects or invent the pending rules. |
@@ -64,8 +64,16 @@ not claims that the target UI exists.
 The completed implementation is recorded in
 [navigation-map.md](navigation-map.md). It covers only navigation placement,
 labels, retained route behavior and tests; it does not authorize a permission
-change, workspace feature, B8 or a later slice. Slice 2 requires its own reviewed
-plan and explicit implementation approval.
+change, workspace feature, B8 or a later slice. Slice 2 was separately reviewed
+and approved before the work recorded below.
+
+### Completed slice 2 boundary
+
+The Customer Activity and Notes workspace unifies existing Lead-owned Notes and a
+curated set of B1–B7 customer/Lead business events. It preserves note provenance
+and removal history, reuses existing note actions and policies, and applies current
+customer, related-Lead and event-location access. It adds no project, conversation,
+proposal, payment, production or B8+ behavior and does not authorize slice 3.
 
 ## Starting point (verified 2026-10-04)
 
