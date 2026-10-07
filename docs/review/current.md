@@ -4,9 +4,10 @@ How this file is used: [../collaboration.md](../collaboration.md), "Review hando
 No secrets or customer information belong here.
 
 **Updated:** 2026-10-07 · **Branch:** `checkpoint-slice-1-five-center-navigation`
-**State:** slice 1 implementation and the independent-review correction are built.
-The corrected implementation passed exact-SHA CI. Local browser review remains
-before merge review. It is not merged. B8 and slices 2–5 remain unauthorized.
+**State:** slice 1 implementation and both review corrections are built, independently
+reviewed and browser-verified. Exact-SHA CI passed, and the completed approved work
+is cleared for integration under the standing staging authorization. B8 and slices
+2–5 remain unauthorized.
 
 ## Objective
 
@@ -42,20 +43,25 @@ working URL changed.
 
 - Final full `composer test`: passed Pint, PHPStan and **1,499 tests / 6,486
   assertions**.
-- Focused post-review regression run: **85 tests / 324 assertions**, including
-  shared Leads, Customers, Users & Access, legacy Settings context, and a
-  remembered destination that becomes unauthorized in the new location.
+- Focused final regression run: **56 tests / 192 assertions**, including shared
+  Leads, Customers, Users & Access, location-to-All and All-to-location switches,
+  legacy Settings context, route parameters/query, and a remembered destination
+  that becomes unauthorized in the new location.
 - `npm run build`: passed. The optional Fontaine optimization warning is unchanged
   and non-failing.
 - `git diff --check`: passed after the implementation and handoff updates.
-- Both GitHub jobs passed on corrected implementation SHA
-  `5b8bb9f1745a4a5184f41263c30e3674f980cd3b`: Checks and tests (SQLite), and
-  Migrations and tests (MySQL 8.4), in run `37692600487`.
-- Local Chrome review is blocked because the browser-control transport is closed;
-  the existing Chrome session exposes no DevTools endpoint. No HTTP-only check is
-  being substituted for this required visual review.
+- Both GitHub jobs passed on final implementation SHA
+  `b1e26412988f562385e4eadd5cab8a910184f38f`: Checks and tests (SQLite), and
+  Migrations and tests (MySQL 8.4), in run `37696146601`.
+- Fresh local Chrome review passed: five Centers and separate External Color Studio;
+  nested Settings and permission-gated Finance People & Access; muted unbuilt
+  navigation; Owner, Sales Consultant, role and location scope; dropdown Escape;
+  and the approved shared-context routes.
+- Targeted browser re-review confirmed Marketing `/leads` and `/customers`, Company
+  `/settings/users`, and nearby Sales Workspace `/leads` preserve both URL and active
+  Center from Four Corners to All Locations and back where applicable.
 
-## Review boundary
+## Integration boundary
 
 - Confirm the shell presents five Centers and a separate External group without
   widening authorization or location scope.
@@ -63,16 +69,15 @@ working URL changed.
   route and active-context behavior.
 - Confirm unbuilt target items remain non-interactive and no feature behavior was
   added.
-- In Chrome, review Home grouping; Company and nested Settings; Finance People &
-  Access; Marketing/Sales Leads; each Center's Customers context; role and location
-  scoping; legacy and current location-switch context; and muted unbuilt items.
-- Do not merge until the final local gate, both GitHub jobs and browser review are
-  recorded here. Do not begin B8 or slices 2–5.
+- Merge only this verified branch into `main` and allow its normal automatic staging
+  deployment. Do not begin B8 or slices 2–5, deploy to production, or widen scope.
 
 ## Known limitations and decisions still needed
 
 This slice intentionally builds no Contact Center, Inbox, Workspace, calendar,
 warranty, scorecard or report behavior. No further product or architecture
-decision is needed for this implementation. The only current blocker is access to
-the requested local Chrome control for the required browser review. The next slice
-requires a separate owner-approved plan after this slice is reviewed.
+decision is needed for this implementation. The next slice requires a separate
+owner-approved plan. The unauthorized remembered-context fallback is covered by
+automated tests only: the available Sales Consultant fixture has one location and
+therefore no rendered location selector, and there is no dedicated Finance browser
+fixture. No merge-blocking issue remains for slice 1.
