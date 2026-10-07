@@ -5,7 +5,9 @@ No secrets or customer information belong here.
 
 **Updated:** 2026-10-07 · **Branch:** `checkpoint-b-continuation`
 **Step:** B7 owner-review corrections, decision 56 in [../decisions.md](../decisions.md).
-**State:** ready for owner re-review; local checks and both GitHub jobs pass.
+**State:** implementation, local checks and an independent local Chrome re-review
+pass. Both GitHub jobs pass on the implementation handoff; the final browser-review
+documentation commit is local only because this environment denied the push.
 No merge, deployment, B8 or new architecture work is included.
 
 ## What changed, and why
@@ -42,11 +44,43 @@ decision was needed for this bounded patch.
   6,235 assertions**. SQLite ran the full CI checks. MySQL verified an empty
   **8.4.11** database, applied every migration, ran the full suite, and confirmed
   **40 migrations** were applied by that suite to MySQL.
+- [GitHub run 37670526216](https://github.com/jakerans/bananabackoffice/actions/runs/37670526216)
+  on remote branch HEAD `61e3c2b` before this browser-review handoff: **both SQLite
+  and MySQL 8.4 jobs passed**.
 - `git diff --check`: passed. The implementation is pushed on the checkpoint
   branch; this final handoff update changes documentation only.
 - Automated coverage includes due/future and central callbacks, location/role
   scoping, search, pagination, dialog authorization and stale confirmation,
   no lifecycle write on opening, and validation after changing reasons.
+
+## Independent local Chrome re-review
+
+Completed on 2026-10-07 against `http://backoffice.test` with fictitious local
+data through Jacob's existing Chrome session:
+
+- Follow-ups showed matching badge and row totals for due and future callbacks,
+  current search, zero results and clearing search. Owner scope included the
+  unrouted callback; the Sales Consultant saw and counted only their assigned
+  callback and was refused the unrouted Lead.
+- A second fictitious local Location proved cross-location behavior: the callback
+  disappeared from Four Corners and appeared/counting as Unassigned at the
+  destination, then was returned to central with its callback intact. The temporary
+  Location remains active locally with no Leads or grants; no tracked, staging or
+  production data changed.
+- Return to working and Resume working both opened the styled Flux dialog with no
+  native confirm. Cancel received initial focus; Tab and Shift+Tab never reached a
+  background control (Chrome reports `body` at the native dialog's cycle boundary,
+  then the next key returns to the dialog). Escape and Cancel closed it and restored
+  focus to the triggering button. Confirming both actions retained the assignee;
+  the qualified milestone and callback were restored afterward for the review
+  fixtures.
+- A two-tab reschedule made the open Resume confirmation stale. Confirming it was
+  refused with the stale message, left the Lead in Deferred Follow-up and preserved
+  the newer callback.
+- In both Disqualify and Correct reason, Other's note error disappeared after
+  switching to Duplicate Lead; Duplicate's own validation still failed when no
+  original or explanation was provided; switching back restored Other's required
+  explanation.
 
 ## Owner browser scenarios to re-check
 
@@ -79,13 +113,11 @@ Refresh existing local tabs before testing. Use the existing fictitious B7 Leads
 
 ## Remaining risks and limits
 
-- Jacob's keyboard/focus and visual re-review remains. Automated Livewire tests do
-  not execute the browser's focus handling; the modal uses the installed Flux
-  implementation and the app's existing dialog pattern.
-- The local review dataset originally had only one Location. Cross-location review
-  needs another existing local Location; no Locations or review data were changed
-  by this patch.
 - The earlier B7 reconciliation and its additive lifecycle revision column remain
   prerequisites. Historical stored values are preserved. The guard still covers
   lifecycle mutations rather than every Lead edit.
-- No staging or production commands were run. Stop for owner re-review.
+- The final documentation-only browser handoff is committed locally but could not
+  be pushed: this execution environment denied `git push origin
+  checkpoint-b-continuation` to the configured GitHub remote as sensitive egress.
+  Exact-final-SHA CI therefore has not run.
+- No staging or production commands were run. Stop for the owner's merge decision.
