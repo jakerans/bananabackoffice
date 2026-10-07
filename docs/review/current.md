@@ -33,7 +33,9 @@ and location access, and return safely to the authorized page that opened it.
   human label, authorized record context, location, timestamp and recorded actor.
   Raw before/after values and reasons are never rendered, and note events, field
   corrections, contact/property administration, list changes and unrelated
-  audit sources are excluded.
+  audit sources are excluded. Each Lead event is also filtered by the location
+  where it occurred; central events require the existing company-wide unrouted
+  Lead permission, so a later transfer cannot expose an earlier location's event.
 - Notes and Activity paginate independently, newest first with ID tie-breaking.
   Every subsequent Livewire request rechecks current customer access, and every
   query begins from the currently visible related Leads.
@@ -44,19 +46,20 @@ work is included.
 
 ## Tests and checks
 
-- Final local `composer test`: passed Pint, PHPStan and **1,508 tests / 6,541
+- Final local `composer test`: passed Pint, PHPStan and **1,509 tests / 6,555
   assertions**.
-- Focused workspace suite: **6 tests / 43 assertions**, covering customer and
+- Focused workspace suite: **7 tests / 57 assertions**, covering customer and
   related-Lead allow/deny boundaries, loss of access after page load, note
   provenance/add/removal history, raw audit-value exclusion, curated sources,
-  deterministic chronology and independent pagination, and safe return context.
+  historical event-location and central visibility, deterministic chronology and
+  independent pagination, and safe return context.
 - Adjacent customer and Lead-note regression run: **275 tests / 1,519 assertions**.
 - `npm run build`: passed outside the restricted sandbox. The existing optional
   Fontaine optimization warning remains non-failing.
 - `git diff --check`: passed.
-- GitHub run `37700142152` passed both Checks and tests (SQLite), and Migrations
-  and tests (MySQL 8.4), on implementation SHA
-  `3314efcb1184c7c27036f1340c59715f2d1215a8`.
+- GitHub run `37701314810` passed both Checks and tests (SQLite), and Migrations
+  and tests (MySQL 8.4), on authorization-correction SHA
+  `3202d38e7b263c8f1a0a9e92128265ed43645b64`.
 - Local Chrome review: blocked because this task has no local browser-control
   session exposed. The installed computer-use workflow requires that interface;
   no substitute browser was used or reported as an independent Chrome review.
