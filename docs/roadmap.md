@@ -4,21 +4,23 @@
 
 **Checkpoint A — Secure branded foundation — is approved and merged into `main`
 (2026-10-04).**
-**Current: first reconciled slice implementation review.** The B1–B7 record and
-older unbuilt plan are in [checkpoint-b.md](checkpoint-b.md). Jacob approved the
-five-slice order, plan and bounded implementation for slice 1 on 2026-10-07. Each
-later implementation slice still stops for owner approval and review.
+**Current: first reconciled slice completed.** The B1–B7 record and older unbuilt
+plan are in [checkpoint-b.md](checkpoint-b.md). Jacob approved the five-slice
+order, plan and bounded implementation for slice 1, which was verified and merged
+into `main` on 2026-10-07. Each later implementation slice still stops for owner
+approval and review.
 
 **Steps B1 to B7 are approved and merged into `main` (2026-10-07).** B1 to B6
 were deployed to staging on 2026-10-06; the automatic staging deployment caused
 by the B7 merge was explicitly allowed and is verified separately. See
 "Integration checkpoint" below. **B8 to B12 are not built.**
 
-Slice 1 is the only authorized implementation step after B7. Its five-Center
-navigation compatibility work is built on its review branch and must pass the
-required checks and owner browser review before merge. B8, Projects, production
-readiness, slices 2–5 and other downstream implementation remain unauthorized.
-The older future steps below remain historical planning context.
+Slice 1 is the only completed implementation step after B7. Its five-Center
+navigation compatibility work passed local checks, independent review, browser
+review, SQLite CI and MySQL 8.4 CI before merge; post-merge CI also passed. B8,
+Projects, production readiness, slices 2–5 and other downstream implementation
+remain unauthorized. The older future steps below remain historical planning
+context.
 
 The former launch target of B1 to B9 and production-readiness timing around B7 or
 B8 are historical planning assumptions. They remain useful context but are not
@@ -45,7 +47,7 @@ approval.
 
 | Order | Proposed slice | Product status | Implementation status and boundary |
 | --- | --- | --- | --- |
-| 1 | Five-Center shell alignment | **LOCKED:** Marketing, Sales, Production, Finance and Company; Settings under Company; Color Studio external. | **Implementation approved and built; verification and owner merge review pending.** The current-ID/current-route/access compatibility map is in [navigation-map.md](navigation-map.md). Shell/navigation only; no new workspace behavior or permission expansion. |
+| 1 | Five-Center shell alignment | **LOCKED:** Marketing, Sales, Production, Finance and Company; Settings under Company; Color Studio external. | **Approved, built, verified and merged into `main` (2026-10-07).** The current-ID/current-route/access compatibility map is in [navigation-map.md](navigation-map.md). Shell/navigation only; no new workspace behavior or permission expansion. |
 | 2 | Shared Customer Activity and unified Notes | **LOCKED:** shared records, context/provenance/history-preserving Notes, and Activity made from major business events rather than every audit event. | **Order approved; not planned or authorized.** Reuse existing customer, Lead note and audit evidence. Do not expose unrelated records or sensitive finance fields. |
 | 3 | Contact-attempt evidence foundation | **LOCKED:** each attempt is durable evidence with actor, channel, time and outcome; suspicious patterns go to manager review, with no automated punishment. **PENDING:** provider choice. | **Order approved; not planned or authorized.** No provider selection, cadence enforcement or personnel policy is introduced. |
 | 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow. **CONFIGURABLE:** cadence. **PENDING:** scheduler, timezone, retry and failure contracts. | **Order approved; not planned or authorized.** Specify those pending contracts before implementation; do not reinterpret B7 follow-ups as automated nurture. |
@@ -57,14 +59,13 @@ Production Workspace instead of separate stage/project modules. Customers and
 their related records remain shared across Centers. These locked directions are
 not claims that the target UI exists.
 
-### Slice 1 review boundary
+### Completed slice 1 boundary
 
-Review the bounded implementation against [navigation-map.md](navigation-map.md).
-The approval covers only navigation placement, labels, retained route behavior and
-tests; it does not authorize a permission change, workspace feature, B8 or a later
-slice. The separate standing staging authorization in
-[collaboration.md](collaboration.md) applies only after this implementation is
-completed and verified.
+The completed implementation is recorded in
+[navigation-map.md](navigation-map.md). It covers only navigation placement,
+labels, retained route behavior and tests; it does not authorize a permission
+change, workspace feature, B8 or a later slice. Slice 2 requires its own reviewed
+plan and explicit implementation approval.
 
 ## Starting point (verified 2026-10-04)
 

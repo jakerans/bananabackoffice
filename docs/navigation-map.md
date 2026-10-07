@@ -3,8 +3,8 @@
 Status: **As-built navigation through B7 is approved and live.** The five-slice
 roadmap order and implementation of its first slice are owner-approved. The target
 five-Center structure below is **LOCKED product direction**; the compatibility
-implementation is built on `checkpoint-slice-1-five-center-navigation` and awaits
-final verification and owner merge review.
+implementation passed local checks, independent review, browser review, SQLite CI
+and MySQL 8.4 CI, and was merged into `main` on 2026-10-07.
 
 ## Canonical target and compatibility migration
 
