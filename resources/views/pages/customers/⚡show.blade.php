@@ -78,6 +78,15 @@ new #[Title('Customer')] class extends AddressCapturePage {
 
     public bool $showRemoved = false;
 
+    #[Locked]
+    public ?int $pendingContactLinkId = null;
+
+    #[Locked]
+    public string $pendingContactName = '';
+
+    #[Locked]
+    public ?int $pendingPropertyId = null;
+
     public string $accountType = '';
 
     public string $accountBusinessName = '';
@@ -141,6 +150,20 @@ new #[Title('Customer')] class extends AddressCapturePage {
     /**
      * Archive the customer. A company-wide management action.
      */
+    public function openArchiveAccount(): void
+    {
+        $this->authorize('archive', $this->account);
+
+        Flux::modal('archive-customer-confirmation')->show();
+    }
+
+    public function confirmArchiveAccount(ArchiveAccount $archiveAccount): void
+    {
+        $this->archiveAccount($archiveAccount);
+
+        Flux::modal('archive-customer-confirmation')->close();
+    }
+
     public function archiveAccount(ArchiveAccount $archiveAccount): void
     {
         $this->authorize('archive', $this->account);
@@ -317,6 +340,26 @@ new #[Title('Customer')] class extends AddressCapturePage {
     /**
      * Remove a person from this customer. A company-wide management action.
      */
+    public function openRemoveContact(int $linkId): void
+    {
+        $this->authorize('archive', $this->account);
+
+        $link = $this->currentLink($linkId)->loadMissing('contact');
+
+        $this->pendingContactLinkId = $link->id;
+        $this->pendingContactName = $link->contact?->fullName() ?? __('this person');
+
+        Flux::modal('remove-contact-confirmation')->show();
+    }
+
+    public function confirmRemoveContact(RemoveContactFromAccount $removeContactFromAccount): void
+    {
+        $this->removeContact($this->pendingContactLinkId ?? abort(404), $removeContactFromAccount);
+
+        $this->reset('pendingContactLinkId', 'pendingContactName');
+        Flux::modal('remove-contact-confirmation')->close();
+    }
+
     public function removeContact(int $linkId, RemoveContactFromAccount $removeContactFromAccount): void
     {
         $this->authorize('archive', $this->account);
@@ -401,6 +444,23 @@ new #[Title('Customer')] class extends AddressCapturePage {
     /**
      * Archive a property. A company-wide management action.
      */
+    public function openArchiveProperty(int $propertyId): void
+    {
+        $this->authorize('archive', $this->account);
+
+        $this->pendingPropertyId = $this->currentProperty($propertyId)->id;
+
+        Flux::modal('archive-property-confirmation')->show();
+    }
+
+    public function confirmArchiveProperty(ArchiveProperty $archiveProperty): void
+    {
+        $this->archiveProperty($this->pendingPropertyId ?? abort(404), $archiveProperty);
+
+        $this->reset('pendingPropertyId');
+        Flux::modal('archive-property-confirmation')->close();
+    }
+
     public function archiveProperty(int $propertyId, ArchiveProperty $archiveProperty): void
     {
         $this->authorize('archive', $this->account);
@@ -774,8 +834,7 @@ new #[Title('Customer')] class extends AddressCapturePage {
                     <flux:button
                         size="sm"
                         variant="ghost"
-                        wire:click="archiveAccount"
-                        wire:confirm="{{ __('Archive this customer? It is hidden from lists and choices, and can be restored later.') }}"
+                        wire:click="openArchiveAccount"
                         data-test="archive-customer"
                     >
                         {{ __('Archive customer') }}
@@ -884,8 +943,7 @@ new #[Title('Customer')] class extends AddressCapturePage {
                                         <flux:button
                                             size="xs"
                                             variant="ghost"
-                                            wire:click="removeContact({{ $link->id }})"
-                                            wire:confirm="{{ __('Remove :name from this customer? They stay a contact of any other customer.', ['name' => $contact->fullName() ?? __('this person')]) }}"
+                                            wire:click="openRemoveContact({{ $link->id }})"
                                             data-test="remove-contact"
                                         >
                                             {{ __('Remove') }}
@@ -964,8 +1022,7 @@ new #[Title('Customer')] class extends AddressCapturePage {
                                         <flux:button
                                             size="xs"
                                             variant="ghost"
-                                            wire:click="archiveProperty({{ $property->id }})"
-                                            wire:confirm="{{ __('Archive this property? It can be restored later.') }}"
+                                            wire:click="openArchiveProperty({{ $property->id }})"
                                             data-test="archive-property"
                                         >
                                             {{ __('Archive') }}
@@ -1259,5 +1316,31 @@ new #[Title('Customer')] class extends AddressCapturePage {
                 </div>
             </form>
         </flux:modal>
+    @endcan
+
+    @can('archive', $account)
+        <x-confirmation-modal
+            name="archive-customer-confirmation"
+            :title="__('Archive this customer?')"
+            :description="__('It is hidden from lists and choices, and can be restored later.')"
+            action="confirmArchiveAccount"
+            :confirm-label="__('Archive customer')"
+        />
+
+        <x-confirmation-modal
+            name="remove-contact-confirmation"
+            :title="__('Remove :name from this customer?', ['name' => $pendingContactName ?: __('this person')])"
+            :description="__('They stay a contact of any other customer.')"
+            action="confirmRemoveContact"
+            :confirm-label="__('Remove')"
+        />
+
+        <x-confirmation-modal
+            name="archive-property-confirmation"
+            :title="__('Archive this property?')"
+            :description="__('It is removed from current choices and can be restored later.')"
+            action="confirmArchiveProperty"
+            :confirm-label="__('Archive property')"
+        />
     @endcan
 </section>

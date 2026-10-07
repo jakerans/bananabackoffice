@@ -36,6 +36,15 @@ new #[Title('Lead & Sales Lists')] class extends Component {
 
     public string $editingCategory = '';
 
+    #[Locked]
+    public ?int $pendingDeactivationId = null;
+
+    #[Locked]
+    public string $pendingDeactivationName = '';
+
+    #[Locked]
+    public string $pendingDeactivationList = '';
+
     /**
      * Mount the component.
      */
@@ -211,6 +220,35 @@ new #[Title('Lead & Sales Lists')] class extends Component {
     }
 
     /**
+     * Open the confirmation dialog for a choice that is still in the current list.
+     */
+    public function openDeactivate(int $optionId): void
+    {
+        $this->authorize(Permission::ManageLeadSalesLists);
+
+        $option = $this->option($optionId);
+
+        $this->pendingDeactivationId = $option->id;
+        $this->pendingDeactivationName = $option->name;
+        $this->pendingDeactivationList = $this->currentList->value;
+
+        Flux::modal('deactivate-option-confirmation')->show();
+    }
+
+    /**
+     * Confirm deactivation after resolving the locked target again.
+     */
+    public function confirmDeactivate(SetListOptionActive $setListOptionActive): void
+    {
+        abort_unless($this->pendingDeactivationList === $this->currentList->value, 404);
+
+        $this->deactivate((int) $this->pendingDeactivationId, $setListOptionActive);
+
+        $this->reset('pendingDeactivationId', 'pendingDeactivationName', 'pendingDeactivationList');
+        Flux::modal('deactivate-option-confirmation')->close();
+    }
+
+    /**
      * Offer a deactivated choice for new records again.
      */
     public function reactivate(int $optionId, SetListOptionActive $setListOptionActive): void
@@ -379,8 +417,7 @@ new #[Title('Lead & Sales Lists')] class extends Component {
                                 @elseif ($option->is_active)
                                     <flux:button
                                         size="sm"
-                                        wire:click="deactivate({{ $option->id }})"
-                                        wire:confirm="{{ __('Deactivate :name? Staff will no longer be able to choose it. Records that already use it keep it.', ['name' => $option->name]) }}"
+                                        wire:click="openDeactivate({{ $option->id }})"
                                     >
                                         {{ __('Deactivate') }}
                                     </flux:button>
@@ -452,5 +489,13 @@ new #[Title('Lead & Sales Lists')] class extends Component {
             </div>
         </form>
     </flux:modal>
+
+    <x-confirmation-modal
+        name="deactivate-option-confirmation"
+        :title="__('Deactivate :name?', ['name' => $pendingDeactivationName])"
+        :description="__('Staff will no longer be able to choose it. Records that already use it keep it.')"
+        action="confirmDeactivate"
+        :confirm-label="__('Deactivate')"
+    />
     @endif
 </section>

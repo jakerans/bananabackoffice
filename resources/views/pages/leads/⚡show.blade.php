@@ -91,6 +91,9 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
     public string $noteBody = '';
 
+    #[Locked]
+    public ?int $pendingNoteId = null;
+
     /** The lifecycle state shown when the dialog opened, retained across requests. */
     #[Locked]
     public string $knownStatus = '';
@@ -690,6 +693,20 @@ new #[Title('Lead')] class extends AddressCapturePage {
         Flux::toast(variant: 'success', text: __('This lead is no longer linked to a customer.'));
     }
 
+    public function openUnlinkCustomer(): void
+    {
+        $this->authorize('resolveCustomer', $this->lead);
+
+        Flux::modal('unlink-customer-confirmation')->show();
+    }
+
+    public function confirmUnlinkCustomer(UnlinkLeadCustomer $unlinkLeadCustomer): void
+    {
+        $this->unlinkCustomer($unlinkLeadCustomer);
+
+        Flux::modal('unlink-customer-confirmation')->close();
+    }
+
     /**
      * Add a note to the Lead. It changes nothing else about the Lead.
      */
@@ -715,6 +732,25 @@ new #[Title('Lead')] class extends AddressCapturePage {
     /**
      * Remove a note from view. Its author may, and so may someone who manages notes here.
      */
+    public function openRemoveNote(int $noteId): void
+    {
+        $note = $this->lead->notes()->findOrFail($noteId)->setRelation('notable', $this->lead);
+
+        $this->authorize('remove', $note);
+
+        $this->pendingNoteId = $note->id;
+
+        Flux::modal('remove-note-confirmation')->show();
+    }
+
+    public function confirmRemoveNote(RemoveNote $removeNote): void
+    {
+        $this->removeNote($this->pendingNoteId ?? abort(404), $removeNote);
+
+        $this->reset('pendingNoteId');
+        Flux::modal('remove-note-confirmation')->close();
+    }
+
     public function removeNote(int $noteId, RemoveNote $removeNote): void
     {
         // Only a note that belongs to this Lead can be reached from this page.
@@ -1276,8 +1312,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
                                     <flux:button
                                         size="xs"
                                         variant="ghost"
-                                        wire:click="removeNote({{ $note->id }})"
-                                        wire:confirm="{{ __('Remove this note? It will no longer be shown on the lead.') }}"
+                                        wire:click="openRemoveNote({{ $note->id }})"
                                         data-test="remove-note"
                                     >
                                         {{ __('Remove') }}
@@ -1335,8 +1370,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
                             <flux:button
                                 size="sm"
                                 variant="ghost"
-                                wire:click="unlinkCustomer"
-                                wire:confirm="{{ __('Remove this lead\'s link to the customer? The customer and the inquiry are both kept as they are.') }}"
+                                wire:click="openUnlinkCustomer"
                                 data-test="unlink-customer"
                             >
                                 {{ __('Remove link') }}
@@ -1867,4 +1901,20 @@ new #[Title('Lead')] class extends AddressCapturePage {
             </form>
         </flux:modal>
     @endcan
+
+    <x-confirmation-modal
+        name="remove-note-confirmation"
+        :title="__('Remove this note?')"
+        :description="__('It will no longer be shown on the lead. The note is kept in history.')"
+        action="confirmRemoveNote"
+        :confirm-label="__('Remove note')"
+    />
+
+    <x-confirmation-modal
+        name="unlink-customer-confirmation"
+        :title="__('Remove this lead\'s link to the customer?')"
+        :description="__('The customer and the inquiry are both kept as they are.')"
+        action="confirmUnlinkCustomer"
+        :confirm-label="__('Remove link')"
+    />
 </section>

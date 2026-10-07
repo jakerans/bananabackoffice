@@ -1307,6 +1307,31 @@ provide authorization to start them. Stop for owner review; do not merge or depl
 
 No new architecture, B8, merge or deployment is authorized.
 
+## 57. Accessible application confirmation dialogs (2026-10-07)
+
+**Approved by Jacob.** Replace every application-triggered browser-native alert,
+confirmation or prompt with a consistent accessible styled in-app dialog. The
+current inventory contains nine native confirmations and no production alerts or
+prompts: customer archive, customer-contact removal, property archive, Lead-note
+removal, Lead-customer unlink, list-option deactivation, Location deactivation,
+staff deactivation and access revocation.
+
+- Use the shared Flux confirmation component. The safe Cancel action receives
+  initial focus, Tab and Shift+Tab remain inside the dialog, Escape and Cancel
+  dismiss without mutation, and focus returns to the trigger.
+- Preserve every existing authorization, validation, audit and domain-action
+  semantic. Opening a dialog resolves and authorizes the target but changes
+  nothing. Confirmation resolves and authorizes the locked target again before
+  calling the existing action, so stale or substituted records are not trusted.
+- Keep the standard durable in `.ai/guidelines/collaboration.md` and
+  `docs/design-system.md`, and enforce the native-dialog prohibition with a
+  regression test.
+- Browser- and operating-system-owned permission dialogs are outside this rule;
+  they are not application UI and must not be bypassed.
+
+This is a bounded owner-review extension. It does not authorize B8, new product
+behavior, dependency changes, merge, deployment, or staging/production mutation.
+
 ## Future decisions already constrained by the brief- Estimates hold any number of named, ordered options. No fixed tiers.
 - Accepted proposals are stored as versioned snapshots.
 - Projects carry several narrow states (sales, production, payment), not one

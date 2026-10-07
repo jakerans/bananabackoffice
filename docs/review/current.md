@@ -4,10 +4,12 @@ How this file is used: [../collaboration.md](../collaboration.md), "Review hando
 No secrets or customer information belong here.
 
 **Updated:** 2026-10-07 · **Branch:** `checkpoint-b-continuation`
-**Step:** B7 owner-review corrections, decision 56 in [../decisions.md](../decisions.md).
-**State:** implementation, local checks and an independent local Chrome re-review
-pass. Both GitHub jobs pass on the implementation handoff; the final browser-review
-documentation commit is local only because this environment denied the push.
+**Step:** B7 owner-review corrections and the bounded application-confirmation
+follow-up, decisions 56 and 57 in [../decisions.md](../decisions.md).
+**State:** implementation, local checks and local Chrome re-review pass. Both
+GitHub jobs pass on the earlier B7 implementation handoff. The confirmation-dialog
+follow-up is local only because this environment denies the push, so its exact
+final SHA has not run in GitHub Actions.
 No merge, deployment, B8 or new architecture work is included.
 
 ## What changed, and why
@@ -32,13 +34,35 @@ Canonical behavior: [../checkpoint-b.md](../checkpoint-b.md). No schema, domain
 rules, permissions or audit actions were changed. No deviation or new stakeholder
 decision was needed for this bounded patch.
 
+### Application confirmation follow-up
+
+- The complete production inventory had nine browser-native confirmations and no
+  application `alert()` or `prompt()` calls. Customer archive, customer-contact
+  removal, property archive, Lead-note removal, Lead-customer unlink,
+  list-option deactivation, Location deactivation, staff deactivation and access
+  revocation now use one shared styled Flux confirmation component.
+- Cancel receives initial focus. The styled dialog keeps keyboard focus inside,
+  Escape and Cancel dismiss without mutation, focus returns to the trigger, and
+  the destructive action is explicit. No system- or browser-owned permission
+  prompt is bypassed.
+- Each opening action resolves and authorizes the target without changing it.
+  Confirmation resolves and authorizes the locked record again, then calls the
+  existing domain action. The list dialog also locks the list identity, so a
+  crafted list switch cannot substitute a same-ID option from another table.
+- The durable prohibition on application-native confirms, alerts and prompts is
+  recorded in `.ai/guidelines/collaboration.md`, [../design-system.md](../design-system.md)
+  and decision 57. A repository-wide regression test enforces it.
+
 ## Checks
 
 - Targeted B7 follow-up, qualification, disqualification and concurrency tests:
   **141 passed / 872 assertions**.
+- Confirmation-dialog and affected customer, Lead, list, Location and access
+  suites: **277 passed / 1,529 assertions**. The final cross-list target guard and
+  its nearby list coverage pass with **80 tests / 373 assertions**.
 - Dirty PHP formatting: `php vendor/bin/pint --dirty --format agent` passed.
-- Full local `composer ci:check` (invokes `composer test`): **passed**, including
-  Pint, PHPStan and **1,444 tests / 6,235 assertions**.
+- Final local `composer test`: **passed**, including Pint, PHPStan and **1,451
+  tests / 6,388 assertions**.
 - [GitHub run 37669939744](https://github.com/jakerans/bananabackoffice/actions/runs/37669939744)
   on implementation commit `d1e60e8`: **both jobs passed**, each with **1,444 tests /
   6,235 assertions**. SQLite ran the full CI checks. MySQL verified an empty
@@ -51,7 +75,9 @@ decision was needed for this bounded patch.
   branch; this final handoff update changes documentation only.
 - Automated coverage includes due/future and central callbacks, location/role
   scoping, search, pagination, dialog authorization and stale confirmation,
-  no lifecycle write on opening, and validation after changing reasons.
+  no lifecycle write on opening, validation after changing reasons, every new
+  confirmation wrapper's open/confirm boundary, cross-list target substitution,
+  and a source inventory that rejects native application dialogs.
 
 ## Independent local Chrome re-review
 
@@ -82,6 +108,28 @@ data through Jacob's existing Chrome session:
   original or explanation was provided; switching back restored Other's required
   explanation.
 
+### Application-confirmation Chrome re-review
+
+Completed in a fresh tab in Jacob's connected local Chrome session after reloading
+the current code:
+
+- Opened every one of the nine affected actions. Each displayed the styled Flux
+  dialog with the exact target and consequence; `getJsDialog()` returned no native
+  JavaScript dialog for every flow. Cancel was initially focused.
+- On the shared Location dialog, Tab moved from Cancel to the destructive action,
+  Shift+Tab returned to Cancel, Escape closed the dialog, and focus returned to
+  the Deactivate trigger. Cancel on the other flows likewise changed nothing.
+- The empty `B7 Review Location (Fictitious)` is visibly inactive with zero ZIP
+  codes and zero access grants. Four Corners remained active; no production,
+  staging or unrelated local record was changed.
+- A minimal local note, `Confirmation dialog browser review fixture (fictitious).`,
+  was added to Lead 4 because no removable note existed. Its removal dialog was
+  reviewed and cancelled. The note remains visible; no delete-like browser action
+  was taken without action-time confirmation.
+- The only captured console error was an extension message-channel closure from
+  the earlier stale tab, not an application exception. A fresh Chrome tab remained
+  connected throughout the completed review.
+
 ## Owner browser scenarios to re-check
 
 Refresh existing local tabs before testing. Use the existing fictitious B7 Leads.
@@ -110,14 +158,25 @@ Refresh existing local tabs before testing. Use the existing fictitious B7 Leads
    appear. Submit without an original or explanation: its own validation must still
    fail. Switch back to Other and confirm it still requires an explanation. Also
    check the same reason switching in Correct reason as Owner.
+6. **Application confirmations:** open customer archive, contact removal, property
+   archive, note removal, Lead-customer unlink, list-option deactivation, Location
+   deactivation, staff deactivation and access revocation. Each must use the styled
+   dialog, initially focus Cancel, contain Tab/Shift+Tab, dismiss on Escape/Cancel,
+   restore trigger focus and change nothing on dismissal. Confirm only a disposable
+   fictitious target and verify the existing action semantics and audit entry.
 
 ## Remaining risks and limits
 
 - The earlier B7 reconciliation and its additive lifecycle revision column remain
   prerequisites. Historical stored values are preserved. The guard still covers
   lifecycle mutations rather than every Lead edit.
-- The final documentation-only browser handoff is committed locally but could not
-  be pushed: this execution environment denied `git push origin
+- The earlier documentation-only browser handoff and this confirmation follow-up
+  are local only. This execution environment denied `git push origin
   checkpoint-b-continuation` to the configured GitHub remote as sensitive egress.
-  Exact-final-SHA CI therefore has not run.
+  Exact-final-SHA CI therefore has not run and must run before an owner merge
+  decision.
+- Jacob requested a comparison with the original ChatGPT Backoffice conversation.
+  The connected Chrome inventory showed that tab, but access was policy-denied
+  because it could expose unrelated private conversation data. It was not read and
+  no message was posted.
 - No staging or production commands were run. Stop for the owner's merge decision.

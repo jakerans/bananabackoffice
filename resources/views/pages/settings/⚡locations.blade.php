@@ -26,6 +26,12 @@ new #[Title('Locations')] class extends Component {
     #[Locked]
     public ?int $serviceAreaLocationId = null;
 
+    #[Locked]
+    public ?int $pendingDeactivationId = null;
+
+    #[Locked]
+    public string $pendingDeactivationName = '';
+
     /** The location's ZIP codes as typed: one per line, or separated by commas or spaces. */
     public string $postalCodes = '';
 
@@ -223,6 +229,33 @@ new #[Title('Locations')] class extends Component {
     }
 
     /**
+     * Open the confirmation dialog after resolving and authorizing the location.
+     */
+    public function openDeactivate(int $locationId): void
+    {
+        $location = Location::query()->findOrFail($locationId);
+
+        $this->authorize('update', $location);
+
+        $this->pendingDeactivationId = $location->id;
+        $this->pendingDeactivationName = $location->name;
+        $this->resetValidation('deactivation');
+
+        Flux::modal('deactivate-location-confirmation')->show();
+    }
+
+    /**
+     * Confirm deactivation after resolving and authorizing the locked target again.
+     */
+    public function confirmDeactivateLocation(DeactivateLocation $deactivateLocation): void
+    {
+        $this->deactivate((int) $this->pendingDeactivationId, $deactivateLocation);
+
+        $this->reset('pendingDeactivationId', 'pendingDeactivationName');
+        Flux::modal('deactivate-location-confirmation')->close();
+    }
+
+    /**
      * Bring a deactivated location back into operation.
      */
     public function reactivate(int $locationId, RecordAuditEvent $recordAuditEvent): void
@@ -320,8 +353,7 @@ new #[Title('Locations')] class extends Component {
                                     @if ($location->is_active)
                                         <flux:button
                                             size="sm"
-                                            wire:click="deactivate({{ $location->id }})"
-                                            wire:confirm="{{ __('Deactivate :name? Staff will no longer be able to work in this location until it is reactivated.', ['name' => $location->name]) }}"
+                                            wire:click="openDeactivate({{ $location->id }})"
                                         >
                                             {{ __('Deactivate') }}
                                         </flux:button>
@@ -410,4 +442,13 @@ new #[Title('Locations')] class extends Component {
             </div>
         </form>
     </flux:modal>
+
+    <x-confirmation-modal
+        name="deactivate-location-confirmation"
+        :title="__('Deactivate :name?', ['name' => $pendingDeactivationName])"
+        :description="__('Staff will no longer be able to work in this location until it is reactivated.')"
+        action="confirmDeactivateLocation"
+        :confirm-label="__('Deactivate')"
+        error="deactivation"
+    />
 </section>
