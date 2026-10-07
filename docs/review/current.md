@@ -4,8 +4,8 @@ How this file is used: [../collaboration.md](../collaboration.md), "Review hando
 No secrets or customer information belong here.
 
 **Updated:** 2026-10-07 · **Branch:** `checkpoint-slice-2-customer-activity-notes`
-**State:** approved slice 2 is built and locally verified. GitHub SQLite/MySQL
-checks and the required independent local Chrome review remain before merge.
+**State:** approved slice 2 is built, locally verified and green in GitHub SQLite
+and MySQL 8.4. The required independent local Chrome review remains before merge.
 
 ## Objective
 
@@ -54,7 +54,9 @@ work is included.
 - `npm run build`: passed outside the restricted sandbox. The existing optional
   Fontaine optimization warning remains non-failing.
 - `git diff --check`: passed.
-- GitHub SQLite and MySQL 8.4 checks: pending the branch push.
+- GitHub run `37700142152` passed both Checks and tests (SQLite), and Migrations
+  and tests (MySQL 8.4), on implementation SHA
+  `3314efcb1184c7c27036f1340c59715f2d1215a8`.
 - Local Chrome review: blocked because this task has no local browser-control
   session exposed. The installed computer-use workflow requires that interface;
   no substitute browser was used or reported as an independent Chrome review.
@@ -97,4 +99,4 @@ Use only fictitious local data at `http://backoffice.test`.
 The slice intentionally does not add projects, conversations, proposals,
 production, payments or any B8+ source that is not already represented by approved
 B1–B7 records. There is no product or architecture decision still needed. Merge is
-blocked only on exact-SHA GitHub checks and the independent local Chrome review.
+blocked only on the independent local Chrome review.
