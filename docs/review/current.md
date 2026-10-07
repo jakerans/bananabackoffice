@@ -5,7 +5,7 @@ No secrets or customer information belong here.
 
 **Updated:** 2026-10-07 · **Branch:** `checkpoint-b-continuation`
 **Step:** B7 owner-review corrections, decision 56 in [../decisions.md](../decisions.md).
-**State:** implementation and local checks complete; GitHub checks pending.
+**State:** ready for owner re-review; local checks and both GitHub jobs pass.
 No merge, deployment, B8 or new architecture work is included.
 
 ## What changed, and why
@@ -37,7 +37,13 @@ decision was needed for this bounded patch.
 - Dirty PHP formatting: `php vendor/bin/pint --dirty --format agent` passed.
 - Full local `composer ci:check` (invokes `composer test`): **passed**, including
   Pint, PHPStan and **1,444 tests / 6,235 assertions**.
-- `git diff --check`: passed. GitHub SQLite / MySQL 8.4 results pending push.
+- [GitHub run 37669939744](https://github.com/jakerans/bananabackoffice/actions/runs/37669939744)
+  on implementation commit `d1e60e8`: **both jobs passed**, each with **1,444 tests /
+  6,235 assertions**. SQLite ran the full CI checks. MySQL verified an empty
+  **8.4.11** database, applied every migration, ran the full suite, and confirmed
+  **40 migrations** were applied by that suite to MySQL.
+- `git diff --check`: passed. The implementation is pushed on the checkpoint
+  branch; this final handoff update changes documentation only.
 - Automated coverage includes due/future and central callbacks, location/role
   scoping, search, pagination, dialog authorization and stale confirmation,
   no lifecycle write on opening, and validation after changing reasons.
