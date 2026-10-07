@@ -3,85 +3,96 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-07 · **Branch:** `checkpoint-slice-1-five-center-navigation`
-**State:** slice 1 implementation and both review corrections are built,
-independently reviewed, browser-verified and merged into `main` under the standing
-staging authorization. Post-merge CI passed. B8 and slices 2–5 remain unauthorized.
+**Updated:** 2026-10-07 · **Branch:** `checkpoint-slice-2-customer-activity-notes`
+**State:** approved slice 2 is built, independently reviewed, browser-verified and
+green in GitHub SQLite and MySQL 8.4. Integration into `main` and its normal
+automatic staging deployment are authorized; production and slice 3 are not.
 
 ## Objective
 
-Review the bounded navigation-only implementation approved by Jacob: exactly five
-Centers, Settings under Company, and Color Studio as a separately grouped external
-destination, while retaining all working URLs, stable IDs, gates, location scope
-and active-context behavior.
+Review the bounded canonical slice 2: one full-page customer workspace with a
+curated major-business-event Activity timeline and context-linked Notes unified
+across the customer's currently authorized Leads. Preserve note history and
+provenance, use existing B1–B7 records/actions, enforce current related-record
+and location access, and return safely to the authorized page that opened it.
 
 ## What changed
 
-- The Center registry now exposes Marketing, Sales, Production, Finance and
-  Company only. Color Studio remains available through the full destination
-  collection and appears in a visually separate External group.
-- Company contains the approved target navigation, including direct Locations and
-  nested Settings. `/settings` uses a small permission-aware landing action and
-  retains the existing Locations, Users and Access, then Lead & Sales Lists order.
-- Marketing, Sales, Production and Finance use the approved labels, hierarchy and
-  muted unbuilt target items. Shared Leads, Customers and Users & Access keep their
-  working routes and context-sensitive active navigation.
-- Finance → People & Access uses the existing `settings.users.manage` gate. The
-  Finance role receives no new permission and cannot see or open it by default.
-- A legacy `backoffice.center=settings` session value maps to Company. Existing
-  five-Center and Color Studio context values remain valid.
-- Location switching now selects from every authorized destination that owns the
-  previous route. It preserves the remembered shared Leads, Customers or Users &
-  Access context only when that destination is still authorized in the new
-  location, otherwise it uses the first authorized context or Home.
+- Added `/customers/{account}/workspace`, reachable from both customer detail and
+  a linked Lead. The Back link accepts only an authorized related Lead context or
+  the current customer; arbitrary return URLs are never accepted.
+- Notes from the customer's currently visible Leads are unified newest-first.
+  Every note keeps and displays its original Lead context, location, author and
+  timestamp. Removed notes remain as provenance tombstones while their removed
+  text stays out of the rendered page.
+- Adding and removing notes reuse the existing `AddNote`, `RemoveNote` and
+  `NotePolicy` behavior. A note context is selected from only the related Leads
+  where the current viewer may write; every action re-resolves and re-authorizes
+  that Lead or note.
+- Activity reads the immutable audit record through a fixed allowlist of major
+  customer and Lead lifecycle, routing and ownership events. It renders only a
+  human label, authorized record context, location, timestamp and recorded actor.
+  Raw before/after values and reasons are never rendered, and note events, field
+  corrections, contact/property administration, list changes and unrelated
+  audit sources are excluded. Each Lead event is also filtered by the location
+  where it occurred; central events require the existing company-wide unrouted
+  Lead permission, so a later transfer cannot expose an earlier location's event.
+- Notes and Activity paginate independently, newest first with ID tie-breaking.
+  Every subsequent Livewire request rechecks current customer access, and every
+  query begins from the currently visible related Leads.
 
-No database, permission enum, role grant, policy, domain action, dependency or
-working URL changed.
+No migration, dependency, role grant, permission enum, policy, domain action,
+audit event, existing note record or existing URL changed. No B8 or later slice
+work is included.
 
 ## Tests and checks
 
-- Final full `composer test`: passed Pint, PHPStan and **1,499 tests / 6,486
+- Final local `composer test`: passed Pint, PHPStan and **1,509 tests / 6,555
   assertions**.
-- Focused final regression run: **56 tests / 192 assertions**, including shared
-  Leads, Customers, Users & Access, location-to-All and All-to-location switches,
-  legacy Settings context, route parameters/query, and a remembered destination
-  that becomes unauthorized in the new location.
-- `npm run build`: passed. The optional Fontaine optimization warning is unchanged
-  and non-failing.
-- `git diff --check`: passed after the implementation and handoff updates.
-- Both GitHub jobs passed on final implementation SHA
-  `b1e26412988f562385e4eadd5cab8a910184f38f`: Checks and tests (SQLite), and
-  Migrations and tests (MySQL 8.4), in run `37696146601`.
-- Both GitHub jobs passed after the application merge at
-  `4896efbb61948d62791f6e89f89c9b251909c312`, in run `37697321579`.
-- The staging `/up` endpoint returned HTTP 200 after the merge. Forge exposes no
-  commit-specific deployment record through this repository's GitHub metadata, so
-  the health check proves availability but not a deployment SHA.
-- Fresh local Chrome review passed: five Centers and separate External Color Studio;
-  nested Settings and permission-gated Finance People & Access; muted unbuilt
-  navigation; Owner, Sales Consultant, role and location scope; dropdown Escape;
-  and the approved shared-context routes.
-- Targeted browser re-review confirmed Marketing `/leads` and `/customers`, Company
-  `/settings/users`, and nearby Sales Workspace `/leads` preserve both URL and active
-  Center from Four Corners to All Locations and back where applicable.
+- Focused workspace suite: **7 tests / 59 assertions**, covering customer and
+  related-Lead allow/deny boundaries, loss of access after page load, note
+  aggregation across multiple authorized Leads, provenance/add/removal history,
+  raw audit-value exclusion, curated sources, historical event-location and
+  central visibility, deterministic chronology and independent pagination, and
+  safe return context.
+- Adjacent customer and Lead-note regression run: **275 tests / 1,519 assertions**.
+- `npm run build`: passed outside the restricted sandbox. The existing optional
+  Fontaine optimization warning remains non-failing.
+- `git diff --check`: passed.
+- GitHub run `37701752970` passed both Checks and tests (SQLite), and Migrations
+  and tests (MySQL 8.4), on reviewed feature SHA
+  `6b7176512b36c66a32368e31f0b717f8c66233db`.
+- Independent local Chrome review passed on that SHA for customer and linked-Lead
+  entry/back navigation, the separate Notes and Activity histories, empty-note
+  validation, an authorized fictitious note add and its original-Lead provenance,
+  remove-modal Escape/Cancel/focus/no-deletion behavior, curated newest-first
+  Activity and actor/impersonation display, sensitive payload exclusion, Owner and
+  scoped Consultant views, and unauthorized-customer refusal.
 
-## Completed integration boundary
+## Architectural decisions made while building
 
-- Confirm the shell presents five Centers and a separate External group without
-  widening authorization or location scope.
-- Confirm `/settings`, shared Leads/Customers and Users & Access preserve their
-  route and active-context behavior.
-- Confirm unbuilt target items remain non-interactive and no feature behavior was
-  added.
-- Do not begin B8 or slices 2–5, deploy to production, or widen scope. The next
-  implementation slice requires a separate owner-approved plan.
+No new product or ownership decision was made. The bounded technical choices are:
+
+- Notes remain Lead-owned; the workspace is a permission-filtered unified view,
+  so no duplicate Account note store or authorization path was introduced.
+- A removed note is represented by a tombstone and never by its body, preserving
+  removal history without undoing the established "removed from view" behavior.
+- The Activity allowlist is intentionally conservative and renders no audit
+  payload fields. New domains require an explicitly approved event mapping before
+  they can appear here.
+
+## Browser-review coverage limit
+
+The available fictitious browser fixture did not contain a customer with multiple
+simultaneously accessible Leads, a removed-note tombstone, more than ten rows for
+pagination, or a historical transferred-location event. Those paths are covered
+by focused automated tests rather than claimed as browser evidence. The browser
+review added one explicitly fictitious local note and made no other lasting change.
 
 ## Known limitations and decisions still needed
 
-This slice intentionally builds no Contact Center, Inbox, Workspace, calendar,
-warranty, scorecard or report behavior. No further product or architecture
-decision is needed for this implementation. The next slice requires a separate
-owner-approved plan. The unauthorized remembered-context fallback is covered by
-automated tests only: the available Sales Consultant fixture has one location and
-therefore no rendered location selector, and there is no dedicated Finance browser
-fixture. No merge-blocking issue remains for slice 1.
+The slice intentionally does not add projects, conversations, proposals,
+production, payments or any B8+ source that is not already represented by approved
+B1–B7 records. There is no product or architecture decision still needed and no
+known merge blocker remains. Slice 3 requires its own reviewed plan and explicit
+implementation approval.

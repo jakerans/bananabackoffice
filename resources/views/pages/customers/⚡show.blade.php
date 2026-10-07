@@ -844,6 +844,16 @@ new #[Title('Customer')] class extends AddressCapturePage {
 
         <div class="flex flex-col items-end gap-3">
             <div class="flex flex-wrap justify-end gap-2">
+                <flux:button
+                    size="sm"
+                    icon="clock"
+                    :href="route('customers.workspace', ['account' => $account, 'from' => 'customer'])"
+                    wire:navigate
+                    data-test="customer-workspace"
+                >
+                    {{ __('Activity & notes') }}
+                </flux:button>
+
                 @can('update', $account)
                     <flux:button size="sm" icon="pencil-square" wire:click="editAccount" data-test="edit-customer">{{ __('Edit customer') }}</flux:button>
                 @endcan
