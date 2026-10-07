@@ -46,6 +46,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // what the person can already see of it, never by the location that happens to be selected.
     Route::livewire('customers', 'pages::customers.index')->can(Permission::ViewAccounts)->name('customers');
     Route::livewire('customers/new', 'pages::customers.create')->can('create', Account::class)->name('customers.create');
+    Route::livewire('customers/{account}/workspace', 'pages::customers.workspace')->can('view', 'account')->name('customers.workspace');
     Route::livewire('customers/{account}', 'pages::customers.show')->can('view', 'account')->name('customers.show');
 
     // A center has no page of its own: its address opens the center's primary section.

@@ -1383,6 +1383,14 @@ new #[Title('Lead')] class extends AddressCapturePage {
                             @can('view', $lead->account)
                                 <a href="{{ route('customers.show', $lead->account) }}" wire:navigate class="font-semibold underline decoration-zinc-300 underline-offset-2 hover:decoration-ink">{{ $lead->account->display_name }}</a>
                                 <x-account-type :type="$lead->account->type" />
+                                <a
+                                    href="{{ route('customers.workspace', ['account' => $lead->account, 'from' => 'lead', 'lead' => $lead->id]) }}"
+                                    wire:navigate
+                                    class="text-sm font-medium text-wall-teal underline decoration-zinc-300 underline-offset-2 hover:decoration-wall-teal"
+                                    data-test="customer-workspace"
+                                >
+                                    {{ __('Activity & notes') }}
+                                </a>
                             @else
                                 {{ __('Linked to a customer') }}
                             @endcan
