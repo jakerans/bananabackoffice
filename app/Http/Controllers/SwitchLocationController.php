@@ -12,6 +12,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class SwitchLocationController extends Controller
@@ -47,14 +48,22 @@ class SwitchLocationController extends Controller
      */
     private function destination(Request $request, User $user, Navigation $navigation, Router $router): string
     {
+        $previousRequest = Request::create(url()->previous());
+
         try {
-            $previous = $router->getRoutes()->match(Request::create(url()->previous()));
+            $previous = $router->getRoutes()->match($previousRequest);
         } catch (HttpExceptionInterface) {
             return route('dashboard');
         }
 
+        $routeName = $previous->getName();
+
+        if ($routeName === null) {
+            return route('dashboard');
+        }
+
         $candidates = array_values(array_filter(
-            $navigation->destinationsForRoute($previous->getName()),
+            $navigation->destinationsForRoute($routeName),
             fn (NavigationItem $destination): bool => $navigation->allows($user, $destination),
         ));
 
@@ -71,6 +80,18 @@ class SwitchLocationController extends Controller
         $destination = collect($candidates)->firstWhere('id', $lastDestinationId) ?? $candidates[0];
 
         $request->session()->put(Shell::LAST_CENTER_KEY, $destination->id);
+
+        $routeItem = collect($destination->flatten())->first(
+            fn (NavigationItem $item): bool => $item->ownsRoute($routeName)
+                && $navigation->allows($user, $item),
+        );
+
+        if ($routeItem !== null) {
+            $pathParameters = Arr::only($previous->parameters(), $previous->parameterNames());
+            $parameters = array_merge($previousRequest->query->all(), $pathParameters);
+
+            return route($routeName, $parameters);
+        }
 
         return $destination->route !== null ? route($destination->route) : route('dashboard');
     }
