@@ -4,9 +4,10 @@ How this file is used: [../collaboration.md](../collaboration.md), "Review hando
 No secrets or customer information belong here.
 
 **Updated:** 2026-10-07 · **Branch:** `docs/architecture-roadmap-reconciliation`
-**State:** slice 1 compatibility plan awaiting owner approval. The five-slice
-order and slice 1 planning are approved; no implementation, merge, deployment or
-B8 work is authorized yet.
+**State:** slice 1 compatibility plan awaiting implementation approval. The
+five-slice order and slice 1 planning are approved. Jacob has authorized merging
+this documentation branch and its automatic staging deployment under decision 61.
+Navigation implementation and B8 remain unauthorized.
 
 ## Objective
 
@@ -37,8 +38,9 @@ not touch permission grants, policies, domain actions, the database or dependenc
 ## Decisions needed now
 
 1. Approve, revise or reject the slice 1 compatibility plan.
-2. If approved, explicitly authorize **slice 1 implementation only**. Merge and
-   deployment remain separate later decisions after code, checks and browser review.
+2. If approved, explicitly authorize **slice 1 implementation only**. Completed,
+   verified approved work may then merge and deploy to staging under the standing
+   authorization; code checks and owner browser review still apply.
 
 ## Constraints carried forward
 
@@ -52,5 +54,15 @@ not touch permission grants, policies, domain actions, the database or dependenc
   invented.
 - The approved five-slice order does not authorize planning or implementation of
   slices 2–5.
-- No production action, feature implementation or deployment is part of this
-  review.
+- No production action or feature implementation is part of this review. Only
+  the approved documentation may merge and deploy to staging now.
+
+## Documentation release verification
+
+- Scope check: the branch changes documentation only; no application, schema,
+  configuration or navigation implementation changes.
+- Full local `composer test`: passed, including Pint, PHPStan and **1,470 tests /
+  6,404 assertions**. `git diff --check` passed.
+- Both GitHub jobs (SQLite and MySQL 8.4) must pass before merge. Remote commit
+  and active staging release verification are reported in the final release
+  handoff; merging this plan does not authorize its implementation.

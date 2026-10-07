@@ -1401,6 +1401,21 @@ The reviewed proposal is recorded in [navigation-map.md](navigation-map.md). No
 navigation code, permission change, B8 work, merge or deployment is authorized
 by this decision. Slice 1 implementation requires Jacob's next explicit approval.
 
+## 61. Standing authority to release approved work to staging (2026-10-07)
+
+**Approved by Jacob.** Commit and push approved work using the connected Windows
+repository and existing Git credentials. Merge completed, verified work into
+`main` and allow automatic staging deployment without another approval request.
+This explicitly includes `docs/architecture-roadmap-reconciliation`. Verify the
+remote commits and relevant CI results. The standing agreement is recorded in
+[collaboration.md](collaboration.md).
+
+This supersedes earlier requirements to ask again for each merge or staging
+deployment within approved scope. It does not approve navigation implementation:
+planning is approved, and the compatibility plan remains a proposal until Jacob
+authorizes implementation. No force-push, production deployment, destruction of
+important data or expanded feature scope is authorized.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

@@ -62,7 +62,10 @@ not claims that the target UI exists.
 Approve, revise or reject the compatibility plan in
 [navigation-map.md](navigation-map.md). Approval authorizes only that bounded
 implementation: navigation placement, labels, retained route behavior and tests.
-It does not authorize a permission change, workspace feature, B8, merge or deploy.
+It does not authorize a permission change, workspace feature or B8. The separate
+standing staging authorization in [collaboration.md](collaboration.md) covers
+release of completed and verified approved work; it does not approve this
+navigation implementation.
 
 ## Starting point (verified 2026-10-04)
 

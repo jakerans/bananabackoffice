@@ -17,6 +17,22 @@ is in [roadmap.md](roadmap.md).
 Advice from any review partner or tool counts only when Jacob records it as his
 decision, and not before.
 
+## Standing staging authorization (2026-10-07)
+
+Jacob authorizes the implementation agent to commit and push approved work,
+merge completed and verified work into `main`, and allow its automatic staging
+deployment without asking again. This includes the documentation branch
+`docs/architecture-roadmap-reconciliation`. Use the connected Windows repository
+`C:\Users\PC\Herd\backoffice`, its existing Git credentials, and origin
+`https://github.com/jakerans/bananabackoffice.git`. Verify remote commits and the
+relevant CI results before reporting completion.
+
+This is release authority for approved scope, not feature approval. Navigation
+planning is approved; navigation implementation still requires Jacob's explicit
+approval. Do not force-push, deploy to production, destroy important data or expand
+feature scope without his approval. These limits supersede earlier per-checkpoint
+merge/staging confirmation requirements; all testing and review requirements stay.
+
 ## The record
 
 - **The approved documents in `docs/` are the canonical record:** the roadmap,
@@ -80,9 +96,10 @@ so a review does not need a long conversational prompt.
   either. Examples use fictitious people.
 - Jacob is never asked to paste a secret into any chat. Secrets are entered by
   Jacob directly where they are used.
-- **Branch discipline stays.** Work happens on the checkpoint branch, one step at
-  a time. Nothing is merged into `main` without Jacob's approval.
-- **Staging and production change only with Jacob's explicit approval** at the
-  checkpoint that calls for it.
+- **Branch discipline stays.** Work happens on an approved working branch, one
+  step at a time. Completed, verified work may merge under the standing staging
+  authorization above. Never force-push.
+- **Staging may deploy approved work under that authorization.** Production
+  deployment and destructive data operations remain unauthorized.
 - **Testing, authorization and audit requirements are never weakened** to move
   faster. A check that was not run is never reported as passed.
