@@ -1416,6 +1416,25 @@ planning is approved, and the compatibility plan remains a proposal until Jacob
 authorizes implementation. No force-push, production deployment, destruction of
 important data or expanded feature scope is authorized.
 
+## 62. Slice 1 five-Center navigation implementation (2026-10-07)
+
+**Approved by Jacob.** Implement the reviewed slice 1 compatibility map only:
+show Marketing, Sales, Production, Finance and Company as the five Centers; place
+Settings under Company; and keep Color Studio reachable as a separately grouped
+external destination. Preserve existing URLs, route names, stable IDs, gates,
+location scope and shared-page active-context behavior. Finance → People & Access
+must remain filtered by the existing staff-management permission and does not add
+that permission to the Finance role. Unbuilt target items remain muted navigation
+and gain no feature behavior.
+
+This approval covers the navigation registry and shell, the permission-aware
+`/settings` compatibility landing, related views/routes, regression tests and
+handoff documentation. It does not authorize database, permission-grant, policy,
+domain-feature or dependency changes, B8, slices 2–5, production action or a force
+push. Under decision 61, the completed work may merge and deploy to staging only
+after the required local checks, exact-commit GitHub jobs and owner browser review
+are complete.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

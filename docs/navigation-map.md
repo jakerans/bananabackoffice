@@ -1,19 +1,20 @@
 # Navigation Map
 
 Status: **As-built navigation through B7 is approved and live.** The five-slice
-roadmap order and planning for its first slice are owner-approved. The target
+roadmap order and implementation of its first slice are owner-approved. The target
 five-Center structure below is **LOCKED product direction**; the compatibility
-implementation plan is **proposed** and awaits owner approval before coding.
+implementation is built on `slice-1-five-center-navigation` and awaits final
+verification and owner merge review.
 
 ## Canonical target and compatibility migration
 
 The target parent Centers are **Marketing, Sales, Production, Finance and
 Company**. Customers and other canonical records remain shared pages presented
 inside the Centers that use them. Color Studio is an external/customer surface,
-not a parent Center. Settings belongs under Company. This describes the target;
-the current shell still uses the registry documented below.
+not a parent Center. Settings belongs under Company. This describes the target
+implemented by slice 1; it does not claim that muted future features are built.
 
-### Proposed slice 1 implementation map
+### Approved slice 1 implementation map
 
 Slice 1 changes the registry and shell presentation only. It does not build a
 Contact Center, Inbox, Sales or Production Workspace, calendar, warranty,

@@ -1,7 +1,7 @@
 @inject('shell', \App\Support\Navigation\Shell::class)
 
 @php
-    $currentCenter = $shell->currentCenter();
+    $currentDestination = $shell->currentDestination();
 @endphp
 
 <!DOCTYPE html>
@@ -19,7 +19,11 @@
                 <x-app-logo :href="route('dashboard')" wire:navigate class="bg-cream px-4 lg:px-6" height="h-8 sm:h-9" />
 
                 <div class="flex min-w-0 flex-1 items-center gap-2 px-3 sm:gap-4 lg:px-6">
-                    <x-shell.center-switcher :centers="$shell->centers()" :current="$currentCenter" />
+                    <x-shell.center-switcher
+                        :centers="$shell->centers()"
+                        :external-surfaces="$shell->externalSurfaces()"
+                        :current="$currentDestination"
+                    />
 
                     <div class="flex-1"></div>
 
@@ -30,10 +34,10 @@
             </div>
         </header>
 
-        @if ($currentCenter)
-            <x-shell.center-nav :center="$currentCenter" :shell="$shell" />
+        @if ($currentDestination)
+            <x-shell.center-nav :center="$currentDestination" :shell="$shell" />
 
-            @if ($currentSection = $shell->currentSection($currentCenter))
+            @if ($currentSection = $shell->currentSection($currentDestination))
                 <x-shell.section-nav :section="$currentSection" :shell="$shell" />
             @endif
         @endif

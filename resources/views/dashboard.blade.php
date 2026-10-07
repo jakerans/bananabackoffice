@@ -2,6 +2,7 @@
 
 @php
     $centers = $shell->centers();
+    $externalSurfaces = $shell->externalSurfaces();
     $context = $shell->locationContext();
 @endphp
 
@@ -35,22 +36,54 @@
             @endcan
         @endif
 
-        @if (count($centers) > 0)
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                @foreach ($centers as $center)
-                    <a
-                        href="{{ route($center->route) }}"
-                        wire:navigate
-                        class="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-card p-5 shadow-xs hover:border-zinc-300"
-                    >
-                        <span class="flex items-center gap-2 font-nav text-base font-bold text-ink">
-                            <flux:icon :icon="$center->icon" variant="mini" class="text-wall-teal" />
-                            {{ $center->label }}
-                        </span>
-                        <span class="text-sm text-zinc-600">{{ $center->description }}</span>
-                    </a>
-                @endforeach
-            </div>
+        @if (count($centers) + count($externalSurfaces) > 0)
+            @if (count($centers) > 0)
+                <section class="flex flex-col gap-3" aria-labelledby="centers-heading">
+                    <h2 id="centers-heading" class="font-nav text-sm font-bold tracking-wide text-zinc-500 uppercase">
+                        {{ __('Centers') }}
+                    </h2>
+
+                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($centers as $center)
+                            <a
+                                href="{{ route($center->route) }}"
+                                wire:navigate
+                                class="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-card p-5 shadow-xs hover:border-zinc-300"
+                            >
+                                <span class="flex items-center gap-2 font-nav text-base font-bold text-ink">
+                                    <flux:icon :icon="$center->icon" variant="mini" class="text-wall-teal" />
+                                    {{ $center->label }}
+                                </span>
+                                <span class="text-sm text-zinc-600">{{ $center->description }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
+            @if (count($externalSurfaces) > 0)
+                <section class="flex flex-col gap-3" aria-labelledby="external-heading">
+                    <h2 id="external-heading" class="font-nav text-sm font-bold tracking-wide text-zinc-500 uppercase">
+                        {{ __('External') }}
+                    </h2>
+
+                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($externalSurfaces as $surface)
+                            <a
+                                href="{{ route($surface->route) }}"
+                                wire:navigate
+                                class="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-card p-5 shadow-xs hover:border-zinc-300"
+                            >
+                                <span class="flex items-center gap-2 font-nav text-base font-bold text-ink">
+                                    <flux:icon :icon="$surface->icon" variant="mini" class="text-wall-teal" />
+                                    {{ $surface->label }}
+                                </span>
+                                <span class="text-sm text-zinc-600">{{ $surface->description }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
         @else
             {{-- Signed in, but nothing has been granted. This is not an error and is not "coming soon". --}}
             <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 bg-card px-6 py-12 text-center" data-test="no-access">

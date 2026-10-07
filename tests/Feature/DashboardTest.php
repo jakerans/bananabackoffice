@@ -38,7 +38,7 @@ test('an owner is prompted to add the first location when none exist', function 
         ->assertDontSee('No access assigned yet');
 });
 
-test('the dashboard offers only the centers the staff member can open', function () {
+test('the dashboard separates authorized centers from external surfaces', function () {
     $location = Location::factory()->create();
 
     $user = User::factory()->withRoleAt(Role::SalesConsultant, $location)->create();
@@ -46,7 +46,9 @@ test('the dashboard offers only the centers the staff member can open', function
     $this->actingAs($user)
         ->get(route('dashboard'))
         ->assertOk()
+        ->assertSee('Centers')
         ->assertSee('Sales Center')
+        ->assertSee('External')
         ->assertSee('Color Studio')
         ->assertDontSee('Finance Center')
         ->assertDontSee('Marketing Center');

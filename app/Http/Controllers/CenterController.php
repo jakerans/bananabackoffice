@@ -13,7 +13,7 @@ class CenterController extends Controller
      */
     public function __invoke(Request $request, Navigation $navigation, string $center): RedirectResponse
     {
-        $center = $navigation->center($center) ?? abort(404);
+        $center = $navigation->destination($center) ?? abort(404);
 
         abort_unless($navigation->allows($request->user(), $center), 403);
 

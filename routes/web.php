@@ -3,6 +3,7 @@
 use App\Enums\Permission;
 use App\Http\Controllers\CenterController;
 use App\Http\Controllers\InvitationAcceptanceController;
+use App\Http\Controllers\NavigationLandingController;
 use App\Http\Controllers\PasswordResetLinkController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StopImpersonationController;
@@ -54,7 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('production', CenterController::class)->defaults('center', 'production')->name('production.home');
     Route::get('finance', CenterController::class)->defaults('center', 'finance')->name('finance.home');
     Route::get('color-studio', CenterController::class)->defaults('center', 'color_studio')->name('color_studio.home');
-    Route::get('settings', CenterController::class)->defaults('center', 'settings')->name('settings.home');
+    Route::get('settings', NavigationLandingController::class)->name('settings.home');
 
     // Primary sections that are not built yet. Each becomes a real page when its feature is built.
     Route::get('company/performance', SectionController::class)->defaults('section', 'company.performance')->name('company.performance');

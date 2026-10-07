@@ -51,7 +51,7 @@ class SwitchLocationController extends Controller
             return route('dashboard');
         }
 
-        $center = $navigation->centerForRoute($previous->getName());
+        $center = $navigation->destinationForRoute($previous->getName());
 
         return $center !== null && $center->route !== null && $navigation->allows($user, $center)
             ? route($center->route)

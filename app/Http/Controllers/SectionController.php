@@ -22,7 +22,7 @@ class SectionController extends Controller
 
         return view('sections.show', [
             'section' => $section,
-            'center' => $navigation->centerForRoute($section->route) ?? abort(404),
+            'center' => $navigation->destinationForRoute($section->route) ?? abort(404),
         ]);
     }
 }

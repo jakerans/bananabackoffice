@@ -3,66 +3,61 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-07 · **Branch:** `docs/architecture-roadmap-reconciliation`
-**State:** slice 1 compatibility plan awaiting implementation approval. The
-five-slice order and slice 1 planning are approved. Jacob has authorized merging
-this documentation branch and its automatic staging deployment under decision 61.
-Navigation implementation and B8 remain unauthorized.
+**Updated:** 2026-10-07 · **Branch:** `slice-1-five-center-navigation`
+**State:** slice 1 implementation is built and under verification. It is not
+merged. B8 and slices 2–5 remain unauthorized.
 
 ## Objective
 
-Approve or revise the source-grounded compatibility plan for the first reconciled
-slice: five-Center shell alignment. The full ID, route, access and regression map
-is in [navigation-map.md](../navigation-map.md), "Proposed slice 1 implementation
-map."
+Review the bounded navigation-only implementation approved by Jacob: exactly five
+Centers, Settings under Company, and Color Studio as a separately grouped external
+destination, while retaining all working URLs, stable IDs, gates, location scope
+and active-context behavior.
 
-## Recommendation
+## What changed
 
-Approve slice 1 as a navigation-only implementation:
+- The Center registry now exposes Marketing, Sales, Production, Finance and
+  Company only. Color Studio remains available through the full destination
+  collection and appears in a visually separate External group.
+- Company contains the approved target navigation, including direct Locations and
+  nested Settings. `/settings` uses a small permission-aware landing action and
+  retains the existing Locations, Users and Access, then Lead & Sales Lists order.
+- Marketing, Sales, Production and Finance use the approved labels, hierarchy and
+  muted unbuilt target items. Shared Leads, Customers and Users & Access keep their
+  working routes and context-sensitive active navigation.
+- Finance → People & Access uses the existing `settings.users.manage` gate. The
+  Finance role receives no new permission and cannot see or open it by default.
+- A legacy `backoffice.center=settings` session value maps to Company. Existing
+  five-Center and Color Studio context values remain valid.
 
-- expose exactly Marketing, Sales, Production, Finance and Company as Centers;
-- keep Color Studio reachable as a separately grouped external destination with
-  its current routes, gate and location scope;
-- nest Settings under Company while preserving `settings`, every `settings.*` ID,
-  `/settings` landing behavior and every working `/settings/*` URL;
-- preserve all existing root URLs, shared Leads/Customers routes, active-context
-  behavior and server-side permissions;
-- present Finance → People & Access only to someone who already has
-  `settings.users.manage`; do not grant it to the Finance role;
-- keep every unbuilt target as muted navigation with no new feature behavior.
+No database, permission enum, role grant, policy, domain action, dependency or
+working URL changed.
 
-Implementation should touch only the navigation registry/shell, one small nested
-landing action, related shell views/routes, and focused regression tests. It must
-not touch permission grants, policies, domain actions, the database or dependencies.
+## Tests and checks
 
-## Decisions needed now
+- Focused navigation/controller/browser-response tests: **125 tests / 358
+  assertions**, passed.
+- Related Customers, Settings and location-switching tests: **235 tests / 942
+  assertions**, passed.
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `git diff --check`: passed.
+- Full `composer test`, asset build, exact-SHA GitHub SQLite/MySQL checks and owner
+  browser review are still pending and will be recorded before merge review.
 
-1. Approve, revise or reject the slice 1 compatibility plan.
-2. If approved, explicitly authorize **slice 1 implementation only**. Completed,
-   verified approved work may then merge and deploy to staging under the standing
-   authorization; code checks and owner browser review still apply.
+## Review boundary
 
-## Constraints carried forward
+- Confirm the shell presents five Centers and a separate External group without
+  widening authorization or location scope.
+- Confirm `/settings`, shared Leads/Customers and Users & Access preserve their
+  route and active-context behavior.
+- Confirm unbuilt target items remain non-interactive and no feature behavior was
+  added.
+- Do not merge until the final local gate, both GitHub jobs and browser review are
+  recorded here. Do not begin B8 or slices 2–5.
 
-- Shared Customers and related records remain permission-filtered canonical
-  records. Related-record access never exposes unrelated work or sensitive GP,
-  commission, payout or job-cost fields.
-- Responsibility and assignment never grant access; separate grants do not union
-  into authority neither grant provides alone.
-- Old B8–B12 ordering, Project-from-Qualified and B9-only Open/Won/Lost assumptions
-  remain historical pending revalidation. No exact Project or Pending rule was
-  invented.
-- The approved five-slice order does not authorize planning or implementation of
-  slices 2–5.
-- No production action or feature implementation is part of this review. Only
-  the approved documentation may merge and deploy to staging now.
+## Known limitations and decisions still needed
 
-## Documentation release verification
-
-- Scope check: the branch changes documentation only; no application, schema,
-  configuration or navigation implementation changes.
-- Full local `composer test`: passed, including Pint, PHPStan and **1,470 tests /
-  6,404 assertions**. `git diff --check` passed.
-- Both GitHub jobs (SQLite and MySQL 8.4) must pass before merge. Remote commit
-  and active staging release verification are reported in the final release
-  handoff; merging this plan does not authorize its implementation.
+This slice intentionally builds no Contact Center, Inbox, Workspace, calendar,
+warranty, scorecard or report behavior. No further product or architecture
+decision is needed for this implementation. The next slice requires a separate
+owner-approved plan after this slice is reviewed.
