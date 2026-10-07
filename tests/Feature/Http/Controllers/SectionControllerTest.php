@@ -83,7 +83,7 @@ test('an unbuilt primary section says it is coming soon and shows its center and
     $this->actingAs($agent)
         ->get(route('marketing.performance'))
         ->assertOk()
-        ->assertSee('Performance Board')
+        ->assertSee('Performance')
         ->assertSee('Coming soon')
         ->assertSee('Marketing Center')
         ->assertSee('Working in Lakeview');
@@ -99,14 +99,12 @@ test('the second navigation row lists the sections of the current center in orde
         ->assertOk()
         ->assertSeeInOrder([
             'aria-label="Sales Center"',
-            'Performance Board',
-            'Appointments',
-            'Estimates',
-            'Proposals',
-            'Relationships',
-            'Customers',
-            'Inbox',
+            'Performance',
+            'Workspace',
+            'Calendar',
             'Commissions',
+            'Leaderboard',
+            'Customers',
             'Reports',
         ], escape: false);
 });
@@ -142,10 +140,10 @@ test('unbuilt sections are shown without a link', function () {
     $this->actingAs($owner)
         ->get(route('sales.performance'))
         ->assertOk()
-        ->assertSee('Estimates')
+        ->assertSee('Calendar')
         ->assertSee('aria-disabled="true"', escape: false)
-        ->assertDontSee('/sales/estimates')
-        ->assertDontSee('/sales/appointments');
+        ->assertDontSee('/sales/calendar')
+        ->assertDontSee('/sales/workspace');
 });
 
 test('the center switcher does not offer centers the staff member cannot open', function () {
@@ -158,5 +156,39 @@ test('the center switcher does not offer centers the staff member cannot open', 
         ->assertOk()
         ->assertDontSee('Finance Center')
         ->assertDontSee('Sales Center')
-        ->assertDontSee('Settings');
+        ->assertDontSee('Settings')
+        ->assertDontSee('Color Studio')
+        ->assertDontSee('External');
+});
+
+test('the center switcher separates color studio as an external surface', function () {
+    Location::factory()->create();
+
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    $this->actingAs($owner)
+        ->get(route('company.performance'))
+        ->assertOk()
+        ->assertSeeInOrder([
+            'Company',
+            'Marketing Center',
+            'Sales Center',
+            'Production Center',
+            'Finance Center',
+            'External',
+            'Color Studio',
+        ]);
+});
+
+test('color studio keeps its existing navigation as an external destination', function () {
+    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, Location::factory()->create())->create();
+
+    $this->actingAs($consultant)
+        ->get(route('color_studio.projects'))
+        ->assertOk()
+        ->assertSee('data-test="center-switcher"', escape: false)
+        ->assertSee('Color Studio')
+        ->assertSee('aria-label="Color Studio"', escape: false)
+        ->assertSee('Color Projects')
+        ->assertSee('External');
 });

@@ -23,6 +23,9 @@ class Navigation
     /** @var list<NavigationItem>|null */
     private ?array $centers = null;
 
+    /** @var list<NavigationItem>|null */
+    private ?array $externalSurfaces = null;
+
     public function __construct(private Gate $gate) {}
 
     /**
@@ -38,9 +41,29 @@ class Navigation
             $this->sales(),
             $this->production(),
             $this->finance(),
-            $this->colorStudio(),
-            $this->settings(),
         ];
+    }
+
+    /**
+     * Get external surfaces that remain reachable from the Backoffice shell.
+     *
+     * @return list<NavigationItem>
+     */
+    public function externalSurfaces(): array
+    {
+        return $this->externalSurfaces ??= [
+            $this->colorStudio(),
+        ];
+    }
+
+    /**
+     * Get every navigation destination that may own a route or shell context.
+     *
+     * @return list<NavigationItem>
+     */
+    public function destinations(): array
+    {
+        return [...$this->centers(), ...$this->externalSurfaces()];
     }
 
     public function center(string $id): ?NavigationItem
@@ -48,13 +71,18 @@ class Navigation
         return Arr::first($this->centers(), fn (NavigationItem $center): bool => $center->id === $id);
     }
 
+    public function destination(string $id): ?NavigationItem
+    {
+        return Arr::first($this->destinations(), fn (NavigationItem $destination): bool => $destination->id === $id);
+    }
+
     /**
      * Find a center or section by its stable ID.
      */
     public function find(string $id): ?NavigationItem
     {
-        foreach ($this->centers() as $center) {
-            foreach ($center->flatten() as $item) {
+        foreach ($this->destinations() as $destination) {
+            foreach ($destination->flatten() as $item) {
                 if ($item->id === $id) {
                     return $item;
                 }
@@ -79,38 +107,39 @@ class Navigation
     }
 
     /**
-     * Get the center that a route belongs to.
+     * Get the first navigation destination that a route belongs to.
      */
-    public function centerForRoute(?string $routeName): ?NavigationItem
+    public function destinationForRoute(?string $routeName): ?NavigationItem
     {
         if ($routeName === null) {
             return null;
         }
 
         return Arr::first(
-            $this->centers(),
-            fn (NavigationItem $center): bool => Arr::first(
-                $center->flatten(),
+            $this->destinations(),
+            fn (NavigationItem $destination): bool => Arr::first(
+                $destination->flatten(),
                 fn (NavigationItem $item): bool => $item->ownsRoute($routeName),
             ) !== null,
         );
     }
 
     /**
-     * Get every center whose menu contains a route. A shared page belongs to more than one.
+     * Get every navigation destination whose menu contains a route.
+     * A shared page belongs to more than one.
      *
      * @return list<NavigationItem>
      */
-    public function centersForRoute(?string $routeName): array
+    public function destinationsForRoute(?string $routeName): array
     {
         if ($routeName === null) {
             return [];
         }
 
         return array_values(array_filter(
-            $this->centers(),
-            fn (NavigationItem $center): bool => Arr::first(
-                $center->flatten(),
+            $this->destinations(),
+            fn (NavigationItem $destination): bool => Arr::first(
+                $destination->flatten(),
                 fn (NavigationItem $item): bool => $item->ownsRoute($routeName),
             ) !== null,
         ));
@@ -137,23 +166,51 @@ class Navigation
         ));
     }
 
+    /**
+     * Get the external surfaces the staff member may open in their current location.
+     *
+     * @return list<NavigationItem>
+     */
+    public function externalSurfacesFor(User $user): array
+    {
+        return array_values(array_filter(
+            $this->externalSurfaces(),
+            fn (NavigationItem $surface): bool => $this->allows($user, $surface),
+        ));
+    }
+
     private function company(): NavigationItem
     {
-        $permissions = [Permission::CompanyOverviewAccess];
+        $overviewPermissions = [Permission::CompanyOverviewAccess];
+        $entryPermissions = [
+            Permission::CompanyOverviewAccess,
+            Permission::ManageLocations,
+            Permission::ManageUsers,
+            Permission::ManageLeadSalesLists,
+        ];
 
         return new NavigationItem(
             id: 'company',
-            label: 'Company Overview',
-            permissions: $permissions,
+            label: 'Company',
+            permissions: $entryPermissions,
             state: NavigationState::Live,
             route: 'company.home',
             icon: 'building-office-2',
-            description: 'Company-wide performance across every location.',
+            description: 'Company-wide performance, locations and settings.',
             primary: 'company.performance',
             children: [
-                new NavigationItem('company.performance', 'Company Performance', $permissions, route: 'company.performance'),
-                new NavigationItem('company.location_comparison', 'Location Comparison', $permissions),
-                new NavigationItem('company.reports', 'Company Reports', $permissions),
+                new NavigationItem('company.performance', 'Executive Board', $overviewPermissions, route: 'company.performance'),
+                new NavigationItem('company.leadership_scorecards', 'Leadership Scorecards', $overviewPermissions),
+                new NavigationItem('company.needs_attention', 'Needs Attention', $overviewPermissions),
+                new NavigationItem(
+                    id: 'settings.locations',
+                    label: 'Locations',
+                    permissions: [Permission::ManageLocations],
+                    state: NavigationState::Live,
+                    route: 'settings.locations',
+                ),
+                new NavigationItem('company.reports', 'Reports', $overviewPermissions),
+                $this->settings(),
             ],
         );
     }
@@ -169,30 +226,17 @@ class Navigation
             state: NavigationState::Live,
             route: 'marketing.home',
             icon: 'megaphone',
-            description: 'Leads, the call center, campaigns and reviews.',
+            description: 'Performance, the Contact Center, campaigns and customers.',
             primary: 'marketing.performance',
             children: [
-                new NavigationItem('marketing.performance', 'Performance Board', $permissions, route: 'marketing.performance'),
-                new NavigationItem('marketing.call_center', 'Call Center', $permissions, primary: 'marketing.call_center.inbox', children: [
-                    new NavigationItem('marketing.call_center.inbox', 'Central Inbox', $permissions),
+                new NavigationItem('marketing.performance', 'Performance', $permissions, route: 'marketing.performance'),
+                new NavigationItem('marketing.call_center', 'Contact Center', $permissions, primary: 'shared.leads', children: [
                     $this->leads(),
-                    new NavigationItem('marketing.call_center.appointments', 'Appointments', $permissions),
-                    new NavigationItem('marketing.call_center.close_assist', 'Close Assist', $permissions),
-                    new NavigationItem('marketing.call_center.canceled', 'Canceled Appointments', $permissions),
-                    new NavigationItem('marketing.call_center.reports', 'Call Center Reports', $permissions),
                 ]),
-                ...$this->shared($permissions),
+                new NavigationItem('shared.inbox', 'Inbox', $permissions),
                 new NavigationItem('marketing.campaigns', 'Campaigns', $permissions),
-                new NavigationItem('marketing.social', 'Social', $permissions),
-                new NavigationItem('marketing.reviews', 'Reviews', $permissions),
-                new NavigationItem('marketing.reporting', 'Reporting', $permissions, primary: 'marketing.reporting.lead_sources', children: [
-                    new NavigationItem('marketing.reporting.lead_sources', 'Lead Sources', $permissions),
-                    new NavigationItem('marketing.reporting.leads', 'Leads', $permissions),
-                    new NavigationItem('marketing.reporting.appointments', 'Appointments', $permissions),
-                    new NavigationItem('marketing.reporting.call_center', 'Call Center', $permissions),
-                    new NavigationItem('marketing.reporting.campaigns', 'Campaigns', $permissions),
-                    new NavigationItem('marketing.reporting.roi', 'Marketing ROI', $permissions),
-                ]),
+                $this->customers(),
+                new NavigationItem('marketing.reporting', 'Reports', $permissions),
             ],
         );
     }
@@ -208,17 +252,17 @@ class Navigation
             state: NavigationState::Live,
             route: 'sales.home',
             icon: 'currency-dollar',
-            description: 'Appointments, estimates, proposals and commissions.',
+            description: 'Performance, the sales workspace, calendar and commissions.',
             primary: 'sales.performance',
             children: [
-                new NavigationItem('sales.performance', 'Performance Board', $permissions, route: 'sales.performance'),
-                $this->leads(),
-                new NavigationItem('sales.appointments', 'Appointments', $permissions),
-                new NavigationItem('sales.estimates', 'Estimates', $permissions),
-                new NavigationItem('sales.proposals', 'Proposals', $permissions),
-                new NavigationItem('sales.relationships', 'Relationships', $permissions),
-                ...$this->shared($permissions),
+                new NavigationItem('sales.performance', 'Performance', $permissions, route: 'sales.performance'),
+                new NavigationItem('sales.workspace', 'Workspace', $permissions, primary: 'shared.leads', children: [
+                    $this->leads(),
+                ]),
+                new NavigationItem('sales.calendar', 'Calendar', $permissions),
                 new NavigationItem('sales.commissions', 'Commissions', $permissions),
+                new NavigationItem('sales.leaderboard', 'Leaderboard', $permissions),
+                $this->customers(),
                 new NavigationItem('sales.reports', 'Reports', $permissions),
             ],
         );
@@ -235,18 +279,15 @@ class Navigation
             state: NavigationState::Live,
             route: 'production.home',
             icon: 'paint-brush',
-            description: 'Scheduling, projects, crews and subcontractors.',
+            description: 'Performance, project delivery, scheduling and subcontractors.',
             primary: 'production.performance',
             children: [
-                new NavigationItem('production.performance', 'Performance Board', $permissions, route: 'production.performance'),
-                new NavigationItem('production.projects', 'Projects', $permissions, primary: 'production.projects.ready', children: [
-                    new NavigationItem('production.projects.ready', 'Ready to Schedule', $permissions),
-                    new NavigationItem('production.projects.pre_production', 'Pre-Production', $permissions),
-                    new NavigationItem('production.projects.in_production', 'In Production', $permissions),
-                    new NavigationItem('production.projects.completed', 'Completed', $permissions),
-                ]),
-                new NavigationItem('production.crews', 'Crews / Subcontractors', $permissions),
-                ...$this->shared($permissions),
+                new NavigationItem('production.performance', 'Performance', $permissions, route: 'production.performance'),
+                new NavigationItem('production.workspace', 'Workspace', $permissions),
+                new NavigationItem('production.schedule', 'Schedule', $permissions),
+                new NavigationItem('production.crews', 'Subcontractors', $permissions),
+                new NavigationItem('production.warranty', 'Warranty', $permissions),
+                $this->customers(),
                 new NavigationItem('production.reports', 'Reports', $permissions),
             ],
         );
@@ -263,10 +304,10 @@ class Navigation
             state: NavigationState::Live,
             route: 'finance.home',
             icon: 'banknotes',
-            description: 'Receivables, job costing, payroll and commission approvals.',
+            description: 'Cash management, job costing, payroll and financial reporting.',
             primary: 'finance.performance',
             children: [
-                new NavigationItem('finance.performance', 'Performance Board', $permissions, route: 'finance.performance'),
+                new NavigationItem('finance.performance', 'Performance', $permissions, route: 'finance.performance'),
                 new NavigationItem('finance.cash', 'Cash Management', $permissions, primary: 'finance.cash.receivables', children: [
                     new NavigationItem('finance.cash.receivables', 'Receivables', $permissions),
                     new NavigationItem('finance.cash.payments', 'Payments', $permissions),
@@ -274,8 +315,14 @@ class Navigation
                 ]),
                 new NavigationItem('finance.job_costing', 'Job Costing', $permissions),
                 new NavigationItem('finance.payroll', 'Payroll', $permissions),
-                new NavigationItem('finance.commission_approvals', 'Commission Approvals', $permissions),
-                ...$this->shared($permissions),
+                new NavigationItem(
+                    id: 'finance.people_access',
+                    label: 'People & Access',
+                    permissions: [Permission::ManageUsers],
+                    state: NavigationState::Live,
+                    route: 'settings.users',
+                ),
+                $this->customers(),
                 new NavigationItem('finance.reports', 'Reports', $permissions),
             ],
         );
@@ -317,16 +364,9 @@ class Navigation
             route: 'settings.home',
             icon: 'cog-6-tooth',
             description: 'Locations, staff access, lead and sales lists, and company configuration.',
-            primary: 'settings.locations',
+            primary: 'settings.users',
             children: [
                 new NavigationItem('settings.company', 'Company', $permissions),
-                new NavigationItem(
-                    id: 'settings.locations',
-                    label: 'Locations',
-                    permissions: [Permission::ManageLocations],
-                    state: NavigationState::Live,
-                    route: 'settings.locations',
-                ),
                 new NavigationItem(
                     id: 'settings.users',
                     label: 'Users and Access',
@@ -370,26 +410,16 @@ class Navigation
     }
 
     /**
-     * Customers and Inbox each exist once and are reached from several centers.
-     *
-     * Customers is one page with one address. It is opened by the customer
-     * permission, not by access to the center whose menu shows it. Inbox is not
-     * built yet and is still shown to whoever can open the center.
-     *
-     * @param  list<Permission>  $permissions
-     * @return list<NavigationItem>
+     * Customers is one page with one address, reached from several centers.
      */
-    private function shared(array $permissions): array
+    private function customers(): NavigationItem
     {
-        return [
-            new NavigationItem(
-                id: 'shared.customers',
-                label: 'Customers',
-                permissions: [Permission::ViewAccounts],
-                state: NavigationState::Live,
-                route: 'customers',
-            ),
-            new NavigationItem('shared.inbox', 'Inbox', $permissions),
-        ];
+        return new NavigationItem(
+            id: 'shared.customers',
+            label: 'Customers',
+            permissions: [Permission::ViewAccounts],
+            state: NavigationState::Live,
+            route: 'customers',
+        );
     }
 }

@@ -42,19 +42,29 @@ class Shell
     }
 
     /**
-     * Get the center the current page belongs to.
+     * Get the external surfaces the staff member may open in their current location.
+     *
+     * @return list<NavigationItem>
+     */
+    public function externalSurfaces(): array
+    {
+        return $this->navigation->externalSurfacesFor($this->user());
+    }
+
+    /**
+     * Get the navigation destination the current page belongs to.
      *
      * A shared page, such as Leads, sits in more than one center's menu. It is
      * shown under a center the staff member may open, preferring the one they
      * were last in, so the menu around the page does not jump unexpectedly.
      */
-    public function currentCenter(): ?NavigationItem
+    public function currentDestination(): ?NavigationItem
     {
         $user = $this->user();
 
         $candidates = array_values(array_filter(
-            $this->navigation->centersForRoute($this->request->route()?->getName()),
-            fn (NavigationItem $center): bool => $this->navigation->allows($user, $center),
+            $this->navigation->destinationsForRoute($this->request->route()?->getName()),
+            fn (NavigationItem $destination): bool => $this->navigation->allows($user, $destination),
         ));
 
         if ($candidates === []) {
@@ -62,13 +72,17 @@ class Shell
         }
 
         $session = $this->request->hasSession() ? $this->request->session() : null;
-        $lastCenterId = $session?->get(self::LAST_CENTER_KEY);
+        $lastDestinationId = $session?->get(self::LAST_CENTER_KEY);
 
-        $center = collect($candidates)->firstWhere('id', $lastCenterId) ?? $candidates[0];
+        if ($lastDestinationId === 'settings') {
+            $lastDestinationId = 'company';
+        }
 
-        $session?->put(self::LAST_CENTER_KEY, $center->id);
+        $destination = collect($candidates)->firstWhere('id', $lastDestinationId) ?? $candidates[0];
 
-        return $center;
+        $session?->put(self::LAST_CENTER_KEY, $destination->id);
+
+        return $destination;
     }
 
     /**

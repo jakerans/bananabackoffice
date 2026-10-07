@@ -6,10 +6,13 @@ use App\Models\Location;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
 use App\Support\Navigation\Navigation;
+use App\Support\Navigation\NavigationItem;
+use App\Support\Navigation\Shell;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class SwitchLocationController extends Controller
@@ -36,25 +39,60 @@ class SwitchLocationController extends Controller
             $currentLocation->switchTo($user, $location);
         }
 
-        return redirect()->to($this->destination($user, $navigation, $router));
+        return redirect()->to($this->destination($request, $user, $navigation, $router));
     }
 
     /**
-     * Stay in the center the staff member came from when they may still open it
-     * in the new location; otherwise go home. Only our own routes are ever used.
+     * Stay in the remembered destination when it still owns the previous route
+     * and remains authorized in the new location. Only our own routes are used.
      */
-    private function destination(User $user, Navigation $navigation, Router $router): string
+    private function destination(Request $request, User $user, Navigation $navigation, Router $router): string
     {
+        $previousRequest = Request::create(url()->previous());
+
         try {
-            $previous = $router->getRoutes()->match(Request::create(url()->previous()));
+            $previous = $router->getRoutes()->match($previousRequest);
         } catch (HttpExceptionInterface) {
             return route('dashboard');
         }
 
-        $center = $navigation->centerForRoute($previous->getName());
+        $routeName = $previous->getName();
 
-        return $center !== null && $center->route !== null && $navigation->allows($user, $center)
-            ? route($center->route)
-            : route('dashboard');
+        if ($routeName === null) {
+            return route('dashboard');
+        }
+
+        $candidates = array_values(array_filter(
+            $navigation->destinationsForRoute($routeName),
+            fn (NavigationItem $destination): bool => $navigation->allows($user, $destination),
+        ));
+
+        if ($candidates === []) {
+            return route('dashboard');
+        }
+
+        $lastDestinationId = $request->session()->get(Shell::LAST_CENTER_KEY);
+
+        if ($lastDestinationId === 'settings') {
+            $lastDestinationId = 'company';
+        }
+
+        $destination = collect($candidates)->firstWhere('id', $lastDestinationId) ?? $candidates[0];
+
+        $request->session()->put(Shell::LAST_CENTER_KEY, $destination->id);
+
+        $routeItem = collect($destination->flatten())->first(
+            fn (NavigationItem $item): bool => $item->ownsRoute($routeName)
+                && $navigation->allows($user, $item),
+        );
+
+        if ($routeItem !== null) {
+            $pathParameters = Arr::only($previous->parameters(), $previous->parameterNames());
+            $parameters = array_merge($previousRequest->query->all(), $pathParameters);
+
+            return route($routeName, $parameters);
+        }
+
+        return $destination->route !== null ? route($destination->route) : route('dashboard');
     }
 }

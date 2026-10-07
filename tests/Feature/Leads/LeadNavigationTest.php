@@ -9,8 +9,8 @@ use App\Support\Navigation\NavigationItem;
 test('leads is one page with one address, shown in both the marketing and sales menus', function () {
     $navigation = app(Navigation::class);
 
-    expect(collect($navigation->centersForRoute('leads'))->pluck('id')->all())->toBe(['marketing', 'sales']);
-    expect(collect($navigation->centersForRoute('leads.show'))->pluck('id')->all())->toBe(['marketing', 'sales']);
+    expect(collect($navigation->destinationsForRoute('leads'))->pluck('id')->all())->toBe(['marketing', 'sales']);
+    expect(collect($navigation->destinationsForRoute('leads.show'))->pluck('id')->all())->toBe(['marketing', 'sales']);
 
     $entries = collect($navigation->centers())
         ->flatMap(fn (NavigationItem $center) => $center->flatten())
@@ -21,33 +21,32 @@ test('leads is one page with one address, shown in both the marketing and sales 
     expect($navigation->find('marketing.call_center.leads'))->toBeNull();
 });
 
-test('call center opens on leads until the central inbox is built', function () {
+test('contact center opens on leads until its workspace is built', function () {
     $agent = User::factory()->withRoleAt(Role::CallCenterAgent, Location::factory()->create())->create();
 
     $navigation = app(Navigation::class);
     $callCenter = $navigation->find('marketing.call_center');
 
-    expect($navigation->find('marketing.call_center.inbox')->isReachable())->toBeFalse();
+    expect($navigation->find('marketing.call_center.inbox'))->toBeNull();
     expect($navigation->landingFor($agent, $callCenter)?->id)->toBe('shared.leads');
 
-    // In the Marketing menu, Call Center is a link that goes to Leads.
+    // In the Marketing menu, Contact Center is a link that goes to Leads.
     $this->actingAs($agent)
         ->get(route('marketing.performance'))
         ->assertOk()
-        ->assertSeeInOrder(['Performance Board', 'href="'.route('leads').'"', 'Call Center'], escape: false);
+        ->assertSeeInOrder(['Performance', 'href="'.route('leads').'"', 'Contact Center'], escape: false);
 });
 
-test('a call center agent sees leads inside the marketing menu, under call center', function () {
+test('a call center agent sees leads inside the marketing menu under contact center', function () {
     $agent = User::factory()->withRoleAt(Role::CallCenterAgent, Location::factory()->create())->create();
 
     $this->actingAs($agent)
         ->get(route('leads'))
         ->assertOk()
         ->assertSee('Marketing Center')
-        // The pages inside Call Center: Leads is live, the rest are shown as not built.
-        ->assertSeeInOrder(['Central Inbox', 'Leads', 'Appointments', 'Close Assist', 'Canceled Appointments', 'Call Center Reports'])
+        ->assertSeeInOrder(['Contact Center', 'Inbox', 'Campaigns', 'Customers', 'Reports', 'Leads'])
         ->assertSee('Campaigns')
-        ->assertDontSee('Estimates')
+        ->assertDontSee('Calendar')
         ->assertDontSee('Commissions');
 });
 
@@ -60,22 +59,22 @@ test('a sales consultant, who cannot open marketing, sees leads inside the sales
         ->get(route('leads'))
         ->assertOk()
         ->assertSee('Sales Center')
-        ->assertSeeInOrder(['Performance Board', 'Leads', 'Appointments', 'Estimates'])
+        ->assertSeeInOrder(['Performance', 'Workspace', 'Calendar', 'Commissions', 'Leaderboard', 'Customers', 'Reports', 'Leads'])
         ->assertDontSee('Campaigns')
-        ->assertDontSee('Central Inbox');
+        ->assertDontSee('Contact Center');
 });
 
 test('someone with both centers sees leads in the menu of the center they were last in', function () {
     $manager = User::factory()->withRoleAt(Role::LocationManager, Location::factory()->create())->create();
 
     // Marketing is first, so it is used when there is nothing to go on.
-    $this->actingAs($manager)->get(route('leads'))->assertOk()->assertSee('Central Inbox')->assertDontSee('Estimates');
+    $this->actingAs($manager)->get(route('leads'))->assertOk()->assertSee('Contact Center')->assertDontSee('Calendar');
 
     $this->get(route('sales.performance'))->assertOk();
-    $this->get(route('leads'))->assertOk()->assertSee('Estimates')->assertDontSee('Central Inbox');
+    $this->get(route('leads'))->assertOk()->assertSee('Calendar')->assertDontSee('Contact Center');
 
     $this->get(route('marketing.performance'))->assertOk();
-    $this->get(route('leads.create'))->assertOk()->assertSee('Central Inbox')->assertDontSee('Estimates');
+    $this->get(route('leads.create'))->assertOk()->assertSee('Contact Center')->assertDontSee('Calendar');
 });
 
 test('the remembered center never grants access to a center', function () {
@@ -108,11 +107,11 @@ test('a section with no built pages stays muted and is not a link', function () 
 
     $navigation = app(Navigation::class);
 
-    expect($navigation->landingFor($manager, $navigation->find('production.projects')))->toBeNull();
+    expect($navigation->landingFor($manager, $navigation->find('production.workspace')))->toBeNull();
 
     $this->actingAs($manager)
         ->get(route('production.performance'))
         ->assertOk()
-        ->assertSee('Projects')
+        ->assertSee('Workspace')
         ->assertDontSee('Ready to Schedule');
 });

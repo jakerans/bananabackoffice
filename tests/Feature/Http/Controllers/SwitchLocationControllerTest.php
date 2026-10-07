@@ -1,9 +1,11 @@
 <?php
 
 use App\Enums\Role;
+use App\Models\Lead;
 use App\Models\Location;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
+use App\Support\Navigation\Shell;
 
 test('guests are redirected to the login page', function () {
     $location = Location::factory()->create();
@@ -97,6 +99,118 @@ test('switching location keeps the staff member in a center they can still open'
         ->from(route('sales.home'))
         ->post(route('location.switch'), ['location' => (string) $riverside->id])
         ->assertRedirect(route('sales.home'));
+});
+
+test('switching location preserves an authorized destination around a shared route', function (
+    string $previousRoute,
+    string $rememberedDestination,
+    string $expectedRoute,
+) {
+    $lakeview = Location::factory()->create(['name' => 'Lakeview']);
+    $riverside = Location::factory()->create(['name' => 'Riverside']);
+
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    $this->actingAs($owner)
+        ->withSession([
+            CurrentLocation::SESSION_KEY => $lakeview->id,
+            Shell::LAST_CENTER_KEY => $rememberedDestination,
+        ])
+        ->from(route($previousRoute))
+        ->post(route('location.switch'), ['location' => (string) $riverside->id])
+        ->assertRedirect(route($expectedRoute))
+        ->assertSessionHas(CurrentLocation::SESSION_KEY, $riverside->id)
+        ->assertSessionHas(Shell::LAST_CENTER_KEY, $rememberedDestination);
+})->with([
+    'Marketing Leads' => ['leads', 'marketing', 'leads'],
+    'Sales Leads' => ['leads', 'sales', 'leads'],
+    'Marketing Customers' => ['customers', 'marketing', 'customers'],
+    'Sales Customers' => ['customers', 'sales', 'customers'],
+    'Production Customers' => ['customers', 'production', 'customers'],
+    'Finance Customers' => ['customers', 'finance', 'customers'],
+    'Company Users and Access' => ['settings.users', 'company', 'settings.users'],
+    'Finance People and Access' => ['settings.users', 'finance', 'settings.users'],
+]);
+
+test('switching between one location and all locations preserves the shared route and destination', function (bool $startsAtAll) {
+    $fourCorners = Location::factory()->create(['name' => 'Four Corners']);
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    $startingLocation = $startsAtAll ? CurrentLocation::ALL_LOCATIONS : $fourCorners->id;
+    $targetLocation = $startsAtAll ? (string) $fourCorners->id : CurrentLocation::ALL_LOCATIONS;
+
+    $this->actingAs($owner)
+        ->withSession([
+            CurrentLocation::SESSION_KEY => $startingLocation,
+            Shell::LAST_CENTER_KEY => 'marketing',
+        ])
+        ->from(route('leads'))
+        ->post(route('location.switch'), ['location' => $targetLocation])
+        ->assertRedirect(route('leads'))
+        ->assertSessionHas(CurrentLocation::SESSION_KEY, $targetLocation === CurrentLocation::ALL_LOCATIONS
+            ? CurrentLocation::ALL_LOCATIONS
+            : $fourCorners->id)
+        ->assertSessionHas(Shell::LAST_CENTER_KEY, 'marketing');
+})->with([
+    'location to all locations' => [false],
+    'all locations to location' => [true],
+]);
+
+test('switching location preserves internal route parameters and query without allowing query overrides', function () {
+    $lakeview = Location::factory()->create(['name' => 'Lakeview']);
+    $riverside = Location::factory()->create(['name' => 'Riverside']);
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $lead = Lead::factory()->at($lakeview)->create();
+
+    $previousUrl = route('leads.show', $lead).'?view=timeline&lead=999999';
+    $expectedUrl = route('leads.show', ['lead' => $lead, 'view' => 'timeline']);
+
+    $this->actingAs($owner)
+        ->withSession([
+            CurrentLocation::SESSION_KEY => $lakeview->id,
+            Shell::LAST_CENTER_KEY => 'marketing',
+        ])
+        ->from($previousUrl)
+        ->post(route('location.switch'), ['location' => (string) $riverside->id])
+        ->assertRedirect($expectedUrl)
+        ->assertSessionHas(Shell::LAST_CENTER_KEY, 'marketing');
+});
+
+test('switching location maps the legacy settings context to company', function () {
+    $lakeview = Location::factory()->create(['name' => 'Lakeview']);
+    $riverside = Location::factory()->create(['name' => 'Riverside']);
+
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    $this->actingAs($owner)
+        ->withSession([
+            CurrentLocation::SESSION_KEY => $lakeview->id,
+            Shell::LAST_CENTER_KEY => 'settings',
+        ])
+        ->from(route('settings.users'))
+        ->post(route('location.switch'), ['location' => (string) $riverside->id])
+        ->assertRedirect(route('settings.users'))
+        ->assertSessionHas(Shell::LAST_CENTER_KEY, 'company');
+});
+
+test('switching location never preserves an unauthorized remembered destination', function () {
+    $lakeview = Location::factory()->create(['name' => 'Lakeview']);
+    $riverside = Location::factory()->create(['name' => 'Riverside']);
+
+    $user = User::factory()
+        ->withRoleAt(Role::SalesConsultant, $lakeview)
+        ->withRoleAt(Role::CallCenterAgent, $riverside)
+        ->create();
+
+    $this->actingAs($user)
+        ->withSession([
+            CurrentLocation::SESSION_KEY => $lakeview->id,
+            Shell::LAST_CENTER_KEY => 'sales',
+        ])
+        ->from(route('leads'))
+        ->post(route('location.switch'), ['location' => (string) $riverside->id])
+        ->assertRedirect(route('leads'))
+        ->assertSessionHas(Shell::LAST_CENTER_KEY, 'marketing');
 });
 
 test('switching location returns home when the center is not available in the new location', function () {

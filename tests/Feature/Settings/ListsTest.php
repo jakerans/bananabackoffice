@@ -97,13 +97,13 @@ test('a list that does not exist is not found', function () {
 |--------------------------------------------------------------------------
 */
 
-test('leadership sees settings in the menu with only this page in it', function () {
+test('leadership sees settings under company with only this page in it', function () {
     $leader = User::factory()->withRoleEverywhere(Role::Leadership)->create();
 
     $navigation = app(Navigation::class);
-    $settings = $navigation->center('settings');
+    $settings = $navigation->find('settings');
 
-    expect(collect($navigation->centersFor($leader))->pluck('id'))->toContain('settings');
+    expect(collect($navigation->centersFor($leader))->pluck('id'))->toContain('company');
     expect($navigation->landingFor($leader, $settings)?->id)->toBe('settings.lists');
 
     $visible = collect($settings->children)
@@ -138,12 +138,15 @@ test('leadership is shown no other settings page, built or not', function () {
         ->assertDontSee('Integrations');
 });
 
-test('an owner still opens settings on locations and sees this page beside it', function () {
+test('an owner still opens settings on locations and sees the nested settings entry beside it', function () {
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
 
     $this->actingAs($owner)->get(route('settings.home'))->assertRedirect(route('settings.locations'));
 
-    $this->actingAs($owner)->get(route('settings.locations'))->assertSee('Lead & Sales Lists', escape: true);
+    $this->actingAs($owner)
+        ->get(route('settings.locations'))
+        ->assertSee('href="'.route('settings.home').'"', escape: false)
+        ->assertSee('Settings');
 });
 
 /*

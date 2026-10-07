@@ -5,8 +5,8 @@ use App\Models\Location;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
 
-dataset('center routes', [
-    'company overview' => ['company.home'],
+dataset('navigation destination routes', [
+    'company' => ['company.home'],
     'marketing' => ['marketing.home'],
     'sales' => ['sales.home'],
     'production' => ['production.home'],
@@ -15,9 +15,9 @@ dataset('center routes', [
     'settings' => ['settings.home'],
 ]);
 
-test('guests are redirected to the login page from every center', function (string $route) {
+test('guests are redirected to the login page from every navigation destination', function (string $route) {
     $this->get(route($route))->assertRedirect(route('login'));
-})->with('center routes');
+})->with('navigation destination routes');
 
 test('a center opens directly on its primary section', function (string $center, string $primary) {
     Location::factory()->create();
@@ -26,7 +26,7 @@ test('a center opens directly on its primary section', function (string $center,
 
     $this->actingAs($owner)->get(route($center))->assertRedirect(route($primary));
 })->with([
-    'company overview' => ['company.home', 'company.performance'],
+    'company' => ['company.home', 'company.performance'],
     'marketing' => ['marketing.home', 'marketing.performance'],
     'sales' => ['sales.home', 'sales.performance'],
     'production' => ['production.home', 'production.performance'],
@@ -35,13 +35,13 @@ test('a center opens directly on its primary section', function (string $center,
     'settings' => ['settings.home', 'settings.locations'],
 ]);
 
-test('a staff member with no grants is forbidden from every center', function (string $route) {
+test('a staff member with no grants is forbidden from every navigation destination', function (string $route) {
     Location::factory()->create();
 
     $user = User::factory()->create();
 
     $this->actingAs($user)->get(route($route))->assertForbidden();
-})->with('center routes');
+})->with('navigation destination routes');
 
 test('a call center agent is forbidden from centers outside marketing', function (string $route) {
     Location::factory()->create();
@@ -50,7 +50,7 @@ test('a call center agent is forbidden from centers outside marketing', function
 
     $this->actingAs($agent)->get(route($route))->assertForbidden();
 })->with([
-    'company overview' => ['company.home'],
+    'company' => ['company.home'],
     'sales' => ['sales.home'],
     'production' => ['production.home'],
     'finance' => ['finance.home'],
@@ -88,7 +88,7 @@ test('a forbidden page says not authorized rather than coming soon', function ()
         ->assertDontSee('Coming soon');
 });
 
-test('leadership granted at a single location is forbidden from company overview', function () {
+test('leadership granted at a single location is forbidden from company', function () {
     $location = Location::factory()->create();
 
     $leader = User::factory()->withRoleAt(Role::Leadership, $location)->create();

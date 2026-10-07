@@ -158,8 +158,8 @@ test('a contact with only one name is shown by it', function () {
 test('customers is one page with one address, shown in four centers', function () {
     $navigation = app(Navigation::class);
 
-    expect(collect($navigation->centersForRoute('customers'))->pluck('id')->all())->toBe(['marketing', 'sales', 'production', 'finance']);
-    expect(collect($navigation->centersForRoute('customers.show'))->pluck('id')->all())->toBe(['marketing', 'sales', 'production', 'finance']);
+    expect(collect($navigation->destinationsForRoute('customers'))->pluck('id')->all())->toBe(['marketing', 'sales', 'production', 'finance']);
+    expect(collect($navigation->destinationsForRoute('customers.show'))->pluck('id')->all())->toBe(['marketing', 'sales', 'production', 'finance']);
 
     $entries = collect($navigation->centers())
         ->flatMap(fn (NavigationItem $center) => $center->flatten())
