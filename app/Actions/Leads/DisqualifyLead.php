@@ -10,21 +10,14 @@ use App\Enums\LeadStatusEvent;
 use App\Models\Lead;
 use App\Models\LeadDisqualificationReason;
 use App\Models\User;
-use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class DisqualifyLead
 {
-    /**
-     * How long a Lead must have been worked before it may be closed as "unable
-     * to contact". A stand-in until real contact attempts are tracked.
-     */
-    public const int CONTACT_WAIT_DAYS = 3;
-
     public function __construct(
+        private ChangeLeadLifecycle $changeLeadLifecycle,
         private RecordAuditEvent $recordAuditEvent,
         private RecordLeadStatusChange $recordLeadStatusChange,
         private UnassignLead $unassignLead,
@@ -46,47 +39,41 @@ class DisqualifyLead
      * already happened.
      *
      * The caller is responsible for checking that the person may do this, that
-     * they may see the original Lead they name, and that they may waive the
-     * waiting period if they ask to.
+     * they may see the original Lead they name.
      *
      * @param  Lead|null  $duplicateOf  The Lead this one repeats, for the "duplicate" reason.
-     * @param  bool  $waiveContactWait  Close it as "unable to contact" before the waiting period has passed.
      *
      * @throws ValidationException
      */
-    public function handle(Lead $lead, LeadDisqualificationReason $reason, ?string $note, User $actor, ?Lead $duplicateOf = null, bool $waiveContactWait = false): void
+    public function handle(Lead $lead, LeadDisqualificationReason $reason, ?string $note, User $actor, ?Lead $duplicateOf = null, ?int $expectedVersion = null): void
     {
-        if (! $lead->isActive()) {
-            throw ValidationException::withMessages([
-                'status' => __('This lead is already disqualified.'),
-            ]);
-        }
+        $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $reason, $note, $actor, $duplicateOf): bool {
+            $reason->refresh();
 
-        if (! $reason->is_active) {
-            throw ValidationException::withMessages([
-                'disqualificationReasonId' => __(':reason is no longer offered. Choose another.', ['reason' => $reason->name]),
-            ]);
-        }
-
-        $note = self::clean($note);
-        $duplicateOf = $reason->isDuplicate() ? $duplicateOf : null;
-
-        self::ensureExplained($reason, $note, $duplicateOf);
-        self::ensureOriginalIsUsable($lead, $duplicateOf);
-
-        $waived = false;
-
-        if ($reason->isUnableToContact()) {
-            if ($lead->status !== LeadStatus::Working) {
+            if (! $lead->isActive()) {
                 throw ValidationException::withMessages([
-                    'disqualificationReasonId' => __('":reason" is for a lead that has been worked. Start working this one first, or choose another reason.', ['reason' => $reason->name]),
+                    'status' => __('This lead is already disqualified.'),
                 ]);
             }
 
-            $waived = self::ensureWaitedLongEnough($lead->work_started_at, now(), $waiveContactWait, $reason);
-        }
+            if (! $reason->is_active) {
+                throw ValidationException::withMessages([
+                    'disqualificationReasonId' => __(':reason is no longer offered. Choose another.', ['reason' => $reason->name]),
+                ]);
+            }
 
-        DB::transaction(function () use ($lead, $reason, $note, $actor, $duplicateOf, $waived): void {
+            $note = self::clean($note);
+            $duplicateOf = $reason->isDuplicate() ? $duplicateOf : null;
+
+            self::ensureExplained($reason, $note, $duplicateOf);
+            self::ensureOriginalIsUsable($lead, $duplicateOf);
+
+            if ($reason->isUnableToContact()) {
+                throw ValidationException::withMessages([
+                    'disqualificationReasonId' => __('Unable to Contact is historical only. Nonresponse is not a reason to disqualify a lead. Schedule a follow-up instead.'),
+                ]);
+            }
+
             $from = $lead->status;
             $assigneeId = $lead->assigned_user_id;
             $assignee = $lead->assignee;
@@ -131,11 +118,12 @@ class DisqualifyLead
                     'reason' => $reason->name,
                     'category' => $reason->category->value,
                     'duplicate_of_lead_id' => $duplicateOf?->id,
-                    'contact_wait_waived' => $waived,
                 ],
                 location: $lead->location,
                 reason: $note,
             );
+
+            return true;
         });
     }
 
@@ -224,6 +212,8 @@ class DisqualifyLead
             ]);
         }
 
+        $duplicateOf = Lead::query()->lockForUpdate()->findOrFail($duplicateOf->id);
+
         if ($duplicateOf->duplicate_of_lead_id !== null) {
             throw ValidationException::withMessages([
                 'duplicateOfId' => __('That lead is itself recorded as a duplicate. Choose the original it repeats.'),
@@ -235,35 +225,6 @@ class DisqualifyLead
                 'duplicateOfId' => __('Another lead is recorded as a duplicate of this one, so this one cannot be a duplicate too.'),
             ]);
         }
-    }
-
-    /**
-     * "Unable to contact" is for after proper follow-up, not after one missed
-     * call. Returns whether the waiting period was waived.
-     *
-     * @throws ValidationException
-     */
-    public static function ensureWaitedLongEnough(?CarbonInterface $workStartedAt, CarbonInterface $asOf, bool $waive, LeadDisqualificationReason $reason): bool
-    {
-        $earliest = $workStartedAt?->copy()->addDays(self::CONTACT_WAIT_DAYS);
-
-        if ($earliest !== null && ! $earliest->isAfter($asOf)) {
-            return false;
-        }
-
-        if ($waive) {
-            return true;
-        }
-
-        throw ValidationException::withMessages([
-            'disqualificationReasonId' => $earliest === null
-                ? __('":reason" is for a lead that has been worked. This one has not been.', ['reason' => $reason->name])
-                : __('":reason" can be used from :date, :days days after work on this lead started. Until then, move it to nurture to try again later.', [
-                    'reason' => $reason->name,
-                    'date' => $earliest->setTimezone(config('app.display_timezone'))->format('M j, Y'),
-                    'days' => self::CONTACT_WAIT_DAYS,
-                ]),
-        ]);
     }
 
     public static function clean(?string $note): ?string

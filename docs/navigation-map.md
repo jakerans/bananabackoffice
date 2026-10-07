@@ -265,7 +265,10 @@ and B7): Assigned to me, Follow-ups, Unassigned, All leads and Unrouted. A perso
 views they may use, and the page opens on the one that suits their job. See
 "Routing and assignment, as built in step B4" in
 [checkpoint-b.md](checkpoint-b.md). The views are not separate pages and add
-nothing to the menus.
+nothing to the menus. B7 presents the manual callback status as **Deferred
+Follow-up** and the action as **Schedule follow-up** (decision 55). Follow-ups
+is still the existing manual queue; no multichannel nurture or Contact Center
+workflow is introduced.
 - The first live section that has sub-sections brings the third row (sub-sections)
   into the shell, as already described under "Shell layout".
 - Every other item on this page keeps its current state through Checkpoint B.

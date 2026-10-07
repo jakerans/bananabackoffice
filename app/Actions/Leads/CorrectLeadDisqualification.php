@@ -9,12 +9,12 @@ use App\Enums\LeadStatusEvent;
 use App\Models\Lead;
 use App\Models\LeadDisqualificationReason;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CorrectLeadDisqualification
 {
     public function __construct(
+        private ChangeLeadLifecycle $changeLeadLifecycle,
         private RecordAuditEvent $recordAuditEvent,
         private RecordLeadStatusChange $recordLeadStatusChange,
     ) {}
@@ -35,40 +35,41 @@ class CorrectLeadDisqualification
      *
      * @throws ValidationException
      */
-    public function handle(Lead $lead, LeadDisqualificationReason $reason, ?string $note, User $actor, ?Lead $duplicateOf = null, bool $waiveContactWait = false): void
+    public function handle(Lead $lead, LeadDisqualificationReason $reason, ?string $note, User $actor, ?Lead $duplicateOf = null, ?int $expectedVersion = null): void
     {
-        if ($lead->status !== LeadStatus::Disqualified) {
-            throw ValidationException::withMessages([
-                'status' => __('Only a disqualified lead has a reason to correct.'),
-            ]);
-        }
+        $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $reason, $note, $actor, $duplicateOf): bool {
+            $reason->refresh();
 
-        $reasonChanged = $lead->disqualification_reason_id !== $reason->id;
+            if ($lead->status !== LeadStatus::Disqualified) {
+                throw ValidationException::withMessages([
+                    'status' => __('Only a disqualified lead has a reason to correct.'),
+                ]);
+            }
 
-        if ($reasonChanged && ! $reason->is_active) {
-            throw ValidationException::withMessages([
-                'disqualificationReasonId' => __(':reason is no longer offered. Choose another.', ['reason' => $reason->name]),
-            ]);
-        }
+            $reasonChanged = $lead->disqualification_reason_id !== $reason->id;
 
-        $note = DisqualifyLead::clean($note);
-        $duplicateOf = $reason->isDuplicate() ? $duplicateOf : null;
+            if ($reasonChanged && ! $reason->is_active) {
+                throw ValidationException::withMessages([
+                    'disqualificationReasonId' => __(':reason is no longer offered. Choose another.', ['reason' => $reason->name]),
+                ]);
+            }
 
-        DisqualifyLead::ensureExplained($reason, $note, $duplicateOf);
-        DisqualifyLead::ensureOriginalIsUsable($lead, $duplicateOf);
+            $note = DisqualifyLead::clean($note);
+            $duplicateOf = $reason->isDuplicate() ? $duplicateOf : null;
 
-        $waived = false;
+            DisqualifyLead::ensureExplained($reason, $note, $duplicateOf);
+            DisqualifyLead::ensureOriginalIsUsable($lead, $duplicateOf);
 
-        if ($reasonChanged && $reason->isUnableToContact()) {
-            // Judged as of when the Lead was disqualified, not as of today.
-            $waived = DisqualifyLead::ensureWaitedLongEnough($lead->work_started_at, $lead->last_disqualified_at ?? now(), $waiveContactWait, $reason);
-        }
+            if ($reasonChanged && $reason->isUnableToContact()) {
+                throw ValidationException::withMessages([
+                    'disqualificationReasonId' => __('Unable to Contact is historical only. Choose another reason.'),
+                ]);
+            }
 
-        if (! $reasonChanged && $lead->disqualification_note === $note && $lead->duplicate_of_lead_id === $duplicateOf?->id) {
-            return;
-        }
+            if (! $reasonChanged && $lead->disqualification_note === $note && $lead->duplicate_of_lead_id === $duplicateOf?->id) {
+                return false;
+            }
 
-        DB::transaction(function () use ($lead, $reason, $note, $actor, $duplicateOf, $reasonChanged, $waived): void {
             $before = [
                 'reason' => $lead->disqualificationReason?->name,
                 'category' => $lead->disqualification_category?->value,
@@ -110,10 +111,11 @@ class CorrectLeadDisqualification
                     'category' => $category->value,
                     'note' => $note,
                     'duplicate_of_lead_id' => $duplicateOf?->id,
-                    'contact_wait_waived' => $waived,
                 ],
                 location: $lead->location,
             );
+
+            return true;
         });
     }
 }

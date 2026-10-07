@@ -16,7 +16,7 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
 /**
- * A lead with everything a project will need: a location, someone assigned, a
+ * A lead meeting the existing qualification requirements: a location, someone assigned, a
  * customer with a contact and a property, a service and a project size.
  */
 function leadReadyToQualify(Location $location, User $assignee): LeadFactory
@@ -33,7 +33,7 @@ function leadReadyToQualify(Location $location, User $assignee): LeadFactory
 |--------------------------------------------------------------------------
 */
 
-test('a working lead with everything a project needs can be qualified by the person it is assigned to', function () {
+test('a working lead meeting the qualification requirements can be qualified by the person it is assigned to', function () {
     $this->freezeSecond();
 
     $lakeview = Location::factory()->create(['name' => 'Lakeview']);
@@ -43,6 +43,7 @@ test('a working lead with everything a project needs can be qualified by the per
     Livewire::actingAs($consultant)
         ->test('pages::leads.show', ['lead' => $lead])
         ->call('openQualify')
+        ->assertSee('It does not mean booked, Lead Issued, demoed, sold or Project-created.')
         ->assertSeeHtml('data-test="qualification-ready"')
         ->call('qualify')
         ->assertHasNoErrors()
@@ -68,7 +69,7 @@ test('a working lead with everything a project needs can be qualified by the per
     expect($entry->created_at->equalTo(now()))->toBeTrue();
 });
 
-test('a lead cannot be qualified while something a project needs is missing', function (Closure $without, string $missing) {
+test('a lead cannot be qualified while a qualification requirement is missing', function (Closure $without, string $missing) {
     $lakeview = Location::factory()->create();
     $manager = User::factory()->withRoleAt(Role::LocationManager, $lakeview)->create();
     $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
@@ -247,7 +248,7 @@ test('a lead that is new, being worked or disqualified cannot be returned to wor
     $status = $lead->status;
 
     expect(fn () => app(ReturnLeadToWorking::class)->handle($lead, $manager))
-        ->toThrow(ValidationException::class, 'Only a lead in nurture, or a qualified one, can be returned to working.');
+        ->toThrow(ValidationException::class, 'Only a lead with a deferred follow-up, or a qualified one, can be returned to working.');
 
     expect($lead->fresh()->status)->toBe($status);
 })->with([

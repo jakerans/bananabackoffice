@@ -37,10 +37,13 @@ test('a lead being worked can be moved to nurture with a follow-up date and a no
     Livewire::actingAs($consultant)
         ->test('pages::leads.show', ['lead' => $lead])
         ->call('openNurture')
+        ->assertSee('Schedule follow-up')
+        ->assertSee('Schedule a manual callback with a date and note.')
         ->set('followUpOn', '2026-11-02')
         ->set('followUpNote', 'Wants a quote once the roof is finished.')
         ->call('saveNurture')
         ->assertHasNoErrors()
+        ->assertSee('Deferred Follow-up')
         ->assertSee('Follow up on Nov 2, 2026')
         ->assertSee('Wants a quote once the roof is finished.')
         ->assertDontSeeHtml('data-test="follow-up-due"');
@@ -139,7 +142,7 @@ test('a lead that is new or disqualified cannot be moved to nurture', function (
     $status = $lead->status;
 
     expect(fn () => app(MoveLeadToNurture::class)->handle($lead, '2026-11-02', 'Call back.', $manager))
-        ->toThrow(ValidationException::class, 'Only a lead that is being worked, or is qualified, can be moved to nurture.');
+        ->toThrow(ValidationException::class, 'Only a lead that is being worked, or is qualified, can have a deferred follow-up scheduled.');
 
     expect($lead->fresh()->status)->toBe($status);
 })->with([

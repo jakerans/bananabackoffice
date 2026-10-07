@@ -8,12 +8,12 @@ use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
 use App\Models\Lead;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ReopenLead
 {
     public function __construct(
+        private ChangeLeadLifecycle $changeLeadLifecycle,
         private RecordAuditEvent $recordAuditEvent,
         private RecordLeadStatusChange $recordLeadStatusChange,
     ) {}
@@ -33,23 +33,23 @@ class ReopenLead
      *
      * @throws ValidationException
      */
-    public function handle(Lead $lead, ?string $reason, User $actor): void
+    public function handle(Lead $lead, ?string $reason, User $actor, ?int $expectedVersion = null): void
     {
-        if ($lead->status !== LeadStatus::Disqualified) {
-            throw ValidationException::withMessages([
-                'status' => __('Only a disqualified lead can be reopened. This one is :status.', ['status' => $lead->status->label()]),
-            ]);
-        }
+        $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $reason, $actor): bool {
+            if ($lead->status !== LeadStatus::Disqualified) {
+                throw ValidationException::withMessages([
+                    'status' => __('Only a disqualified lead can be reopened. This one is :status.', ['status' => $lead->status->label()]),
+                ]);
+            }
 
-        $reason = trim((string) $reason);
+            $reason = trim((string) $reason);
 
-        if ($reason === '') {
-            throw ValidationException::withMessages([
-                'reopenReason' => __('Say why this lead is being reopened.'),
-            ]);
-        }
+            if ($reason === '') {
+                throw ValidationException::withMessages([
+                    'reopenReason' => __('Say why this lead is being reopened.'),
+                ]);
+            }
 
-        DB::transaction(function () use ($lead, $reason, $actor): void {
             $before = [
                 'status' => LeadStatus::Disqualified->value,
                 'reason' => $lead->disqualificationReason?->name,
@@ -81,6 +81,8 @@ class ReopenLead
                 location: $lead->location,
                 reason: $reason,
             );
+
+            return true;
         });
     }
 }

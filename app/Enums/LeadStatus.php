@@ -16,10 +16,10 @@ enum LeadStatus: string
     /** Someone is in contact or trying to be. */
     case Working = 'working';
 
-    /** A legitimate opportunity, with what is needed to create its Project. */
+    /** The qualification milestone only; not booked, issued, demoed, sold or Project-created. */
     case Qualified = 'qualified';
 
-    /** Still a viable opportunity, to be followed up on a set date. */
+    /** A deliberate manual callback. The stored value is retained for compatibility. */
     case Nurture = 'nurture';
 
     /** Did not become a legitimate opportunity, for a recorded reason. */
@@ -31,7 +31,7 @@ enum LeadStatus: string
             self::New => 'New',
             self::Working => 'Working',
             self::Qualified => 'Qualified',
-            self::Nurture => 'Nurture',
+            self::Nurture => 'Deferred Follow-up',
             self::Disqualified => 'Disqualified',
         };
     }
@@ -39,8 +39,8 @@ enum LeadStatus: string
     /**
      * Whether a Lead in this status still needs someone's attention.
      *
-     * Everything but Disqualified does. A Qualified Lead stays active until
-     * Projects exist to carry it on.
+     * Everything but Disqualified does. Qualified records remain active; this milestone alone does not
+     * create or imply any downstream workflow.
      */
     public function isActive(): bool
     {

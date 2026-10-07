@@ -17,6 +17,7 @@ use App\Models\LeadStatusChange;
 use App\Models\Location;
 use App\Models\Property;
 use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 /**
  * The one audit event of a kind about a lead's lifecycle.
@@ -111,7 +112,6 @@ test('disqualifying a lead records the reason, its category and the handoff it e
     expect($event->after()['status'])->toBe('disqualified');
     expect($event->after()['reason'])->toBe('Other');
     expect($event->after()['category'])->toBe('other');
-    expect($event->after()['contact_wait_waived'])->toBeFalse();
     expect($event->reason)->toBe('A film set for one day.');
 
     // Ending the assignment is its own event, with why it ended.
@@ -121,22 +121,16 @@ test('disqualifying a lead records the reason, its category and the handoff it e
     expect($unassigned->after()['cause'])->toBe('lead_disqualified');
 });
 
-test('waiving the wait for unable to contact is recorded, and only when it was needed', function () {
-    $reason = disqualificationReason('Unable to Contact');
+test('a refused nonresponse closure records no audit or status event and keeps the assignment', function () {
+    $lead = Lead::factory()->at($this->lakeview)->working()->assignedTo($this->consultant)->create(['work_started_at' => now()->subYear()]);
+    $auditCount = AuditEvent::query()->count();
 
-    $early = Lead::factory()->at($this->lakeview)->working()->assignedTo($this->consultant)->create(['work_started_at' => now()->subHour()]);
-    $waited = Lead::factory()->at($this->lakeview)->working()->assignedTo($this->consultant)->create(['work_started_at' => now()->subDays(5)]);
+    expect(fn () => app(DisqualifyLead::class)->handle($lead, disqualificationReason('Unable to Contact'), 'No response.', $this->manager))
+        ->toThrow(ValidationException::class);
 
-    app(DisqualifyLead::class)->handle($early, $reason, 'Number disconnected.', $this->manager, waiveContactWait: true);
-    // Ticking the box when the wait has already passed waives nothing.
-    app(DisqualifyLead::class)->handle($waited, $reason, 'Five calls, two emails.', $this->manager, waiveContactWait: true);
-
-    $events = AuditEvent::query()->where('action', AuditAction::LeadDisqualified)->orderBy('id')->get();
-
-    expect($events[0]->subject->is($early))->toBeTrue();
-    expect($events[0]->after()['contact_wait_waived'])->toBeTrue();
-    expect($events[0]->actor->is($this->manager))->toBeTrue();
-    expect($events[1]->after()['contact_wait_waived'])->toBeFalse();
+    expect(AuditEvent::query()->count())->toBe($auditCount);
+    expect(LeadStatusChange::query()->count())->toBe(0);
+    expect($lead->fresh()->assignee->is($this->consultant))->toBeTrue();
 });
 
 test('correcting a disqualification records what it said before and after', function () {
@@ -187,11 +181,10 @@ test('a status change made while viewing Backoffice as someone names them on the
     $page = livewireSnapshot($this->get(route('leads.show', $lead))->assertOk());
     $dialog = json_decode(sendLivewireAction($page, 'openDisqualify')->assertOk()->json('components.0.snapshot'), true);
 
-    // As the consultant, the Owner's own reach is not added: no waiving the wait.
+    // Nonresponse remains unavailable during impersonation too.
     sendLivewireAction($dialog, 'disqualify', updates: [
         'disqualificationReasonId' => disqualificationReason('Unable to Contact')->id,
         'disqualificationNote' => 'Called once.',
-        'waiveContactWait' => true,
     ])->assertOk();
 
     expect($lead->fresh()->status)->toBe(LeadStatus::Working);

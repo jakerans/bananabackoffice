@@ -8,12 +8,12 @@ use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
 use App\Models\Lead;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class StartWorkingLead
 {
     public function __construct(
+        private ChangeLeadLifecycle $changeLeadLifecycle,
         private RecordAuditEvent $recordAuditEvent,
         private AssignLead $assignLead,
         private RecordLeadStatusChange $recordLeadStatusChange,
@@ -32,19 +32,19 @@ class StartWorkingLead
      *
      * @throws ValidationException
      */
-    public function handle(Lead $lead, User $worker): void
+    public function handle(Lead $lead, User $worker, ?int $expectedVersion = null): void
     {
-        if ($lead->status !== LeadStatus::New) {
-            return;
-        }
+        $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $worker): bool {
+            if ($lead->status !== LeadStatus::New) {
+                return false;
+            }
 
-        if ($lead->isAssigned() && ! $lead->isAssignedTo($worker)) {
-            throw ValidationException::withMessages([
-                'lead' => __('This lead is assigned to :name. It must be reassigned before someone else works it.', ['name' => $lead->assignee?->name]),
-            ]);
-        }
+            if ($lead->isAssigned() && ! $lead->isAssignedTo($worker)) {
+                throw ValidationException::withMessages([
+                    'lead' => __('This lead is assigned to :name. It must be reassigned before someone else works it.', ['name' => $lead->assignee?->name]),
+                ]);
+            }
 
-        DB::transaction(function () use ($lead, $worker): void {
             $this->assignLead->handle($lead, $worker, $worker);
 
             $lead->forceFill([
@@ -63,6 +63,8 @@ class StartWorkingLead
                 after: ['status' => LeadStatus::Working->value],
                 location: $lead->location,
             );
+
+            return true;
         });
     }
 }

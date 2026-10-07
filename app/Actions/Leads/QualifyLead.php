@@ -8,7 +8,6 @@ use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
 use App\Models\Lead;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class QualifyLead
@@ -27,17 +26,18 @@ class QualifyLead
     ];
 
     public function __construct(
+        private ChangeLeadLifecycle $changeLeadLifecycle,
         private RecordAuditEvent $recordAuditEvent,
         private RecordLeadStatusChange $recordLeadStatusChange,
     ) {}
 
     /**
      * Mark a Working Lead as Qualified: a legitimate opportunity, with the core
-     * information needed to create its Project.
+     * information required by the existing qualification milestone.
      *
      * It must have a location, an assignee, a customer with a contact and a
      * property, at least one service with a main one, and a project size.
-     * Creating the Project later checks these again.
+     * This does not mean booked, Lead Issued, demoed, sold or Project-created.
      *
      * The first time a Lead is qualified is kept for good, whatever happens to
      * it afterwards, so it can always be counted as having been qualified.
@@ -46,25 +46,25 @@ class QualifyLead
      *
      * @throws ValidationException
      */
-    public function handle(Lead $lead, User $actor): void
+    public function handle(Lead $lead, User $actor, ?int $expectedVersion = null): void
     {
-        if ($lead->status !== LeadStatus::Working) {
-            throw ValidationException::withMessages([
-                'status' => __('Only a lead that is being worked can be qualified. This one is :status.', ['status' => $lead->status->label()]),
-            ]);
-        }
+        $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $actor): bool {
+            if ($lead->status !== LeadStatus::Working) {
+                throw ValidationException::withMessages([
+                    'status' => __('Only a lead that is being worked can be qualified. This one is :status.', ['status' => $lead->status->label()]),
+                ]);
+            }
 
-        $gaps = $lead->qualificationGaps();
+            $gaps = $lead->qualificationGaps();
 
-        if ($gaps !== []) {
-            throw ValidationException::withMessages([
-                'qualification' => __('This lead cannot be qualified yet. It still needs: :missing.', [
-                    'missing' => implode('; ', array_map(fn (string $gap): string => self::REQUIREMENTS[$gap], $gaps)),
-                ]),
-            ]);
-        }
+            if ($gaps !== []) {
+                throw ValidationException::withMessages([
+                    'qualification' => __('This lead cannot be qualified yet. It still needs: :missing.', [
+                        'missing' => implode('; ', array_map(fn (string $gap): string => self::REQUIREMENTS[$gap], $gaps)),
+                    ]),
+                ]);
+            }
 
-        DB::transaction(function () use ($lead, $actor): void {
             $lead->forceFill([
                 'status' => LeadStatus::Qualified,
                 'status_changed_at' => now(),
@@ -81,6 +81,8 @@ class QualifyLead
                 after: ['status' => LeadStatus::Qualified->value],
                 location: $lead->location,
             );
+
+            return true;
         });
     }
 }

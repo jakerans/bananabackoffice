@@ -28,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property Carbon $received_at
  * @property LeadStatus $status
+ * @property int $lifecycle_version
  * @property int $lead_channel_id
  * @property int $lead_source_id
  * @property int $marketing_source_id
@@ -106,6 +107,7 @@ class Lead extends Model
         return [
             'received_at' => 'datetime',
             'status' => LeadStatus::class,
+            'lifecycle_version' => 'integer',
             'assigned_at' => 'datetime',
             'first_routed_at' => 'datetime',
             'routed_at' => 'datetime',

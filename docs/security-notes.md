@@ -125,7 +125,7 @@ another location has dealt with. Staff are told so without being shown who.
   matches an hour per person, and every link, and every correction of a lead's
   phone or email, is an audit event. It never exposes another location's leads.
 
-### Lead lifecycle (added 2026-10-06, step B7)
+### Lead lifecycle (added 2026-10-06; reconciled 2026-10-07, step B7)
 
 - Every lifecycle action is authorized on the server against the Lead's own
   Location, whatever the screen offered. A Sales Consultant acts only on Leads
@@ -134,16 +134,19 @@ another location has dealt with. Staff are told so without being shown who.
   person can already see are offered, and any other ID is refused as not found.
   When a Lead points at an original its viewer cannot open, the page says only
   "a lead you cannot open".
-- **Asking to skip the "Unable to Contact" wait counts only for someone allowed
-  to.** The request's flag is ignored otherwise, and a waiver is written into the
-  audit event.
-- A change, its status-history row and its audit events are saved in one
-  transaction: all of them or none.
+- **Nonresponse closure is retired.** Unable to Contact is unavailable for new
+  closure or newly selected corrections, regardless of role or elapsed time.
+  Historical reasons, notes and audit entries remain; a historical note can be
+  corrected and the Lead can be reopened. No action accepts a waiver.
+- A change, its lifecycle revision, assignment, status-history row and audit
+  events are saved in one transaction: all or none. An atomic revision claim
+  rejects stale lifecycle saves even when the status or second has not changed;
+  the claim also checks Location and assignee against the authorization context.
 - The status history refuses to be edited or deleted in code. Like audit events,
   this is not yet enforced by the database itself.
 - Through impersonation, the Lead and its history name the staff identity; the
   audit event names the Owner as well. The Owner's own permissions are not added:
-  viewing as a Sales Consultant cannot waive the wait or reopen a Lead.
+  viewing as a Sales Consultant cannot reopen a Lead.
 
 ### Open: must be handled before real staff use the systemThese are not blocking for development, but they must be closed before Backoffice
 is used with real accounts on a server.

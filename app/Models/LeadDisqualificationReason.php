@@ -23,14 +23,14 @@ class LeadDisqualificationReason extends ManagedListOption
     /** @use HasFactory<LeadDisqualificationReasonFactory> */
     use HasFactory;
 
-    /** May only be used after proper follow-up, with a note saying what was tried. */
+    /** Retired closure reason, retained for historical records and corrections. */
     public const string UNABLE_TO_CONTACT = 'unable_to_contact';
 
     /** Asks which Lead this one repeats. */
     public const string DUPLICATE = 'duplicate';
 
     /**
-     * Whether this is the reason that may only be used after proper follow-up.
+     * Whether this is the retired nonresponse closure reason.
      * It is recognized by a marker, not by its name, so renaming it changes nothing.
      */
     public function isUnableToContact(): bool

@@ -3,6 +3,7 @@
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Leads\AssignLead;
 use App\Actions\Leads\CaptureLead;
+use App\Actions\Leads\CorrectLeadDisqualification;
 use App\Actions\Leads\CorrectLeadReceivedTime;
 use App\Actions\Leads\DisqualifyLead;
 use App\Actions\Leads\MoveLeadToNurture;
@@ -255,6 +256,10 @@ test('a lead\'s status is not changed when its audit event cannot be recorded', 
     expect(LeadStatusChange::query()->count())->toBe(0);
     expect(LeadAssignment::query()->whereNull('ended_at')->count())->toBe($before['assigned_user_id'] === null ? 0 : 1);
 })->with([
+    'correcting a disqualification' => [
+        fn ($lead) => $lead->disqualified(),
+        fn (Lead $lead, User $manager) => app(CorrectLeadDisqualification::class)->handle($lead, LeadDisqualificationReason::query()->where('name', 'Other')->sole(), 'Corrected reason.', $manager),
+    ],
     'qualifying' => [
         fn ($lead, User $consultant) => $lead->working()->assignedTo($consultant),
         fn (Lead $lead, User $manager) => app(QualifyLead::class)->handle($lead, $manager),

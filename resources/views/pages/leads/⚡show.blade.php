@@ -91,9 +91,22 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
     public string $noteBody = '';
 
-    /** The Lead's status when a lifecycle dialog was opened, so an out-of-date dialog saves nothing. */
+    /** The lifecycle state shown when the dialog opened, retained across requests. */
     #[Locked]
     public string $knownStatus = '';
+
+    #[Locked]
+    public int $knownLifecycleVersion = 0;
+
+    /** The revision shown on the page for actions without a dialog. */
+    #[Locked]
+    public int $pageLifecycleVersion = 0;
+
+    #[Locked]
+    public ?int $lifecycleLocationId = null;
+
+    #[Locked]
+    public ?int $lifecycleAssigneeId = null;
 
     public string $followUpOn = '';
 
@@ -105,8 +118,6 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
     /** The Lead this one repeats. Empty means "the original cannot be identified or opened". */
     public ?int $duplicateOfId = null;
-
-    public bool $waiveContactWait = false;
 
     /** Whether the disqualify dialog is correcting an existing disqualification rather than making one. */
     #[Locked]
@@ -122,8 +133,14 @@ new #[Title('Lead')] class extends AddressCapturePage {
         $this->authorize('view', $lead);
 
         $this->lead = $lead;
+        $this->pageLifecycleVersion = (int) $lead->lifecycle_version;
 
         $this->startAddressCapture();
+    }
+
+    public function dehydrate(): void
+    {
+        $this->pageLifecycleVersion = (int) $this->lead->lifecycle_version;
     }
 
     /**
@@ -136,7 +153,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
     {
         $this->authorize('startWorking', $this->lead);
 
-        $startWorkingLead->handle($this->lead, Auth::user());
+        $startWorkingLead->handle($this->lead, Auth::user(), $this->pageLifecycleVersion);
 
         Flux::toast(variant: 'success', text: __('You are now working this lead.'));
     }
@@ -158,17 +175,17 @@ new #[Title('Lead')] class extends AddressCapturePage {
     }
 
     /**
-     * Mark the Lead Qualified: a legitimate opportunity with what its Project will need.
+     * Record the existing qualification milestone; no appointment, sale or Project is created.
      */
     public function qualify(QualifyLead $qualifyLead): void
     {
         $this->authorize('changeStatus', $this->lead);
 
-        if ($this->statusHasChangedSinceTheDialogOpened('qualify-lead')) {
+        if ($this->lifecycleHasChangedSinceTheDialogOpened('qualify-lead')) {
             return;
         }
 
-        $qualifyLead->handle($this->lead, Auth::user());
+        $qualifyLead->handle($this->lead, Auth::user(), $this->knownLifecycleVersion);
 
         Flux::modal('qualify-lead')->close();
         Flux::toast(variant: 'success', text: __('This lead is qualified.'));
@@ -194,7 +211,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
     {
         $this->authorize('changeStatus', $this->lead);
 
-        if ($this->statusHasChangedSinceTheDialogOpened('nurture-lead')) {
+        if ($this->lifecycleHasChangedSinceTheDialogOpened('nurture-lead')) {
             return;
         }
 
@@ -209,7 +226,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
             'followUpNote' => 'note',
         ]);
 
-        $moveLeadToNurture->handle($this->lead, $this->followUpOn, $this->followUpNote, Auth::user());
+        $moveLeadToNurture->handle($this->lead, $this->followUpOn, $this->followUpNote, Auth::user(), $this->knownLifecycleVersion);
 
         Flux::modal('nurture-lead')->close();
         Flux::toast(variant: 'success', text: __('Follow-up set for :date.', ['date' => $this->lead->follow_up_on?->format('M j, Y')]));
@@ -222,7 +239,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
     {
         $this->authorize('changeStatus', $this->lead);
 
-        $returnLeadToWorking->handle($this->lead, Auth::user());
+        $returnLeadToWorking->handle($this->lead, Auth::user(), $this->pageLifecycleVersion);
 
         Flux::toast(variant: 'success', text: __('This lead is being worked again.'));
     }
@@ -234,7 +251,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
     {
         $this->authorize('changeStatus', $this->lead);
 
-        $this->reset('disqualificationReasonId', 'disqualificationNote', 'duplicateOfId', 'waiveContactWait');
+        $this->reset('disqualificationReasonId', 'disqualificationNote', 'duplicateOfId');
 
         $this->correctingDisqualification = false;
 
@@ -251,7 +268,6 @@ new #[Title('Lead')] class extends AddressCapturePage {
         $this->disqualificationReasonId = $this->lead->disqualification_reason_id;
         $this->disqualificationNote = (string) $this->lead->disqualification_note;
         $this->duplicateOfId = $this->lead->duplicate_of_lead_id;
-        $this->waiveContactWait = false;
 
         $this->correctingDisqualification = true;
 
@@ -265,7 +281,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
     {
         $this->authorize($this->correctingDisqualification ? 'reopen' : 'changeStatus', $this->lead);
 
-        if ($this->statusHasChangedSinceTheDialogOpened('disqualify-lead')) {
+        if ($this->lifecycleHasChangedSinceTheDialogOpened('disqualify-lead')) {
             return;
         }
 
@@ -292,13 +308,10 @@ new #[Title('Lead')] class extends AddressCapturePage {
             ? ($this->possibleOriginals->firstWhere('id', $this->duplicateOfId) ?? abort(404))
             : null;
 
-        // Asking to skip the waiting period counts only for someone allowed to.
-        $waive = $this->waiveContactWait && Auth::user()->can('waiveContactWait', $this->lead);
-
         if ($this->correctingDisqualification) {
-            $correctLeadDisqualification->handle($this->lead, $reason, $this->disqualificationNote, Auth::user(), $original, $waive);
+            $correctLeadDisqualification->handle($this->lead, $reason, $this->disqualificationNote, Auth::user(), $original, $this->knownLifecycleVersion);
         } else {
-            $disqualifyLead->handle($this->lead, $reason, $this->disqualificationNote, Auth::user(), $original, $waive);
+            $disqualifyLead->handle($this->lead, $reason, $this->disqualificationNote, Auth::user(), $original, $this->knownLifecycleVersion);
         }
 
         unset($this->possibleOriginals, $this->eligibleAssignees, $this->openLeadCounts);
@@ -336,7 +349,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
     {
         $this->authorize('reopen', $this->lead);
 
-        if ($this->statusHasChangedSinceTheDialogOpened('reopen-lead')) {
+        if ($this->lifecycleHasChangedSinceTheDialogOpened('reopen-lead')) {
             return;
         }
 
@@ -346,7 +359,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
             ['reopenReason' => 'reason'],
         );
 
-        $reopenLead->handle($this->lead, $this->reopenReason, Auth::user());
+        $reopenLead->handle($this->lead, $this->reopenReason, Auth::user(), $this->knownLifecycleVersion);
 
         Flux::modal('reopen-lead')->close();
         Flux::toast(variant: 'success', text: __('Reopened. Assign it to someone to work.'));
@@ -361,7 +374,10 @@ new #[Title('Lead')] class extends AddressCapturePage {
     public function disqualificationReasons(): Collection
     {
         return LeadDisqualificationReason::query()
-            ->where(fn ($query) => $query->where('is_active', true)->orWhere('id', $this->lead->disqualification_reason_id))
+            ->where(fn ($query) => $query
+                ->where(fn ($offered) => $offered->where('is_active', true)
+                    ->where(fn ($special) => $special->whereNull('special_handling')->orWhere('special_handling', '!=', LeadDisqualificationReason::UNABLE_TO_CONTACT)))
+                ->orWhere('id', $this->lead->disqualification_reason_id))
             ->ordered()
             ->get();
     }
@@ -397,6 +413,9 @@ new #[Title('Lead')] class extends AddressCapturePage {
     private function startLifecycleDialog(string $dialog): void
     {
         $this->knownStatus = $this->lead->status->value;
+        $this->knownLifecycleVersion = (int) $this->lead->lifecycle_version;
+        $this->lifecycleLocationId = $this->lead->location_id;
+        $this->lifecycleAssigneeId = $this->lead->assigned_user_id;
 
         unset($this->chosenReason, $this->qualificationGaps);
 
@@ -406,12 +425,15 @@ new #[Title('Lead')] class extends AddressCapturePage {
     }
 
     /**
-     * Refuse to act on a dialog that is out of date: if the Lead's status was
-     * changed by someone else after it was opened, nothing is saved.
+     * Refuse stale dialogs, including same-status corrections and reschedules.
+     * The action repeats the revision check atomically when claiming the row.
      */
-    private function statusHasChangedSinceTheDialogOpened(string $dialog): bool
+    private function lifecycleHasChangedSinceTheDialogOpened(string $dialog): bool
     {
-        if ($this->lead->status->value === $this->knownStatus) {
+        if ($this->lead->status->value === $this->knownStatus
+            && (int) $this->lead->lifecycle_version === $this->knownLifecycleVersion
+            && $this->lead->location_id === $this->lifecycleLocationId
+            && $this->lead->assigned_user_id === $this->lifecycleAssigneeId) {
             return false;
         }
 
@@ -1027,7 +1049,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
                 @endif
 
                 @if ($lead->status === LeadStatus::Working || $lead->status === LeadStatus::Qualified)
-                    <flux:button wire:click="openNurture" data-test="nurture-lead">{{ __('Move to nurture') }}</flux:button>
+                    <flux:button wire:click="openNurture" data-test="nurture-lead">{{ __('Schedule follow-up') }}</flux:button>
                 @endif
 
                 <flux:button variant="ghost" wire:click="openDisqualify" data-test="disqualify-lead">{{ __('Disqualify') }}</flux:button>
@@ -1043,6 +1065,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
     @if ($lead->status === LeadStatus::Qualified)
         <div class="rounded-lg border border-green-300 bg-green-50 p-4 text-sm text-ink" data-test="lead-qualified">
             <span class="font-semibold">{{ __('Qualified') }}</span>
+            <span>{{ __('Qualification milestone only; not booked, Lead Issued, demoed, sold or Project-created.') }}</span>
             @if ($lead->first_qualified_at)
                 &middot; {{ __('first qualified') }} <x-local-time :at="$lead->first_qualified_at" />
             @endif
@@ -1629,9 +1652,10 @@ new #[Title('Lead')] class extends AddressCapturePage {
     @can('changeStatus', $lead)
         <flux:modal name="qualify-lead" class="w-full max-w-lg">
             <form wire:submit="qualify" class="flex flex-col gap-5">
+                <flux:error name="stale" />
                 <div>
                     <flux:heading size="lg">{{ __('Qualify this lead') }}</flux:heading>
-                    <flux:subheading>{{ __('A legitimate opportunity, with what is needed to create its project.') }}</flux:subheading>
+                    <flux:subheading>{{ __('This records the qualification milestone only. It does not mean booked, Lead Issued, demoed, sold or Project-created.') }}</flux:subheading>
                 </div>
 
                 @if ($this->qualificationGaps === [])
@@ -1671,9 +1695,10 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
         <flux:modal name="nurture-lead" class="w-full max-w-lg">
             <form wire:submit="saveNurture" class="flex flex-col gap-5">
+                <flux:error name="stale" />
                 <div>
-                    <flux:heading size="lg">{{ $lead->status === LeadStatus::Nurture ? __('Reschedule follow-up') : __('Move to nurture') }}</flux:heading>
-                    <flux:subheading>{{ __('For an opportunity that is real but not ready now. It stays with whoever is assigned, and shows as due on the date.') }}</flux:subheading>
+                    <flux:heading size="lg">{{ $lead->status === LeadStatus::Nurture ? __('Reschedule follow-up') : __('Schedule follow-up') }}</flux:heading>
+                    <flux:subheading>{{ __('Schedule a manual callback with a date and note. It stays with whoever is assigned and shows as due on that date. This does not enroll the lead in automated outreach.') }}</flux:subheading>
                 </div>
 
                 <flux:input wire:model="followUpOn" type="date" :label="__('Follow up on')" :min="\App\Models\Lead::today()" />
@@ -1694,6 +1719,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
     @canany(['changeStatus', 'reopen'], $lead)
         <flux:modal name="disqualify-lead" class="w-full max-w-xl">
             <form wire:submit="disqualify" class="flex flex-col gap-5">
+                <flux:error name="stale" />
                 <div>
                     <flux:heading size="lg">{{ $correctingDisqualification ? __('Correct the reason') : __('Disqualify this lead') }}</flux:heading>
                     <flux:subheading>
@@ -1713,21 +1739,12 @@ new #[Title('Lead')] class extends AddressCapturePage {
                 </flux:select>
 
                 @if ($this->chosenReason?->isUnableToContact())
-                    <div class="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4 text-sm text-ink" data-test="unable-to-contact-rule">
-                        <div>
-                            {{ __('This is for a lead that has been followed up properly, not one missed call. It can be used :days days after work on the lead started, with a note of what was tried.', ['days' => DisqualifyLead::CONTACT_WAIT_DAYS]) }}
-                        </div>
+                    <flux:text>{{ __('This historical reason can be corrected or the lead reopened. It is no longer offered for new disqualifications.') }}</flux:text>
+                @endif
 
-                        @if (! $correctingDisqualification && ($lead->status === LeadStatus::Working || $lead->status === LeadStatus::Qualified))
-                            <div>
-                                <flux:button size="sm" type="button" wire:click="tryAgainLater" data-test="try-again-later">{{ __('Try again later instead') }}</flux:button>
-                            </div>
-                        @endif
-
-                        @can('waiveContactWait', $lead)
-                            <flux:checkbox wire:model="waiveContactWait" :label="__('Allow it before the :days days have passed', ['days' => DisqualifyLead::CONTACT_WAIT_DAYS])" data-test="waive-contact-wait" />
-                        @endcan
-                    </div>
+                @if (! $correctingDisqualification && in_array($lead->status, [LeadStatus::Working, LeadStatus::Qualified, LeadStatus::Nurture], true))
+                    <flux:text>{{ __('No response alone is not a reason to disqualify. For a deliberate callback, schedule a follow-up.') }}</flux:text>
+                    <flux:button size="sm" type="button" wire:click="tryAgainLater" data-test="try-again-later">{{ __('Schedule follow-up instead') }}</flux:button>
                 @endif
 
                 @if ($this->chosenReason?->isDuplicate())
@@ -1769,7 +1786,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
                     wire:model="disqualificationNote"
                     rows="3"
                     :label="match (true) {
-                        (bool) $this->chosenReason?->isUnableToContact() => __('What was tried (required)'),
+                        (bool) $this->chosenReason?->isUnableToContact() => __('Historical explanation (required)'),
                         (bool) $this->chosenReason?->needsNote() => __('Explanation (required)'),
                         default => __('Note (optional)'),
                     }"
@@ -1789,6 +1806,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
     @can('reopen', $lead)
         <flux:modal name="reopen-lead" class="w-full max-w-lg">
             <form wire:submit="reopen" class="flex flex-col gap-5">
+                <flux:error name="stale" />
                 <div>
                     <flux:heading size="lg">{{ __('Reopen this lead') }}</flux:heading>
                     <flux:subheading>{{ __('It comes back as Working with nobody assigned, and is handed out again in the usual way. Why it was disqualified stays in its history.') }}</flux:subheading>

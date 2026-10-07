@@ -148,8 +148,8 @@ class LeadPolicy
     }
 
     /**
-     * Determine whether the user can let a Lead be closed as "unable to contact"
-     * before the usual waiting period has passed.
+     * Legacy permission lookup retained with existing role grants. No current
+     * lifecycle action accepts a contact-wait waiver or nonresponse closure.
      */
     public function waiveContactWait(User $user, Lead $lead): bool
     {

@@ -1260,6 +1260,37 @@ The owner approved the B8 plan in principle on 2026-10-06 with these decisions.
 - **No file storage in B8.** Attachments, photos and object storage are B10. No
   bucket is created and no storage driver installed before then.
 
+## 55. B7 reconciliation only (2026-10-07)
+
+**Approved by Jacob.** The new target product architecture supersedes conflicting
+older plans, but this approval implements only these bounded B7 corrections:
+
+- Present the existing stored `nurture` status as **Deferred Follow-up**, with a
+  **Schedule follow-up** action: a deliberate manual callback requiring a date and
+  note. It is not the future multichannel nurture system. Stored status/event
+  identifiers and existing history stay unchanged.
+- Retire **Unable to Contact** as a new disqualification or newly selected
+  correction reason. Nonresponse does not become terminal merely because time
+  passed. Remove the three-day rule and waiver action without replacing them with
+  guessed thresholds. Existing records remain readable and their notes may be
+  corrected; legitimate reason corrections and reopening remain available.
+- **Qualified** means the existing qualification milestone only, not booked,
+  Lead Issued, demoed, sold or Project-created. Existing qualification requirements,
+  assignment and first-qualification history remain unchanged.
+- Preserve legitimate disqualification, duplicates, reopening, audit/history and
+  all other authorization behavior. Existing waiver grants remain legacy only;
+  no lifecycle action consumes them.
+- Atomically guard B7 lifecycle changes with a monotonically increasing revision,
+  including same-status reschedules/corrections. Use one additive revision column
+  with a zero default for existing Leads. Claim it transactionally against the
+  caller's revision, status, Location and assignee; validation, assignment changes,
+  history and audit share that transaction. Unchanged saves retain the revision.
+
+This supersedes the conflicting B7 rules in decision 52. It does not approve a
+new roadmap, B8/Projects, Contact Center, appointments, dialer, Inbox, AI, deployment
+or any downstream feature. Decisions 53/54 and other older future plans do not
+provide authorization to start them. Stop for owner review; do not merge or deploy.
+
 ## Future decisions already constrained by the brief- Estimates hold any number of named, ordered options. No fixed tiers.
 - Accepted proposals are stored as versioned snapshots.
 - Projects carry several narrow states (sales, production, payment), not one

@@ -10,19 +10,19 @@ use App\Models\Lead;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class MoveLeadToNurture
 {
     public function __construct(
+        private ChangeLeadLifecycle $changeLeadLifecycle,
         private RecordAuditEvent $recordAuditEvent,
         private RecordLeadStatusChange $recordLeadStatusChange,
     ) {}
 
     /**
-     * Move a Lead to Nurture: still a viable opportunity, not ready now, to be
-     * followed up on a set date.
+     * Schedule a deliberate manual callback with a date and note. The stored
+     * Nurture value is retained; this is not the multichannel nurture system.
      *
      * It needs someone assigned, who owns the follow-up; a date, today or later;
      * and a short note saying what to follow up about. Nothing happens by itself
@@ -37,36 +37,36 @@ class MoveLeadToNurture
      *
      * @throws ValidationException
      */
-    public function handle(Lead $lead, ?string $followUpOn, ?string $note, User $actor): void
+    public function handle(Lead $lead, ?string $followUpOn, ?string $note, User $actor, ?int $expectedVersion = null): void
     {
-        $rescheduling = $lead->status === LeadStatus::Nurture;
+        $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $followUpOn, $note, $actor): bool {
+            $rescheduling = $lead->status === LeadStatus::Nurture;
 
-        if (! $rescheduling && ! in_array($lead->status, [LeadStatus::Working, LeadStatus::Qualified], true)) {
-            throw ValidationException::withMessages([
-                'status' => __('Only a lead that is being worked, or is qualified, can be moved to nurture. This one is :status.', ['status' => $lead->status->label()]),
-            ]);
-        }
+            if (! $rescheduling && ! in_array($lead->status, [LeadStatus::Working, LeadStatus::Qualified], true)) {
+                throw ValidationException::withMessages([
+                    'status' => __('Only a lead that is being worked, or is qualified, can have a deferred follow-up scheduled. This one is :status.', ['status' => $lead->status->label()]),
+                ]);
+            }
 
-        if (! $lead->isAssigned()) {
-            throw ValidationException::withMessages([
-                'followUpOn' => __('Someone must be assigned to this lead to own the follow-up.'),
-            ]);
-        }
+            if (! $lead->isAssigned()) {
+                throw ValidationException::withMessages([
+                    'followUpOn' => __('Someone must be assigned to this lead to own the follow-up.'),
+                ]);
+            }
 
-        $date = self::followUpDate($followUpOn);
-        $note = trim((string) $note);
+            $date = self::followUpDate($followUpOn);
+            $note = trim((string) $note);
 
-        if ($note === '') {
-            throw ValidationException::withMessages([
-                'followUpNote' => __('Say what to follow up about.'),
-            ]);
-        }
+            if ($note === '') {
+                throw ValidationException::withMessages([
+                    'followUpNote' => __('Say what to follow up about.'),
+                ]);
+            }
 
-        if ($rescheduling && $lead->follow_up_on?->toDateString() === $date->toDateString() && $lead->follow_up_note === $note) {
-            return;
-        }
+            if ($rescheduling && $lead->follow_up_on?->toDateString() === $date->toDateString() && $lead->follow_up_note === $note) {
+                return false;
+            }
 
-        DB::transaction(function () use ($lead, $date, $note, $actor, $rescheduling): void {
             $from = $lead->status;
             $before = ['status' => $from->value, 'follow_up_on' => $lead->follow_up_on?->toDateString()];
 
@@ -96,6 +96,8 @@ class MoveLeadToNurture
                 location: $lead->location,
                 reason: $note,
             );
+
+            return true;
         });
     }
 

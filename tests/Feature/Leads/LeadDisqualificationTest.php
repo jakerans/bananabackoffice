@@ -10,11 +10,13 @@ use App\Actions\Leads\RouteLead;
 use App\Actions\Leads\StartWorkingLead;
 use App\Actions\Locations\DeactivateLocation;
 use App\Enums\AssignmentEndReason;
+use App\Enums\AuditAction;
 use App\Enums\DisqualificationCategory;
 use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
 use App\Enums\Role;
 use App\Models\Account;
+use App\Models\AuditEvent;
 use App\Models\Lead;
 use App\Models\LeadAssignment;
 use App\Models\LeadDisqualificationReason;
@@ -177,131 +179,61 @@ test('an already disqualified lead cannot be disqualified again', function () {
 |--------------------------------------------------------------------------
 */
 
-test('unable to contact is refused until the lead has been worked for three days', function () {
+test('elapsed time never makes unable to contact a valid new closure', function (int $days) {
     $lakeview = Location::factory()->create();
     $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
-    $lead = Lead::factory()->at($lakeview)->working()->assignedTo($consultant)->create(['work_started_at' => '2026-10-04 15:00:01']);
+    $lead = Lead::factory()->at($lakeview)->working()->assignedTo($consultant)->create(['work_started_at' => now()->subDays($days)]);
+    $before = $lead->fresh()->getAttributes();
 
-    $page = Livewire::actingAs($consultant)
-        ->test('pages::leads.show', ['lead' => $lead])
-        ->call('openDisqualify')
-        ->set('disqualificationReasonId', reasonNamed('Unable to Contact')->id)
-        ->assertSeeHtml('data-test="unable-to-contact-rule"')
-        // The gentler choice is offered right there.
-        ->assertSeeHtml('data-test="try-again-later"')
-        // A sales consultant is not offered a way round the wait.
-        ->assertDontSeeHtml('data-test="waive-contact-wait"')
-        ->set('disqualificationNote', 'Called twice, no answer.')
-        ->call('disqualify')
-        ->assertHasErrors('disqualificationReasonId')
-        ->assertSee('can be used from Oct 7, 2026')
-        ->assertSee('move it to nurture to try again later');
+    expect(fn () => app(DisqualifyLead::class)->handle($lead, reasonNamed('Unable to Contact'), 'Called without an answer.', $consultant))
+        ->toThrow(ValidationException::class, 'historical only');
 
-    expect($lead->fresh()->status)->toBe(LeadStatus::Working);
+    expect($lead->fresh()->getAttributes())->toBe($before);
+    expect(LeadStatusChange::query()->count())->toBe(0);
     expect($lead->fresh()->assignee->is($consultant))->toBeTrue();
+})->with([0, 3, 30, 365]);
 
-    // Three days to the second after work started.
-    $this->travelTo('2026-10-07 15:00:01');
-
-    $page->call('disqualify')->assertHasNoErrors();
-
-    expect($lead->fresh()->status)->toBe(LeadStatus::Disqualified);
-    expect($lead->fresh()->disqualification_note)->toBe('Called twice, no answer.');
-});
-
-test('unable to contact needs a note of what was tried', function () {
+test('unable to contact is unavailable even to roles that formerly could waive the wait', function (Closure $actor) {
     $lakeview = Location::factory()->create();
     $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
-    $lead = Lead::factory()->at($lakeview)->working()->assignedTo($consultant)->create(['work_started_at' => now()->subDays(10)]);
-
-    Livewire::actingAs($consultant)
-        ->test('pages::leads.show', ['lead' => $lead])
-        ->call('openDisqualify')
-        ->set('disqualificationReasonId', reasonNamed('Unable to Contact')->id)
-        ->assertSee('What was tried (required)')
-        ->call('disqualify')
-        ->assertHasErrors(['disqualificationNote' => 'Describe the attempts made to reach them.']);
-
-    expect($lead->fresh()->status)->toBe(LeadStatus::Working);
-});
-
-test('unable to contact is only for a lead that is being worked', function (Closure $state) {
-    $lakeview = Location::factory()->create();
-    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
-    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
-    $lead = $state(Lead::factory()->at($lakeview)->assignedTo($consultant))->create(['work_started_at' => now()->subDays(10)]);
-    $status = $lead->status;
-
-    // Not even with the wait waived: nobody has tried to reach them in this status.
-    expect(fn () => app(DisqualifyLead::class)->handle($lead, reasonNamed('Unable to Contact'), 'Called twice.', $owner, waiveContactWait: true))
-        ->toThrow(ValidationException::class, 'is for a lead that has been worked');
-
-    expect($lead->fresh()->status)->toBe($status);
-})->with([
-    'new' => [fn (LeadFactory $lead) => $lead],
-    'qualified' => [fn (LeadFactory $lead) => $lead->qualified()],
-    'nurture' => [fn (LeadFactory $lead) => $lead->nurture()],
-]);
-
-test('the wait can be waived by an owner, leadership or a location manager', function (Closure $actor) {
-    $lakeview = Location::factory()->create();
-    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
-    $lead = Lead::factory()->at($lakeview)->working()->assignedTo($consultant)->create(['work_started_at' => now()->subHour()]);
-
-    Livewire::actingAs($actor($lakeview))
-        ->test('pages::leads.show', ['lead' => $lead])
-        ->call('openDisqualify')
-        ->set('disqualificationReasonId', reasonNamed('Unable to Contact')->id)
-        ->assertSeeHtml('data-test="waive-contact-wait"')
-        ->set('disqualificationNote', 'The number is disconnected and the email bounced.')
-        // Without ticking the box, the wait still applies to them too.
-        ->call('disqualify')
-        ->assertHasErrors('disqualificationReasonId')
-        ->set('waiveContactWait', true)
-        ->call('disqualify')
-        ->assertHasNoErrors();
-
-    expect($lead->fresh()->status)->toBe(LeadStatus::Disqualified);
-})->with([
-    'owner' => [fn () => User::factory()->withRoleEverywhere(Role::Owner)->create()],
-    'leadership' => [fn () => User::factory()->withRoleEverywhere(Role::Leadership)->create()],
-    'location manager' => [fn (Location $lakeview) => User::factory()->withRoleAt(Role::LocationManager, $lakeview)->create()],
-]);
-
-test('the wait cannot be waived by the call center or a sales consultant, even by asking', function (Closure $actor) {
-    $lakeview = Location::factory()->create();
-    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
-    $lead = Lead::factory()->at($lakeview)->working()->assignedTo($consultant)->create(['work_started_at' => now()->subHour()]);
+    $lead = Lead::factory()->at($lakeview)->working()->assignedTo($consultant)->create(['work_started_at' => now()->subDays(30)]);
 
     Livewire::actingAs($actor($lakeview, $consultant))
         ->test('pages::leads.show', ['lead' => $lead])
         ->call('openDisqualify')
-        ->set('disqualificationReasonId', reasonNamed('Unable to Contact')->id)
+        ->assertDontSee('Unable to Contact')
         ->assertDontSeeHtml('data-test="waive-contact-wait"')
-        ->set('disqualificationNote', 'Called once.')
-        // A forged request ticks a box they were never shown.
-        ->set('waiveContactWait', true)
+        ->assertSee('Schedule follow-up instead')
+        ->set('disqualificationReasonId', reasonNamed('Unable to Contact')->id)
+        ->set('disqualificationNote', 'No response.')
         ->call('disqualify')
         ->assertHasErrors('disqualificationReasonId');
 
     expect($lead->fresh()->status)->toBe(LeadStatus::Working);
 })->with([
-    'call center agent at the location' => [fn (Location $lakeview) => User::factory()->withRoleAt(Role::CallCenterAgent, $lakeview)->create()],
-    'company-wide call center agent' => [fn () => User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create()],
-    'the assigned sales consultant' => [fn (Location $lakeview, User $consultant) => $consultant],
+    'owner' => [fn () => User::factory()->withRoleEverywhere(Role::Owner)->create()],
+    'leadership' => [fn () => User::factory()->withRoleEverywhere(Role::Leadership)->create()],
+    'location manager' => [fn (Location $location) => User::factory()->withRoleAt(Role::LocationManager, $location)->create()],
+    'call center' => [fn () => User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create()],
+    'assigned consultant' => [fn (Location $location, User $consultant) => $consultant],
 ]);
 
-test('a location manager cannot waive the wait at a location they do not manage', function () {
-    $lakeview = Location::factory()->create();
-    $northside = Location::factory()->create();
-    $manager = User::factory()->withRoleAt(Role::LocationManager, $northside)->withRoleAt(Role::SalesConsultant, $lakeview)->create();
-    $lead = Lead::factory()->at($lakeview)->working()->assignedTo($manager)->create();
+test('unable to contact cannot close a lead in any active status', function (Closure $state) {
+    $manager = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $lead = $state(Lead::factory())->create();
+    $before = $lead->fresh()->getAttributes();
 
-    expect($manager->can('changeStatus', $lead))->toBeTrue();
-    expect($manager->can('waiveContactWait', $lead))->toBeFalse();
-});
+    expect(fn () => app(DisqualifyLead::class)->handle($lead, reasonNamed('Unable to Contact'), 'No response.', $manager))
+        ->toThrow(ValidationException::class, 'historical only');
 
-test('"try again later" swaps the disqualify dialog for a follow-up', function () {
+    expect($lead->fresh()->getAttributes())->toBe($before);
+})->with([
+    'new' => [fn (LeadFactory $lead) => $lead],
+    'qualified' => [fn (LeadFactory $lead) => $lead->qualified()],
+    'deferred follow-up' => [fn (LeadFactory $lead) => $lead->nurture()],
+]);
+
+test('schedule follow-up swaps the disqualify dialog for a manual callback', function () {
     $lakeview = Location::factory()->create();
     $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
     $lead = Lead::factory()->at($lakeview)->working()->assignedTo($consultant)->create();
@@ -309,26 +241,80 @@ test('"try again later" swaps the disqualify dialog for a follow-up', function (
     Livewire::actingAs($consultant)
         ->test('pages::leads.show', ['lead' => $lead])
         ->call('openDisqualify')
-        ->set('disqualificationReasonId', reasonNamed('Unable to Contact')->id)
         ->call('tryAgainLater')
         ->set('followUpOn', '2026-10-09')
-        ->set('followUpNote', 'Third attempt, try the evening.')
+        ->set('followUpNote', 'Requested an evening callback.')
         ->call('saveNurture')
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertSee('Deferred Follow-up');
 
     expect($lead->fresh()->status)->toBe(LeadStatus::Nurture);
 });
 
-test('renaming a reason does not remove its rule', function () {
-    $lakeview = Location::factory()->create();
-    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
-    $lead = Lead::factory()->at($lakeview)->working()->assignedTo($consultant)->create();
-
+test('renaming or reactivating the historical reason does not make it available', function () {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $lead = Lead::factory()->working()->create(['work_started_at' => now()->subYear()]);
     $reason = reasonNamed('Unable to Contact');
-    $reason->update(['name' => 'No Answer']);
+    $reason->forceFill(['name' => 'No Answer', 'is_active' => true])->save();
 
-    expect(fn () => app(DisqualifyLead::class)->handle($lead, $reason->fresh(), 'Called once.', $consultant))
-        ->toThrow(ValidationException::class, '"No Answer" can be used from');
+    expect(fn () => app(DisqualifyLead::class)->handle($lead, $reason, 'No answer.', $owner))
+        ->toThrow(ValidationException::class, 'historical only');
+});
+
+test('a correction cannot newly select unable to contact', function () {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $lead = Lead::factory()->disqualified(reasonNamed('Spam / Solicitation'))->create(['work_started_at' => now()->subYear()]);
+
+    expect(fn () => app(CorrectLeadDisqualification::class)->handle($lead, reasonNamed('Unable to Contact'), 'No answer.', $owner))
+        ->toThrow(ValidationException::class, 'historical only');
+
+    expect($lead->fresh()->disqualificationReason->name)->toBe('Spam / Solicitation');
+    expect(LeadStatusChange::query()->count())->toBe(0);
+});
+
+test('historical unable to contact records retain their history and allow note corrections and reopening', function () {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $reason = reasonNamed('Unable to Contact');
+    $reason->forceFill(['is_active' => false])->save();
+    $lead = Lead::factory()->disqualified($reason)->create(['disqualification_note' => 'Original explanation.']);
+    $history = LeadStatusChange::factory()->create([
+        'lead_id' => $lead->id,
+        'event' => LeadStatusEvent::Disqualified,
+        'from_status' => LeadStatus::Working,
+        'to_status' => LeadStatus::Disqualified,
+        'disqualification_reason_id' => $reason->id,
+        'disqualification_category' => $reason->category,
+        'note' => 'Original explanation.',
+    ]);
+    $audit = AuditEvent::factory()->about($lead)->create([
+        'actor_id' => $owner->id,
+        'action' => AuditAction::LeadDisqualified,
+        'values_after' => ['status' => 'disqualified', 'reason' => 'Unable to Contact', 'contact_wait_waived' => true],
+    ]);
+    $auditBefore = $audit->fresh()->getAttributes();
+    $before = $history->fresh()->getAttributes();
+    $disqualifiedAt = $lead->last_disqualified_at;
+
+    Livewire::actingAs($owner)
+        ->test('pages::leads.show', ['lead' => $lead])
+        ->call('openCorrectDisqualification')
+        ->assertSee('Unable to Contact')
+        ->assertSee('This historical reason can be corrected or the lead reopened.')
+        ->set('disqualificationNote', 'Corrected historical explanation.')
+        ->call('disqualify')
+        ->assertHasNoErrors();
+
+    expect($lead->fresh()->disqualification_reason_id)->toBe($reason->id);
+    expect($lead->fresh()->last_disqualified_at->equalTo($disqualifiedAt))->toBeTrue();
+    expect($history->fresh()->getAttributes())->toBe($before);
+    expect(LeadStatusChange::query()->count())->toBe(2);
+
+    app(ReopenLead::class)->handle($lead->fresh(), 'Customer responded.', $owner);
+
+    expect($lead->fresh()->status)->toBe(LeadStatus::Working);
+    expect($lead->fresh()->assigned_user_id)->toBeNull();
+    expect($history->fresh()->getAttributes())->toBe($before);
+    expect($audit->fresh()->getAttributes())->toBe($auditBefore);
 });
 
 /*

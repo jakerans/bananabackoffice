@@ -286,11 +286,11 @@ new #[Title('Leads')] class extends Component {
                         @break
                     @case($this::FOLLOW_UPS)
                         @if ($this->canDistribute && $this->canSeeUnrouted)
-                            {{ __('Every lead in nurture for :location, assigned or not, those not yet sent to a location, and your own anywhere. Soonest follow-up first.', ['location' => $this->context?->label()]) }}
+                            {{ __('Every lead with a deferred follow-up for :location, assigned or not, those not yet sent to a location, and your own anywhere. Soonest follow-up first.', ['location' => $this->context?->label()]) }}
                         @elseif ($this->canDistribute)
-                            {{ __('Every lead in nurture for :location, assigned or not, and your own anywhere. Soonest follow-up first.', ['location' => $this->context?->label()]) }}
+                            {{ __('Every lead with a deferred follow-up for :location, assigned or not, and your own anywhere. Soonest follow-up first.', ['location' => $this->context?->label()]) }}
                         @else
-                            {{ __('Your leads in nurture. Soonest follow-up first.') }}
+                            {{ __('Your leads with a deferred follow-up. Soonest follow-up first.') }}
                         @endif
                         @break
                     @case($this::UNASSIGNED)
@@ -364,7 +364,7 @@ new #[Title('Leads')] class extends Component {
                 @if (trim($search) !== '' || $status !== '')
                     {{ __('Nothing matches that search. Try fewer words, or clear the status. Disqualified leads are listed only when that status is chosen.') }}
                 @elseif ($this->currentView === $this::FOLLOW_UPS)
-                    {{ __('No leads are in nurture here.') }}
+                    {{ __('No deferred follow-ups here.') }}
                 @elseif ($this->currentView === $this::UNROUTED)
                     {{ __('Every lead received centrally has been sent to a location.') }}
                 @elseif ($this->currentView === $this::MINE)

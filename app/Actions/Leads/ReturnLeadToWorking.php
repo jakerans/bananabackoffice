@@ -8,12 +8,12 @@ use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
 use App\Models\Lead;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ReturnLeadToWorking
 {
     public function __construct(
+        private ChangeLeadLifecycle $changeLeadLifecycle,
         private RecordAuditEvent $recordAuditEvent,
         private RecordLeadStatusChange $recordLeadStatusChange,
     ) {}
@@ -31,15 +31,15 @@ class ReturnLeadToWorking
      *
      * @throws ValidationException
      */
-    public function handle(Lead $lead, User $actor): void
+    public function handle(Lead $lead, User $actor, ?int $expectedVersion = null): void
     {
-        if (! in_array($lead->status, [LeadStatus::Nurture, LeadStatus::Qualified], true)) {
-            throw ValidationException::withMessages([
-                'status' => __('Only a lead in nurture, or a qualified one, can be returned to working. This one is :status.', ['status' => $lead->status->label()]),
-            ]);
-        }
+        $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $actor): bool {
+            if (! in_array($lead->status, [LeadStatus::Nurture, LeadStatus::Qualified], true)) {
+                throw ValidationException::withMessages([
+                    'status' => __('Only a lead with a deferred follow-up, or a qualified one, can be returned to working. This one is :status.', ['status' => $lead->status->label()]),
+                ]);
+            }
 
-        DB::transaction(function () use ($lead, $actor): void {
             $from = $lead->status;
             $wasNurture = $from === LeadStatus::Nurture;
             $before = array_filter(['status' => $from->value, 'follow_up_on' => $lead->follow_up_on?->toDateString()]);
@@ -67,6 +67,8 @@ class ReturnLeadToWorking
                 after: ['status' => LeadStatus::Working->value],
                 location: $lead->location,
             );
+
+            return true;
         });
     }
 }
