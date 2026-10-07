@@ -1,9 +1,31 @@
 # Navigation Map
 
-Status: **Approved** (structure from the owner's brief; IDs, states and permissions
-approved 2026-10-04).
+Status: **As-built navigation through B7 is approved and live.** The target
+five-Center structure below is **LOCKED product direction**; its route, ID and
+access migration is a **proposed implementation** awaiting owner approval.
 
-## How navigation works
+## Canonical target and compatibility migration
+
+The target parent Centers are **Marketing, Sales, Production, Finance and
+Company**. Customers and other canonical records remain shared pages presented
+inside the Centers that use them. Color Studio is an external/customer surface,
+not a parent Center. Settings belongs under Company. This describes the target;
+the current shell still uses the registry documented below.
+
+| Current surface | Target direction | Compatibility rule before coding |
+| --- | --- | --- |
+| Company Overview and standalone Settings | Company Center, including Settings | Preserve working routes and permissions until a reviewed ID/route migration map says whether each is retained, aliased or redirected. |
+| Marketing Call Center with Central Inbox beneath it | Contact Center calling workspace and a separate Inbox section | Do not collapse calling queues and omnichannel conversations into one module. |
+| Sales Estimates and Proposals sections | One Sales Workspace | Estimate math, offer options, presentation and agreement remain distinct domain concepts inside the workspace. |
+| Production Projects and separate stage pages | One Production Workspace | Stage filters become workspace views; do not create parallel record types or split ownership. |
+| Color Studio Center | External Color Studio surface | Keep current route and `color_studio.access` behavior until its reviewed compatibility migration; target placement alone grants no access. |
+| Settings Users and Access | Finance → People & Access in the target navigation | Placement does not give the Finance role staff-administration permission or widen `settings.users.manage`. |
+
+The shared Customers page remains canonical across operational Centers. Marketing
+Contact Center is distinct from Marketing Inbox. No target item in this section
+is live merely because its product direction is locked.
+
+## As-built navigation through B7
 
 Navigation is defined once, in code, in a single registry. Every item has:
 
@@ -20,7 +42,7 @@ Navigation is defined once, in code, in a single registry. Every item has:
 
 ### The hierarchy
 
-There are exactly three levels, and no level in between:
+The current shell has exactly three levels, and no level in between:
 
 1. **Ink header** — brand, center selector, location selector, user.
 2. **Second row** — the sections of the selected center, and nothing else.
@@ -119,7 +141,7 @@ How these were chosen:
 If a person may not open a center's primary section but may open another section
 in that center, the center opens on the first section they may open.
 
-## Centers
+## As-built center registry through B7
 
 State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 (`/sales`, for example) is only a shortcut that opens its primary section.
@@ -237,17 +259,18 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 Customers and Inbox each exist once, with one route. They appear inside the
 navigation of the centers that use them, pointing at the same shared page.
 
-## Planned for Checkpoint B (not built yet)
+## Historical unbuilt Checkpoint B navigation plan
 
-Nothing below is live. Each change is made in the step that builds the page. See
-[checkpoint-b.md](checkpoint-b.md).
+Built rows below remain the as-built record. Unbuilt rows are historical planning
+and are not authorized; the canonical target and a reviewed compatibility map
+must replace them before implementation. See [checkpoint-b.md](checkpoint-b.md).
 
 All approved by the owner on 2026-10-05.
 
 | Item | Change | Step |
 | --- | --- | --- |
 | `settings.lists` — Lead & Sales Lists | A new Settings page holding the five managed lists. Opened by its own permission, held by Owner and Leadership. Leadership sees Settings with this page only. | B2 — **built** |
-| `shared.leads` — Leads | One shared Leads page with one address, shown in **both** the Marketing Center and the Sales Center to anyone holding the lead permission. There is no separate Marketing Leads and Sales Leads. Marketing > Call Center > Leads points at it. | B3 â **built** |
+| `shared.leads` — Leads | One shared Leads page with one address, shown in **both** the Marketing Center and the Sales Center to anyone holding the lead permission. There is no separate Marketing Leads and Sales Leads. Marketing > Call Center > Leads points at it. | B3 — **built** |
 | `shared.customers` — Customers | Becomes live. Lists Accounts. | B6a — **built** |
 | `shared.projects` — Projects | One shared Projects page with one address, shown in the Sales Center and the Production Center as appropriate. There are no separate Sales Projects and Production Projects. | B8 |
 
@@ -271,10 +294,9 @@ is still the existing manual queue; no multichannel nurture or Contact Center
 workflow is introduced.
 - The first live section that has sub-sections brings the third row (sub-sections)
   into the shell, as already described under "Shell layout".
-- Every other item on this page keeps its current state through Checkpoint B.
-  Estimates, Proposals, Relationships, the Production project stages, the Finance
-  sections and the Call Center tools all stay Coming Soon. They will be different
-  views of the same Project record, not separate records.
+- Every other item on this page remains an as-built Coming Soon entry until an
+  approved compatibility migration changes it. The canonical target consolidates
+  Sales and Production work into their respective Workspaces as described above.
 
 ## Home
 

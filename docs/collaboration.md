@@ -2,18 +2,19 @@
 
 The standing agreement for how work on Backoffice is proposed, reviewed, approved
 and built. It is short on purpose. What Backoffice is and the rules that never bend
-are in [project-brief.md](project-brief.md); what is being built is in
-[roadmap.md](roadmap.md).
+are in [project-brief.md](project-brief.md); the canonical target direction is in
+[product-architecture.md](product-architecture.md); what is authorized and built
+is in [roadmap.md](roadmap.md).
 
 ## Roles
 
 | Who | Role |
 | --- | --- |
 | **Jacob** | Product owner and final decision maker. Only Jacob's approval authorizes a step, a merge, or any change to staging or production. |
-| **Claude Code** | Implementation engineer. Works in the repository: proposes, builds what was approved, tests, reports, and stops. |
-| **ChatGPT** | Jacob's product, architecture and review partner. It advises Jacob. It cannot see this repository or this machine, and it has no authority to change anything. |
+| **Implementation agent** | Works in the connected repository: proposes, builds only what Jacob approved, tests, reports, and stops. Tool or repository access grants no product authority. |
+| **Review partner** | Helps Jacob review product, architecture and implementation evidence. It may inspect connected sources when Jacob provides access, but it has no authority to approve or change anything. |
 
-Advice from ChatGPT arrives through Jacob. It counts once Jacob returns it as his
+Advice from any review partner or tool counts only when Jacob records it as his
 decision, and not before.
 
 ## The record
@@ -33,8 +34,10 @@ decision, and not before.
 
 For each meaningful checkpoint or step:
 
-1. **Read first.** Read the roadmap, decisions, permission model, navigation map,
-   security notes and the relevant checkpoint plan before proposing or building.
+1. **Read first.** Read the relevant product-architecture sections, roadmap,
+   decisions, permission and navigation rules, security notes and checkpoint
+   material for the paths in scope. Use incremental context; do not reread or
+   re-audit unrelated material without a change-driven reason.
 2. **Do not ask Jacob to repeat** a decision those documents already hold.
 3. **Unresolved decisions stop the work.** If the step needs a product or
    architecture decision that is not recorded, write a concise planning report to

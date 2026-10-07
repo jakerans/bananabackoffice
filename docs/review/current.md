@@ -3,15 +3,58 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-07
+**Updated:** 2026-10-07 · **Branch:** `docs/architecture-roadmap-reconciliation`
+**State:** documentation proposal awaiting owner decisions. No implementation,
+merge, deployment or B8 work is authorized by this proposal.
 
-B7 reconciliation, its owner-review corrections and the accessible application
-confirmation follow-up are owner-approved and merged into `main`. The automatic
-staging deployment caused by that merge was explicitly allowed; production was
-not authorized.
+## Objective
 
-There is no approved implementation step after B7. The next review boundary is a
-planning and documentation reconciliation of [../roadmap.md](../roadmap.md)
-against the canonical [../product-architecture.md](../product-architecture.md).
-B8 and all other feature development remain stopped until Jacob approves that
-reconciled roadmap.
+Reconcile the post-B7 roadmap and supporting documents with the canonical
+[product architecture](../product-architecture.md), while preserving B1–B7 as-built
+history and older decisions as historical context.
+
+## Recommendation
+
+Approve this sequence one bounded slice at a time:
+
+1. **Five-Center shell alignment.** Marketing, Sales, Production, Finance and
+   Company; Settings under Company; Color Studio external. Review the complete
+   route/ID/access compatibility map before coding. No permission changes.
+2. **Shared Customer Activity and unified Notes.** Preserve note context,
+   provenance and history; Activity contains major business events, not every
+   audit event.
+3. **Contact-attempt evidence foundation.** Durable attempt records only;
+   provider choice is pending and automated penalty policy is deferred.
+4. **Scheduled work and atomic due queue.** Cadence is configurable. Decide
+   scheduler, timezone, retry and failure contracts first. Keep manual Deferred
+   Follow-up distinct from automated work.
+5. **Appointment issuance and ownership-handoff contract.** Leave exact Project
+   creation transition and Pending ownership/validity policy pending.
+
+Product architecture statuses and implementation statuses are separate. A
+`LOCKED` target is not approval to code it. Every item above is **proposed**.
+
+## Decisions needed now
+
+1. Approve, revise or reject the five-slice order.
+2. If approved, authorize **slice 1 only** as the next implementation-planning
+   boundary.
+3. Confirm the compatibility recommendation: preserve working IDs and URLs with
+   explicit aliases or redirects; remove nothing until its map is reviewed.
+4. Confirm slice 1 changes navigation placement and labels only. In particular,
+   Finance → People & Access does not give the Finance role staff-administration
+   access, and Contact Center, Inbox, Sales Workspace and Production Workspace do
+   not gain feature behavior yet.
+
+## Constraints carried forward
+
+- Shared Customers and related records remain permission-filtered canonical
+  records. Related-record access never exposes unrelated work or sensitive GP,
+  commission, payout or job-cost fields.
+- Responsibility and assignment never grant access; separate grants do not union
+  into authority neither grant provides alone.
+- Old B8–B12 ordering, Project-from-Qualified and B9-only Open/Won/Lost assumptions
+  remain historical pending revalidation. No exact Project or Pending rule was
+  invented.
+- No production action, feature implementation or deployment is part of this
+  review.

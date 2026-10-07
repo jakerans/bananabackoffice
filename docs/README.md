@@ -8,8 +8,9 @@ before starting work, and update them in the same change that alters what they d
 | Document | What it answers |
 | --- | --- |
 | [project-brief.md](project-brief.md) | What Backoffice is, the business rules that never bend, and how we work. |
+| [product-architecture.md](product-architecture.md) | The canonical target product structure, domain boundaries and direction. Its status labels describe product certainty, not permission to implement. |
 | [roadmap.md](roadmap.md) | Checkpoints, the current checkpoint, and what has been built. |
-| [checkpoint-b.md](checkpoint-b.md) | The current checkpoint in full: leads, customers and projects. The records, the rules, the build steps and the open decisions. |
+| [checkpoint-b.md](checkpoint-b.md) | The B1–B7 as-built record and the older unbuilt B8–B12 plan retained as historical context. |
 | [navigation-map.md](navigation-map.md) | Every center and menu item, its stable ID, and whether it is built yet. |
 | [permission-model.md](permission-model.md) | Who can do what, and where. Roles, permissions, location rules. |
 | [design-system.md](design-system.md) | How the Backoffice design system is applied in code. |
@@ -20,9 +21,17 @@ before starting work, and update them in the same change that alters what they d
 
 ## Status labels used in these documents
 
-- **Approved** — agreed with the owner. Build to this.
-- **Proposed** — recommended, awaiting owner approval. Do not build yet.
-- **Open** — a decision that has not been made. Do not guess.
+Two separate statuses must be stated for future work:
+
+- **Product direction:** `LOCKED`, `CONFIGURABLE`, `PENDING` or `DEFERRED`, as
+  defined in [product-architecture.md](product-architecture.md).
+- **Implementation:** `proposed`, `approved` or `built`.
+
+`LOCKED` means the target direction is settled enough to plan against. It does
+not authorize a roadmap slice, code change, merge or deployment. **Proposed**
+implementation remains unapproved; **approved** implementation may be built only
+within its stated slice; **built** records what exists now. An undecided product
+detail is **PENDING** and must not be guessed.
 
 ## Environments
 

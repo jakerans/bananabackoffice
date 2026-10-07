@@ -1,6 +1,8 @@
 # Permission Model
 
-Status: **Approved** (2026-10-04). Roles and matrix confirmed by the owner.
+Status: **Implemented rules and role grants through B7 are approved and built.**
+Canonical target guardrails are locked product direction. Any new permission,
+role grant or widening of scope still needs an approved implementation slice.
 
 ## The idea in plain English
 
@@ -59,6 +61,29 @@ grant instead of as two separate lists.
 7. The Owner role can only be granted at all-locations scope.
 8. There is always at least one active Owner.
 
+## Canonical target authorization guardrails
+
+- **Responsibility is not permission.** Assignment, ownership, queue placement or
+  responsibility selects who is accountable; it never grants record access.
+- **Grants do not union into broader authority.** One grant must contain the
+  permission and cover the action's scope. A company-wide permission from one
+  role cannot be combined with a location permission from another to manufacture
+  access neither grant provides alone.
+- **Related-record access is explicit and one-way.** A visible Lead or Project may
+  make its related Customer, Contact or Property visible under the documented
+  policy. Seeing that shared record never reveals other Leads, Projects,
+  Locations or relationships the viewer cannot independently access.
+- **Sensitive financial data needs its own permission boundary.** Customer access
+  does not imply access to GP, commissions, subcontractor payouts, job-cost detail
+  or other finance-sensitive fields. The Contact Center target explicitly excludes
+  those fields even where central support has broader customer visibility.
+- **Navigation placement grants nothing.** Targeting People & Access under Finance
+  does not give the Finance role `settings.users.manage`; moving Settings under
+  Company likewise changes no current grant.
+- Future broader Contact Center search, record types and field-level financial
+  views require explicit backend permissions and policy tests in their approved
+  implementation slices. They are not implied by the target architecture.
+
 ## The current location
 
 The header shows which location a person is working in.
@@ -81,7 +106,7 @@ Accounts, Contacts and Properties have no location; access to them follows the
 Leads and Projects they are connected to (see "Checkpoint B" below). Lists are
 always limited to what the person's grants allow, in every view.
 
-## Permissions in Checkpoint A
+## Implemented Center and Settings permissions
 
 | Permission | Scope | Allows |
 | --- | --- | --- |
@@ -98,7 +123,7 @@ always limited to what the person's grants allow, in every view.
 Only permissions that guard something real are defined. Finer permissions (view
 job costs, approve commissions, edit leads) are added when the feature is built.
 
-## Roles and matrix
+## Implemented Center role matrix
 
 | Role | Company Overview | Marketing | Sales | Production | Finance | Color Studio | Settings |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
@@ -202,10 +227,10 @@ Homeowners will never be rows in the staff `users` table and will never sign in
 through the staff sign-in page. The future portal gets its own sign-in, its own
 account table and its own access rules.
 
-## Checkpoint B
+## Implemented authorization through B7
 
-Status: **Approved by the owner (2026-10-05). Not built yet.** Each permission is
-added to the code in the step that builds what it guards. Built so far:
+Status: **B1 to B7 are built, approved and merged.** Each permission was added to
+the code in the step that built what it guards. Implemented:
 `settings.lists.manage` (B2); `leads.view`, `leads.manage` and
 `leads.view_unrouted` (B3); `leads.route`, `leads.transfer`, `leads.return` and
 `leads.assign` (B4); `notes.write` and `notes.remove` (B5); `accounts.view`
@@ -215,7 +240,7 @@ no lifecycle action consumes it (decision 55). Existing other authorization is
 unchanged. The records and their
 rules are described in [checkpoint-b.md](checkpoint-b.md).
 
-### The rules Checkpoint B adds
+### The rules implemented through B7
 
 1. **Location stays the authorization boundary.** A Project is governed by its
    Location. A routed Lead is governed by its Location.
@@ -252,7 +277,9 @@ rules are described in [checkpoint-b.md](checkpoint-b.md).
     it, or correcting why it was disqualified, needs `leads.assign` at its
     Location. A Sales Consultant cannot, even for a Lead they disqualified.
 13. **A disqualified Lead is closed (B7).** It cannot be routed, returned,
-    assigned or have its status changed until it is reopened.### How someone sees a customer, which has no Location
+    assigned or have its status changed until it is reopened.
+
+### How someone sees a customer, which has no Location
 
 `accounts.view` is granted like any other permission, at a Location or across all
 Locations. Because an Account has no Location, it is applied like this:
@@ -283,7 +310,14 @@ are listed or counted.
   through their own Lead. Never sight of another Location's Leads or Projects.
 - Archiving and restoring a customer needs `accounts.archive`, company-wide.
 
-### Permissions| Permission | Scope | Allows |
+### Current and historical planned permissions
+
+The Account, Lead, Note and Settings rows below describe implemented permissions
+through B7. `leads.convert`, every `projects.*` row, `attachments.manage` and
+`history.view` are preserved historical proposals from the old B8–B12 sequence;
+they are not implemented grants and do not authorize that sequence.
+
+| Permission | Scope | Allows |
 | --- | --- | --- |
 | `accounts.view` | Location | See Accounts, Contacts and Properties, under rule 3 |
 | `accounts.manage` | Location | Add and edit a customer's Contacts and Properties. Through an all-locations grant: every customer, and creating one that has no Lead |
@@ -317,6 +351,10 @@ Company-scope permissions count only when held through an all-locations grant.
 
 "Yes" means the role contains the permission. Where it applies still depends on
 each grant's scope.
+
+Rows involving Projects, attachments or History preserve the old proposed matrix
+for review context. They are not current code or implementation approval and must
+be revalidated against the canonical architecture before use.
 
 The owner approved this matrix at the final review on 2026-10-05.
 
