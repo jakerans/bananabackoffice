@@ -9,17 +9,16 @@
 for the owner's review after each step. The table under "Checkpoint B" below shows
 how far it has got.
 
-**Steps B1 to B6 are approved, merged into `main` and deployed to staging
-(2026-10-06).** That merge was an integration checkpoint, not the end of
-Checkpoint B: see "Integration checkpoint" below. **B7 reconciliation is approved for implementation and awaiting owner review
-(decision 55); B8 to B12 are not built.** The
-remaining steps are built on the `checkpoint-b-continuation` branch, which starts
-from the verified `main`.
+**Steps B1 to B7 are approved and merged into `main` (2026-10-07).** B1 to B6
+were deployed to staging on 2026-10-06; the automatic staging deployment caused
+by the B7 merge was explicitly allowed and is verified separately. See
+"Integration checkpoint" below. **B8 to B12 are not built.**
 
-**Current authorization is B7 reconciliation only.** The new target architecture
-supersedes conflicting older plans. B8, Projects, production readiness and the
-architecture-driven roadmap are not authorized by this step; await Jacob's next
-decision. The older future steps below remain historical planning context.
+**There is no authorized implementation step after B7.** The next planning work
+is to reconcile this roadmap with the canonical product architecture. B8,
+Projects, production readiness and other downstream implementation remain
+unauthorized until Jacob approves the reconciled roadmap. The older future steps
+below remain historical planning context.
 
 Banana Painting launches about a week after that approval. The operational target
 for launch is steps B1 to B9, with a production-readiness checkpoint around B7 or
@@ -32,7 +31,7 @@ in [review/current.md](review/current.md).
 | Checkpoint | Scope | State |
 | --- | --- | --- |
 | A | Secure branded foundation | Approved and merged (2026-10-04) |
-| B | Leads, customers and projects: lead capture and attribution, routing, accounts, contacts, properties, qualification, projects, sales outcome, notes, private attachments, timeline | B1 to B6 approved, merged and on staging (2026-10-06). B7 to B12 not built. |
+| B | Leads, customers and projects: lead capture and attribution, routing, accounts, contacts, properties, qualification, projects, sales outcome, notes, private attachments, timeline | B1 to B7 approved and merged into `main` (2026-10-07). B8 to B12 not built. |
 | C | First Color Studio workflow | Not started |
 | Later | Estimating and proposals, homeowner portal, production, finance, reporting | Not started |
 
@@ -397,7 +396,7 @@ outcome, because Backoffice is to be the system of record from launch.
 | B6b | Managing Contacts and Properties, with address lookup; creating a customer directly | Built and approved (2026-10-06). |
 | B6c | Resolving a Lead into a customer; duplicate suggestions, including masked matches; shared Contacts; "New lead for this customer"; archive and restore; editing a customer | Built and approved (2026-10-06). |
 | — | **Integration checkpoint:** B1 to B6 merged into `main` and verified on staging | Complete (2026-10-06). See below. |
-| B7 | Qualification milestone, legitimate disqualification and Deferred Follow-up; lifecycle history and concurrency; Follow-ups view | Reconciled (2026-10-07) on `checkpoint-b-continuation` per decision 55. Awaiting owner review; not merged. |
+| B7 | Qualification milestone, legitimate disqualification and Deferred Follow-up; lifecycle history and concurrency; Follow-ups view | Reconciled, owner-approved and merged into `main` (2026-10-07), including review corrections and accessible application confirmation dialogs. See decisions 55 to 58. |
 | — | **Production-readiness checkpoint** (before B8a) | Plan prepared (2026-10-06) and awaiting the owner's decisions: see [review/current.md](review/current.md). Nothing has been created. |
 | B8 | Projects; the shared Projects page. Two reviewed steps, B8a and B8b. | Plan approved in principle (2026-10-06, decision 54). Not started. |
 | B9 | Sales outcome: Won with Sold Amount, Lost | Not started |

@@ -1332,7 +1332,21 @@ staff deactivation and access revocation.
 This is a bounded owner-review extension. It does not authorize B8, new product
 behavior, dependency changes, merge, deployment, or staging/production mutation.
 
-## Future decisions already constrained by the brief- Estimates hold any number of named, ordered options. No fixed tiers.
+## 58. B7 merge and next planning boundary (2026-10-07)
+
+**Approved by Jacob.** Merge the reviewed `checkpoint-b-continuation` branch into
+`main` with the ordinary merge strategy that preserves its commits. The automatic
+staging deployment caused by pushing `main` is allowed for this merge. No separate
+deployment action and no production deployment are authorized.
+
+B7 is complete after the merge. Do not start B8 or another feature. The next work
+is planning and documentation: reconcile [roadmap.md](roadmap.md) against the
+canonical [product-architecture.md](product-architecture.md), then return the
+result for the owner's approval before implementation.
+
+## Future decisions already constrained by the brief
+
+- Estimates hold any number of named, ordered options. No fixed tiers.
 - Accepted proposals are stored as versioned snapshots.
 - Projects carry several narrow states (sales, production, payment), not one
   combined status.
