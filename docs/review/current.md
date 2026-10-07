@@ -6,7 +6,7 @@ No secrets or customer information belong here.
 **Updated:** 2026-10-07 · **Branch:** `checkpoint-b-continuation`
 **Step:** B7 reconciliation only, approved in decision 55 of
 [../decisions.md](../decisions.md). No B8 or architecture-roadmap work is included.
-**State:** implementation complete; final checks and CI verification in progress.
+**State:** ready for owner review; local checks and both GitHub jobs pass.
 Not merged or deployed. Jacob's browser review and explicit merge decision remain.
 
 ## What changed, and why
@@ -47,7 +47,15 @@ roadmap is not authorization to start new work.
   historical reasons/audit preservation, duplicate rules, authorization and rollback.
 - `php artisan migrate --no-interaction`: the additive revision migration passed
   against the existing local SQLite database.
-- Final CI-equivalent local check and GitHub SQLite/MySQL 8.4 results: pending.
+- Final `composer ci:check`: passed; Pint and PHPStan passed, **1,440 tests /
+  6,178 assertions** after the final UI and historical-audit assertions.
+- [GitHub run 37664221781](https://github.com/jakerans/bananabackoffice/actions/runs/37664221781)
+  on implementation commit `3b0899a`: **both jobs passed**, each with **1,440 tests /
+  6,178 assertions**. SQLite ran the full CI check. MySQL verified an empty
+  **8.4.11** database, applied every migration, ran the full suite, and confirmed
+  **40 migrations** were applied by that suite to MySQL.
+- `git diff --check`: passed. The implementation is committed and pushed on the
+  checkpoint branch; this handoff update changes documentation only.
 - No staging or production commands were run.
 
 ## Browser review for Jacob
