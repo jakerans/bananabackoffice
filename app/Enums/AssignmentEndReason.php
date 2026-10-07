@@ -19,6 +19,9 @@ enum AssignmentEndReason: string
     /** The person can no longer work Leads there, or their account was deactivated. */
     case AccessRemoved = 'access_removed';
 
+    /** The Lead was disqualified, which ends anyone's responsibility for it. */
+    case LeadDisqualified = 'lead_disqualified';
+
     public function label(): string
     {
         return match ($this) {
@@ -26,6 +29,7 @@ enum AssignmentEndReason: string
             self::Released => 'Released',
             self::LocationChanged => 'The lead changed location',
             self::AccessRemoved => 'Access was removed',
+            self::LeadDisqualified => 'The lead was disqualified',
         };
     }
 }

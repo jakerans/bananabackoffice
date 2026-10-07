@@ -95,22 +95,136 @@ There is no existing customer or lead data to bring in. No import tooling is bui
 | --- | --- |
 | **New** | Received; nobody has worked it yet. |
 | **Working** | Someone is in contact or trying to be. |
-| **Qualified** | A legitimate sales opportunity. Projects may be created from it. |
-| **Nurture** | The opportunity remains viable but should be followed up later. Carries a next follow-up date. Never treated as Disqualified or as a Sales Loss. |
+| **Qualified** | The existing qualification milestone only. Not booked, Lead Issued, demoed, sold or Project-created. |
+| **Deferred Follow-up** | A deliberate manual callback with a date and note, separate from multichannel nurture. Never treated as Disqualified or as a Sales Loss. |
 | **Disqualified** | Did not become a legitimate opportunity, or Banana Painting decided not to pursue it. Requires a reason. |
 
 - There is no generic "closed" status. Disqualification and sales loss are never
   mixed: a Lead is disqualified; a **Project** is lost.
 - A Lead keeps the date it was first qualified and the date it was disqualified,
   even if its status changes afterwards, so rates can be calculated correctly.
-- A disqualified Lead can be reopened. A Qualified Lead with no Project can move to
-  Nurture, back to Working, or to Disqualified. Once a Project exists, a lost
-  opportunity is recorded on the Project, not by disqualifying the Lead. (Proposed)
-- "Unable to Contact" is meant for use after proper follow-up, not after one missed
-  call. Checkpoint B does not build follow-up automation; Nurture and the follow-up
-  date are the foundation for it.
+- A disqualified Lead can be reopened. In B7, a Qualified Lead can move to
+  Deferred Follow-up, back to Working, or to Disqualified. Qualification history
+  remains. Downstream booking, sales and Project behavior is outside this step.
+- "Unable to Contact" is historical only. Nonresponse or elapsed time is not a
+  new disqualification path. Deferred Follow-up is a deliberate manual callback,
+  separate from future multichannel nurture; no cadence system is built here.
 - Leads are never archived as a substitute for their lifecycle.
 
+#### Qualification, disqualification and deferred follow-up, as built in step B7
+
+Built on 2026-10-06 from decision 52; reconciled on 2026-10-07 by decision 55.
+Only the bounded B7 reconciliation is approved now. Older downstream proposals
+elsewhere in this document do not authorize further implementation.
+
+**The moves that exist.** Nothing else is possible, and nothing returns to New.
+
+| From | To | How |
+| --- | --- | --- |
+| New | Working | Start working (B4) |
+| Working | Qualified | Qualify |
+| Working, Qualified | Deferred Follow-up | Schedule follow-up |
+| Deferred Follow-up | Working | Resume working |
+| Qualified | Working | Return to working |
+| New, Working, Qualified, Deferred Follow-up | Disqualified | Disqualify |
+| Disqualified | Working | Reopen |
+
+**Qualified** records the existing qualification milestone only. It does not
+mean booked, Lead Issued, demoed, sold or Project-created. A Lead can be qualified only
+when it has all of: a Location; an assignee; a customer (Account) that is not
+archived; a Contact; a Property that is not archived; at least one Service with
+a main one; and a Project Size. The Qualify dialog lists whatever is missing and
+offers nothing to submit until it is all there. No downstream workflow is
+created or inferred from this milestone.
+
+**Deferred Follow-up**, presented as **Schedule follow-up**, is a deliberate
+manual callback. It is not multichannel nurture, automated outreach or aged-lead
+work. The stored `nurture` status and existing event identifiers are retained,
+without rewriting history. It needs an assignee, a follow-up date (today or later, with no upper
+limit) and a short note. The Lead stays with its assignee. On the date it shows
+"Follow-up due"; afterwards "Overdue by N days". Nothing happens automatically:
+no reassignment, no escalation, no closing. The date can be rescheduled without
+leaving Deferred Follow-up. A follow-up date is a calendar day in the company's time zone.
+
+**Return to working / Resume working** uses the shared styled confirmation dialog,
+with Cancel and Return to working actions. It keeps the assignee and historical
+qualification/follow-up records; returning from Deferred Follow-up clears the
+current callback. Confirmation rejects lifecycle changes made while it was open.
+
+**Disqualified** needs a reason from the managed list that is still offered.
+
+- It ends anyone's responsibility: the current assignment is closed with the
+  reason "lead disqualified" and kept in the assignment history, and the Lead is
+  left unassigned.
+- Everything else stays exactly as it was: the inquiry, attribution, Services,
+  Project Size and the links to a customer.
+- The reason's **reporting category is copied** onto the Lead and into its
+  history at that moment. Recategorizing a reason later changes nothing that
+  already happened.
+- "Other" requires an explanation.
+- **"Unable to Contact"** is excluded from new disqualifications and cannot be
+  newly selected by a correction, regardless of elapsed time or role. No replacement
+  attempt/time threshold exists. Historical records keep the reason and may have
+  their notes corrected, be corrected to another legitimate reason, or be reopened.
+  The existing marker enforces this even if Settings renames or reactivates it.
+- **"Duplicate Lead"** asks which Lead this one repeats. Only Leads the person
+  can already see are offered (same phone, email or customer), and naming any
+  other is refused. If the original cannot be identified or opened, an
+  explanation is required instead. Nothing is merged or deleted. A Lead cannot
+  be a duplicate of itself, of a duplicate, or become one while others point to
+  it.
+- These two rules are tied to a marker on the reason, not its name, so renaming
+  the reason in Settings does not remove the rule.
+- The reason, its note and the original can be **corrected** while the Lead is
+  still Disqualified. The Lead shows the corrected reason; the first history
+  entry is left as written and a new entry records the correction.
+
+**Reopening** needs a reason. The Lead comes back as Working with nobody
+assigned; the previous assignee is not restored. The current reason, note and
+"duplicate of" are cleared from the Lead. The earlier disqualification stays in
+its history, and the Lead keeps the date it was last disqualified.
+
+**Who may do what** (on top of being able to work Leads at the Lead's Location):
+
+| Action | Who |
+| --- | --- |
+| Qualify, schedule follow-up, reschedule, resume, return to working, disqualify | The Lead's assignee, or anyone who may assign Leads there |
+| Reopen, or correct a disqualification | Anyone who may assign Leads there: Owner, Leadership, Location Manager, Call Center. Not a Sales Consultant. |
+
+**Active and inactive.** A Lead is active in every status but Disqualified. A
+Qualified Lead remains active in B7, so it still blocks archiving
+its customer and deactivating its Location. A Disqualified Lead blocks neither.
+
+**Routing.** A lifecycle change never changes the Location. New, Working,
+Deferred Follow-up and Qualified Leads can be routed, transferred and returned as before,
+and a move still clears the assignee (so a Deferred Follow-up or Qualified Lead can be
+unassigned after a move, and appears in Unassigned). A Disqualified Lead cannot
+be routed or assigned until it is reopened.
+
+**Status history.** Every change is a row in `lead_status_changes`, which is
+only ever added to: the event, the status it came from and went to, who made it
+(the staff identity), when, the Lead's Location and assignee at that moment, and
+for a disqualification the reason, the category it had then, the original Lead
+and the note; for Deferred Follow-up, the follow-up date and note. Starting work is its
+first entry. Lifecycle reporting reads this table, not the audit log. The Lead
+also keeps `first_qualified_at` (set once, never cleared), `last_disqualified_at`
+and `status_changed_at`.
+
+This supports, without any dashboard being built: received to first routed,
+routed to assigned, assigned to first worked, received or working to qualified,
+time to disqualification, time in Deferred Follow-up, overdue follow-ups, qualification and
+disqualification rates, and reasons by category as they were at the time.
+
+**Concurrency.** Each B7 lifecycle action atomically claims a `lifecycle_version`
+inside its database transaction, checking the expected revision, status, Location
+and assignee. Dialogs retain a locked revision, including same-status reschedules
+and corrections. The revision, assignment changes, status history and audit commit
+or roll back together. Unchanged saves do not advance the revision. Existing rows
+start at revision zero; no stored statuses or history are rewritten.
+
+**Not built here:** a visible history on the Lead page (the timeline is B11),
+reminders or notifications for follow-ups, contact-attempt tracking, and
+Projects.
 #### Attribution: three separate questions
 
 Each Lead records three things. They belong to that Lead, not to the Account: the
@@ -370,14 +484,20 @@ Two separate questions, kept as separate actions and separate data:
 
 | View | Shows | Order | Who has it |
 | --- | --- | --- | --- |
-| Assigned to me | The person's Leads at every Location they can see, whatever Location is selected | Oldest first | Everyone |
+| Assigned to me | The person's Leads that need action now, at every Location they can see, whatever Location is selected: New, Working, Qualified, and Deferred Follow-up once its follow-up is due (B7) | Oldest first | Everyone |
+| Follow-ups (B7) | Leads in Deferred Follow-up. A Sales Consultant sees only their own. Someone who may assign at the current Location also sees every Deferred Follow-up Lead there, **including those with no assignee** (a move clears the assignee), shown as Unassigned. Someone who may see unrouted Leads also sees Deferred Follow-up Leads that were returned to central. The badge counts every eligible row in this scope, including future dates, central/unrouted Leads and the current search, across all pages. | Soonest follow-up first | Everyone |
 | Unassigned | Leads at the current Location with no assignee | Longest at that Location first | People who may assign there |
 | All leads | Every Lead at the current Location | Newest first | Everyone |
 | Unrouted | Leads not yet sent to a Location | Oldest first | People who may see unrouted Leads |
 
 The page opens on: All leads for Owner and Leadership; Unrouted for company-wide
 Call Center; Unassigned for a Location Manager (and a Call Center agent at one
-Location); Assigned to me for a Sales Consultant. Nurture arrives with B7.
+Location); Assigned to me for a Sales Consultant.
+
+Since B7, every view leaves out Disqualified Leads unless that status is chosen in
+the Status filter. There is no Disqualified queue. The workload shown beside each
+person in the Assign dialog counts their New, Working and Qualified Leads and
+their Deferred Follow-up Leads that are due, not Deferred Follow-up still ahead.
 
 A Sales Consultant can still see unassigned Leads in All leads, because the
 Location, not assignment, decides what may be seen. They cannot take one.
@@ -523,13 +643,13 @@ Facebook / Instagram Message · In Person · Other
 | Service Not Offered | Serviceability |
 | Project Too Small / Below Minimum | Serviceability |
 | Not Authorized to Make Decision | Lead quality |
-| Unable to Contact | Lead quality |
+| Unable to Contact (historical only; unavailable for new closure) | Lead quality |
 | Invalid Contact Information | Invalid |
 | Duplicate Lead | Invalid |
 | Spam / Solicitation | Invalid |
 | Other | Other |
 
-Future timing is deliberately not a disqualification reason; that is what Nurture
+Future timing is deliberately not a disqualification reason; that is what Deferred Follow-up
 is for. The category exists for reporting. Frontline staff choose a reason and
 never see or pick a category.
 
@@ -882,7 +1002,7 @@ business's name, or change the kind of customer.
 - Archiving records who and when. Archived records are hidden from lists and
   choices by default, can be shown with a filter, and can be restored.
 - An Account cannot be archived while it has a Lead that is New, Working or
-  Nurture, or a Project whose sales outcome is Open.
+  Deferred Follow-up, or a Project whose sales outcome is Open.
 - Archiving and restoring Accounts, Contacts, connections and Properties is done
   by Owner and Leadership through an all-locations grant only.
 - Relationships and list values on archived records stay intact.
@@ -926,7 +1046,7 @@ never disagree. This is deliberately not a compliance product.
 | Lead received | Yes | Yes |
 | Lead routed, re-routed, returned to central (with reason) | Yes | Yes |
 | Lead assigned or reassigned | Yes | Yes |
-| Lead moved to Working, Nurture, Qualified or Disqualified (with reason); reopened | Yes | Yes |
+| Lead moved to Working, Deferred Follow-up, Qualified or Disqualified (with reason); reopened | Yes | Yes |
 | Lead linked to or unlinked from an Account, Contact or Property | Yes | Yes |
 | Project created (from a Lead or directly) | Yes | Yes |
 | Project transferred to another Location | Yes | Yes |
@@ -1048,7 +1168,7 @@ first; photos and history presentation come last.
 | **B4** | Routing and assignment: the unrouted queue, route and re-route, return to central with a reason, assign a person, "Assigned to me". |
 | **B5** | Notes on a Lead. (Extended to Accounts and Projects as those arrive.) |
 | **B6** | Accounts, Contacts and Properties, in three reviewed steps. **B6a:** the records, who may see a customer, the Customers list and page. **B6b:** managing Contacts and Properties. **B6c:** resolving a Lead into a customer with duplicate suggestions, shared Contacts, "New lead for this customer", archive and restore. |
-| **B7** | Qualification: Qualified, Disqualified with managed reasons, Nurture with a follow-up date, reopening. |
+| **B7** | Qualification milestone, legitimate disqualification, Deferred Follow-up with date and note, reopening, and atomic lifecycle concurrency (decision 55). |
 | **B8** | Projects: create one or more from a Qualified Lead, or directly; the Project page; responsibilities; transfer between locations; archive and restore; the shared Projects page shown in Sales and Production. |
 | **B9** | Sales outcome: Open, Won with its Sold Amount, Lost with managed Sales Loss Reasons; correcting a Sold Amount. |
 | **B10** | Attachments: storage setup for staging, the attachment model, project photos, removal and the 30-day purge. |
@@ -1058,8 +1178,9 @@ first; photos and history presentation come last.
 B1 to B9 are the operational target for launch. See "Launch and production".
 
 **Where it stands (2026-10-06):** B1 to B6 are approved, merged into `main` and
-verified on staging. B7 to B12 are not built; they continue on the
-`checkpoint-b-continuation` branch.
+verified on staging. B7 is built on the `checkpoint-b-continuation` branch and
+awaiting the owner's final review. B8 to B12 are not built; B8's plan is approved
+in principle (decisions.md, 54) and follows the production-readiness checkpoint.
 
 ## Not in Checkpoint B
 
@@ -1104,7 +1225,7 @@ Before real customer data is entered into production:
 | --- | --- | --- |
 | 1 | Where Leads live in the menu | One shared Leads page, shown in both Marketing and Sales to people whose permissions allow it. There is no separate Marketing Leads and Sales Leads data or behavior. |
 | 2 | The Settings page for the managed lists | One Settings page named **Lead & Sales Lists**, holding all five lists. Owner and Leadership manage it. Leadership's permission is for this page only and opens no other Settings page. |
-| 3 | Nurture | Approved as a Lead status with a next follow-up date. Never treated as Disqualified or as a Sales Loss. |
+| 3 | Deferred Follow-up | Approved as a Lead status with a next follow-up date. Never treated as Disqualified or as a Sales Loss. |
 | 4 | What a duplicate suggestion may reveal | The minimum needed to recognize a likely duplicate: the Account type and a masked form of the matching phone or email. Never a way to discover customers the person may not see. |
 | 5 | How Projects are found | One shared Projects page, shown in Sales and Production as appropriate. Future center screens are views of the same records. |
 | 6 | Sold Amount | Recorded when a Project is marked Won, as the temporary source of sold value. Owner and Leadership may correct it; corrections are audited. Accepted proposals take over later. |

@@ -11,13 +11,23 @@ how far it has got.
 
 **Steps B1 to B6 are approved, merged into `main` and deployed to staging
 (2026-10-06).** That merge was an integration checkpoint, not the end of
-Checkpoint B: see "Integration checkpoint" below. **B7 to B12 are not built.** The
+Checkpoint B: see "Integration checkpoint" below. **B7 reconciliation is approved for implementation and awaiting owner review
+(decision 55); B8 to B12 are not built.** The
 remaining steps are built on the `checkpoint-b-continuation` branch, which starts
 from the verified `main`.
 
+**Current authorization is B7 reconciliation only.** The new target architecture
+supersedes conflicting older plans. B8, Projects, production readiness and the
+architecture-driven roadmap are not authorized by this step; await Jacob's next
+decision. The older future steps below remain historical planning context.
+
 Banana Painting launches about a week after that approval. The operational target
 for launch is steps B1 to B9, with a production-readiness checkpoint around B7 or
-B8.
+B8. It is now taken before B8a.
+
+How each step is planned, reviewed and approved is in
+[collaboration.md](collaboration.md). Whatever is waiting on the owner right now is
+in [review/current.md](review/current.md).
 
 | Checkpoint | Scope | State |
 | --- | --- | --- |
@@ -387,9 +397,9 @@ outcome, because Backoffice is to be the system of record from launch.
 | B6b | Managing Contacts and Properties, with address lookup; creating a customer directly | Built and approved (2026-10-06). |
 | B6c | Resolving a Lead into a customer; duplicate suggestions, including masked matches; shared Contacts; "New lead for this customer"; archive and restore; editing a customer | Built and approved (2026-10-06). |
 | — | **Integration checkpoint:** B1 to B6 merged into `main` and verified on staging | Complete (2026-10-06). See below. |
-| B7 | Qualification, disqualification and nurture | Not started |
-| — | **Production-readiness checkpoint** (around B7 or B8) | Not started |
-| B8 | Projects; the shared Projects page | Not started |
+| B7 | Qualification milestone, legitimate disqualification and Deferred Follow-up; lifecycle history and concurrency; Follow-ups view | Reconciled (2026-10-07) on `checkpoint-b-continuation` per decision 55. Awaiting owner review; not merged. |
+| — | **Production-readiness checkpoint** (before B8a) | Plan prepared (2026-10-06) and awaiting the owner's decisions: see [review/current.md](review/current.md). Nothing has been created. |
+| B8 | Projects; the shared Projects page. Two reviewed steps, B8a and B8b. | Plan approved in principle (2026-10-06, decision 54). Not started. |
 | B9 | Sales outcome: Won with Sold Amount, Lost | Not started |
 | B10 | Attachments and project photos | Not started; may follow launch |
 | B11 | Timeline and record history | Not started; may follow launch |

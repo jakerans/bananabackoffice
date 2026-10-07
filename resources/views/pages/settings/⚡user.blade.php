@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -30,6 +31,12 @@ new #[Title('Manage access')] class extends Component {
     public string $scope = GrantScope::Location->value;
 
     public ?int $locationId = null;
+
+    #[Locked]
+    public ?int $pendingGrantId = null;
+
+    #[Locked]
+    public string $pendingGrantDescription = '';
 
     /**
      * Runs on every request to this page. Staff accounts and access are managed
@@ -128,6 +135,33 @@ new #[Title('Manage access')] class extends Component {
     }
 
     /**
+     * Open the confirmation dialog for one of this staff member's current grants.
+     */
+    public function openRevoke(int $grantId): void
+    {
+        $this->authorize('update', $this->staff);
+
+        $grant = $this->staff->accessGrants()->with('location')->findOrFail($grantId);
+
+        $this->pendingGrantId = $grant->id;
+        $this->pendingGrantDescription = $grant->role->label().' · '.($grant->isCompanyWide() ? __('All locations') : $grant->location?->name);
+        $this->resetValidation('grant');
+
+        Flux::modal('revoke-access-confirmation')->show();
+    }
+
+    /**
+     * Confirm revocation after resolving the locked target again.
+     */
+    public function confirmRevoke(RevokeAccess $revokeAccess): void
+    {
+        $this->revoke((int) $this->pendingGrantId, $revokeAccess);
+
+        $this->reset('pendingGrantId', 'pendingGrantDescription');
+        Flux::modal('revoke-access-confirmation')->close();
+    }
+
+    /**
      * Stop the staff member signing in.
      */
     public function deactivate(DeactivateStaffMember $deactivateStaffMember): void
@@ -137,6 +171,27 @@ new #[Title('Manage access')] class extends Component {
         $deactivateStaffMember->handle($this->staff);
 
         Flux::toast(variant: 'success', text: __('Account deactivated.'));
+    }
+
+    /**
+     * Open the account-deactivation confirmation dialog.
+     */
+    public function openDeactivate(): void
+    {
+        $this->authorize('deactivate', $this->staff);
+        $this->resetValidation('staff');
+
+        Flux::modal('deactivate-staff-confirmation')->show();
+    }
+
+    /**
+     * Confirm account deactivation with the same authorization and action.
+     */
+    public function confirmDeactivate(DeactivateStaffMember $deactivateStaffMember): void
+    {
+        $this->deactivate($deactivateStaffMember);
+
+        Flux::modal('deactivate-staff-confirmation')->close();
     }
 
     /**
@@ -231,8 +286,7 @@ new #[Title('Manage access')] class extends Component {
             @can('deactivate', $staff)
                 @if ($staff->isActive())
                     <flux:button
-                        wire:click="deactivate"
-                        wire:confirm="{{ __('Deactivate :name? They will be signed out and will not be able to sign in again until reactivated.', ['name' => $staff->name]) }}"
+                        wire:click="openDeactivate"
                     >
                         {{ __('Deactivate account') }}
                     </flux:button>
@@ -285,8 +339,7 @@ new #[Title('Manage access')] class extends Component {
                                 <flux:table.cell align="end">
                                     <flux:button
                                         size="sm"
-                                        wire:click="revoke({{ $grant->id }})"
-                                        wire:confirm="{{ __('Remove this access?') }}"
+                                        wire:click="openRevoke({{ $grant->id }})"
                                     >
                                         {{ __('Remove') }}
                                     </flux:button>
@@ -331,4 +384,22 @@ new #[Title('Manage access')] class extends Component {
             <flux:button type="submit" variant="primary">{{ __('Grant access') }}</flux:button>
         </div>
     </form>
+
+    <x-confirmation-modal
+        name="deactivate-staff-confirmation"
+        :title="__('Deactivate :name?', ['name' => $staff->name])"
+        :description="__('They will be signed out and will not be able to sign in again until reactivated.')"
+        action="confirmDeactivate"
+        :confirm-label="__('Deactivate account')"
+        error="staff"
+    />
+
+    <x-confirmation-modal
+        name="revoke-access-confirmation"
+        :title="__('Remove this access?')"
+        :description="$pendingGrantDescription"
+        action="confirmRevoke"
+        :confirm-label="__('Remove access')"
+        error="grant"
+    />
 </section>

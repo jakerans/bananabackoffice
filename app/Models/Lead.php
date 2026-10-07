@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DisqualificationCategory;
 use App\Enums\LeadStatus;
 use App\Enums\Permission;
 use App\Support\Contact\PhoneNumber;
@@ -27,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property Carbon $received_at
  * @property LeadStatus $status
+ * @property int $lifecycle_version
  * @property int $lead_channel_id
  * @property int $lead_source_id
  * @property int $marketing_source_id
@@ -70,6 +72,19 @@ use Illuminate\Support\Carbon;
  * @property-read Location|null $location
  * @property-read User|null $capturedBy
  * @property-read User|null $assignee
+ * @property Carbon|null $status_changed_at
+ * @property Carbon|null $first_qualified_at
+ * @property Carbon|null $follow_up_on
+ * @property string|null $follow_up_note
+ * @property int|null $disqualification_reason_id
+ * @property DisqualificationCategory|null $disqualification_category
+ * @property string|null $disqualification_note
+ * @property Carbon|null $last_disqualified_at
+ * @property int|null $disqualified_by
+ * @property int|null $duplicate_of_lead_id
+ * @property-read LeadDisqualificationReason|null $disqualificationReason
+ * @property-read User|null $disqualifiedBy
+ * @property-read Lead|null $duplicateOf
  * @property int|null $account_id
  * @property int|null $contact_id
  * @property int|null $property_id
@@ -92,10 +107,16 @@ class Lead extends Model
         return [
             'received_at' => 'datetime',
             'status' => LeadStatus::class,
+            'lifecycle_version' => 'integer',
             'assigned_at' => 'datetime',
             'first_routed_at' => 'datetime',
             'routed_at' => 'datetime',
             'work_started_at' => 'datetime',
+            'status_changed_at' => 'datetime',
+            'first_qualified_at' => 'datetime',
+            'follow_up_on' => 'date',
+            'last_disqualified_at' => 'datetime',
+            'disqualification_category' => DisqualificationCategory::class,
             'project_size_min_value' => 'integer',
             'project_size_max_value' => 'integer',
         ];
@@ -253,11 +274,122 @@ class Lead extends Model
     }
 
     /**
-     * Whether the Lead still needs someone's attention. Its customer links can be changed only while it does.
+     * Whether the Lead still needs someone's attention: anything but
+     * Disqualified. Its location, assignee and customer links can be changed
+     * only while it does.
      */
     public function isActive(): bool
     {
-        return in_array($this->status, [LeadStatus::New, LeadStatus::Working], true);
+        return $this->status->isActive();
+    }
+
+    /**
+     * Today's date where the company is, which is what a follow-up date is compared with.
+     */
+    public static function today(): string
+    {
+        return now()->setTimezone(config('app.display_timezone'))->toDateString();
+    }
+
+    /**
+     * Whether a Nurture Lead's follow-up date has arrived or passed.
+     */
+    public function followUpIsDue(): bool
+    {
+        return $this->status === LeadStatus::Nurture
+            && $this->follow_up_on !== null
+            && $this->follow_up_on->toDateString() <= self::today();
+    }
+
+    /**
+     * How many days past its follow-up date a Nurture Lead is. Zero on the day itself.
+     */
+    public function daysOverdue(): int
+    {
+        if (! $this->followUpIsDue() || $this->follow_up_on === null) {
+            return 0;
+        }
+
+        return (int) $this->follow_up_on->startOfDay()->diffInDays(Carbon::parse(self::today())->startOfDay());
+    }
+
+    /**
+     * What is still missing before the Lead can be marked Qualified.
+     *
+     * Qualified means a legitimate opportunity has been identified and the core
+     * information needed to create its Project is there. An empty list means it
+     * may be qualified.
+     *
+     * @return list<string> Any of: location, assignee, customer, contact, property, service, project_size.
+     */
+    public function qualificationGaps(): array
+    {
+        $services = $this->services;
+
+        return array_values(array_filter([
+            $this->location_id === null ? 'location' : null,
+            $this->assigned_user_id === null ? 'assignee' : null,
+            $this->account_id === null || $this->account?->isArchived() ? 'customer' : null,
+            $this->contact_id === null ? 'contact' : null,
+            $this->property_id === null || $this->property?->isArchived() ? 'property' : null,
+            $services->isEmpty() || $this->primaryService() === null ? 'service' : null,
+            $this->project_size_id === null ? 'project_size' : null,
+        ]));
+    }
+
+    /**
+     * The reason the Lead is disqualified, while it is.
+     *
+     * @return BelongsTo<LeadDisqualificationReason, $this>
+     */
+    public function disqualificationReason(): BelongsTo
+    {
+        return $this->belongsTo(LeadDisqualificationReason::class);
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function disqualifiedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'disqualified_by');
+    }
+
+    /**
+     * The Lead this one repeats, when it was disqualified as a duplicate.
+     *
+     * @return BelongsTo<Lead, $this>
+     */
+    public function duplicateOf(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'duplicate_of_lead_id');
+    }
+
+    /**
+     * Every change to the Lead's lifecycle, oldest first.
+     *
+     * @return HasMany<LeadStatusChange, $this>
+     */
+    public function statusChanges(): HasMany
+    {
+        return $this->hasMany(LeadStatusChange::class)->orderBy('id');
+    }
+
+    /**
+     * Limit the query to Leads that someone has to act on now: New, Working and
+     * Qualified, and Nurture once its follow-up date has arrived. A Nurture Lead
+     * with a date still ahead is waiting, not work.
+     *
+     * @param  Builder<Lead>  $query
+     */
+    #[Scope]
+    protected function actionable(Builder $query): void
+    {
+        $query->where(function (Builder $query): void {
+            $query
+                ->whereIn('status', [LeadStatus::New, LeadStatus::Working, LeadStatus::Qualified])
+                ->orWhere(fn (Builder $nurture) => $nurture->where('status', LeadStatus::Nurture)->whereDate('follow_up_on', '<=', self::today()));
+        });
     }
 
     public function isLinkedToCustomer(): bool
@@ -276,17 +408,16 @@ class Lead extends Model
     }
 
     /**
-     * Limit the query to Leads that still need someone's attention.
-     *
-     * Every status that exists today is active. When qualification is built, a
-     * disqualified Lead stops being active.
+     * Limit the query to Leads that still need someone's attention: every
+     * status but Disqualified. A Qualified Lead stays active until Projects
+     * exist to carry it on.
      *
      * @param  Builder<Lead>  $query
      */
     #[Scope]
     protected function active(Builder $query): void
     {
-        $query->whereIn('status', [LeadStatus::New, LeadStatus::Working]);
+        $query->whereIn('status', LeadStatus::active());
     }
 
     /**

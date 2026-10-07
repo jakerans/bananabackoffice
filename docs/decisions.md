@@ -1102,9 +1102,237 @@ branch, none of it yet proven on the real server and database. Merging at a poin
 where every step has been reviewed keeps the remaining work small and means a
 problem that only appears on staging is found now, not at the end.
 
-## Future decisions already constrained by the brief
+## 52. Qualification, disqualification and nurture (step B7)
 
-- Estimates hold any number of named, ordered options. No fixed tiers.
+Built on 2026-10-06 from the B7 plan as the owner approved it with 18 decisions.
+Described under "Qualification, disqualification and nurture, as built in step
+B7" in [checkpoint-b.md](checkpoint-b.md).
+
+What the owner decided:
+
+- **Qualified requires a Property** as well as a Location, an assignee, a
+  customer, a Contact, a Service with a main one and a Project Size.
+- **Disqualification from New is allowed** (spam never needs to be "worked").
+  Nothing returns to New.
+- **Disqualifying clears the assignment** and keeps it in the assignment history.
+  **A reopened Lead is Working and unassigned**; the previous assignee is not
+  restored.
+- **"Unable to Contact"** needs a Working Lead, 3 days since work started and a
+  note. Only Owner, Leadership and a Location Manager may waive the wait, and a
+  waiver is audited.
+- **Nurture** needs an assignee, a date and a note, has no maximum date, and
+  nothing happens automatically when the date passes.
+- **Reopening** needs a reason and is for Owner, Leadership, Location Manager
+  and Call Center, not a Sales Consultant.
+- **The reason's category is recorded as it was at the time.**
+- **A duplicate names its original** where one can be identified among Leads the
+  person can see; otherwise an explanation. Never merged, never deleted, no
+  chains.
+- **A dedicated, append-only status history,** not the audit log, carries
+  lifecycle reporting.
+- **Active** means every status but Disqualified, so Qualified still blocks
+  archiving and deactivation until B8.
+- **All leads hides Disqualified** unless that status is chosen. No Disqualified
+  queue.
+
+Choices made while building, for the owner to confirm:
+
+- **One new permission, `leads.waive_contact_wait`,** held by Owner, Leadership
+  and Location Manager. It is the only way to express "managers but not the Call
+  Center" without naming roles in the code. It is a location-level permission.
+- **Reopening and correcting a reason use the existing "may assign Leads here"
+  rule,** which is exactly Owner, Leadership, Location Manager and Call Center.
+  No new permission was needed. It also fits: a reopened Lead has to be handed
+  out again.
+- **The two special reasons are recognized by a marker** on the reason, set by
+  the migration on the starting values "Unable to Contact" and "Duplicate Lead".
+  Renaming them keeps the rule. A newly added reason never has one. The marker is
+  not editable in Settings, like "note required".
+- **Correcting a reason is limited to the people who may reopen,** since a
+  disqualified Lead has no assignee.
+- **Correcting only the note keeps the category the Lead was disqualified
+  under.** Choosing a different reason takes that reason's category as it is now.
+- **Possible originals for a duplicate** are other visible Leads with the same
+  phone, the same email or the same customer, newest first, at most eight.
+- **The follow-up note is separate from Lead notes** (B5). It says what the
+  follow-up is about and is replaced when the follow-up is rescheduled; each
+  version stays in the status history.
+- **A Qualified Lead can be disqualified.** The plan listed it and nothing
+  replaces it until Projects exist.
+- **The Leads page gained a fifth view, Follow-ups,** and its Status filter now
+  starts on "Open leads" in every view.
+- **The Lead page does not show the status history yet.** It is recorded; showing
+  it belongs to the timeline (B11).
+- **Location deactivation and customer archiving needed no new rule:** they
+  already refuse while "active" Leads exist, and active now includes Qualified
+  and Nurture and excludes Disqualified.
+
+**The owner confirmed all of these on 2026-10-06** and approved B7 in principle,
+pending a browser review: the separate `leads.waive_contact_wait` permission and
+who holds it; reopening and correcting through the existing authority to assign;
+the markers on the two special reasons; "Unable to Contact" for Working Leads
+only; category snapshots that never change, with a genuinely corrected reason
+taking the new reason's current category; "Open leads" as the filter's default;
+and no status history on the Lead page until B11.
+
+The owner also required that **Follow-ups never loses an unassigned Nurture
+Lead.** For someone who may assign Leads at the current Location, the view lists
+every Nurture Lead there, assigned or not, with "Unassigned" shown. A Sales
+Consultant still sees only their own. That was already how it worked for a Lead
+moved between Locations. One gap was closed: a Nurture Lead **returned to
+central** has no Location as well as no assignee, and was missing from the view.
+It is now listed for the people who may see unrouted Leads (Owner, Leadership and
+a company-wide Call Center Agent).
+## 53. How work is planned, reviewed and approved
+
+Decided by the owner on 2026-10-06. The agreement is
+[collaboration.md](collaboration.md).
+
+- Jacob is the product owner and the only source of approval. Claude Code is the
+  implementation engineer. ChatGPT is Jacob's review partner: it advises him,
+  cannot see the repository, and has no authority to change it.
+- **The approved documents in `docs/` are the canonical record.** A conversation
+  stops being the record once its decision is written into them.
+- A step that needs an unrecorded decision stops at a planning report. Built work
+  stops at a report. Both are handed over in one file,
+  [review/current.md](review/current.md), which is temporary and is updated or
+  cleared once the decisions are recorded.
+- The existing discipline is unchanged: one step at a time on the checkpoint
+  branch, the complete local check, both GitHub jobs, a report, and a stop.
+
+Why: every review had been carried between tools as a long pasted prompt, and
+decisions risked living only in a conversation.
+
+How it reaches every session: the rules that must always apply are also in
+`.ai/guidelines/collaboration.md`, which Laravel Boost builds into the generated
+agent instructions (`AGENTS.md`) when `php artisan boost:update` runs. That file
+is generated and not committed, so the committed guideline is the source.
+
+Rules out: treating advice from any AI tool as approval; putting secrets or real
+customer information in a review file; an archive of old handoffs (Git history
+serves).
+
+## 54. Projects (step B8): the plan as approved, not yet built
+
+The owner approved the B8 plan in principle on 2026-10-06 with these decisions.
+**B8 is not started.** The production-readiness checkpoint comes first.
+
+- **Two reviewed steps. B8a:** the Project record, creating one from a Qualified
+  Lead, creating one directly, the Project page, the Projects list, visibility.
+  **B8b:** responsibilities, transfer, archive and restore, notes on a Project,
+  the blocking rules, and clearing responsibilities when access is lost.
+- **Creating from a Lead:** the Lead's assigned Sales Consultant, an Owner,
+  Leadership, or a Location Manager within scope. Not the Call Center. The Project
+  takes the Lead's current Location, and uses the Account, Contact and Property
+  the Lead already resolved (B7).
+- **First Sales Consultant responsibility:** the Lead's assignee, or the creator
+  of a direct Project, when that person is eligible. Otherwise it is left unfilled.
+- **Who may hold a responsibility:** Sales Consultant responsibility needs the
+  Sales Consultant role at the Project's Location; Production Manager
+  responsibility needs the Production Manager role there. Being able to edit
+  Projects is not enough. The person assigning (Owner, Leadership, Location
+  Manager) need not hold that role. A responsibility still grants no access.
+- **Transfer clears every responsibility,** even for someone who also works at the
+  destination, and needs a reason. What was held before stays in the history.
+- **An archived Project does not reverse the Lead's history.** Once a Lead has
+  produced any Project it stays Qualified for good: it cannot return to Working,
+  move to Nurture, be disqualified or be reopened into an earlier stage, even if
+  every Project from it is later archived. A Project created by mistake will get
+  its own deliberate workflow if one is needed; archiving is not that. A Qualified
+  Lead may still produce further Projects. This replaces the first proposal, in
+  which archiving the only Project would have released the Lead.
+- **Sales outcome is added in B8 with the single value Open** and no screen to
+  change it. Won, Lost, Sold Amount and Sales Loss Reasons stay in B9.
+- **A title is required,** pre-filled where possible as "Primary Service — short
+  street address" (for example "Exterior Painting — 123 Oak St"). It is ordinary
+  editable data and is not regenerated when the Service or Property changes. The
+  description is optional.
+- **Menus:** the shared Projects page appears in Sales and Production only. Call
+  Center and Finance get no Projects menu yet; other authorized people reach a
+  Project from the customer page.
+- **Every Project carries its own Services, with exactly one primary, and its own
+  Project Size with the range as it was.** Copied from the Lead when there is one;
+  captured for a direct Project. Reporting on Projects never depends on a Lead's
+  classification, which can change.
+- **Relationships:** Property and Location required; the Account is reached
+  through the Property; the originating Lead is optional; the primary Contact is
+  optional and, when given, must belong to the Account.
+- **No file storage in B8.** Attachments, photos and object storage are B10. No
+  bucket is created and no storage driver installed before then.
+
+## 55. B7 reconciliation only (2026-10-07)
+
+**Approved by Jacob.** The new target product architecture supersedes conflicting
+older plans, but this approval implements only these bounded B7 corrections:
+
+- Present the existing stored `nurture` status as **Deferred Follow-up**, with a
+  **Schedule follow-up** action: a deliberate manual callback requiring a date and
+  note. It is not the future multichannel nurture system. Stored status/event
+  identifiers and existing history stay unchanged.
+- Retire **Unable to Contact** as a new disqualification or newly selected
+  correction reason. Nonresponse does not become terminal merely because time
+  passed. Remove the three-day rule and waiver action without replacing them with
+  guessed thresholds. Existing records remain readable and their notes may be
+  corrected; legitimate reason corrections and reopening remain available.
+- **Qualified** means the existing qualification milestone only, not booked,
+  Lead Issued, demoed, sold or Project-created. Existing qualification requirements,
+  assignment and first-qualification history remain unchanged.
+- Preserve legitimate disqualification, duplicates, reopening, audit/history and
+  all other authorization behavior. Existing waiver grants remain legacy only;
+  no lifecycle action consumes them.
+- Atomically guard B7 lifecycle changes with a monotonically increasing revision,
+  including same-status reschedules/corrections. Use one additive revision column
+  with a zero default for existing Leads. Claim it transactionally against the
+  caller's revision, status, Location and assignee; validation, assignment changes,
+  history and audit share that transaction. Unchanged saves retain the revision.
+
+This supersedes the conflicting B7 rules in decision 52. It does not approve a
+new roadmap, B8/Projects, Contact Center, appointments, dialer, Inbox, AI, deployment
+or any downstream feature. Decisions 53/54 and other older future plans do not
+provide authorization to start them. Stop for owner review; do not merge or deploy.
+
+## 56. B7 owner-review corrections (2026-10-07)
+
+**Approved by Jacob.** Fix only the B7 review findings before owner re-review:
+
+- The Follow-ups badge must count the same eligible result as the table, including
+  future callbacks, the current search and all pages. Preserve existing location,
+  assignment and unrouted authorization. This supersedes the due/overdue-only
+  badge rule; Assigned to me and assignment workload counts keep their rules.
+- Replace the native Return to working confirmation with the existing Flux modal
+  pattern. Use it for Resume working too, preserve lifecycle authorization,
+  assignment and history, and reject stale dialog submissions.
+- Clear obsolete disqualification field errors when the selected reason changes;
+  the newly selected reason must still be validated on submission.
+
+No new architecture, B8, merge or deployment is authorized.
+
+## 57. Accessible application confirmation dialogs (2026-10-07)
+
+**Approved by Jacob.** Replace every application-triggered browser-native alert,
+confirmation or prompt with a consistent accessible styled in-app dialog. The
+current inventory contains nine native confirmations and no production alerts or
+prompts: customer archive, customer-contact removal, property archive, Lead-note
+removal, Lead-customer unlink, list-option deactivation, Location deactivation,
+staff deactivation and access revocation.
+
+- Use the shared Flux confirmation component. The safe Cancel action receives
+  initial focus, Tab and Shift+Tab remain inside the dialog, Escape and Cancel
+  dismiss without mutation, and focus returns to the trigger.
+- Preserve every existing authorization, validation, audit and domain-action
+  semantic. Opening a dialog resolves and authorizes the target but changes
+  nothing. Confirmation resolves and authorizes the locked target again before
+  calling the existing action, so stale or substituted records are not trusted.
+- Keep the standard durable in `.ai/guidelines/collaboration.md` and
+  `docs/design-system.md`, and enforce the native-dialog prohibition with a
+  regression test.
+- Browser- and operating-system-owned permission dialogs are outside this rule;
+  they are not application UI and must not be bypassed.
+
+This is a bounded owner-review extension. It does not authorize B8, new product
+behavior, dependency changes, merge, deployment, or staging/production mutation.
+
+## Future decisions already constrained by the brief- Estimates hold any number of named, ordered options. No fixed tiers.
 - Accepted proposals are stored as versioned snapshots.
 - Projects carry several narrow states (sales, production, payment), not one
   combined status.

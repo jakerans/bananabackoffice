@@ -113,6 +113,15 @@ Status: **Approved** (2026-10-04).
 14. **Unbuilt sections in the second row** are muted and not clickable. "Coming
     soon" appears as a tooltip on hover and as hidden text for screen readers, so
     the state is never carried by color alone.
+15. **Application confirmations use one styled Flux modal pattern** (2026-10-07).
+    The safe Cancel action receives initial focus; keyboard focus stays in the
+    dialog; Escape and Cancel dismiss it without a mutation and return focus to
+    the trigger. The destructive action is explicit and visually dangerous.
+    Livewire locks the pending record identifier, then the confirmation action
+    resolves and authorizes that target again before using the existing domain
+    action. Application templates do not use native `wire:confirm`,
+    `window.confirm`, `alert` or `prompt`. Browser- and operating-system-owned
+    permission prompts are not application UI and are never bypassed.
 
 ## Assets noted on inspection
 

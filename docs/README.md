@@ -15,6 +15,8 @@ before starting work, and update them in the same change that alters what they d
 | [design-system.md](design-system.md) | How the Backoffice design system is applied in code. |
 | [decisions.md](decisions.md) | Important architectural decisions and the reasoning behind them. |
 | [security-notes.md](security-notes.md) | Security review findings: what was fixed and what is still open. |
+| [collaboration.md](collaboration.md) | How work is planned, reviewed and approved: who decides, the step-by-step workflow, and the limits that are never traded for speed. |
+| [review/current.md](review/current.md) | The review handoff: what is waiting on the owner right now, and the decisions it needs. Temporary; not part of the record. |
 
 ## Status labels used in these documents
 

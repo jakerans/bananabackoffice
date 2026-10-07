@@ -3,8 +3,14 @@
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Leads\AssignLead;
 use App\Actions\Leads\CaptureLead;
+use App\Actions\Leads\CorrectLeadDisqualification;
 use App\Actions\Leads\CorrectLeadReceivedTime;
+use App\Actions\Leads\DisqualifyLead;
+use App\Actions\Leads\MoveLeadToNurture;
+use App\Actions\Leads\QualifyLead;
+use App\Actions\Leads\ReopenLead;
 use App\Actions\Leads\ReturnLeadToCentral;
+use App\Actions\Leads\ReturnLeadToWorking;
 use App\Actions\Leads\RouteLead;
 use App\Actions\Leads\StartWorkingLead;
 use App\Actions\Leads\UnassignLead;
@@ -27,12 +33,16 @@ use App\Enums\GrantScope;
 use App\Enums\ManagedList;
 use App\Enums\Role;
 use App\Models\AccessGrant;
+use App\Models\Account;
 use App\Models\Lead;
 use App\Models\LeadAssignment;
 use App\Models\LeadChannel;
+use App\Models\LeadDisqualificationReason;
+use App\Models\LeadStatusChange;
 use App\Models\Location;
 use App\Models\Note;
 use App\Models\ProjectSize;
+use App\Models\Property;
 use App\Models\User;
 use App\Support\Leads\ServiceSelection;
 use Illuminate\Support\Facades\Notification;
@@ -229,3 +239,49 @@ test('a note is not removed when its audit event cannot be recorded', function (
     expect($note->fresh()->isRemoved())->toBeFalse();
     expect($note->fresh()->removed_by)->toBeNull();
 });
+
+test('a lead\'s status is not changed when its audit event cannot be recorded', function (Closure $state, Closure $change) {
+    $lakeview = Location::factory()->create();
+    $manager = User::factory()->withRoleAt(Role::LocationManager, $lakeview)->create();
+    $consultant = User::factory()->withRoleAt(Role::SalesConsultant, $lakeview)->create();
+
+    $account = Account::factory()->withPrimaryContact()->create();
+    $lead = $state(Lead::factory()->at($lakeview)->from($account, $account->primaryContact(), Property::factory()->of($account)->create()), $consultant)->create();
+    $before = $lead->fresh()->getAttributes();
+
+    expect(fn () => $change($lead, $manager))->toThrow(RuntimeException::class);
+
+    // Neither the lead, nor its history, nor who has it.
+    expect($lead->fresh()->getAttributes())->toBe($before);
+    expect(LeadStatusChange::query()->count())->toBe(0);
+    expect(LeadAssignment::query()->whereNull('ended_at')->count())->toBe($before['assigned_user_id'] === null ? 0 : 1);
+})->with([
+    'correcting a disqualification' => [
+        fn ($lead) => $lead->disqualified(),
+        fn (Lead $lead, User $manager) => app(CorrectLeadDisqualification::class)->handle($lead, LeadDisqualificationReason::query()->where('name', 'Other')->sole(), 'Corrected reason.', $manager),
+    ],
+    'qualifying' => [
+        fn ($lead, User $consultant) => $lead->working()->assignedTo($consultant),
+        fn (Lead $lead, User $manager) => app(QualifyLead::class)->handle($lead, $manager),
+    ],
+    'returning to working' => [
+        fn ($lead, User $consultant) => $lead->qualified()->assignedTo($consultant),
+        fn (Lead $lead, User $manager) => app(ReturnLeadToWorking::class)->handle($lead, $manager),
+    ],
+    'moving to nurture' => [
+        fn ($lead, User $consultant) => $lead->working()->assignedTo($consultant),
+        fn (Lead $lead, User $manager) => app(MoveLeadToNurture::class)->handle($lead, now()->addWeek()->toDateString(), 'Call back.', $manager),
+    ],
+    'rescheduling a follow-up' => [
+        fn ($lead, User $consultant) => $lead->nurture()->assignedTo($consultant),
+        fn (Lead $lead, User $manager) => app(MoveLeadToNurture::class)->handle($lead, now()->addMonth()->toDateString(), 'Later.', $manager),
+    ],
+    'disqualifying' => [
+        fn ($lead, User $consultant) => $lead->working()->assignedTo($consultant),
+        fn (Lead $lead, User $manager) => app(DisqualifyLead::class)->handle($lead, LeadDisqualificationReason::query()->ordered()->firstOrFail(), null, $manager),
+    ],
+    'reopening' => [
+        fn ($lead) => $lead->disqualified(),
+        fn (Lead $lead, User $manager) => app(ReopenLead::class)->handle($lead, 'A mistake.', $manager),
+    ],
+]);

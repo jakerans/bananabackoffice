@@ -8,6 +8,9 @@
     $color = match ($status) {
         LeadStatus::New => 'amber',
         LeadStatus::Working => 'sky',
+        LeadStatus::Qualified => 'green',
+        LeadStatus::Nurture => 'purple',
+        LeadStatus::Disqualified => 'zinc',
     };
 @endphp
 
