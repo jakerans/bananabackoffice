@@ -5,8 +5,8 @@ No secrets or customer information belong here.
 
 **Updated:** 2026-10-07 · **Branch:** `checkpoint-slice-1-five-center-navigation`
 **State:** slice 1 implementation and the independent-review correction are built.
-Final exact-SHA CI and local browser review remain before merge review. It is not
-merged. B8 and slices 2–5 remain unauthorized.
+The corrected implementation passed exact-SHA CI. Local browser review remains
+before merge review. It is not merged. B8 and slices 2–5 remain unauthorized.
 
 ## Objective
 
@@ -48,9 +48,9 @@ working URL changed.
 - `npm run build`: passed. The optional Fontaine optimization warning is unchanged
   and non-failing.
 - `git diff --check`: passed after the implementation and handoff updates.
-- Both GitHub jobs passed on reviewed implementation SHA
-  `45d67d880a77519eb7e92a53822def892f395761` before the location-switch fix. Both
-  jobs must pass again on the final SHA.
+- Both GitHub jobs passed on corrected implementation SHA
+  `5b8bb9f1745a4a5184f41263c30e3674f980cd3b`: Checks and tests (SQLite), and
+  Migrations and tests (MySQL 8.4), in run `37692600487`.
 - Local Chrome review is blocked because the browser-control transport is closed;
   the existing Chrome session exposes no DevTools endpoint. No HTTP-only check is
   being substituted for this required visual review.
