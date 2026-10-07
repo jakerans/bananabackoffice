@@ -7,9 +7,9 @@ No secrets or customer information belong here.
 **Step:** B7 owner-review corrections and the bounded application-confirmation
 follow-up, decisions 56 and 57 in [../decisions.md](../decisions.md).
 **State:** implementation, local checks and local Chrome re-review pass. Both
-GitHub jobs pass on the earlier B7 implementation handoff. The confirmation-dialog
-follow-up is local only because this environment denies the push, so its exact
-final SHA has not run in GitHub Actions.
+GitHub jobs pass through the pushed confirmation review commit `a05df3f`. The
+final concurrent-refusal corrections described below are local only, so their
+exact final SHA has not run in GitHub Actions.
 No merge, deployment, B8 or new architecture work is included.
 
 ## What changed, and why
@@ -51,11 +51,18 @@ decision was needed for this bounded patch.
   crafted list switch cannot substitute a same-ID option from another table.
 - Lead-customer unlink also locks the Account, Contact and Property identities.
   Confirmation refreshes the Lead and refuses a stale dialog if any part of that
-  relationship changed, preserving the newer link. Permission is rechecked too.
+  relationship changed, preserving the newer link. The domain action repeats
+  that comparison while holding a row lock and performs a conditional update, so
+  a change between the component check and the write is also preserved.
+  Permission is rechecked too.
 - Domain refusals render inside the open dialog for customer, contact, property,
   Lead unlink, list option, Location, staff and access-grant actions. Reopening a
   dialog clears only its own stale error; the existing domain error is not caught,
   renamed or moved to another scope.
+- Contact removal and property archive also re-read and reauthorize the parent
+  customer at confirmation time. If it was archived concurrently, the shared
+  dialog renders the existing customer-scoped refusal without mutating the child;
+  if access was revoked, the request remains forbidden.
 - The durable prohibition on application-native confirms, alerts and prompts is
   recorded in `.ai/guidelines/collaboration.md`, [../design-system.md](../design-system.md)
   and decision 57. A repository-wide regression test covers view and JavaScript
@@ -65,12 +72,13 @@ decision was needed for this bounded patch.
 
 - Targeted B7 follow-up, qualification, disqualification and concurrency tests:
   **141 passed / 872 assertions**.
+- Focused confirmation-dialog and Lead-customer suites after the final review
+  corrections: **60 passed / 383 assertions**.
 - Confirmation-dialog and affected customer, Lead, list, Location and access
-  suites after review corrections: **293 passed / 1,532 assertions**. The focused
-  confirmation regression file passes **22 tests / 152 assertions**.
+  suites: **297 passed / 1,549 assertions**.
 - Dirty PHP formatting: `php vendor/bin/pint --dirty --format agent` passed.
-- Final local `composer test`: **passed**, including Pint, PHPStan and **1,466
-  tests / 6,387 assertions**.
+- Final local `composer test`: **passed**, including Pint, PHPStan and **1,470
+  tests / 6,404 assertions**.
 - [GitHub run 37669939744](https://github.com/jakerans/bananabackoffice/actions/runs/37669939744)
   on implementation commit `d1e60e8`: **both jobs passed**, each with **1,444 tests /
   6,235 assertions**. SQLite ran the full CI checks. MySQL verified an empty
@@ -79,9 +87,11 @@ decision was needed for this bounded patch.
 - [GitHub run 37670526216](https://github.com/jakerans/bananabackoffice/actions/runs/37670526216)
   on remote branch HEAD `61e3c2b` before this browser-review handoff: **both SQLite
   and MySQL 8.4 jobs passed**.
-- `git diff --check`: passed. The earlier B7 implementation through `61e3c2b` is
-  pushed. The browser handoff commit `f1767fe`, confirmation implementation
-  `1f3b115`, and the current review corrections are local-only code and docs;
+- [GitHub run 37679413429](https://github.com/jakerans/bananabackoffice/actions/runs/37679413429)
+  on pushed commit `a05df3f`: **both SQLite and MySQL 8.4 jobs passed**. The run
+  completed successfully in 3m 40s.
+- `git diff --check`: passed. The branch is pushed through `a05df3f`. The final
+  account-refusal and atomic-unlink corrections are local-only code and docs;
   exact-final-SHA CI has not run.
 - Automated coverage includes due/future and central callbacks, location/role
   scoping, search, pagination, dialog authorization and stale confirmation,
@@ -90,6 +100,9 @@ decision was needed for this bounded patch.
   stale Lead-customer replacement, locked relationship tampering, permission loss
   after opening, in-dialog refusal/error clearing, and a source inventory with
   detection fixtures that reject native application dialogs and aliases.
+  The final additions cover a customer archived after opening contact/property
+  confirmation, permission loss on that refusal path, and a relationship replaced
+  after an unlink caller captured its expected IDs.
 
 ## Independent local Chrome re-review
 
@@ -146,6 +159,11 @@ the current code:
   JavaScript dialog. Its destructive submit was not clicked because computer-use
   policy requires action-time confirmation even for an expected refusal; the
   refusal rendering and stale/concurrent paths are covered by Livewire tests.
+- After the final corrections and complete local suite, a fresh Chrome tab opened
+  contact removal for Adam Lopez (Sample). The styled dialog named the target,
+  Cancel had initial focus, Tab moved to Remove, Shift+Tab returned to Cancel,
+  Escape dismissed without mutation and restored focus to the same Remove trigger;
+  `getJsDialog()` reported no native JavaScript dialog.
 
 ## Owner browser scenarios to re-check
 
@@ -187,9 +205,8 @@ Refresh existing local tabs before testing. Use the existing fictitious B7 Leads
 - The earlier B7 reconciliation and its additive lifecycle revision column remain
   prerequisites. Historical stored values are preserved. The guard still covers
   lifecycle mutations rather than every Lead edit.
-- The earlier documentation-only browser handoff and this confirmation follow-up
-  are local only. This execution environment denied `git push origin
-  checkpoint-b-continuation` to the configured GitHub remote as sensitive egress.
+- The branch is pushed through `a05df3f`, whose SQLite and MySQL jobs pass. The
+  final concurrent-refusal corrections remain local until an authorized push.
   Exact-final-SHA CI therefore has not run and must run before an owner merge
   decision.
 - Jacob requested a comparison with the original ChatGPT Backoffice conversation.

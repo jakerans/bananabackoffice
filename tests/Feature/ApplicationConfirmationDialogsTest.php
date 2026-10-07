@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Leads\UnlinkLeadCustomer;
 use App\Enums\LeadStatus;
 use App\Enums\ManagedList;
 use App\Enums\Role;
@@ -11,6 +12,7 @@ use App\Models\MarketingSource;
 use App\Models\Note;
 use App\Models\Property;
 use App\Models\User;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
 function applicationNativeDialogPattern(): string
@@ -160,6 +162,66 @@ test('confirmation refusals render inside customer dialogs', function () {
     $page->call('openArchiveProperty', $property->id)->assertHasNoErrors('property');
 });
 
+test('a contact-removal dialog shows a customer archived concurrently refusal', function () {
+    Location::factory()->create();
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $account = Account::factory()->commercial('Fictitious Customer')->withPrimaryContact()->withContact()->create();
+    $link = $account->contactLinks()->where('is_primary', false)->sole();
+
+    $page = Livewire::actingAs($owner)
+        ->test('pages::customers.show', ['account' => $account])
+        ->call('openRemoveContact', $link->id);
+
+    $account->forceFill(['archived_at' => now(), 'archived_by' => $owner->id])->save();
+    expect($account->fresh()->isArchived())->toBeTrue();
+
+    $page->call('confirmRemoveContact');
+    expect($link->fresh()->isArchived())->toBeFalse();
+    $page
+        ->assertHasErrors('account')
+        ->assertSee('This customer is archived. Restore it before changing it.');
+
+});
+
+test('a property-archive dialog shows a customer archived concurrently refusal', function () {
+    Location::factory()->create();
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $account = Account::factory()->commercial('Fictitious Customer')->withPrimaryContact()->create();
+    $property = Property::factory()->of($account)->create();
+
+    $page = Livewire::actingAs($owner)
+        ->test('pages::customers.show', ['account' => $account])
+        ->call('openArchiveProperty', $property->id);
+
+    $account->forceFill(['archived_at' => now(), 'archived_by' => $owner->id])->save();
+    expect($account->fresh()->isArchived())->toBeTrue();
+
+    $page->call('confirmArchiveProperty');
+    expect($property->fresh()->isArchived())->toBeFalse();
+    $page
+        ->assertHasErrors('account')
+        ->assertSee('This customer is archived. Restore it before changing it.');
+});
+
+test('an archived-concurrently refusal still rechecks customer archive permission', function () {
+    Location::factory()->create();
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $account = Account::factory()->commercial('Fictitious Customer')->withPrimaryContact()->withContact()->create();
+    $link = $account->contactLinks()->where('is_primary', false)->sole();
+
+    $page = Livewire::actingAs($owner)
+        ->test('pages::customers.show', ['account' => $account])
+        ->call('openRemoveContact', $link->id);
+
+    $account->forceFill(['archived_at' => now(), 'archived_by' => $owner->id])->save();
+    $owner->accessGrants()->delete();
+    $owner->refresh();
+
+    $page->call('confirmRemoveContact')->assertForbidden();
+
+    expect($link->fresh()->isArchived())->toBeFalse();
+});
+
 test('a closed lead unlink refusal renders inside the confirmation dialog', function () {
     $location = Location::factory()->create();
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
@@ -178,6 +240,36 @@ test('a closed lead unlink refusal renders inside the confirmation dialog', func
     $page->call('openUnlinkCustomer')->assertHasNoErrors('customerChoice');
 
     expect($lead->fresh()->account->is($account))->toBeTrue();
+});
+
+test('the unlink domain action atomically preserves a relationship replaced after the caller snapshot', function () {
+    $location = Location::factory()->create();
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $original = Account::factory()->withPrimaryContact()->create();
+    $lead = Lead::factory()->at($location)->from($original)->create();
+    $snapshot = $lead->fresh();
+    $replacement = Account::factory()->withPrimaryContact()->create();
+    $replacementProperty = Property::factory()->of($replacement)->create();
+    $replacementContact = $replacement->primaryContact();
+
+    $lead->forceFill([
+        'account_id' => $replacement->id,
+        'contact_id' => $replacementContact?->id,
+        'property_id' => $replacementProperty->id,
+    ])->save();
+
+    expect(fn () => app(UnlinkLeadCustomer::class)->handle(
+        $snapshot,
+        $snapshot->account_id,
+        $snapshot->contact_id,
+        $snapshot->property_id,
+    ))->toThrow(ValidationException::class, 'customer link was just changed');
+
+    expect($lead->fresh()->only(['account_id', 'contact_id', 'property_id']))->toBe([
+        'account_id' => $replacement->id,
+        'contact_id' => $replacementContact?->id,
+        'property_id' => $replacementProperty->id,
+    ]);
 });
 
 test('list confirmation locks the selected option and waits for confirmation', function () {

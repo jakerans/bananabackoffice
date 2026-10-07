@@ -733,7 +733,14 @@ new #[Title('Lead')] class extends AddressCapturePage {
             ]);
         }
 
-        $this->unlinkCustomer($unlinkLeadCustomer);
+        $unlinkLeadCustomer->handle(
+            $this->lead,
+            $this->pendingUnlinkAccountId,
+            $this->pendingUnlinkContactId,
+            $this->pendingUnlinkPropertyId,
+        );
+
+        Flux::toast(variant: 'success', text: __('This lead is no longer linked to a customer.'));
 
         $this->reset('pendingUnlinkAccountId', 'pendingUnlinkContactId', 'pendingUnlinkPropertyId');
         Flux::modal('unlink-customer-confirmation')->close();

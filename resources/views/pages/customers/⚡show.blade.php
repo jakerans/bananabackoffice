@@ -349,13 +349,14 @@ new #[Title('Customer')] class extends AddressCapturePage {
 
         $this->pendingContactLinkId = $link->id;
         $this->pendingContactName = $link->contact?->fullName() ?? __('this person');
-        $this->resetValidation('contact');
+        $this->resetValidation(['contact', 'account']);
 
         Flux::modal('remove-contact-confirmation')->show();
     }
 
     public function confirmRemoveContact(RemoveContactFromAccount $removeContactFromAccount): void
     {
+        $this->refreshAccountForArchiveConfirmation();
         $this->removeContact($this->pendingContactLinkId ?? abort(404), $removeContactFromAccount);
 
         $this->reset('pendingContactLinkId', 'pendingContactName');
@@ -366,7 +367,9 @@ new #[Title('Customer')] class extends AddressCapturePage {
     {
         $this->authorize('archive', $this->account);
 
-        $removeContactFromAccount->handle($this->currentLink($linkId), Auth::user());
+        $link = $this->currentLink($linkId)->setRelation('account', $this->account->fresh());
+
+        $removeContactFromAccount->handle($link, Auth::user());
 
         $this->afterContactsChanged();
 
@@ -451,13 +454,14 @@ new #[Title('Customer')] class extends AddressCapturePage {
         $this->authorize('archive', $this->account);
 
         $this->pendingPropertyId = $this->currentProperty($propertyId)->id;
-        $this->resetValidation('property');
+        $this->resetValidation(['property', 'account']);
 
         Flux::modal('archive-property-confirmation')->show();
     }
 
     public function confirmArchiveProperty(ArchiveProperty $archiveProperty): void
     {
+        $this->refreshAccountForArchiveConfirmation();
         $this->archiveProperty($this->pendingPropertyId ?? abort(404), $archiveProperty);
 
         $this->reset('pendingPropertyId');
@@ -468,7 +472,9 @@ new #[Title('Customer')] class extends AddressCapturePage {
     {
         $this->authorize('archive', $this->account);
 
-        $archiveProperty->archive($this->currentProperty($propertyId), Auth::user());
+        $property = $this->currentProperty($propertyId)->setRelation('account', $this->account->fresh());
+
+        $archiveProperty->archive($property, Auth::user());
 
         unset($this->properties, $this->archivedProperties);
 
@@ -725,6 +731,23 @@ new #[Title('Customer')] class extends AddressCapturePage {
             ->with(['contact', 'roles'])
             ->findOrFail($linkId)
             ->setRelation('account', $this->account);
+    }
+
+    /**
+     * Reauthorize a destructive customer-record confirmation against the current
+     * customer state while keeping an archived-concurrently refusal in the dialog.
+     */
+    private function refreshAccountForArchiveConfirmation(): void
+    {
+        $account = Account::query()->findOrFail($this->account->id);
+
+        if ($account->isArchived()) {
+            $this->authorize('restore', $account);
+            LinkContactToAccount::ensureChangeable($account);
+        }
+
+        $this->authorize('archive', $account);
+        $this->account = $account;
     }
 
     /**
@@ -1337,7 +1360,7 @@ new #[Title('Customer')] class extends AddressCapturePage {
             :description="__('They stay a contact of any other customer.')"
             action="confirmRemoveContact"
             :confirm-label="__('Remove')"
-            error="contact"
+            :error="['contact', 'account']"
         />
 
         <x-confirmation-modal
@@ -1346,7 +1369,7 @@ new #[Title('Customer')] class extends AddressCapturePage {
             :description="__('It is removed from current choices and can be restored later.')"
             action="confirmArchiveProperty"
             :confirm-label="__('Archive property')"
-            error="property"
+            :error="['property', 'account']"
         />
     @endcan
 </section>

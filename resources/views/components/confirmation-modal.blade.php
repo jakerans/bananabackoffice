@@ -9,9 +9,9 @@
 
 <flux:modal :name="$name" class="w-full max-w-lg">
     <form wire:submit="{{ $action }}" class="flex flex-col gap-5">
-        @if ($error !== null)
-            <flux:error :name="$error" />
-        @endif
+        @foreach ((array) $error as $errorName)
+            <flux:error :name="$errorName" />
+        @endforeach
 
         <div>
             <flux:heading size="lg">{{ $title }}</flux:heading>
