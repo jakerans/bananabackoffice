@@ -1384,6 +1384,23 @@ domain contract, leaving Project transition and Pending policy unresolved.
 The owner must approve or revise this sequence and authorize its first bounded
 slice before implementation begins.
 
+## 60. Five-slice order and slice 1 planning (2026-10-07)
+
+**Approved by Jacob.** Use the five-slice order proposed in decision 59. This
+approval authorizes planning only for slice 1, the five-Center shell alignment.
+
+The implementation plan must map the live registry, routes, stable IDs, gates,
+location scope and active-navigation behavior to Marketing, Sales, Production,
+Finance and Company. It must keep all working URLs reachable through retained
+routes, aliases or redirects; keep Color Studio reachable as an external surface;
+place Settings under Company without widening access; and keep Finance → People &
+Access permission-filtered by the existing staff-management gate. Unbuilt
+workspaces remain unbuilt.
+
+The reviewed proposal is recorded in [navigation-map.md](navigation-map.md). No
+navigation code, permission change, B8 work, merge or deployment is authorized
+by this decision. Slice 1 implementation requires Jacob's next explicit approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

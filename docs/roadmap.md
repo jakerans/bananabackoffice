@@ -4,20 +4,21 @@
 
 **Checkpoint A — Secure branded foundation — is approved and merged into `main`
 (2026-10-04).**
-**Current: post-B7 roadmap reconciliation.** The B1–B7 record and older unbuilt
-plan are in [checkpoint-b.md](checkpoint-b.md). The proposed replacement sequence
-below stops for owner review before every implementation slice.
+**Current: first reconciled slice planning.** The B1–B7 record and older unbuilt
+plan are in [checkpoint-b.md](checkpoint-b.md). Jacob approved the five-slice
+order and authorized planning for slice 1 on 2026-10-07. Each implementation
+slice still stops for owner approval and review.
 
 **Steps B1 to B7 are approved and merged into `main` (2026-10-07).** B1 to B6
 were deployed to staging on 2026-10-06; the automatic staging deployment caused
 by the B7 merge was explicitly allowed and is verified separately. See
 "Integration checkpoint" below. **B8 to B12 are not built.**
 
-**There is no authorized implementation step after B7.** The next planning work
-is to reconcile this roadmap with the canonical product architecture. B8,
-Projects, production readiness and other downstream implementation remain
-unauthorized until Jacob approves the reconciled roadmap. The older future steps
-below remain historical planning context.
+**There is no authorized implementation step after B7.** Slice 1 now has a
+compatibility plan for owner review in [navigation-map.md](navigation-map.md), but
+no code is authorized yet. B8, Projects, production readiness and other downstream
+implementation remain unauthorized. The older future steps below remain
+historical planning context.
 
 The former launch target of B1 to B9 and production-readiness timing around B7 or
 B8 are historical planning assumptions. They remain useful context but are not
@@ -35,19 +36,20 @@ in [review/current.md](review/current.md).
 | C | Historical Color Studio checkpoint placeholder | Not started; target Color Studio is an external surface and sequencing is pending reconciliation |
 | Later | Historical future-work placeholders | Pending replacement by the canonical architecture roadmap |
 
-## Reconciled target and proposed implementation sequence
+## Reconciled target and approved planning sequence
 
 [product-architecture.md](product-architecture.md) is the authority for product
-direction. The sequence below is **proposed for owner review only**. No row is an
-approved implementation step.
+direction. Jacob approved this planning order on 2026-10-07. That approval does
+not authorize implementation; each row requires its own reviewed plan and explicit
+implementation approval.
 
 | Order | Proposed slice | Product status | Implementation status and boundary |
 | --- | --- | --- | --- |
-| 1 | Five-Center shell alignment | **LOCKED:** Marketing, Sales, Production, Finance and Company; Settings under Company; Color Studio external. | **Proposed.** Review a complete current-ID/current-route/access compatibility map before code. Shell/navigation only; no new workspace behavior or permission expansion. |
-| 2 | Shared Customer Activity and unified Notes | **LOCKED:** shared records, context/provenance/history-preserving Notes, and Activity made from major business events rather than every audit event. | **Proposed.** Reuse existing customer, Lead note and audit evidence. Do not expose unrelated records or sensitive finance fields. |
-| 3 | Contact-attempt evidence foundation | **LOCKED:** each attempt is durable evidence with actor, channel, time and outcome; suspicious patterns go to manager review, with no automated punishment. **PENDING:** provider choice. | **Proposed.** No provider selection, cadence enforcement or personnel policy is introduced. |
-| 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow. **CONFIGURABLE:** cadence. **PENDING:** scheduler, timezone, retry and failure contracts. | **Proposed after slice 3.** Specify those pending contracts before implementation; do not reinterpret B7 follow-ups as automated nurture. |
-| 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales. **PENDING:** exact Project creation transition and Pending ownership/validity policy. | **Proposed contract/design slice only.** Do not implement Projects or invent the pending rules. |
+| 1 | Five-Center shell alignment | **LOCKED:** Marketing, Sales, Production, Finance and Company; Settings under Company; Color Studio external. | **Planning approved; implementation proposed.** The current-ID/current-route/access compatibility map is in [navigation-map.md](navigation-map.md). Shell/navigation only; no new workspace behavior or permission expansion. |
+| 2 | Shared Customer Activity and unified Notes | **LOCKED:** shared records, context/provenance/history-preserving Notes, and Activity made from major business events rather than every audit event. | **Order approved; not planned or authorized.** Reuse existing customer, Lead note and audit evidence. Do not expose unrelated records or sensitive finance fields. |
+| 3 | Contact-attempt evidence foundation | **LOCKED:** each attempt is durable evidence with actor, channel, time and outcome; suspicious patterns go to manager review, with no automated punishment. **PENDING:** provider choice. | **Order approved; not planned or authorized.** No provider selection, cadence enforcement or personnel policy is introduced. |
+| 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow. **CONFIGURABLE:** cadence. **PENDING:** scheduler, timezone, retry and failure contracts. | **Order approved; not planned or authorized.** Specify those pending contracts before implementation; do not reinterpret B7 follow-ups as automated nurture. |
+| 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales. **PENDING:** exact Project creation transition and Pending ownership/validity policy. | **Order approved; not planned or authorized.** Contract/design slice only; do not implement Projects or invent the pending rules. |
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
@@ -55,18 +57,12 @@ Production Workspace instead of separate stage/project modules. Customers and
 their related records remain shared across Centers. These locked directions are
 not claims that the target UI exists.
 
-### Owner decisions needed before slice 1
+### Owner decision needed before slice 1 implementation
 
-1. Approve, revise or reject the five-slice order above.
-2. Approve slice 1 as the next implementation-planning boundary only. The
-   recommended compatibility rule is to preserve working IDs and URLs with
-   explicit aliases or redirects; removals wait for a reviewed map.
-3. Confirm slice 1 changes navigation placement and labels only: Settings moves
-   under Company and People & Access appears in Finance without adding the
-   Finance role to `settings.users.manage` or changing any current grant.
-4. Confirm Contact Center, Inbox, Sales Workspace and Production Workspace remain
-   labels/route destinations only in slice 1; their feature behavior belongs to
-   later approved slices.
+Approve, revise or reject the compatibility plan in
+[navigation-map.md](navigation-map.md). Approval authorizes only that bounded
+implementation: navigation placement, labels, retained route behavior and tests.
+It does not authorize a permission change, workspace feature, B8, merge or deploy.
 
 ## Starting point (verified 2026-10-04)
 

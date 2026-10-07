@@ -1,8 +1,9 @@
 # Navigation Map
 
-Status: **As-built navigation through B7 is approved and live.** The target
-five-Center structure below is **LOCKED product direction**; its route, ID and
-access migration is a **proposed implementation** awaiting owner approval.
+Status: **As-built navigation through B7 is approved and live.** The five-slice
+roadmap order and planning for its first slice are owner-approved. The target
+five-Center structure below is **LOCKED product direction**; the compatibility
+implementation plan is **proposed** and awaits owner approval before coding.
 
 ## Canonical target and compatibility migration
 
@@ -12,18 +13,119 @@ inside the Centers that use them. Color Studio is an external/customer surface,
 not a parent Center. Settings belongs under Company. This describes the target;
 the current shell still uses the registry documented below.
 
-| Current surface | Target direction | Compatibility rule before coding |
-| --- | --- | --- |
-| Company Overview and standalone Settings | Company Center, including Settings | Preserve working routes and permissions until a reviewed ID/route migration map says whether each is retained, aliased or redirected. |
-| Marketing Call Center with Central Inbox beneath it | Contact Center calling workspace and a separate Inbox section | Do not collapse calling queues and omnichannel conversations into one module. |
-| Sales Estimates and Proposals sections | One Sales Workspace | Estimate math, offer options, presentation and agreement remain distinct domain concepts inside the workspace. |
-| Production Projects and separate stage pages | One Production Workspace | Stage filters become workspace views; do not create parallel record types or split ownership. |
-| Color Studio Center | External Color Studio surface | Keep current route and `color_studio.access` behavior until its reviewed compatibility migration; target placement alone grants no access. |
-| Settings Users and Access | Finance → People & Access in the target navigation | Placement does not give the Finance role staff-administration permission or widen `settings.users.manage`. |
+### Proposed slice 1 implementation map
 
-The shared Customers page remains canonical across operational Centers. Marketing
-Contact Center is distinct from Marketing Inbox. No target item in this section
-is live merely because its product direction is locked.
+Slice 1 changes the registry and shell presentation only. It does not build a
+Contact Center, Inbox, Sales or Production Workspace, calendar, warranty,
+scorecard or report. A target item is muted `coming_soon` unless the table below
+explicitly maps it to an existing working route.
+
+| Target destination | Stable ID and route compatibility | State and access |
+| --- | --- | --- |
+| Company | Keep root ID `company`, route name `company.home` and `/company`. Relabel Company Overview to Company. | Its entry permission becomes the union of the existing `company.overview.access`, `settings.locations.manage`, `settings.users.manage` and `settings.lead_sales_lists.manage` gates so each existing Settings-only user can still enter the containing Center. This is composition of current grants, not a new grant. |
+| Company → Executive Board | Keep `company.performance` and `/company/performance`; change only the label. | Existing `company.overview.access`; current primary coming-soon page. |
+| Company → Leadership Scorecards | Add `company.leadership_scorecards`; no route. | Coming soon; `company.overview.access`. |
+| Company → Needs Attention | Add `company.needs_attention`; no route. | Coming soon; `company.overview.access`. |
+| Company → Locations | Reparent `settings.locations` as a direct Company child; keep `/settings/locations`. | Live; existing `settings.locations.manage`. |
+| Company → Reports | Keep `company.reports`; no route. | Coming soon; `company.overview.access`. |
+| Company → Settings | Reparent the existing `settings` node under Company. Keep `settings.users`, `settings.lists` and the unbuilt Settings children beneath it; `settings.locations` moves to the direct Locations item above. Preserve `settings`, every `settings.*` ID, `settings.home`, `/settings` and every live `/settings/*` URL. | The nested entry keeps the current union of Settings permissions. `/settings` still lands on the first working Settings destination the user may open, including the sibling Locations item. |
+| Marketing → Performance | Keep `marketing.performance` and `/marketing/performance-board`. | Existing state and `marketing.access`. |
+| Marketing → Contact Center | Keep `marketing.call_center`, relabel it, and keep `shared.leads` as its live interim landing destination at `/leads`. | Existing Marketing and Lead permissions; no calling behavior is added. |
+| Marketing → Inbox | Reparent `shared.inbox` as a top-level Marketing item; no route. Reserve `marketing.call_center.inbox` as a legacy ID rather than reusing it. | Coming soon; `marketing.access`. |
+| Marketing → Campaigns | Keep `marketing.campaigns`; no route. | Coming soon; `marketing.access`. |
+| Marketing → Customers | Keep `shared.customers` and `/customers`. | Live; existing `accounts.view`. |
+| Marketing → Reports | Keep `marketing.reporting`, relabel it Reports; no route. | Coming soon; `marketing.access`. |
+| Sales → Performance | Keep `sales.performance` and `/sales/performance-board`. | Existing state and `sales.access`. |
+| Sales → Workspace | Add `sales.workspace`, with `shared.leads` at `/leads` as its live interim child/landing destination. | Existing Sales and Lead permissions; no selling workflow is added. |
+| Sales → Calendar | Add `sales.calendar`; no route. | Coming soon; `sales.access`. |
+| Sales → Commissions | Keep `sales.commissions`; no route. | Coming soon; `sales.access`. |
+| Sales → Leaderboard | Add `sales.leaderboard`; no route. | Coming soon; `sales.access`. |
+| Sales → Customers | Keep `shared.customers` and `/customers`. | Live; existing `accounts.view`. |
+| Sales → Reports | Keep `sales.reports`; no route. | Coming soon; `sales.access`. |
+| Production → Performance | Keep `production.performance` and `/production/performance-board`. | Existing state and `production.access`. |
+| Production → Workspace | Add `production.workspace`; no route. | Coming soon; `production.access`. No Project or stage page is built. |
+| Production → Schedule | Add `production.schedule`; no route. | Coming soon; `production.access`. |
+| Production → Subcontractors | Keep `production.crews` and change only its label. | Coming soon; `production.access`. |
+| Production → Warranty | Add `production.warranty`; no route. | Coming soon; `production.access`. |
+| Production → Customers | Keep `shared.customers` and `/customers`. | Live; existing `accounts.view`. |
+| Production → Reports | Keep `production.reports`; no route. | Coming soon; `production.access`. |
+| Finance → Performance, Cash Management, Job Costing, Payroll | Keep the current IDs, hierarchy and working `/finance/performance-board` route. | Existing states and `finance.access`. |
+| Finance → People & Access | Add `finance.people_access` pointing to the existing `settings.users` route and `/settings/users`. | Live only for `settings.users.manage`; it remains hidden from the Finance role unless that separate permission is already held. |
+| Finance → Customers | Keep `shared.customers` and `/customers`. | Live; existing `accounts.view`. |
+| Finance → Reports | Keep `finance.reports`; no route. | Coming soon; `finance.access`. |
+| Color Studio external destination | Keep `color_studio`, `color_studio.*`, `/color-studio` and `/color-studio/color-projects` unchanged. Remove it only from the Center collection, not from authorized destinations. | Existing `color_studio.access`; still location-scoped and discoverable from Home and the header in a visually separate External group. |
+
+The old unbuilt IDs `marketing.call_center.inbox`, `marketing.social`,
+`marketing.reviews`, `sales.appointments`, `sales.estimates`, `sales.proposals`,
+`sales.relationships`, `production.projects*`, `finance.commission_approvals` and
+the Center-level `shared.inbox` placements are reserved as legacy IDs and are not
+reassigned. They have no current URLs, so redirects would manufacture compatibility
+that does not exist. All existing routed names and URLs above remain valid; no
+working URL is removed.
+
+### Shell and landing compatibility
+
+- `centers()` returns exactly the five parent Centers. A separate authorized
+  destination/context collection contains those Centers plus Color Studio. Home
+  renders the two groups, and the header switcher visually separates Color Studio
+  as External while keeping it reachable.
+- Route ownership and active navigation use the full context collection, not only
+  Centers. Existing shared `/leads`, `/customers` and `/settings/users` routes keep
+  the last authorized context in `backoffice.center`; a remembered unauthorized
+  context is never trusted.
+- A legacy session value of `settings` maps to `company`. `color_studio` remains a
+  valid external context. The five retained Center IDs require no session migration.
+- `/settings` needs a nested-navigation landing action instead of the root-only
+  Center controller. It resolves and authorizes the compatibility entry, then
+  checks the existing landing order—Locations, Users and Access, Lead & Sales
+  Lists—and redirects to the first destination the user already has permission
+  to open. Direct Settings URLs keep their current controllers and server-side
+  gates.
+- `/company`, `/marketing`, `/sales`, `/production`, `/finance` and `/color-studio`
+  keep their current route names and landing behavior. New coming-soon entries do
+  not receive placeholder routes unless they are required as an approved primary
+  landing; none is required by this plan.
+
+### Permission and regression matrix
+
+No enum, role grant, policy, gate or location-scope rule changes in slice 1.
+
+| Existing role/grant context | Destinations after alignment |
+| --- | --- |
+| Owner | All five Centers, Settings pages, Finance People & Access and external Color Studio. |
+| Leadership, all locations | Company, Marketing, Sales and Production; external Color Studio; existing Settings list access only unless another current Settings permission is held. No Finance. |
+| Leadership, one location | Marketing, Sales and Production plus external Color Studio for that location. Company-wide pages remain unavailable. |
+| Finance | Finance and its shared Customers page. People & Access stays hidden and forbidden without `settings.users.manage`. |
+| Location Manager | Marketing, Sales and Production plus external Color Studio for authorized locations. No Company, Finance or Settings access. |
+| Call Center Agent | Marketing for authorized scope. No other Center or external Color Studio. |
+| Sales Consultant | Sales plus external Color Studio for authorized locations. |
+| Production Manager | Production for authorized locations. |
+| No grants | No destination; the existing no-access state remains. |
+
+Required regression coverage:
+
+1. Registry tests assert exactly five Center IDs, separate external Color Studio,
+   unique non-legacy IDs, valid routed items, target order/labels and muted unbuilt
+   items.
+2. Dashboard, switcher and controller tests cover every role row above, location
+   versus all-locations scope, direct forbidden requests, Settings-only entry into
+   Company, and Color Studio discoverability outside the Center group.
+3. Landing tests cover every retained root URL, `/settings` for each of its three
+   existing permission paths, and denial with no matching Settings permission.
+4. Shared-context tests cover Marketing/Sales `/leads`, all four `/customers`
+   contexts, Company/Finance `/settings/users`, active navigation, authorized
+   session preference, the `settings` session alias and rejection of a remembered
+   unauthorized context.
+5. Existing Settings, Leads, Customers, impersonation and location-switching
+   feature suites remain green. No database migration or feature data is needed.
+
+Likely implementation files are `app/Support/Navigation/Navigation.php`,
+`app/Support/Navigation/Shell.php`, `routes/web.php`, a small nested-navigation
+landing controller, the dashboard and shell switcher/layout views, and their
+existing navigation/controller/dashboard/shared-record tests. Creation of the
+controller must use the repository's Artisan convention. No dependency,
+database, permission enum, role, policy or domain-action file belongs in this
+slice.
 
 ## As-built navigation through B7
 
