@@ -4,10 +4,9 @@ How this file is used: [../collaboration.md](../collaboration.md), "Review hando
 No secrets or customer information belong here.
 
 **Updated:** 2026-10-07 · **Branch:** `checkpoint-slice-1-five-center-navigation`
-**State:** slice 1 implementation and both review corrections are built, independently
-reviewed and browser-verified. Exact-SHA CI passed, and the completed approved work
-is cleared for integration under the standing staging authorization. B8 and slices
-2–5 remain unauthorized.
+**State:** slice 1 implementation and both review corrections are built,
+independently reviewed, browser-verified and merged into `main` under the standing
+staging authorization. Post-merge CI passed. B8 and slices 2–5 remain unauthorized.
 
 ## Objective
 
@@ -53,6 +52,11 @@ working URL changed.
 - Both GitHub jobs passed on final implementation SHA
   `b1e26412988f562385e4eadd5cab8a910184f38f`: Checks and tests (SQLite), and
   Migrations and tests (MySQL 8.4), in run `37696146601`.
+- Both GitHub jobs passed after the application merge at
+  `4896efbb61948d62791f6e89f89c9b251909c312`, in run `37697321579`.
+- The staging `/up` endpoint returned HTTP 200 after the merge. Forge exposes no
+  commit-specific deployment record through this repository's GitHub metadata, so
+  the health check proves availability but not a deployment SHA.
 - Fresh local Chrome review passed: five Centers and separate External Color Studio;
   nested Settings and permission-gated Finance People & Access; muted unbuilt
   navigation; Owner, Sales Consultant, role and location scope; dropdown Escape;
@@ -61,7 +65,7 @@ working URL changed.
   `/settings/users`, and nearby Sales Workspace `/leads` preserve both URL and active
   Center from Four Corners to All Locations and back where applicable.
 
-## Integration boundary
+## Completed integration boundary
 
 - Confirm the shell presents five Centers and a separate External group without
   widening authorization or location scope.
@@ -69,8 +73,8 @@ working URL changed.
   route and active-context behavior.
 - Confirm unbuilt target items remain non-interactive and no feature behavior was
   added.
-- Merge only this verified branch into `main` and allow its normal automatic staging
-  deployment. Do not begin B8 or slices 2–5, deploy to production, or widen scope.
+- Do not begin B8 or slices 2–5, deploy to production, or widen scope. The next
+  implementation slice requires a separate owner-approved plan.
 
 ## Known limitations and decisions still needed
 
