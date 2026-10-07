@@ -2,19 +2,36 @@
 
 The standing agreement for how work on Backoffice is proposed, reviewed, approved
 and built. It is short on purpose. What Backoffice is and the rules that never bend
-are in [project-brief.md](project-brief.md); what is being built is in
-[roadmap.md](roadmap.md).
+are in [project-brief.md](project-brief.md); the canonical target direction is in
+[product-architecture.md](product-architecture.md); what is authorized and built
+is in [roadmap.md](roadmap.md).
 
 ## Roles
 
 | Who | Role |
 | --- | --- |
 | **Jacob** | Product owner and final decision maker. Only Jacob's approval authorizes a step, a merge, or any change to staging or production. |
-| **Claude Code** | Implementation engineer. Works in the repository: proposes, builds what was approved, tests, reports, and stops. |
-| **ChatGPT** | Jacob's product, architecture and review partner. It advises Jacob. It cannot see this repository or this machine, and it has no authority to change anything. |
+| **Implementation agent** | Works in the connected repository: proposes, builds only what Jacob approved, tests, reports, and stops. Tool or repository access grants no product authority. |
+| **Review partner** | Helps Jacob review product, architecture and implementation evidence. It may inspect connected sources when Jacob provides access, but it has no authority to approve or change anything. |
 
-Advice from ChatGPT arrives through Jacob. It counts once Jacob returns it as his
+Advice from any review partner or tool counts only when Jacob records it as his
 decision, and not before.
+
+## Standing staging authorization (2026-10-07)
+
+Jacob authorizes the implementation agent to commit and push approved work,
+merge completed and verified work into `main`, and allow its automatic staging
+deployment without asking again. This includes the documentation branch
+`docs/architecture-roadmap-reconciliation`. Use the connected Windows repository
+`C:\Users\PC\Herd\backoffice`, its existing Git credentials, and origin
+`https://github.com/jakerans/bananabackoffice.git`. Verify remote commits and the
+relevant CI results before reporting completion.
+
+This is release authority for approved scope, not feature approval. Navigation
+planning is approved; navigation implementation still requires Jacob's explicit
+approval. Do not force-push, deploy to production, destroy important data or expand
+feature scope without his approval. These limits supersede earlier per-checkpoint
+merge/staging confirmation requirements; all testing and review requirements stay.
 
 ## The record
 
@@ -33,8 +50,10 @@ decision, and not before.
 
 For each meaningful checkpoint or step:
 
-1. **Read first.** Read the roadmap, decisions, permission model, navigation map,
-   security notes and the relevant checkpoint plan before proposing or building.
+1. **Read first.** Read the relevant product-architecture sections, roadmap,
+   decisions, permission and navigation rules, security notes and checkpoint
+   material for the paths in scope. Use incremental context; do not reread or
+   re-audit unrelated material without a change-driven reason.
 2. **Do not ask Jacob to repeat** a decision those documents already hold.
 3. **Unresolved decisions stop the work.** If the step needs a product or
    architecture decision that is not recorded, write a concise planning report to
@@ -77,9 +96,10 @@ so a review does not need a long conversational prompt.
   either. Examples use fictitious people.
 - Jacob is never asked to paste a secret into any chat. Secrets are entered by
   Jacob directly where they are used.
-- **Branch discipline stays.** Work happens on the checkpoint branch, one step at
-  a time. Nothing is merged into `main` without Jacob's approval.
-- **Staging and production change only with Jacob's explicit approval** at the
-  checkpoint that calls for it.
+- **Branch discipline stays.** Work happens on an approved working branch, one
+  step at a time. Completed, verified work may merge under the standing staging
+  authorization above. Never force-push.
+- **Staging may deploy approved work under that authorization.** Production
+  deployment and destructive data operations remain unauthorized.
 - **Testing, authorization and audit requirements are never weakened** to move
   faster. A check that was not run is never reported as passed.

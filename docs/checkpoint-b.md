@@ -1,12 +1,14 @@
 # Checkpoint B — Leads, Customers and Projects
 
-Status: **Approved by the owner (2026-10-05), including the final review.**
-**B0 (this document) is complete. The roadmap shows which steps are built.**
+Status: **B1 to B7 are approved, built and merged.** This document preserves the
+approved Checkpoint B record. Its unbuilt B8 to B12 sequence is historical and
+does not authorize implementation; [roadmap.md](roadmap.md) now proposes a
+replacement sequence against the canonical product architecture.
 
-The few points still marked **Proposed** are details the owner has seen and not
-objected to; they are confirmed or changed in the step that builds them.
+Older points marked **Proposed** remain historical proposals. They must be
+revalidated in an approved roadmap slice before they are built.
 
-## Objective
+## Original objective
 
 Backoffice becomes the system of record for the path from first contact to a
 project, with location-aware access throughout:
@@ -1030,18 +1032,28 @@ business's name, or change the kind of customer.
 - Database backups do not cover these files. Their protection is part of the
   attachments step. See roadmap.md, "Backups".
 
-## Notes, audit events and the timeline
+## Notes, audit events and Activity
 
 | | What it is | Who writes it |
 | --- | --- | --- |
 | **Note** | Operational information in a person's own words: "customer prefers Tuesday". | Staff |
 | **Audit event** | An append-only record of an important change: who, when, what, and the before and after values where they matter. | The system |
-| **Timeline** | What staff read on a Lead, Project or Account page. | Composed from notes plus selected audit events, in plain English |
+| **Activity** | Major business events staff read on a shared record. | Composed from selected domain and audit evidence, in plain English |
 
-There is one store of system events. The timeline is a view over it, so the two can
-never disagree. This is deliberately not a compliance product.
+The canonical target keeps Notes and Activity distinct. Unified Notes retain the
+record context, author/provenance, timestamps and removal history; moving a record
+or showing its notes in another Center does not rewrite that evidence. Activity
+shows major business events, not every message and not every audit event. The
+append-only audit store remains the evidence source where applicable, but Activity
+is a selected business view rather than an audit-log mirror.
 
-| Change | Audit event | Shown in the timeline |
+The table below preserves the original timeline presentation plan as historical
+context. Its "Note added — Yes" row meant the note was visible in the Notes/
+timeline presentation, not that adding a note is itself a target Activity event.
+Slice 2 must review final Activity inclusion; the canonical default keeps Notes
+separate and limits Activity to major business events.
+
+| Change | Audit event | Shown in historical timeline plan |
 | --- | :-: | :-: |
 | Lead received | Yes | Yes |
 | Lead routed, re-routed, returned to central (with reason) | Yes | Yes |
@@ -1073,9 +1085,9 @@ never disagree. This is deliberately not a compliance product.
 
 ### Lead notes, as built in step B5
 
-Notes exist on Leads. Projects, Accounts and Properties get them when those
-records are built; the `notes` table already allows for it. The timeline and the
-History view are step B11 and are not part of this.
+Notes currently exist on Leads. The `notes` table already supports contextual
+records. Extending unified Notes and adding Customer Activity belongs to a future
+approved slice; it is no longer authorized merely by the old B11 label.
 
 - **Where:** a Notes panel on the Lead page, under the inquiry. Newest first,
   each with who it is from and when.
@@ -1153,11 +1165,10 @@ built correctly later:
 - Revenue comes from the Sold Amount recorded when a Project is marked Won, until
   accepted proposals take over as the authoritative source.
 
-## Build sequence
+## Historical Checkpoint B build sequence
 
-Each step is small, has its own tests, runs the full check, and **stops for the
-owner's review** before the next begins. The order follows the operational path
-first; photos and history presentation come last.
+B1 to B7 below are the completed historical sequence. B8 to B12 preserve the old
+plan for traceability only and are pending replacement by the reconciled roadmap.
 
 | Step | Delivers |
 | --- | --- |
@@ -1169,18 +1180,15 @@ first; photos and history presentation come last.
 | **B5** | Notes on a Lead. (Extended to Accounts and Projects as those arrive.) |
 | **B6** | Accounts, Contacts and Properties, in three reviewed steps. **B6a:** the records, who may see a customer, the Customers list and page. **B6b:** managing Contacts and Properties. **B6c:** resolving a Lead into a customer with duplicate suggestions, shared Contacts, "New lead for this customer", archive and restore. |
 | **B7** | Qualification milestone, legitimate disqualification, Deferred Follow-up with date and note, reopening, and atomic lifecycle concurrency (decision 55). |
-| **B8** | Projects: create one or more from a Qualified Lead, or directly; the Project page; responsibilities; transfer between locations; archive and restore; the shared Projects page shown in Sales and Production. |
-| **B9** | Sales outcome: Open, Won with its Sold Amount, Lost with managed Sales Loss Reasons; correcting a Sold Amount. |
-| **B10** | Attachments: storage setup for staging, the attachment model, project photos, removal and the 30-day purge. |
-| **B11** | Timeline on Lead, Project and Account pages; the History view for managers. |
-| **B12** | Documentation, full check, staging verification, owner review of the whole checkpoint. |
+| **B8** | Historical proposal: Projects from a Qualified Lead or directly, responsibilities and transfer. Exact Project creation transition must be revalidated; do not infer it from Qualified. |
+| **B9** | Historical proposal: Project-level Open/Won/Lost and Sold Amount. Canonical appointment/sales outcomes and Pending ownership require revalidation. |
+| **B10** | Historical proposal: attachments and project photos. |
+| **B11** | Historical proposal: timeline and History. Canonical Customer Activity and unified Notes replace this sequencing assumption. |
+| **B12** | Historical proposal: checkpoint wrap-up. |
 
-B1 to B9 are the operational target for launch. See "Launch and production".
-
-**Where it stands (2026-10-06):** B1 to B6 are approved, merged into `main` and
-verified on staging. B7 is built on the `checkpoint-b-continuation` branch and
-awaiting the owner's final review. B8 to B12 are not built; B8's plan is approved
-in principle (decisions.md, 54) and follows the production-readiness checkpoint.
+**Where it stands (2026-10-07):** B1 to B7 are approved and merged into `main`.
+B8 to B12 are not built and their former order is not current implementation
+authority. See [roadmap.md](roadmap.md) for the proposed replacement sequence.
 
 ## Not in Checkpoint B
 
@@ -1191,10 +1199,12 @@ merging records; competitor management; "Referred By"; automatic routing by serv
 area; follow-up automation; the company-wide Audit Log screen; the homeowner
 portal; Color Studio.
 
-## Launch and production
+## Historical launch and production plan
 
-Banana Painting launches about a week after this plan was approved, and Backoffice
-is its system of record from the start.
+The timing and B1-to-B9 launch sequence below were approved with the original
+Checkpoint B plan. They are preserved as history and constraints, not current
+authorization. The reconciled roadmap must replace their timing before production
+work proceeds.
 
 - **The operational target for launch is B1 to B9.** B10 (attachments and photos),
   B11 (timeline and history presentation) and B12 (wrap-up) may follow the first
@@ -1230,7 +1240,7 @@ Before real customer data is entered into production:
 | 5 | How Projects are found | One shared Projects page, shown in Sales and Production as appropriate. Future center screens are views of the same records. |
 | 6 | Sold Amount | Recorded when a Project is marked Won, as the temporary source of sold value. Owner and Leadership may correct it; corrections are audited. Accepted proposals take over later. |
 | 7 | Disqualification reporting categories | Approved as listed: serviceability, lead quality, invalid, other. Sales Loss Reasons are never mixed into them. |
-| 8 | Launch scope | B1 to B9, with a production-readiness checkpoint around B7 or B8. See "Launch and production". |
+| 8 | Launch scope | Historical decision: B1 to B9, with production readiness around B7 or B8. Preserved for traceability; pending replacement by the reconciled roadmap. |
 
 ## Open decisions
 

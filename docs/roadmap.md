@@ -4,25 +4,26 @@
 
 **Checkpoint A — Secure branded foundation — is approved and merged into `main`
 (2026-10-04).**
-**Current: Checkpoint B.** Its plan was approved on 2026-10-05 (step B0) and is in
-[checkpoint-b.md](checkpoint-b.md). It is built one small step at a time, stopping
-for the owner's review after each step. The table under "Checkpoint B" below shows
-how far it has got.
+**Current: first reconciled slice planning.** The B1–B7 record and older unbuilt
+plan are in [checkpoint-b.md](checkpoint-b.md). Jacob approved the five-slice
+order and authorized planning for slice 1 on 2026-10-07. Each implementation
+slice still stops for owner approval and review.
 
 **Steps B1 to B7 are approved and merged into `main` (2026-10-07).** B1 to B6
 were deployed to staging on 2026-10-06; the automatic staging deployment caused
 by the B7 merge was explicitly allowed and is verified separately. See
 "Integration checkpoint" below. **B8 to B12 are not built.**
 
-**There is no authorized implementation step after B7.** The next planning work
-is to reconcile this roadmap with the canonical product architecture. B8,
-Projects, production readiness and other downstream implementation remain
-unauthorized until Jacob approves the reconciled roadmap. The older future steps
-below remain historical planning context.
+**There is no authorized implementation step after B7.** Slice 1 now has a
+compatibility plan for owner review in [navigation-map.md](navigation-map.md), but
+no code is authorized yet. B8, Projects, production readiness and other downstream
+implementation remain unauthorized. The older future steps below remain
+historical planning context.
 
-Banana Painting launches about a week after that approval. The operational target
-for launch is steps B1 to B9, with a production-readiness checkpoint around B7 or
-B8. It is now taken before B8a.
+The former launch target of B1 to B9 and production-readiness timing around B7 or
+B8 are historical planning assumptions. They remain useful context but are not
+the current sequence; the reconciled roadmap must replace them before further
+implementation or production preparation is authorized.
 
 How each step is planned, reviewed and approved is in
 [collaboration.md](collaboration.md). Whatever is waiting on the owner right now is
@@ -32,8 +33,39 @@ in [review/current.md](review/current.md).
 | --- | --- | --- |
 | A | Secure branded foundation | Approved and merged (2026-10-04) |
 | B | Leads, customers and projects: lead capture and attribution, routing, accounts, contacts, properties, qualification, projects, sales outcome, notes, private attachments, timeline | B1 to B7 approved and merged into `main` (2026-10-07). B8 to B12 not built. |
-| C | First Color Studio workflow | Not started |
-| Later | Estimating and proposals, homeowner portal, production, finance, reporting | Not started |
+| C | Historical Color Studio checkpoint placeholder | Not started; target Color Studio is an external surface and sequencing is pending reconciliation |
+| Later | Historical future-work placeholders | Pending replacement by the canonical architecture roadmap |
+
+## Reconciled target and approved planning sequence
+
+[product-architecture.md](product-architecture.md) is the authority for product
+direction. Jacob approved this planning order on 2026-10-07. That approval does
+not authorize implementation; each row requires its own reviewed plan and explicit
+implementation approval.
+
+| Order | Proposed slice | Product status | Implementation status and boundary |
+| --- | --- | --- | --- |
+| 1 | Five-Center shell alignment | **LOCKED:** Marketing, Sales, Production, Finance and Company; Settings under Company; Color Studio external. | **Planning approved; implementation proposed.** The current-ID/current-route/access compatibility map is in [navigation-map.md](navigation-map.md). Shell/navigation only; no new workspace behavior or permission expansion. |
+| 2 | Shared Customer Activity and unified Notes | **LOCKED:** shared records, context/provenance/history-preserving Notes, and Activity made from major business events rather than every audit event. | **Order approved; not planned or authorized.** Reuse existing customer, Lead note and audit evidence. Do not expose unrelated records or sensitive finance fields. |
+| 3 | Contact-attempt evidence foundation | **LOCKED:** each attempt is durable evidence with actor, channel, time and outcome; suspicious patterns go to manager review, with no automated punishment. **PENDING:** provider choice. | **Order approved; not planned or authorized.** No provider selection, cadence enforcement or personnel policy is introduced. |
+| 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow. **CONFIGURABLE:** cadence. **PENDING:** scheduler, timezone, retry and failure contracts. | **Order approved; not planned or authorized.** Specify those pending contracts before implementation; do not reinterpret B7 follow-ups as automated nurture. |
+| 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales. **PENDING:** exact Project creation transition and Pending ownership/validity policy. | **Order approved; not planned or authorized.** Contract/design slice only; do not implement Projects or invent the pending rules. |
+
+Canonical navigation also keeps Marketing Contact Center separate from Inbox,
+uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
+Production Workspace instead of separate stage/project modules. Customers and
+their related records remain shared across Centers. These locked directions are
+not claims that the target UI exists.
+
+### Owner decision needed before slice 1 implementation
+
+Approve, revise or reject the compatibility plan in
+[navigation-map.md](navigation-map.md). Approval authorizes only that bounded
+implementation: navigation placement, labels, retained route behavior and tests.
+It does not authorize a permission change, workspace feature or B8. The separate
+standing staging authorization in [collaboration.md](collaboration.md) covers
+release of completed and verified approved work; it does not approve this
+navigation implementation.
 
 ## Starting point (verified 2026-10-04)
 
@@ -372,8 +404,8 @@ PHP 8.4.
 
 ## Checkpoint B
 
-Status: **plan approved by the owner, including the final review (2026-10-05).**
-The plan, the tables, the managed lists and the launch plan are in
+Status: **B1 to B7 built, approved and merged.** The original plan, tables and
+historical launch assumptions are in
 [checkpoint-b.md](checkpoint-b.md). The permissions are in
 [permission-model.md](permission-model.md), and the reasoning is in decisions.md,
 25 to 37.
@@ -397,16 +429,15 @@ outcome, because Backoffice is to be the system of record from launch.
 | B6c | Resolving a Lead into a customer; duplicate suggestions, including masked matches; shared Contacts; "New lead for this customer"; archive and restore; editing a customer | Built and approved (2026-10-06). |
 | — | **Integration checkpoint:** B1 to B6 merged into `main` and verified on staging | Complete (2026-10-06). See below. |
 | B7 | Qualification milestone, legitimate disqualification and Deferred Follow-up; lifecycle history and concurrency; Follow-ups view | Reconciled, owner-approved and merged into `main` (2026-10-07), including review corrections and accessible application confirmation dialogs. See decisions 55 to 58. |
-| — | **Production-readiness checkpoint** (before B8a) | Plan prepared (2026-10-06) and awaiting the owner's decisions: see [review/current.md](review/current.md). Nothing has been created. |
-| B8 | Projects; the shared Projects page. Two reviewed steps, B8a and B8b. | Plan approved in principle (2026-10-06, decision 54). Not started. |
-| B9 | Sales outcome: Won with Sold Amount, Lost | Not started |
-| B10 | Attachments and project photos | Not started; may follow launch |
-| B11 | Timeline and record history | Not started; may follow launch |
-| B12 | Wrap-up and review | Not started; may follow launch |
+| — | **Production-readiness checkpoint** (historical timing) | Not authorized. Its former placement before B8a is pending replacement by the reconciled roadmap. |
+| B8 | Projects; the shared Projects page. Two reviewed steps, B8a and B8b. | Historical approved-in-principle plan from decision 54; not current implementation authority and pending revalidation. |
+| B9 | Sales outcome: Won with Sold Amount, Lost | Historical sequence; not authorized and pending revalidation. |
+| B10 | Attachments and project photos | Historical sequence; not authorized and pending revalidation. |
+| B11 | Timeline and record history | Historical sequence; target Activity/Notes direction is reconciled above. Not authorized. |
+| B12 | Wrap-up and review | Historical sequence; not authorized and pending replacement. |
 
-Each step stops for the owner's review before the next begins. B1 to B9 are the
-operational target for launch. Authorization, data integrity, tests and
-auditability are not traded for the date.
+Each approved slice stops for the owner's review before the next begins.
+Authorization, data integrity, tests and auditability are not traded for a date.
 
 ### Integration checkpoint: B1 to B6 on staging (2026-10-06)
 
@@ -444,9 +475,11 @@ location never means "all locations". Adding a location in Settings > Locations
 makes both appear. The two lists were checked on staging with a location that
 existed only inside a database transaction that was rolled back.
 
-### Production readiness
+### Historical production-readiness plan
 
-The production-readiness checkpoint is still planned around B7 or B8.
+The former plan placed production readiness around B7 or B8. Its safeguards below
+remain valid constraints, but its timing is pending the reconciled roadmap and no
+production action is authorized by this historical section.
 
 Production is prepared before the operational steps are finished, not after B12.
 Production does not reuse staging, and **real customer data is never entered into

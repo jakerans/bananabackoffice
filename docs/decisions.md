@@ -1344,6 +1344,78 @@ is planning and documentation: reconcile [roadmap.md](roadmap.md) against the
 canonical [product-architecture.md](product-architecture.md), then return the
 result for the owner's approval before implementation.
 
+## 59. Architecture-to-roadmap reconciliation proposal (2026-10-07)
+
+This is a **documentation reconciliation proposed for owner review**, not
+implementation approval. [product-architecture.md](product-architecture.md) is
+the target-direction authority; `LOCKED`, `CONFIGURABLE`, `PENDING` and `DEFERRED`
+describe product certainty, separately from whether implementation is proposed,
+approved or built.
+
+- Decisions 27, 28, 34 to 37 and 54 remain intact as historical Checkpoint B
+  context. Their unbuilt B8-to-B12 sequence, Project-from-Qualified transition and
+  B9-only Open/Won/Lost assumptions require revalidation before implementation.
+  This entry does not invent the exact Project creation point or Pending ownership
+  rules. Decisions 55 to 58 remain authoritative for built B7 and its merge.
+- The target has five parent Centers: Marketing, Sales, Production, Finance and
+  Company. Color Studio is an external surface; Settings is under Company.
+  Finance includes People & Access in navigation without expanding the Finance
+  role or any existing staff-management permission.
+- Marketing Contact Center and Inbox are separate. Sales uses one Workspace
+  instead of top-level Estimates and Proposals. Production uses one Workspace
+  instead of separate Project/stage modules. Shared Customers and related records
+  remain canonical shared records. None of these target surfaces is claimed built.
+- Unified Notes preserve context, provenance and history. Customer Activity is a
+  selected stream of major business events, not every message or audit event.
+  Manual Deferred Follow-up remains the B7 callback workflow and is not silently
+  converted into future automated scheduling.
+- Existing authorization remains the implementation authority: related-record
+  visibility never reveals unrelated records; responsibility never grants access;
+  grants do not union into broader authority; sensitive financial fields require
+  explicit permissions. Target navigation placement changes none of those rules.
+
+The proposed next sequence is: (1) five-Center shell alignment after a reviewed
+route/ID/access compatibility map; (2) shared Customer Activity and unified Notes;
+(3) contact-attempt evidence without provider or penalty rules; (4) scheduled
+work and an atomic due queue, with cadence configurable and scheduler/timezone/
+retry contracts decided first; (5) an Appointment issuance and ownership-handoff
+domain contract, leaving Project transition and Pending policy unresolved.
+
+The owner must approve or revise this sequence and authorize its first bounded
+slice before implementation begins.
+
+## 60. Five-slice order and slice 1 planning (2026-10-07)
+
+**Approved by Jacob.** Use the five-slice order proposed in decision 59. This
+approval authorizes planning only for slice 1, the five-Center shell alignment.
+
+The implementation plan must map the live registry, routes, stable IDs, gates,
+location scope and active-navigation behavior to Marketing, Sales, Production,
+Finance and Company. It must keep all working URLs reachable through retained
+routes, aliases or redirects; keep Color Studio reachable as an external surface;
+place Settings under Company without widening access; and keep Finance → People &
+Access permission-filtered by the existing staff-management gate. Unbuilt
+workspaces remain unbuilt.
+
+The reviewed proposal is recorded in [navigation-map.md](navigation-map.md). No
+navigation code, permission change, B8 work, merge or deployment is authorized
+by this decision. Slice 1 implementation requires Jacob's next explicit approval.
+
+## 61. Standing authority to release approved work to staging (2026-10-07)
+
+**Approved by Jacob.** Commit and push approved work using the connected Windows
+repository and existing Git credentials. Merge completed, verified work into
+`main` and allow automatic staging deployment without another approval request.
+This explicitly includes `docs/architecture-roadmap-reconciliation`. Verify the
+remote commits and relevant CI results. The standing agreement is recorded in
+[collaboration.md](collaboration.md).
+
+This supersedes earlier requirements to ask again for each merge or staging
+deployment within approved scope. It does not approve navigation implementation:
+planning is approved, and the compatibility plan remains a proposal until Jacob
+authorizes implementation. No force-push, production deployment, destruction of
+important data or expanded feature scope is authorized.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
