@@ -6,6 +6,8 @@ use App\Models\Location;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
 use App\Support\Navigation\Navigation;
+use App\Support\Navigation\NavigationItem;
+use App\Support\Navigation\Shell;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,14 +38,14 @@ class SwitchLocationController extends Controller
             $currentLocation->switchTo($user, $location);
         }
 
-        return redirect()->to($this->destination($user, $navigation, $router));
+        return redirect()->to($this->destination($request, $user, $navigation, $router));
     }
 
     /**
-     * Stay in the center the staff member came from when they may still open it
-     * in the new location; otherwise go home. Only our own routes are ever used.
+     * Stay in the remembered destination when it still owns the previous route
+     * and remains authorized in the new location. Only our own routes are used.
      */
-    private function destination(User $user, Navigation $navigation, Router $router): string
+    private function destination(Request $request, User $user, Navigation $navigation, Router $router): string
     {
         try {
             $previous = $router->getRoutes()->match(Request::create(url()->previous()));
@@ -51,10 +53,25 @@ class SwitchLocationController extends Controller
             return route('dashboard');
         }
 
-        $center = $navigation->destinationForRoute($previous->getName());
+        $candidates = array_values(array_filter(
+            $navigation->destinationsForRoute($previous->getName()),
+            fn (NavigationItem $destination): bool => $navigation->allows($user, $destination),
+        ));
 
-        return $center !== null && $center->route !== null && $navigation->allows($user, $center)
-            ? route($center->route)
-            : route('dashboard');
+        if ($candidates === []) {
+            return route('dashboard');
+        }
+
+        $lastDestinationId = $request->session()->get(Shell::LAST_CENTER_KEY);
+
+        if ($lastDestinationId === 'settings') {
+            $lastDestinationId = 'company';
+        }
+
+        $destination = collect($candidates)->firstWhere('id', $lastDestinationId) ?? $candidates[0];
+
+        $request->session()->put(Shell::LAST_CENTER_KEY, $destination->id);
+
+        return $destination->route !== null ? route($destination->route) : route('dashboard');
     }
 }

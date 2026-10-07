@@ -3,8 +3,9 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-07 · **Branch:** `slice-1-five-center-navigation`
-**State:** slice 1 implementation is built and under verification. It is not
+**Updated:** 2026-10-07 · **Branch:** `checkpoint-slice-1-five-center-navigation`
+**State:** slice 1 implementation and the independent-review correction are built.
+Final exact-SHA CI and local browser review remain before merge review. It is not
 merged. B8 and slices 2–5 remain unauthorized.
 
 ## Objective
@@ -29,20 +30,30 @@ and active-context behavior.
   Finance role receives no new permission and cannot see or open it by default.
 - A legacy `backoffice.center=settings` session value maps to Company. Existing
   five-Center and Color Studio context values remain valid.
+- Location switching now selects from every authorized destination that owns the
+  previous route. It preserves the remembered shared Leads, Customers or Users &
+  Access context only when that destination is still authorized in the new
+  location, otherwise it uses the first authorized context or Home.
 
 No database, permission enum, role grant, policy, domain action, dependency or
 working URL changed.
 
 ## Tests and checks
 
-- Focused navigation/controller/browser-response tests: **125 tests / 358
-  assertions**, passed.
-- Related Customers, Settings and location-switching tests: **235 tests / 942
-  assertions**, passed.
-- `vendor/bin/pint --dirty --format agent`: passed.
-- `git diff --check`: passed.
-- Full `composer test`, asset build, exact-SHA GitHub SQLite/MySQL checks and owner
-  browser review are still pending and will be recorded before merge review.
+- Final full `composer test`: passed Pint, PHPStan and **1,499 tests / 6,486
+  assertions**.
+- Focused post-review regression run: **85 tests / 324 assertions**, including
+  shared Leads, Customers, Users & Access, legacy Settings context, and a
+  remembered destination that becomes unauthorized in the new location.
+- `npm run build`: passed. The optional Fontaine optimization warning is unchanged
+  and non-failing.
+- `git diff --check`: passed after the implementation and handoff updates.
+- Both GitHub jobs passed on reviewed implementation SHA
+  `45d67d880a77519eb7e92a53822def892f395761` before the location-switch fix. Both
+  jobs must pass again on the final SHA.
+- Local Chrome review is blocked because the browser-control transport is closed;
+  the existing Chrome session exposes no DevTools endpoint. No HTTP-only check is
+  being substituted for this required visual review.
 
 ## Review boundary
 
@@ -52,6 +63,9 @@ working URL changed.
   route and active-context behavior.
 - Confirm unbuilt target items remain non-interactive and no feature behavior was
   added.
+- In Chrome, review Home grouping; Company and nested Settings; Finance People &
+  Access; Marketing/Sales Leads; each Center's Customers context; role and location
+  scoping; legacy and current location-switch context; and muted unbuilt items.
 - Do not merge until the final local gate, both GitHub jobs and browser review are
   recorded here. Do not begin B8 or slices 2–5.
 
@@ -59,5 +73,6 @@ working URL changed.
 
 This slice intentionally builds no Contact Center, Inbox, Workspace, calendar,
 warranty, scorecard or report behavior. No further product or architecture
-decision is needed for this implementation. The next slice requires a separate
-owner-approved plan after this slice is reviewed.
+decision is needed for this implementation. The only current blocker is access to
+the requested local Chrome control for the required browser review. The next slice
+requires a separate owner-approved plan after this slice is reviewed.
