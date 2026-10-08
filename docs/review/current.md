@@ -8,6 +8,44 @@ No secrets or customer information belong here.
 only. No application code, test, setting or database change is in it. Nothing in
 slice 4 is built.
 
+## Fix round 1: what changed after the first review
+
+Only [../slice-4-plan.md](../slice-4-plan.md) and this file changed. The three
+problems the review raised, and how the plan now answers them:
+
+1. **Skip cooldowns are kept per Lead and per setter.** The single "last skipped
+   by" field on the cadence is gone. Each `skipped` row in the queue history now
+   stores the setter and the instant their cooldown ends, so a second setter's
+   skip cannot erase the first setter's cooldown. Step 4b has a regression test:
+   A skips, B skips, A asks for another Lead inside A's cooldown.
+2. **The claim rechecks everything before a Lead is returned,** including when
+   it returns a Lead the setter already holds: queue permission, timezone,
+   calling hours and skip cooldown, read from the current rows through database
+   row locks taken in one fixed order. Every action that can take eligibility
+   away writes its own row first and then ends the hold in its own transaction,
+   so a change either is seen by the claim or ends the new hold itself. Step 4b
+   has deterministic and real-simultaneous-process tests for a change landing
+   during a claim.
+3. **`DeactivateLocation` ends holds in its own transaction,** and is in the 4b
+   hook list and tests.
+
+Three things the Reviewer and Jacob should know about these fixes:
+
+- **Deactivating a Location normally has no holds to end.** The existing rule
+  refuses to deactivate a Location that still has active Leads, and only active
+  Leads can be held. The hook is a safeguard for a Lead that reaches the
+  Location while the deactivation is in progress, and for state a crash left
+  behind. Its test builds that state on purpose. The refusal rule is unchanged.
+- **A hold taken just before the hours are narrowed is not ended by the save.**
+  It was inside calling hours when offered, like a Lead taken a minute before
+  closing. The setter's next press of Next lead ends it, with the new reason
+  "calling hours have closed". Jacob's decision 71 lists disqualifying, routing
+  and losing access as the things that end a hold at once; hours were not added
+  to that list.
+- **A skip cooldown is now a fixed moment,** the skip time plus the hold length
+  at the time. It is no longer cleared early when an attempt is counted. This is
+  simpler and still matches choice 5 below.
+
 ## Objective
 
 Record Jacob's slice 4 decisions (made in conversation on 2026-10-08) in the

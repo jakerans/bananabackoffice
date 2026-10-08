@@ -163,39 +163,127 @@ lifecycle revision already uses (`ChangeLeadLifecycle`), and it needs nothing th
 only one database offers: no `SKIP LOCKED`, no advisory locks, no stored
 procedures.
 
-`ClaimNextLead`, in one transaction retried up to three times on a deadlock or a
-busy database:
+**The eligibility check.** One rule, in one place (`QueueEligibility`), answers
+"may this person be given this Lead at this moment?". It is used by every path
+that returns a Lead, and it always reads the current rows, never values worked
+out earlier in the request:
 
-1. Release the caller's own hold if it has expired.
-2. If the caller still has a live hold, re-authorize that Lead and return it.
-   Pressing Next lead twice, or in two tabs, returns the same Lead.
-3. Work out, in PHP, the Locations the caller is eligible for **and** that are
-   inside calling hours right now, and whether unrouted Leads are both allowed and
-   open (Eastern).
-4. Read up to ten candidate cadence IDs in queue order, with no lock.
-5. For each candidate in turn:
+- **Queue permission:** the person is active and holds `leads.work_queue` for the
+  Lead's current Location (for an unrouted Lead, through an all-locations grant),
+  the Location is active, and `LeadPolicy::update` passes.
+- **Timezone:** the Lead's current Location's current timezone, or Eastern while
+  unrouted.
+- **Calling hours:** this moment is inside a calling window in that timezone, by
+  the current settings (hours and days).
+- **Skip:** the person has no skip cooldown still running for this Lead (see
+  "Skip cooldown" below).
 
-   ```sql
-   UPDATE lead_cadences
-      SET held_by_user_id = :me, hold_token = :uuid,
-          held_at = :now, held_until = :now_plus_hold
-    WHERE id = :candidate
-      AND state = 'in_queue'
-      AND due_at <= :now
-      AND (held_by_user_id IS NULL OR held_until <= :now)
-   ```
+`ClaimNextLead` works in short transactions, one for the caller's existing hold
+and then one for each candidate tried. Each is retried up to three times on a
+deadlock or a busy database. Reading the candidates is only a hint about where to
+look; nothing read there decides who gets a Lead.
 
-   Exactly one row affected means the caller won it. Zero means someone else did:
-   try the next candidate. If the row carried someone's expired hold, a
-   `hold_expired` event is written for them.
-6. Load the Lead and authorize it again through the policy. If that fails, release
-   it and continue with the next candidate.
-7. Write the `claimed` event and return. If every candidate was lost, read again
-   (at most three rounds), then answer "nothing due right now".
+1. **Existing hold.** In one transaction: take the locks below for the Lead the
+   caller holds, release the hold if it has expired, and otherwise run the
+   eligibility check on it.
+   - Still eligible: return it. Pressing Next lead twice, or in two tabs, returns
+     the same Lead.
+   - Not eligible any more: end the hold with a `hold_ended` event (reason
+     `outside_calling_hours`, `access_lost` or `skip_cooldown`) and carry on to
+     step 2. A hold is never returned just because it exists.
+2. **Candidates.** Work out, in PHP, the Locations the caller is eligible for and
+   that are inside calling hours right now, and whether unrouted Leads are both
+   allowed and open. Read up to ten candidate cadence IDs in queue order, with no
+   lock, leaving out Leads the caller has a running skip cooldown for.
+3. **For each candidate in turn, in its own transaction:**
+   1. Take the locks below and read the current rows through them.
+   2. Run the eligibility check on those rows. If it fails, write nothing and
+      try the next candidate.
+   3. Claim with one conditional update:
 
-Why it is safe on both engines: an `UPDATE` always reads the latest committed row
-and holds the row lock (MySQL InnoDB) or the single write lock (SQLite) while it
-tests the `WHERE` clause, so two callers can never both see the row as free.
+      ```sql
+      UPDATE lead_cadences
+         SET held_by_user_id = :me, hold_token = :uuid,
+             held_at = :now, held_until = :now_plus_hold
+       WHERE id = :candidate
+         AND state = 'in_queue'
+         AND due_at <= :now
+         AND (held_by_user_id IS NULL OR held_until <= :now)
+         AND NOT EXISTS (
+               SELECT 1 FROM lead_queue_events e
+                WHERE e.lead_cadence_id = lead_cadences.id
+                  AND e.type = 'skipped'
+                  AND e.affected_user_id = :me
+                  AND e.cooldown_until > :now)
+      ```
+
+      Exactly one row affected means the caller won it. Zero means someone else
+      did, or the caller skipped it a moment ago: try the next candidate. If the
+      row carried someone's expired hold, a `hold_expired` event is written for
+      them.
+   4. Write the `claimed` event, commit and return the Lead.
+4. If every candidate was lost or refused, read again (at most three rounds),
+   then answer "nothing due right now".
+
+**Locks, and why a change during a claim cannot slip through.** The danger is a
+change that lands between working out eligibility and taking the hold: the Lead
+is routed to a Location that is closed, the hours are narrowed, a timezone is
+changed, the caller's access is removed, the Location is deactivated. Two things
+together close it.
+
+*The claim reads through locks, in one fixed order.* Inside each transaction
+above, before the eligibility check, `ClaimNextLead` reads these rows with
+Laravel's `sharedLock()` (the Lead row with `lockForUpdate()`, as
+`RecordManualContactAttempt` already does):
+
+1. the caller's own `users` row;
+2. the caller's access grants;
+3. the current `contact_center_settings` row;
+4. the Lead row;
+5. the Lead's Location row, when it has one.
+
+The conditional update on the cadence row comes last. A locking read returns the
+latest committed row and waits for a change that is in progress, so the check
+cannot run on values that were already replaced. A plain read is not enough: on
+MySQL a plain read inside a transaction may return an older snapshot. On SQLite
+the lock calls do nothing and are not needed, because SQLite runs write
+transactions one at a time and refuses one whose earlier read has gone stale;
+that refusal is the "busy database" retry.
+
+*Every change that can take eligibility away writes first, then deals with
+holds.* Each of these actions changes its own row before it touches a cadence
+row, which is the same order the claim uses:
+
+| Change | Row it writes or locks first | Then, in the same transaction |
+| --- | --- | --- |
+| `RouteLead`, a transfer, `ReturnLeadToCentral`, `DisqualifyLead`, `MoveLeadToNurture`, `RecordManualContactAttempt` | The Lead row | Ends the hold or the cadence (failure contract) |
+| `RevokeAccess` | The grant, after locking the staff member's `users` row | Ends that person's hold if they may no longer work the Lead |
+| `DeactivateStaffMember` | The staff member's `users` row | Ends that person's hold |
+| `DeactivateLocation` | The Location row | Ends every hold on a Lead at that Location |
+| A Location's timezone is changed | The Location row | Nothing; see below |
+| Contact Center settings are saved | Locks the settings row it replaces, then inserts the next version | Nothing; see below |
+
+Each hook finds the holds it must end with a locking read of `lead_cadences`,
+not a plain read, so it sees a hold that was committed while it waited.
+
+So for every such change there are only two possible orders. Either the change
+commits first, and the claim's locking read sees it and refuses the Lead; or the
+claim commits first, the change waits for it, and the change's own hook then
+finds the new hold and ends it. For a change of hours, days or timezone there is
+no hook because there is nothing to undo: a Lead claimed before the change
+committed was inside calling hours when it was offered, exactly like a Lead
+claimed a minute before closing. The existing-hold check in step 1 stops it
+being handed out again once the hours have closed. An attempt the setter logs on
+it is still saved (failure contract).
+
+Because every path takes its locks in the same order, these waits do not form a
+cycle. If the database reports a deadlock anyway, the transaction is retried.
+
+Why the update itself is safe on both engines: an `UPDATE` always reads the
+latest committed row and holds the row lock (MySQL InnoDB) or the single write
+lock (SQLite) while it tests the `WHERE` clause, so two callers can never both
+see the row as free. `sharedLock()` and `lockForUpdate()` are Laravel's standard
+row locks; nothing here is particular to one database.
 
 Three database rules back the code up, so a bug cannot break the guarantees:
 
@@ -206,26 +294,40 @@ Three database rules back the code up, so a bug cannot break the guarantees:
 - `contact_attempts (lead_id, cadence_cycle, cadence_step)` is unique: a cadence
   step can be used up only once.
 
-Queue order, for the candidates in step 4:
+Queue order, for the candidates in step 2:
 
 1. Leads never called: `cycle = 1` and `attempts_made = 0`, newest first
    (`leads.received_at` descending, then ID descending).
 2. Then everything else, most overdue first (`due_at` ascending, then ID).
 
-A Lead the caller skipped is left out of their candidates until one hold length
-has passed since the skip. A setter never sees a list to choose from.
+A setter never sees a list to choose from.
+
+**Skip cooldown.** A Lead a setter skipped is not offered back to that setter
+until one hold length has passed. The cooldown is kept **per Lead and per
+setter**, in the queue history: every `skipped` event stores the setter
+(`affected_user_id`) and the instant their cooldown ends (`cooldown_until`, the
+skip time plus the hold length in force at the skip). Nothing on the cadence row
+records a skip, so one setter's skip can never overwrite another's: if A skips a
+Lead and then B skips it, both events exist and A's cooldown still runs. A
+cooldown is a stored instant like `due_at`; changing the hold length later does
+not move it. It is checked in the candidate read, in the eligibility check and
+in the claiming update itself. Everyone without a running cooldown for that Lead
+is offered it at once.
 
 ### 6. Retry and failure contract
 
 | Situation | What happens |
 | --- | --- |
-| Next lead pressed twice, or a request retried | The same held Lead is returned. No second hold. |
+| Next lead pressed twice, or a request retried | The same held Lead is returned, after it passes the eligibility check again. No second hold. |
 | The attempt form submitted twice | Slice 3's submission ID returns the existing attempt; the cadence moves once. |
 | Two people log a call on the same Lead at the same moment | The Lead row is locked for each in turn (slice 3). Both calls are kept as evidence; each counted one uses its own step. |
 | The setter walks away | The hold ends at `held_until`. The Lead is due again for everyone, whether or not the timer ran. |
 | The setter logs a call after their hold expired | The attempt is saved if they may still work the Lead, and it counts as above. If someone else now holds the Lead, that hold ends and they are told. A real call is never thrown away. |
 | A held Lead is disqualified, scheduled for Deferred Follow-up, routed, moved, or returned to central | The same action, in its own transaction, ends the cadence or the hold. The setter's card says why on its next poll (every 10 seconds) or their next click. |
 | The setter's access is revoked or their account deactivated | `RevokeAccess` and `DeactivateStaffMember` end their hold at once if they may no longer work that Lead, next to the existing release of assignments. |
+| The Lead's Location is deactivated | `DeactivateLocation`, in its own transaction, ends every hold on a Lead at that Location, reason `access_lost`: a deactivated Location is covered by no grant, so nobody may work those Leads. The existing rule still refuses to deactivate a Location that has active Leads, so this normally finds nothing; it is there for a Lead that reaches the Location while the deactivation is in progress and for state a crash left behind. It does not wait for the timer or the setter's next click. |
+| Routing, hours, days, a timezone, access or a Location changes while a claim is in progress | The claim reads the current rows through locks and refuses the Lead, or the change's own transaction ends the new hold (atomic claim, "Locks"). A Lead is never handed out on eligibility worked out before the change. |
+| Next lead pressed while holding a Lead that is no longer eligible (calling hours have closed, access changed) | The hold ends with its reason and the setter is given another Lead or told nothing is due. The held Lead is not returned again. |
 | Any save from the queue | Re-resolves the Lead and re-authorizes the person against the Lead's current Location, as every Lead action does. A stale card saves nothing it is no longer allowed to. |
 | Server restart or outage | Nothing to replay. Due times and hold times are stored instants; on return, overdue Leads are simply due, most overdue first, and stale holds are already expired. |
 | A tick fails partway | Each part and each Lead is handled on its own and is safe to repeat. The failure is logged without customer details and the next tick tries again. The overlap lock frees itself after five minutes. |
@@ -287,9 +389,10 @@ Validation, always on the server:
 | `held_by_user_id` | bigint, nullable, **unique**, FK `users` (null on delete) | |
 | `hold_token` | uuid, nullable | Identifies one hold, so a card can tell its own hold from a later one. |
 | `held_at`, `held_until` | datetime, nullable | `held_until` indexed. |
-| `last_skipped_by_user_id` | bigint, nullable, FK `users` (null on delete), own index | Cleared when an attempt is counted. |
-| `last_skipped_at` | datetime, nullable | |
 | `created_at`, `updated_at` | datetime | |
+
+The cadence row holds nothing about skips. Skip cooldowns are per Lead and per
+setter and live in `lead_queue_events` (below).
 
 "Cadence finished, no contact" is `state = finished_no_contact` here and nowhere
 else. `LeadStatus`, `lead_status_changes` and `lifecycle_version` are not touched.
@@ -301,13 +404,14 @@ delete in the application like audit events and the status history.
 | --- | --- |
 | `id`, `lead_id` (FK, restrict), `lead_cadence_id` (FK, restrict) | Each with its own index. |
 | `type` | `entered`, `claimed`, `hold_expired`, `hold_ended`, `skipped`, `attempt_counted`, `ended`, `finished_no_contact`, `returned_to_queue`. |
-| `reason` | For `hold_ended`: `disqualified`, `deferred_follow_up`, `moved`, `access_lost`, `attempt_logged_by_other`. For `ended`: `connected`, `disqualified`, `deferred_follow_up`. For `skipped`: the skip reason. |
+| `reason` | For `hold_ended`: `disqualified`, `deferred_follow_up`, `moved`, `access_lost`, `attempt_logged_by_other`, `outside_calling_hours`, `skip_cooldown`. For `ended`: `connected`, `disqualified`, `deferred_follow_up`. For `skipped`: the skip reason. |
 | `note` | The skip note, or the required note on a return to the queue. |
 | `cycle`, `step` | The cadence position at that moment. |
 | `hold_token`, `contact_attempt_id` (nullable FK) | |
 | `location_id` (nullable FK), `location_name` | The Lead's Location then. History is filtered by it, as contact attempts are. |
 | `actor_id`, `actor_name`, `impersonator_id`, `impersonator_name` | Actor is empty for the timer. Impersonation is recorded as everywhere else. |
-| `affected_user_id` | Whose hold expired or was ended. |
+| `affected_user_id` | Whose hold expired, was ended or was given up by a skip. On a `skipped` event it is always the setter who held the Lead, including when an Owner skipped while impersonating them. |
+| `cooldown_until` | datetime, nullable. Set only on a `skipped` event, when the row is inserted: the instant that setter's cooldown for this Lead ends. Indexed as `(lead_cadence_id, affected_user_id, type, cooldown_until)` for the claim. |
 | `created_at` | |
 
 **`contact_attempts`** — two nullable columns, written only when the row is
@@ -444,10 +548,13 @@ Builds: the 4b tables and columns; `leads.work_queue` in the enum and roles; the
 calculators (`app/Support/Queue/CallingHours.php`, `CadenceSchedule.php`); the
 actions in `app/Actions/Queue/` (`EnterLeadCadence`, `AdvanceLeadCadence`,
 `EndLeadCadence`, `ClaimNextLead`, `SkipHeldLead`, `EndQueueHold`,
-`ReturnLeadToQueue`, `RunQueueTick`); the hooks in `CaptureLead`,
+`ReturnLeadToQueue`, `RunQueueTick`); the one eligibility rule
+(`app/Support/Queue/QueueEligibility.php`); the hooks in `CaptureLead`,
 `RecordManualContactAttempt`, `DisqualifyLead`, `MoveLeadToNurture`, `RouteLead`,
-`ReturnLeadToCentral`, `RevokeAccess` and `DeactivateStaffMember`;
-`LeadPolicy::returnToQueue`; the `backoffice:queue-tick` command and its schedule
+`ReturnLeadToCentral`, `RevokeAccess`, `DeactivateStaffMember` and
+`DeactivateLocation`; the row locks the atomic claim relies on, in `RevokeAccess`
+(the staff member's `users` row) and in the 4a settings save (the settings row
+being replaced); `LeadPolicy::returnToQueue`; the `backoffice:queue-tick` command and its schedule
 entry; `lead.returned_to_queue`. **No screen.** From the moment 4b is deployed,
 newly captured Leads enter the cadence and logged attempts move it, but there is
 no queue to open until 4c.
@@ -456,8 +563,10 @@ no queue to open until 4c.
 (decision 39 keeps the managed lists at the existing ones): `no_usable_number`
 "No usable phone number", `needs_manager` "Needs a manager to look at it",
 `cannot_call_now` "I cannot make this call right now", `other` "Other", which
-requires a short note. A skip releases the hold, leaves `due_at` as it was,
-records the event, and keeps the Lead away from that setter for one hold length.
+requires a short note. A skip releases the hold, leaves `due_at` as it was, and
+records the `skipped` event with that setter's `cooldown_until`, in one
+transaction. That keeps the Lead away from that setter for one hold length,
+whoever else skips it in the meantime (atomic claim, "Skip cooldown").
 
 **Put back in queue.** `ReturnLeadToQueue` needs a note. A Lead whose cadence
 `finished_no_contact`, or that has no attempts left, restarts: `cycle + 1`,
@@ -504,6 +613,45 @@ Tests:
   `tests/`, never by an application command or route. If this cannot be made to
   run reliably on either engine, the build stops and reports it; it is not
   quietly replaced by the deterministic test.
+- **Claim, a change during the claim (deterministic).** `ClaimNextLead` has a
+  test-only seam that runs a callback after the candidates are read and before
+  they are tried. With the Lead due and eligible when the candidates are read,
+  each of these is applied in the callback: the Lead is routed or transferred to
+  a Location that is closed at that moment; it is returned to central while
+  Eastern is closed; its Location's timezone is changed so that it is now
+  outside calling hours; the hours are narrowed to exclude this moment; today is
+  unticked as a calling day; the caller's grant is revoked; the caller's role is
+  left without `leads.work_queue` there; the caller is deactivated; the Location
+  is made inactive (set directly in the test, because `DeactivateLocation`
+  refuses while the Lead is active); the caller has a running skip cooldown for
+  the Lead. In every
+  case the Lead is not returned, no hold and no `claimed` event exist for it, and
+  the caller gets the next eligible Lead or "nothing due". The opposite also
+  holds: a Lead routed *into* open hours during the claim is judged by its new
+  Location.
+- **Claim, the existing hold is rechecked.** A setter holding a Lead presses Next
+  lead again after each of: calling hours closing for that Lead (the clock moved
+  past closing, the hours narrowed, the day unticked, the Location's timezone
+  changed); `leads.work_queue` or Lead access lost with the hold deliberately
+  left in place. The hold ends with `outside_calling_hours` or `access_lost`, the
+  event names the setter, and that Lead is not returned. With nothing changed,
+  the same Lead is still returned.
+- **Claim, a change during the claim (real concurrency).** On both engines, with
+  the same shared databases and test-support script as above: claiming processes
+  run together with a process that (a) routes the due Lead to a closed Location,
+  (b) revokes the claimer's access, (c) deactivates the claimer, (d) narrows the
+  calling hours to exclude this moment, (e) changes the Location's timezone to
+  one that is closed. Repeated enough times to meet both orders. (Deactivating
+  the Location is not raced here: the action refuses while the Lead is active.
+  It is covered by the deterministic test above and by "Deactivating a
+  Location" below.) Asserted every time, for (a) to (c): when all processes
+  have finished there is no live hold on a Lead its holder may not be given,
+  and the history shows one of the two legal outcomes: no `claimed` event, or
+  `claimed` followed by `hold_ended` from the change. For (d) and (e): a claim that starts after the change has committed is always refused,
+  and after a claim that got in first, the setter's next Next lead ends that
+  hold with `outside_calling_hours` and returns nothing outside calling hours.
+  No run ends in an unhandled deadlock or "database is locked" error. The same
+  stop-and-report rule applies if this cannot be made reliable.
 - **Eligibility.** A Lead at a Location the setter has no access to is never
   offered; an unrouted Lead only to company-wide lead staff; a Sales Consultant
   is refused; two grants do not combine into access neither gives; a deactivated
@@ -512,10 +660,28 @@ Tests:
 - **Skip.** A reason is required; `other` needs a note; the Lead is not offered
   back to the skipper within one hold length but is offered to someone else at
   once, and to the skipper afterwards; no penalty field or counter exists.
+- **Skip, two setters (regression).** A is given a Lead and skips it. B is given
+  the same Lead and skips it. A presses Next lead inside A's cooldown: A is not
+  given that Lead (A gets a different due Lead, or "nothing due" when it is the
+  only one), and B is not given it inside B's cooldown either. Each is offered
+  it again once their own cooldown has passed. Both `skipped` events exist, each
+  with its own setter and `cooldown_until`. A cooldown is unchanged by a later
+  change of the hold length, and a skip made while an Owner impersonates a
+  setter cools down that setter.
 - **Hold ends at once** on disqualify, Schedule follow-up, route, transfer, return
-  to central, access revoked and deactivation, each with its reason and
-  `affected_user_id`; an attempt logged by someone else ends it; an attempt
-  logged by the former holder after expiry is still saved and counted.
+  to central, access revoked, deactivation of the staff member and deactivation
+  of the Location, each with its reason and `affected_user_id`; an attempt
+  logged by someone else ends it; an attempt logged by the former holder after
+  expiry is still saved and counted.
+- **Deactivating a Location.** `DeactivateLocation` still refuses a Location with
+  active Leads, and a refusal leaves every hold untouched. Because of that
+  refusal, the hook is tested on state the refusal cannot reach by itself: a
+  held, `in_queue` cadence left on a Lead at the Location that no longer counts
+  as active. Deactivating ends each such hold in the same transaction, with
+  `hold_ended`, reason `access_lost` and the holder as `affected_user_id`, and
+  leaves holds at other Locations alone; with the audit event made to fail on
+  purpose, the Location stays active and the holds stay. No tick runs in these
+  tests, and the former holder's next Next lead is not what ends the hold.
 - **Put back.** Who may and may not (a Sales Consultant may not; a Location
   Manager only where they may assign); the note is required; restart versus
   resume; refused for a Disqualified or Deferred Follow-up Lead and for one
@@ -554,7 +720,8 @@ in queue on the Lead page. No new table, permission or audit event.
 - **Told at once.** The page polls every 10 seconds with Livewire's built-in
   polling. If the hold is gone, the card is replaced by the reason (time ran out;
   disqualified by someone; moved to another Location; your access changed;
-  someone else logged a call) and Next lead.
+  calling hours have closed for this Lead; someone else logged a call) and Next
+  lead.
 - **Manager summary**, for people who may assign Leads, counting only Leads the
   viewer may see: due now, longest wait, Leads currently held and by whom,
   cadence-finished count, and a warning when the heartbeat is more than 10
