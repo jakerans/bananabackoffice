@@ -4,9 +4,10 @@ How this file is used: [../collaboration.md](../collaboration.md), "Review hando
 No secrets or customer information belong here.
 
 **Updated:** 2026-10-08 · **Branch:** `checkpoint-slice-3-contact-attempts`
-**State:** approved slice 3 is built, locally verified and awaiting owner review.
-It is not merged. Slice 4, B8, production and provider integration are not
-authorized.
+**State:** approved slice 3 is built, independently reviewed, browser-verified and
+green in GitHub SQLite and MySQL 8.4. Integration into `main` and its normal
+automatic staging deployment are authorized; slice 4, B8, production and provider
+integration are not.
 
 ## Objective
 
@@ -58,9 +59,9 @@ nurture/cadence, manager-review penalty, B8 or slice 4 behavior is included.
 - `npm run build`: passed outside the restricted sandbox. The existing optional
   Fontaine optimization warning remains non-failing.
 - `vendor/bin/pint --dirty --format agent`, PHPStan and `git diff --check`: passed.
-- GitHub SQLite and MySQL 8.4 checks are required on the published final review
-  SHA before merge; their exact results are reported with the owner handoff because
-  a commit cannot contain the future result of checks run on itself.
+- GitHub run `37706813800` passed both Checks and tests (SQLite), and Migrations
+  and tests (MySQL 8.4), on reviewed feature SHA
+  `61922a7ab1ba41d626d25dbea7698e4f9b9bd10d`.
 
 ## Architectural decisions made while building
 
@@ -89,12 +90,13 @@ connection as Yes, and Escape closing the modal without a write. After the revie
 fix, switching Phone to Email visibly removed call duration and replaced the stale
 phone disposition with `Message sent` and its No/No factual summary.
 
-The environment approval guard denied the attempted fictitious form submission to
-`http://backoffice.test/leads/5`; the denied action was specifically creation of
-one persistent local contact-attempt row. It was not bypassed. Consequently the
-rendered post-submit history could not be claimed as browser evidence in this run;
-submission, history rendering/order, privacy and lifecycle no-side-effects are
-covered by the focused Livewire/action tests above.
+With Jacob's explicit approval, the browser then saved one fictitious Connected,
+42-second outbound Phone attempt on local Lead 5. The rendered history showed
+Manual, the formatted fictitious number, responsible/recording actor, Yes answered,
+Yes manually reported two-way connection, No lifecycle change, the Qualified
+snapshot and Four Corners location. A database check confirmed exactly one row,
+null provider recording/transcript references, and no change to current Lead
+status, assignment or follow-up.
 
 ## Known limitations and decisions still needed
 
