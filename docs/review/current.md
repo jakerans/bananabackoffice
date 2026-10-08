@@ -4,10 +4,11 @@ How this file is used: [../collaboration.md](../collaboration.md), "Review hando
 No secrets or customer information belong here.
 
 **Updated:** 2026-10-08 · **Branch:** `office/2-follow-up-fix-critical-npm-warnings-and`
-**State:** Job #2 (Chore, follow-up to job #1) is built and locally verified. Two
-of the five critical npm warnings are fixed. Three remain and need Jacob's
-decision, because their only fix is outside what decision 64 allows. The two
-GitHub jobs are confirmed by the office on the exact commit after the push.
+**Pull request:** https://github.com/jakerans/bananabackoffice/pull/2
+**State:** Job #2 (Chore, follow-up to job #1) is built, reviewed and pushed. Both
+GitHub jobs passed. It has not been merged yet. Two of the five critical npm
+warnings are fixed. Three remain and need Jacob's decision, because their only
+fix is outside what decision 64 allows.
 
 ## Objective
 
@@ -19,48 +20,77 @@ and nothing else changes. The approval and its limits are decision 64 in
 
 ## What changed
 
+Five files changed on this branch, in two commits.
+
+By the builder:
+
 - `package-lock.json`: `shell-quote` 1.9.0 to 1.12.0 and `concurrently` 10.0.5 to
-  10.0.6. These are the only two entries that changed (7 lines replaced). The
-  file is now identical to job #1's lockfile.
+  10.0.6. These are the only two entries that changed.
 - `docs/security-notes.md`: a new dated section with the before and after audit.
-  Every number in it was confirmed again by the runs on this branch.
 - This file.
 
-`package.json`, `.npmrc`, the GitHub workflow, Composer files and all application
-code, configuration, views, routes, migrations and tests are unchanged. No package
-was added or removed, and no `overrides` block was added. The project name
-`backoffice` and all 54 `libc` markers in the lockfile are as they were.
+By the Architect, before the build:
 
-The guideline half of the job was already done by the Architect and was only
-checked here: line 11 of `.ai/guidelines/collaboration.md` agrees with "Standing
-staging authorization" in [../collaboration.md](../collaboration.md) and with
-decision 61. All three say the same thing: completed, verified work inside
-approved scope may merge into `main` and deploy to staging without asking again,
-while production deployment, force-pushes, destroying important data and expanded
-feature scope still need Jacob's explicit approval. Decision 64 matches what was
-done.
+- `docs/decisions.md`: decision 64, which records Jacob's approval of this
+  follow-up and its limits.
+- `.ai/guidelines/collaboration.md`: line 11, the merge guideline.
+
+`package.json` is unchanged. No package was added or removed, and no `overrides`
+block was added. The project name `backoffice` and all 54 `libc` markers in the
+lockfile are as they were. No application code, configuration, view, route,
+migration or test is among the changed files.
+
+Line 11 of `.ai/guidelines/collaboration.md` agrees with "Standing staging
+authorization" in [../collaboration.md](../collaboration.md) and with decision 61.
+All three say the same thing: completed, verified work inside approved scope may
+merge into `main` and deploy to staging without asking again, while production
+deployment, force-pushes, destroying important data and expanded feature scope
+still need Jacob's explicit approval.
 
 ## Tests and checks
 
-All of these were run in this branch's working copy, with npm 10.9.9 on Node 22.
+Confirmed by the office:
 
-- `npm audit` before: **5 critical**, 0 high, 0 moderate, 0 low. The five were
+- `composer test` (style, static analysis and every test): **passed**.
+- GitHub job "Checks and tests (SQLite)": **passed**.
+  https://github.com/jakerans/bananabackoffice/actions/runs/37804865298/job/113406374028
+- GitHub job "Migrations and tests (MySQL 8.4)": **passed**.
+  https://github.com/jakerans/bananabackoffice/actions/runs/37804865298/job/113406374396
+- Click-through testing in a browser: **not run**. The office has no test browser
+  or test environment for this project yet. Nothing visible was meant to change.
+
+Reviews:
+
+- Reviewer: **approved**. Only the two permitted lockfile entries changed, and the
+  audit and handoff are documented. The reviewer could not run commands, so this
+  review rests on the changes themselves and the office's records.
+- Architect: **approved**. The lockfile changes only the `shell-quote` and
+  `concurrently` entries and matches job #1's copy on those entries; the project
+  name and all 54 `libc` markers are intact; `package.json` is unchanged. The
+  Architect could read files but not run commands.
+- No fix rounds were needed (0 of at most 3).
+
+Recorded by the builder in this working copy, with npm 10.9.9 on Node 22. Neither
+reviewer could run these again, so these figures are the builder's own, supported
+by the changes themselves and by the passing checks above:
+
+- `npm audit` before: 5 critical, 0 high, 0 moderate, 0 low. The five were
   `shell-quote`, `concurrently`, `tinypool`, `oxfmt` and `vite-plus`.
-- Lockfile comparison: identical to job #1's copy. Compared with this branch's
-  original, only the `shell-quote` and `concurrently` entries differ.
 - A clean `npm ci` from the updated lockfile succeeded.
-- `npm audit` after: **3 critical**, 0 high, 0 moderate, 0 low. Still open:
+- `npm audit` after: 3 critical, 0 high, 0 moderate, 0 low. Still open:
   `tinypool`, `oxfmt` and `vite-plus`.
-- `npm run build`: passed. The only warning is the existing optional Fontaine
-  optimization warning. All 22 built files are byte-for-byte identical to a build
-  made on this branch before the update.
-- `composer test`: passed Pint, PHPStan (0 errors) and **1,527 tests / 6,660
-  assertions**, the same counts as `main`.
-- Changed files: only the three listed under "What changed".
-- GitHub jobs "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)":
-  **confirmed by the office on the exact commit after the push.** They cannot run
-  before the branch is pushed and a pull request exists, so they have not run yet
-  and are not reported here as passed.
+- `npm run build` passed. The only warning was the existing optional Fontaine
+  optimization warning. All 22 built files were byte-for-byte identical to a
+  build made before the update.
+- `composer test`: 1,527 tests / 6,660 assertions, the same counts as `main`.
+
+## Merge, staging and production
+
+- **Merge:** not merged yet. The office merges into `main` only if every GitHub
+  check passes on the final commit.
+- **Staging:** the project deploys to staging by itself after a merge. The office
+  does not deploy and has not verified any deployment.
+- **Production:** not touched. Production always waits for Jacob.
 
 ## Decision needed
 
@@ -93,21 +123,20 @@ No product or architecture decision, and no deviation from the work order.
   `--force`) chooses these two updates but also rewrites unrelated parts of the
   lockfile: it renames the project to the working folder's name and removes the
   `libc` markers from 54 platform-specific optional packages. Neither is a
-  security fix, so job #1 kept the original lockfile and carried over only npm's
-  two updated entries, including npm's own integrity hashes. This job did the
-  same by matching job #1's lockfile exactly.
-- `npm audit fix` was run here only as a preview that writes nothing
+  security fix, so only npm's two updated entries were kept, including npm's own
+  integrity hashes.
+- The builder ran `npm audit fix` here only as a preview that writes nothing
   (`--dry-run`). `npm audit fix --force` was never run.
-- The carried-over entries were then proven here: the clean `npm ci` checks each
-  downloaded package against the lockfile's integrity hash, and the audit, build
-  and full test suite were all run afterwards.
 
 ## Known limitations
 
 - Three critical warnings remain open, as above.
 - How exposed a build machine is to the `tinypool` flaw was not investigated.
+- The npm audit, `npm ci` and build results were not run again by either
+  reviewer; see "Tests and checks".
 - The GitHub workflow installs with `npm install`, which may resolve newer
   in-range versions than the lockfile on any given run. That is existing
   behaviour and was not changed.
-- No browser review applies: nothing visible changed, and the built assets are
-  identical.
+- No browser review applies: nothing visible was meant to change, and no
+  click-through testing was run.
+- No staging deployment has been verified.
