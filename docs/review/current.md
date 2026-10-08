@@ -8,6 +8,22 @@ No secrets or customer information belong here.
 only. No application code, test, setting or database change is in it. Nothing in
 slice 4 is built.
 
+## Fix round 2: what changed after the second review
+
+Only [../slice-4-plan.md](../slice-4-plan.md) and this file changed. One problem
+was raised: contract 4 said a counted attempt was stamped with its cadence cycle
+and step after it was inserted, while the data model says those two columns are
+never changed after insertion.
+
+Contract 4 now gives one fixed order inside the existing transaction: lock the
+Lead; return the existing attempt and stop if the submission is a replay; work
+out what the attempt is and its cadence position under the Lead lock; insert the
+attempt once with both columns already in the insert; advance the cadence only
+after that insert has succeeded. A failure anywhere rolls back both. A replay
+never advances the cadence again. The data model note, the retry table row and
+the 4b "Advancing" tests were brought into line with it. Nothing else in the
+plan changed.
+
 ## Fix round 1: what changed after the first review
 
 Only [../slice-4-plan.md](../slice-4-plan.md) and this file changed. The three

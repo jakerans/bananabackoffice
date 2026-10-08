@@ -140,15 +140,45 @@ days 3, 4 and 5 two each. Twelve attempts.
 
 ### 4. What a logged contact attempt does to the cadence
 
-Inside `RecordManualContactAttempt`, in its existing transaction, after a **new**
-attempt row is inserted (a replayed submission returns the existing row and does
-nothing more):
+Everything happens inside `RecordManualContactAttempt`, in its existing
+transaction, in this fixed order. The attempt row is written once, complete, and
+is never changed afterwards.
+
+1. **Lock.** Lock the Lead row (`lockForUpdate()`, as slice 3 already does).
+2. **Replay check.** If an attempt with this submission ID already exists, return
+   that existing attempt and stop. Nothing below runs: the cadence is not read,
+   no row is inserted, nothing is advanced and no queue event is written.
+3. **Decide, before inserting.** Still under the Lead lock, read the Lead's
+   cadence row with a locking read and work out from the table below what this
+   attempt is. For an attempt that **counts**, its cadence position is fixed
+   here: `cadence_cycle` is the cadence's current `cycle` and `cadence_step` is
+   `attempts_made + 1`.
+4. **Insert once.** Insert the attempt row with `cadence_cycle` and
+   `cadence_step` already in that insert: the position from step 3 for an attempt
+   that counts, both empty for every other attempt. There is no later update of
+   the attempt row.
+5. **Advance, only after the insert succeeded.** In the same transaction, apply
+   the effect from the table: for a counted attempt, `attempts_made + 1`,
+   `last_counted_attempt_at`, and the next `due_at` or `finished_no_contact`;
+   for a connection, end the cadence. Then end any hold and write the queue
+   events.
+
+If the insert fails, or anything after it fails, the whole transaction rolls
+back: there is never an attempt without its cadence change, or a cadence change
+without its attempt. The Lead lock means two submissions for one Lead run one
+after the other, so the second works out its position from the cadence the first
+has already advanced, and a submission ID replayed at the same moment finds the
+first one's attempt at step 2. If the insert is refused all the same, by the
+submission ID's uniqueness or by the unique index on
+`(lead_id, cadence_cycle, cadence_step)`, the cadence is not advanced by that
+transaction; a refused replay is answered with the existing attempt, as in
+slice 3.
 
 | The attempt | Effect on a Lead whose cadence is `in_queue` |
 | --- | --- |
-| Is a real two-way connection (`was_connected`), any channel, either direction | The cadence ends, `connected`. The Lead leaves the queue and a person decides the next step. |
-| Is an outbound phone call, not connected (no answer, voicemail, wrong party, other), and happened after the last counted attempt | It **counts**: it uses up the current attempt, is stamped with the cadence cycle and step, and the next attempt is scheduled, or the cadence finishes. |
-| Anything else (a text or email sent, an unanswered inbound call, a back-dated call older than the last counted one) | Evidence only. No effect on the cadence. |
+| Is a real two-way connection (`was_connected`), any channel, either direction | Inserted with both cadence columns empty. Then the cadence ends, `connected`. The Lead leaves the queue and a person decides the next step. |
+| Is an outbound phone call, not connected (no answer, voicemail, wrong party, other), and happened after the last counted attempt | It **counts**: it is inserted carrying the cadence cycle and step worked out in step 3, and so uses up the current attempt. Then the next attempt is scheduled, or the cadence finishes. |
+| Anything else (a text or email sent, an unanswered inbound call, a back-dated call older than the last counted one) | Evidence only. Inserted with both cadence columns empty. No effect on the cadence. |
 
 In every case: the Lead's lifecycle status, assignee and `lifecycle_version` are
 untouched, the attempt's `lifecycle_result` stays `no_change`, and any hold on the
@@ -319,7 +349,7 @@ is offered it at once.
 | Situation | What happens |
 | --- | --- |
 | Next lead pressed twice, or a request retried | The same held Lead is returned, after it passes the eligibility check again. No second hold. |
-| The attempt form submitted twice | Slice 3's submission ID returns the existing attempt; the cadence moves once. |
+| The attempt form submitted twice | Slice 3's submission ID returns the existing attempt, before the cadence is read. No second row is inserted and the cadence moves once (contract 4). |
 | Two people log a call on the same Lead at the same moment | The Lead row is locked for each in turn (slice 3). Both calls are kept as evidence; each counted one uses its own step. |
 | The setter walks away | The hold ends at `held_until`. The Lead is due again for everyone, whether or not the timer ran. |
 | The setter logs a call after their hold expired | The attempt is saved if they may still work the Lead, and it counts as above. If someone else now holds the Lead, that hold ends and they are told. A real call is never thrown away. |
@@ -417,7 +447,10 @@ delete in the application like audit events and the status history.
 **`contact_attempts`** — two nullable columns, written only when the row is
 inserted, never afterwards: `cadence_cycle` and `cadence_step` (unsigned
 smallint), with a unique index on `(lead_id, cadence_cycle, cadence_step)`.
-Existing rows keep both empty. The table stays append-only.
+Their values are worked out under the Lead lock before the insert and are part
+of that insert; the cadence is advanced only after it (contract 4). Both are
+empty on every attempt that does not count. Existing rows keep both empty. The
+table stays append-only.
 
 **`scheduler_heartbeats`** — `name` (string, unique) and `last_ran_at` (datetime).
 One row, `queue_tick`.
@@ -588,7 +621,12 @@ Tests:
   event with the Lead, or neither; a Lead that existed before has none and is
   never offered; capture still works identically otherwise.
 - **Advancing.** Each row of the table in "What a logged contact attempt does";
-  a replayed submission moves nothing twice; the twelfth counted attempt marks
+  a counted attempt carries its cycle and step from the insert itself, with no
+  update of the attempt row anywhere in the action; a replayed submission
+  returns the existing attempt, inserts no row, writes no queue event and leaves
+  `attempts_made` and `due_at` as they were; with the cadence change made to
+  fail on purpose after the insert, neither the attempt nor any cadence change
+  is saved; the twelfth counted attempt marks
   `finished_no_contact`; the Lead's status, assignee and `lifecycle_version` are
   byte-for-byte unchanged by every case; a Lead with no cadence behaves exactly
   as in slice 3 (the existing slice 3 tests stay green, with only the "no
