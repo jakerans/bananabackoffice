@@ -222,3 +222,59 @@ is saved through the application. A row inserted by hand could break them.
 **A double-submitted grant relies on the database to refuse it.**
 The friendly "already has that access" message for that case is written but has no
 automated test, because the timing cannot be reproduced reliably in a test.
+
+## npm dependency audit (2026-10-08)
+
+Jacob approved fixing the critical `npm audit` warnings with non-breaking updates
+only. See decisions.md, 64. The audit was run before anything changed and again
+afterwards, with npm 10.9.9 on Node 22.
+
+### Before and after
+
+| Severity | Before | After |
+| --- | --- | --- |
+| Critical | 5 | 3 |
+| High | 0 | 0 |
+| Moderate | 0 | 0 |
+| Low | 0 | 0 |
+| Info | 0 | 0 |
+
+`npm audit` counts every affected package, so the 5 warnings came from two
+underlying problems: one in `shell-quote` (2 packages) and one in `tinypool`
+(3 packages).
+
+### Fixed
+
+| Package | From | To | Why it was flagged |
+| --- | --- | --- | --- |
+| `shell-quote` | 1.9.0 | 1.12.0 | Command injection in `quote()` (GHSA-pqg4-j6r4-53mv). |
+| `concurrently` | 10.0.5 | 10.0.6 | Flagged only because it required the affected `shell-quote`. |
+
+Both are patch or minor updates inside the range `package.json` already allowed
+(`concurrently` `^10.0.3`), so `package.json` did not change. `concurrently` is
+used only by the local `composer dev` command. Nothing else in the lockfile
+changed, and the built assets are byte-for-byte the same as before the update.
+
+### Open: needs Jacob's decision
+
+**Three critical warnings remain, all from one cause: `tinypool` 2.1.0.**
+
+| Package | Installed | Why it is flagged | Fix |
+| --- | --- | --- | --- |
+| `tinypool` | 2.1.0 | Prototype pollution that can lead to code execution (GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr). | Fixed in 2.1.2. |
+| `oxfmt` | 0.64.0 | Requires exactly `tinypool` 2.1.0. | Fixed from 0.67.0. |
+| `vite-plus` | 0.3.0 | Requires exactly `oxfmt` 0.64.0. | Fixed in 0.3.3. |
+
+Each package pins the next one to an exact version, so the only fix is to move
+`vite-plus` from 0.3.0 to 0.3.3. `package.json` pins `vite-plus` to exactly
+0.3.0, so npm offers this only through `npm audit fix --force`, which decision 64
+does not allow. It was not run and the pin was not loosened.
+
+`tinypool` arrives through the code formatter bundled inside the `vite-plus`
+build tool. It is installed on development machines, in CI and wherever the
+assets are built. It is not part of the application code served to staff, and
+Backoffice's own scripts (`vp build`, `vp dev`) do not call the formatter. How
+exposed that leaves a build machine was not investigated further.
+
+Must be decided before production: whether to raise the `vite-plus` pin to 0.3.3
+as its own approved dependency change, with a full build and test check.
