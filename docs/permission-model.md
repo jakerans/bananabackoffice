@@ -3,6 +3,9 @@
 Status: **Implemented rules and role grants through B7 are approved and built.**
 Canonical target guardrails are locked product direction. Any new permission,
 role grant or widening of scope still needs an approved implementation slice.
+**Slice 4 is such a slice: its two permissions are approved and not yet built.**
+They are set out under "Slice 4" at the end of this document and must not be
+described as implemented until their step is merged.
 
 ## The idea in plain English
 
@@ -411,3 +414,64 @@ Notes:
 - Finance sees Accounts and Projects and changes nothing in Checkpoint B.
 - The Checkpoint A center permissions are unchanged. Which center's menu shows a
   shared page is a navigation question; see navigation-map.md.
+
+## Slice 4: the call queue and its settings
+
+Status: **approved for implementation on 2026-10-08 (decisions 65 to 73); not
+built.** Each permission is added to the code in the step named below. The full
+plan is [slice-4-plan.md](slice-4-plan.md). No existing permission, role grant or
+rule above is changed.
+
+### New permissions
+
+| Permission | Scope | Allows | Step |
+| --- | --- | --- | --- |
+| `settings.contact_center.manage` | Company | Open Company > Settings > Contact Center and change the call cadence, calling hours and days, and hold length. Nothing else in Settings. | 4a |
+| `leads.work_queue` | Location | Open the Call Queue, be given the next due Lead, and skip it with a reason | 4b |
+
+`settings.contact_center.manage` is a company-scope permission: it counts only
+when held through an all-locations grant.
+
+### Matrix rows
+
+| Capability | Owner | Leadership | Location Manager | Call Center Agent | Sales Consultant | Production Manager | Finance |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Change the call cadence, calling hours and days, and hold length (all-locations grant only) | Yes | Yes | No | No | No | No | No |
+| Work the Call Queue: get the next due Lead and skip it with a reason | Yes | Yes | Yes | Yes | No | No | No |
+| Log the attempt for a queue Lead (existing: capture, edit and work Leads) | Yes | Yes | Yes | Yes | — | — | — |
+| Disqualify a Lead from the queue card (existing B7 rule) | Yes | Yes | Yes | Yes | — | — | — |
+| Put a Lead back in the queue, and see the manager summary (existing: assign Leads) | Yes | Yes | Yes | Yes | No | No | No |
+| Set a Location's timezone (existing: manage locations, all-locations grant only) | Yes | No | No | No | No | No | No |
+
+"—" means the row does not arise: the role cannot open the queue.
+
+### Rules
+
+1. **A Lead is offered only to someone who may work it where it is.** For a
+   routed Lead the person must hold `leads.work_queue` at the Lead's own Location
+   and pass the existing "work this Lead" rule there. The Location selected in
+   the header neither widens nor narrows this.
+2. **An unrouted Lead is offered only to company-wide lead staff:** the person
+   holds `leads.work_queue` through an all-locations grant and already passes
+   the existing unrouted rule (`leads.view_unrouted` and `leads.manage`, both
+   company-wide). A Location Manager never receives an unrouted Lead, even with
+   an all-locations grant.
+3. **A hold is not assignment and grants nothing.** Holding a Lead gives no
+   access the person did not already have, never changes the assignee, and ends
+   at once if they stop being allowed to work that Lead. Rule 6 above
+   ("assignment grants nothing") and decision 44 ("Sales Consultants do not claim
+   Leads") are unchanged.
+4. **Every save from the queue is authorized again on the server** against the
+   Lead's current Location: taking, logging, skipping, disqualifying and putting
+   back. Nothing the browser sends is trusted, including any timezone.
+5. **Put back in queue belongs to the people who hand out Leads:** it needs
+   `leads.assign` at the Lead's Location (for an unrouted Lead, the existing
+   company-wide rule). No new permission. This includes Call Center Agents.
+6. **Queue history follows the Location it was recorded at,** like contact
+   attempts, and is shown only to people who may assign Leads there.
+7. **Leadership will see two Settings pages,** each through a permission of its
+   own: Lead & Sales Lists and Contact Center. `settings.lists.manage` still
+   opens only the lists page (decision 37). Neither opens Locations or Users and
+   Access.
+8. **Grants still do not combine.** A queue permission from one grant and a lead
+   permission from another do not add up to a Location neither covers.

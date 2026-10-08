@@ -4,18 +4,21 @@
 
 **Checkpoint A — Secure branded foundation — is approved and merged into `main`
 (2026-10-04).**
-**Current: slice 3 is verified and merged into `main`.** The B1–B7 record and
-older unbuilt plan are in [checkpoint-b.md](checkpoint-b.md). Jacob approved the
-five-slice order; slices 1 to 3 are merged. Each later implementation slice still
-stops for owner approval and review.
+**Current: slice 3 is verified and merged into `main`. Slice 4 is planned and
+approved for implementation (2026-10-08); none of it is built.** Its plan is
+[slice-4-plan.md](slice-4-plan.md). The B1–B7 record and older unbuilt plan are in
+[checkpoint-b.md](checkpoint-b.md). Jacob approved the five-slice order; slices 1
+to 3 are merged. Each step of slice 4, and every later slice, still stops for
+owner review.
 
 **Steps B1 to B7 are approved and merged into `main` (2026-10-07).** B1 to B6
 were deployed to staging on 2026-10-06; the automatic staging deployment caused
 by the B7 merge was explicitly allowed and is verified separately. See
 "Integration checkpoint" below. **B8 to B12 are not built.**
 
-Slices 1 to 3 are completed and merged after B7. B8, Projects, production
-readiness, slices 4–5 and other downstream implementation remain unauthorized.
+Slices 1 to 3 are completed and merged after B7. Slice 4 is authorized as
+described in decisions 65 to 73 and nothing beyond it. B8, Projects, production
+readiness, slice 5 and other downstream implementation remain unauthorized.
 The older future steps below remain historical planning context.
 
 The former launch target of B1 to B9 and production-readiness timing around B7 or
@@ -38,7 +41,7 @@ in [review/current.md](review/current.md).
 
 [product-architecture.md](product-architecture.md) is the authority for product
 direction. Jacob approved this planning order on 2026-10-07. Each row requires its
-own reviewed plan and explicit implementation approval; slices 1 and 2 have now
+own reviewed plan and explicit implementation approval; slices 1 to 4 have now
 received that approval.
 
 | Order | Proposed slice | Product status | Implementation status and boundary |
@@ -46,7 +49,7 @@ received that approval.
 | 1 | Five-Center shell alignment | **LOCKED:** Marketing, Sales, Production, Finance and Company; Settings under Company; Color Studio external. | **Approved, built, verified and merged into `main` (2026-10-07).** The current-ID/current-route/access compatibility map is in [navigation-map.md](navigation-map.md). Shell/navigation only; no new workspace behavior or permission expansion. |
 | 2 | Shared Customer Activity and unified Notes | **LOCKED:** shared records, context/provenance/history-preserving Notes, and Activity made from major business events rather than every audit event. | **Approved, built, verified and merged into `main` (2026-10-07).** Reuses existing customer, Lead note and curated audit evidence; every related Lead, note and event location remains permission-scoped, and no raw audit payload or sensitive finance field is rendered. |
 | 3 | Contact-attempt evidence foundation | **LOCKED:** each attempt is durable evidence with actor, channel, time and outcome; suspicious patterns go to manager review, with no automated punishment. **PENDING:** provider choice. | **Approved, built, verified and merged into `main` (2026-10-08).** Manual records are explicitly not provider-verified, preserve current actor/location/contact/lifecycle evidence, and cannot change lifecycle state. No provider selection, cadence enforcement or personnel policy is introduced. |
-| 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow. **CONFIGURABLE:** cadence. **PENDING:** scheduler, timezone, retry and failure contracts. | **Order approved; not planned or authorized.** Specify those pending contracts before implementation; do not reinterpret B7 follow-ups as automated nurture. |
+| 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow; scope, exits, order, holds and failure rules (decisions 65, 67, 70, 71). **CONFIGURABLE:** cadence, calling hours and days, hold length (decisions 66, 69, 70). The scheduler, timezone, retry and failure contracts are **decided** (decisions 68, 71 and 73) and specified in [slice-4-plan.md](slice-4-plan.md). | **Planned and approved for implementation (2026-10-08, decision 65); not built.** Three reviewed steps: 4a settings and timezones, 4b engine, 4c queue screen. No dialer, provider, outbound message, popup, snooze tray, Aged Leads, AI or penalties. B7 follow-ups are not reinterpreted as automated nurture. |
 | 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales. **PENDING:** exact Project creation transition and Pending ownership/validity policy. | **Order approved; not planned or authorized.** Contract/design slice only; do not implement Projects or invent the pending rules. |
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
@@ -83,6 +86,35 @@ and does not enter shared Customer Activity. Recording an attempt has no lifecyc
 assignment or follow-up side effect. Provider integrations, outbound communication,
 dialers, queues, AI, cadence/nurture rules, management penalties and slice 4 are
 outside this implementation.
+
+### Approved slice 4 boundary (planned, not built)
+
+Jacob's decisions are 65 to 72 in [decisions.md](decisions.md); the design is
+decision 73 and [slice-4-plan.md](slice-4-plan.md). His approval of the planning
+batch on 2026-10-08 is the implementation approval for exactly this and nothing
+beyond it.
+
+| Step | Delivers | State |
+| --- | --- | --- |
+| 4a | A timezone on each Location; the Contact Center settings page under Company > Settings (cadence, calling hours and days, hold length) with its permission and audit events | Approved; not built |
+| 4b | The engine: every new Lead enters the cadence; a logged attempt advances it; the atomic claim, holds, skips, Put back in queue; the every-minute background timer. No screen. | Approved; not built |
+| 4c | The Call Queue in Marketing > Contact Center: due-now count, Next lead, the card, the manager summary and the "Cadence finished, no contact" list | Approved; not built |
+
+One recorded change to slice 3: logging a contact attempt now advances the
+cadence (decision 67). It still never changes lifecycle status or assignee.
+
+**Staging needs the server's scheduler enabled in Forge** for the background
+timer: one entry running `php artisan schedule:run` every minute for the staging
+site. Whether it is already on is not known. Step 4b must check and, if the
+office cannot turn it on, give Jacob the exact step. See "The server's scheduler
+on staging" in the plan.
+
+Known follow-ups recorded with this slice, none of them authorized:
+
+- Existing screens (Received time, follow-up dates) still use company time.
+  Moving them to each Location's time is a separate later job (decision 68).
+- A confirmation text to a Lead that arrives outside calling hours, once texting
+  exists and a provider is approved (decision 72).
 
 ## Starting point (verified 2026-10-04)
 

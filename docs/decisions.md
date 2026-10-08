@@ -1477,6 +1477,214 @@ which still described the per-checkpoint merge approval that decision 61
 superseded. It now matches decision 61 and [collaboration.md](collaboration.md).
 No rule changed; the short guideline was brought back in line with the record.
 
+## Slice 4 decisions (65 to 73)
+
+Decided by Jacob in conversation on 2026-10-08 and recorded here by planning job
+#9. The technical plan is [slice-4-plan.md](slice-4-plan.md).
+
+## 65. Slice 4 scope, steps and implementation approval (2026-10-08)
+
+**Approved by Jacob.** Slice 4 delivers the scheduling engine and a simple working
+queue in Marketing > Contact Center: a "due now" count and a **Next lead** button
+that gives the setter one Lead nobody else can get. They call on their own phone
+and log the result with the existing slice 3 manual contact-attempt form. The
+system schedules the next attempt.
+
+It is built in three separately reviewed steps: **4a** settings and timezones,
+**4b** the engine, **4c** the queue screen.
+
+**Jacob's approval of this planning batch is his explicit implementation approval
+for slice 4 as described in decisions 65 to 73 and in
+[slice-4-plan.md](slice-4-plan.md), and for nothing beyond it.** Each step is
+still built on its own, checked, reviewed and reported before the next begins.
+
+Not included, and not authorized: a dialer, a provider integration, any outbound
+call, text or email, the new-lead popup, the snooze tray, Aged Leads, AI,
+penalties, new packages, paid services, slice 5, B8, Projects and any production
+action.
+
+## 66. The call cadence (2026-10-08)
+
+**Approved by Jacob.**
+
+- **Phone only.** One cadence for the whole company.
+- **Default:** day 1 immediately, about 30 minutes later, and about 2 hours later;
+  day 2 three attempts; day 3 two; days 4 and 5 two each. Twelve attempts. On
+  days 2 to 5 the attempts are spread evenly through calling hours.
+- **Editable** on a settings page under Company > Settings. Only Owner and
+  Leadership may change it, through a new company-scope permission. A change
+  applies to attempts scheduled from then on and is audited.
+- **Every newly captured Lead enters the cadence.** Leads that existed before
+  go-live do not enter automatically.
+- **Day 1 is the day the Lead arrives,** unless it cannot be called that day (for
+  example it arrives at 9 pm); then the next calling day is day 1.
+- **Attempts are never skipped.** One that does not fit before closing waits for
+  the next opening and the rest of the schedule shifts along, so every Lead still
+  gets all twelve.
+
+Rules out: per-Location or per-source cadences; text or email steps; dropping an
+attempt because the day ran out.
+
+## 67. Leaving the queue; a logged attempt now advances the cadence (2026-10-08)
+
+**Approved by Jacob.** A Lead leaves the queue when:
+
+- a real two-way connection is logged; a person then decides the next step;
+- it is disqualified;
+- a manual Deferred Follow-up is scheduled; that B7 callback takes over and stays
+  a separate workflow, unchanged; or
+- it reaches the last attempt with no connection, when it is marked **"Cadence
+  finished, no contact"** so managers can find it.
+
+A voicemail or a sent message does not end it. The marker is not a lifecycle
+status: it adds and changes no B7 status.
+
+**This changes one slice 3 rule.** Decision 63 said recording an attempt has no
+follow-up side effect. From slice 4, logging an attempt advances the cadence.
+Everything else in decision 63 stands: an attempt still never changes the Lead's
+lifecycle status or its assignee, and is still not Customer Activity.
+
+## 68. Each Location has its own timezone (2026-10-08)
+
+**Approved by Jacob.** Each Location gets its own timezone, default US Eastern.
+
+**This supersedes the part of decision 40** that said one company timezone
+applies until locations in different timezones need their own.
+
+- Calling hours are evaluated in the Lead's Location timezone.
+- An unrouted Lead uses Eastern until it is routed, then its Location's time.
+  Jacob accepts this as an edge case.
+- In the queue, times are shown in the setter's own device timezone, with the
+  Location's local time beside them.
+
+**Known follow-up, not built in slice 4:** existing screens (Received time,
+follow-up dates and the rest) keep company time for now. Switching them to
+Location time is a separate later job and needs its own approval.
+
+## 69. Calling hours and calling days (2026-10-08)
+
+**Approved by Jacob.**
+
+- **Hours:** 8:00 am to 9:00 pm local by default. One set of hours for the whole
+  company, applied in each Location's local time.
+- Owner and Leadership may **narrow** them (the team is small at first) but never
+  outside 8 am to 9 pm. A **Reset to default** button restores the default.
+- **Days:** tickable, all seven by default. They call on Sundays.
+- No holiday calendar.
+
+## 70. Who works the queue, holds, order and skipping (2026-10-08)
+
+**Approved by Jacob.**
+
+- **Who:** Owner, Leadership, Location Manager and Call Center Agent, through a
+  new permission. Not Sales Consultant. People only receive Leads at Locations
+  they already have access to. Unrouted Leads only go to people with company-wide
+  access.
+- **Claiming is a temporary hold, not assignment.** It never changes the
+  assignee, and every Lead in the cadence is in the shared pool whoever it is
+  assigned to.
+- **A hold lasts 5 minutes by default,** adjustable on the settings page. It ends
+  when the attempt is logged. If the setter walks away, the Lead returns to the
+  queue when the hold expires. One held Lead per setter.
+- **Order:** never-called new Leads first, newest first; then follow-up attempts,
+  most overdue first. Setters get the next Lead and cannot pick from a list.
+- **Skip:** a setter may put a Lead back without calling but must choose a short
+  reason. It is recorded for managers, with no automatic penalty, and the Lead is
+  not offered straight back to the same setter.
+- **Disqualify on the card,** using the existing B7 rules, permissions and
+  reasons. Jacob expects spam and test leads to be the main case.
+
+This does not change decision 44: Sales Consultants still do not claim Leads, and
+a hold is not a way to take one.
+
+## 71. Failure rules, Put back in queue and the manager summary (2026-10-08)
+
+**Approved by Jacob.**
+
+- **Attempts never pile up.** A Lead has only one attempt due at a time, and the
+  next is scheduled only after the current one is logged.
+- **After an outage or restart the system catches up by itself,** with nothing
+  lost or duplicated, and open holds expire normally.
+- **If a held Lead is disqualified or routed elsewhere, or the setter loses
+  access, the hold ends at once and the setter is told.**
+- **Every save rechecks current authorization.**
+- **Put back in queue.** People who may already assign Leads there get this
+  action, with a required note, recorded in history, to correct a wrongly logged
+  result or to restart a Lead marked "Cadence finished, no contact".
+- **Manager summary** at the top of the queue: due now, longest wait, Leads
+  currently held and the cadence-finished count, with a warning if the background
+  timer has not run in the last 10 minutes. No email or text alerts.
+
+## 72. Future requirement: a confirmation text outside calling hours (2026-10-08)
+
+**Recorded by Jacob as a future requirement. Not built and not authorized.**
+
+Once texting exists, a Lead that arrives outside calling hours still gets a
+confirmation text immediately. No provider is chosen, and a paid service needs
+Jacob's separate approval. Slice 4 sends nothing to anyone.
+
+## 73. How slice 4 is designed (2026-10-08)
+
+The technical contracts the roadmap listed as pending are now specified in
+[slice-4-plan.md](slice-4-plan.md). In short:
+
+- **The queue is read from stored state, never driven by timer events.** Each
+  Lead in the cadence stores the one attempt that is due. Nothing is generated in
+  advance, so nothing can pile up, and after an outage there is nothing to replay.
+- **One conditional database update decides who gets a Lead,** the same pattern
+  the B7 lifecycle revision uses. It needs nothing only one database offers, and
+  is proven on SQLite and MySQL 8.4, including by real simultaneous processes.
+  The database itself refuses a second hold for one setter and a second use of
+  one cadence step.
+- **The background timer is a safety net and a heartbeat.** It runs every minute,
+  tidies up and proves it is alive. The queue stays correct if it stops; the
+  manager summary says so. It needs Laravel's scheduler enabled on staging and
+  nothing else: no queue worker, no new package, no paid service.
+- **Times are stored in UTC** and calling hours are checked live in the Lead's
+  Location timezone. A scheduled time is never recalculated when a Lead moves or
+  a setting changes.
+- **"Cadence finished, no contact" lives on the cadence record,** not in the Lead
+  lifecycle. No B7 status, history row or revision is touched.
+- **Queue activity has its own append-only history;** audit events are kept for
+  the settings, the timezone and Put back in queue.
+- **Two new permissions:** `settings.contact_center.manage` (company scope; Owner
+  and Leadership) and `leads.work_queue` (location scope; Owner, Leadership,
+  Location Manager, Call Center Agent).
+
+Choices made while planning, where Jacob's decisions left a detail open. Each is
+in the plan, and each is for Jacob to confirm or change:
+
+- **"About 2 hours later" on day 1** is read as about two hours after the Lead
+  arrived, so the third attempt follows the second by 90 minutes. It is editable
+  on the settings page.
+- **"Spread evenly"** means the first attempt of the day at opening and the rest
+  at equal gaps: 8:00 am, 12:20 pm and 4:40 pm for three; 8:00 am and 2:30 pm for
+  two, with default hours.
+- **What counts as an attempt:** an outbound phone call that did not connect. A
+  real two-way connection on any channel ends the cadence. A text or email that
+  was only sent is kept as evidence and does not use up an attempt.
+- **Skip reasons** are a short fixed list: No usable phone number; Needs a
+  manager to look at it; I cannot make this call right now; Other (with a note).
+  It is not a sixth managed list (decision 39).
+- **"Not offered straight back"** means not for one hold length (5 minutes by
+  default). Other setters are offered it at once.
+- **The setter's pool is every Location they have queue access at,** whichever
+  Location is selected in the header, because a Lead is authorized by its own
+  Location (decision 40) and setters do not pick.
+- **"Managers" for Put back in queue and the summary** are the people who may
+  already assign Leads there, as decision 71 says. That includes Call Center
+  Agents, so in practice everyone who works the queue sees the summary.
+- **Put back in queue is offered for any Lead that has left the queue** and is
+  New, Working or Qualified. A disqualified Lead is reopened first and a Deferred
+  Follow-up is resumed first, under the unchanged B7 rules. A finished Lead
+  restarts at attempt 1; any other resumes where it stopped.
+- **A Location's timezone is set by whoever may manage Locations** (the Owner
+  today), on the existing Locations page, from a list of United States zones.
+- **Limits on the settings page:** hours in 15-minute steps and at least one hour
+  long; at least one calling day; a hold of 1 to 30 minutes; a cadence of 1 to 14
+  days with 1 to 6 attempts a day.
+- **Contact Center still opens on Leads.** Call Queue is added beside it.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

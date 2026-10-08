@@ -128,6 +128,39 @@ controller must use the repository's Artisan convention. No dependency,
 database, permission enum, role, policy or domain-action file belongs in this
 slice.
 
+## Slice 4 navigation changes (approved, not built)
+
+Approved for implementation on 2026-10-08 (decision 65). Nothing below exists
+until its step is merged. The plan is [slice-4-plan.md](slice-4-plan.md); the
+permissions are in [permission-model.md](permission-model.md), "Slice 4".
+
+| Destination | Stable ID, route and URL | State and access | Step |
+| --- | --- | --- | --- |
+| Company → Settings → Contact Center | New ID `settings.contact_center`; route name `settings.contact_center`; `/settings/contact-center`. Listed after Lead & Sales Lists. | Live when built; `settings.contact_center.manage` (Owner and Leadership, all-locations grant only). | 4a |
+| Company and Company → Settings (entry) | No ID or URL change. `settings.contact_center.manage` joins the existing union of permissions that open the `company` Center and the `settings` node. `/settings` adds Contact Center as its fourth landing choice, after Locations, Users and Access, and Lead & Sales Lists. | Composition of a grant the person already holds. It opens no other Settings page. | 4a |
+| Company → Locations | No new item. The existing `settings.locations` page gains a timezone field for each Location. | Existing `settings.locations.manage`. | 4a |
+| Marketing → Contact Center → Call Queue | New ID `marketing.call_center.queue`; route name `marketing.call_center.queue`; `/marketing/contact-center/queue`. A third-row item after Leads. | Live when built; `leads.work_queue` (Owner, Leadership, Location Manager, Call Center Agent). | 4c |
+
+- **Contact Center still opens on Leads.** Its primary stays `shared.leads`, so
+  no one's landing page changes.
+- **The Call Queue is in Marketing only.** Sales gets no queue item, and a Sales
+  Consultant has neither the item nor the route.
+- **No existing ID, route name or URL changes,** and no reserved legacy ID is
+  reused. `marketing.call_center.inbox` stays reserved.
+- **The queue's views are not separate pages.** The setter's card, the manager
+  summary and the "Cadence finished, no contact" list are parts of the one Call
+  Queue page and add nothing else to the menus.
+- **Still not built after slice 4:** Inbox, the new-lead popup, the snooze tray,
+  Aged Leads and any dialer.
+
+Regression coverage required with these changes: registry IDs stay unique and
+every live item is routed; each role row in "Permission and regression matrix"
+below keeps its current destinations, with Contact Center settings added for
+Owner and all-locations Leadership only and Call Queue added for Owner,
+Leadership, Location Manager and Call Center Agent only; `/settings` keeps its
+existing landing order for the three existing permissions; direct requests
+without the permission are refused.
+
 ## As-built navigation through B7
 
 Navigation is defined once, in code, in a single registry. Every item has:
