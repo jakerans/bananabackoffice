@@ -4,21 +4,19 @@
 
 **Checkpoint A — Secure branded foundation — is approved and merged into `main`
 (2026-10-04).**
-**Current: slice 3 is built and awaiting owner review.** The B1–B7 record and
+**Current: slice 3 is verified and merged into `main`.** The B1–B7 record and
 older unbuilt plan are in [checkpoint-b.md](checkpoint-b.md). Jacob approved the
-five-slice order; slices 1 and 2 are merged, and the bounded contact-attempt
-evidence foundation in slice 3 has been implemented for review. Each later
-implementation slice still stops for owner approval and review.
+five-slice order; slices 1 to 3 are merged. Each later implementation slice still
+stops for owner approval and review.
 
 **Steps B1 to B7 are approved and merged into `main` (2026-10-07).** B1 to B6
 were deployed to staging on 2026-10-06; the automatic staging deployment caused
 by the B7 merge was explicitly allowed and is verified separately. See
 "Integration checkpoint" below. **B8 to B12 are not built.**
 
-Slices 1 and 2 are completed and merged after B7. Slice 3 is built on its review
-branch but is not merged. B8, Projects, production readiness, slices 4–5 and
-other downstream implementation remain unauthorized. The older future steps
-below remain historical planning context.
+Slices 1 to 3 are completed and merged after B7. B8, Projects, production
+readiness, slices 4–5 and other downstream implementation remain unauthorized.
+The older future steps below remain historical planning context.
 
 The former launch target of B1 to B9 and production-readiness timing around B7 or
 B8 are historical planning assumptions. They remain useful context but are not
@@ -47,7 +45,7 @@ received that approval.
 | --- | --- | --- | --- |
 | 1 | Five-Center shell alignment | **LOCKED:** Marketing, Sales, Production, Finance and Company; Settings under Company; Color Studio external. | **Approved, built, verified and merged into `main` (2026-10-07).** The current-ID/current-route/access compatibility map is in [navigation-map.md](navigation-map.md). Shell/navigation only; no new workspace behavior or permission expansion. |
 | 2 | Shared Customer Activity and unified Notes | **LOCKED:** shared records, context/provenance/history-preserving Notes, and Activity made from major business events rather than every audit event. | **Approved, built, verified and merged into `main` (2026-10-07).** Reuses existing customer, Lead note and curated audit evidence; every related Lead, note and event location remains permission-scoped, and no raw audit payload or sensitive finance field is rendered. |
-| 3 | Contact-attempt evidence foundation | **LOCKED:** each attempt is durable evidence with actor, channel, time and outcome; suspicious patterns go to manager review, with no automated punishment. **PENDING:** provider choice. | **Approved, built and verified; integration into `main` authorized (2026-10-08).** Manual records are explicitly not provider-verified, preserve current actor/location/contact/lifecycle evidence, and cannot change lifecycle state. No provider selection, cadence enforcement or personnel policy is introduced. |
+| 3 | Contact-attempt evidence foundation | **LOCKED:** each attempt is durable evidence with actor, channel, time and outcome; suspicious patterns go to manager review, with no automated punishment. **PENDING:** provider choice. | **Approved, built, verified and merged into `main` (2026-10-08).** Manual records are explicitly not provider-verified, preserve current actor/location/contact/lifecycle evidence, and cannot change lifecycle state. No provider selection, cadence enforcement or personnel policy is introduced. |
 | 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow. **CONFIGURABLE:** cadence. **PENDING:** scheduler, timezone, retry and failure contracts. | **Order approved; not planned or authorized.** Specify those pending contracts before implementation; do not reinterpret B7 follow-ups as automated nurture. |
 | 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales. **PENDING:** exact Project creation transition and Pending ownership/validity policy. | **Order approved; not planned or authorized.** Contract/design slice only; do not implement Projects or invent the pending rules. |
 
@@ -73,7 +71,7 @@ and removal history, reuses existing note actions and policies, and applies curr
 customer, related-Lead and event-location access. It adds no project, conversation,
 proposal, payment, production or B8+ behavior.
 
-### Slice 3 review boundary
+### Completed slice 3 boundary
 
 The contact-attempt foundation stores append-only manual evidence on a Lead with
 the responsible rep, impersonation provenance, channel, direction, actual event

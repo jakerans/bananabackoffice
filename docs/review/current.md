@@ -3,11 +3,11 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-08 · **Branch:** `checkpoint-slice-3-contact-attempts`
-**State:** approved slice 3 is built, independently reviewed, browser-verified and
-green in GitHub SQLite and MySQL 8.4. Integration into `main` and its normal
-automatic staging deployment are authorized; slice 4, B8, production and provider
-integration are not.
+**Updated:** 2026-10-08 · **Branch:** `main`
+**State:** approved slice 3 is merged into `main` after independent review,
+browser verification and green feature-branch SQLite/MySQL 8.4 CI. Exact-main CI
+and the automatic staging deployment must still be verified. Slice 4, B8,
+production and provider integration are not authorized.
 
 ## Objective
 
