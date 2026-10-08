@@ -6,6 +6,7 @@ use App\Actions\Leads\CorrectLeadReceivedTime;
 use App\Actions\Leads\DisqualifyLead;
 use App\Actions\Leads\MoveLeadToNurture;
 use App\Actions\Leads\QualifyLead;
+use App\Actions\Leads\RecordManualContactAttempt;
 use App\Actions\Leads\ReopenLead;
 use App\Actions\Leads\ReturnLeadToCentral;
 use App\Actions\Leads\ReturnLeadToWorking;
@@ -18,9 +19,13 @@ use App\Actions\Notes\AddNote;
 use App\Actions\Notes\RemoveNote;
 use App\Support\Addresses\AddressCapturePage;
 use App\Enums\AssignmentEndReason;
+use App\Enums\ContactAttemptChannel;
+use App\Enums\ContactAttemptDirection;
+use App\Enums\ContactAttemptDisposition;
 use App\Enums\LeadStatus;
 use App\Enums\Permission;
 use App\Models\Lead;
+use App\Models\ContactAttempt;
 use App\Models\LeadChannel;
 use App\Models\LeadDisqualificationReason;
 use App\Models\LeadSource;
@@ -39,6 +44,7 @@ use Carbon\CarbonImmutable;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
@@ -91,6 +97,25 @@ new #[Title('Lead')] class extends AddressCapturePage {
     public string $receivedTimeReason = '';
 
     public string $noteBody = '';
+
+    public string $attemptOccurredAt = '';
+
+    public string $attemptChannel = 'phone';
+
+    public string $attemptDirection = 'outbound';
+
+    public string $attemptNumber = '';
+
+    public ?int $attemptDurationSeconds = null;
+
+    public bool $attemptAnswered = false;
+
+    public bool $attemptConnected = false;
+
+    public string $attemptDisposition = 'no_answer';
+
+    #[Locked]
+    public string $attemptSubmissionId = '';
 
     #[Locked]
     public ?int $pendingNoteId = null;
@@ -822,6 +847,135 @@ new #[Title('Lead')] class extends AddressCapturePage {
     }
 
     /**
+     * Open the manual attempt form with factual defaults, not inferred success.
+     */
+    public function openContactAttempt(): void
+    {
+        $this->lead->refresh();
+        $this->authorize('update', $this->lead);
+
+        $this->attemptOccurredAt = now()->setTimezone(config('app.display_timezone'))->format('Y-m-d\TH:i');
+        $this->attemptChannel = ContactAttemptChannel::Phone->value;
+        $this->attemptDirection = ContactAttemptDirection::Outbound->value;
+        $this->attemptNumber = (string) ($this->lead->contact?->phone ?? $this->lead->inquiry_phone);
+        $this->attemptDurationSeconds = null;
+        $this->attemptAnswered = false;
+        $this->attemptConnected = false;
+        $this->attemptDisposition = ContactAttemptDisposition::NoAnswer->value;
+        $this->attemptSubmissionId = Str::uuid()->toString();
+
+        $this->resetValidation();
+        Flux::modal('record-contact-attempt')->show();
+    }
+
+    public function updatedAttemptChannel(): void
+    {
+        $channel = ContactAttemptChannel::tryFrom($this->attemptChannel);
+
+        if ($channel?->supportsDuration() !== true) {
+            $this->attemptDurationSeconds = null;
+        }
+
+        $disposition = ContactAttemptDisposition::tryFrom($this->attemptDisposition);
+
+        if ($channel !== null && ($disposition === null || ! $channel->supportsDisposition($disposition))) {
+            $this->attemptDisposition = $channel === ContactAttemptChannel::Phone
+                ? ContactAttemptDisposition::NoAnswer->value
+                : ContactAttemptDisposition::MessageSent->value;
+            $this->updatedAttemptDisposition();
+        }
+
+        $this->resetValidation(['attemptNumber', 'attemptDurationSeconds', 'attemptDisposition']);
+    }
+
+    public function updatedAttemptDisposition(): void
+    {
+        $disposition = ContactAttemptDisposition::tryFrom($this->attemptDisposition);
+
+        if ($disposition?->answered() !== null) {
+            $this->attemptAnswered = $disposition->answered();
+        }
+
+        if ($disposition?->connected() !== null) {
+            $this->attemptConnected = $disposition->connected();
+        }
+
+        $this->resetValidation(['attemptDisposition', 'attemptAnswered', 'attemptConnected']);
+    }
+
+    /**
+     * Append a manual evidence row. This has no Lead lifecycle side effect.
+     */
+    public function recordContactAttempt(RecordManualContactAttempt $recordManualContactAttempt): void
+    {
+        $this->lead->refresh();
+        $this->authorize('update', $this->lead);
+
+        $validated = $this->validate([
+            'attemptOccurredAt' => ['required', 'date_format:Y-m-d\TH:i'],
+            'attemptChannel' => ['required', Rule::enum(ContactAttemptChannel::class)],
+            'attemptDirection' => ['required', Rule::enum(ContactAttemptDirection::class)],
+            'attemptNumber' => ['nullable', 'string', 'max:50'],
+            'attemptDurationSeconds' => ['nullable', 'integer', 'between:0,86400'],
+            'attemptAnswered' => ['boolean'],
+            'attemptConnected' => ['boolean'],
+            'attemptDisposition' => ['required', Rule::enum(ContactAttemptDisposition::class)],
+        ], [], [
+            'attemptOccurredAt' => 'attempt time',
+            'attemptChannel' => 'channel',
+            'attemptDirection' => 'direction',
+            'attemptNumber' => 'number',
+            'attemptDurationSeconds' => 'duration',
+            'attemptAnswered' => 'answered status',
+            'attemptConnected' => 'connection status',
+            'attemptDisposition' => 'disposition',
+        ]);
+
+        $occurredAt = CarbonImmutable::createFromFormat('Y-m-d\TH:i', $validated['attemptOccurredAt'], config('app.display_timezone'));
+
+        $recordManualContactAttempt->handle(
+            $this->lead,
+            Auth::user(),
+            $this->attemptSubmissionId,
+            ContactAttemptChannel::from($validated['attemptChannel']),
+            ContactAttemptDirection::from($validated['attemptDirection']),
+            $occurredAt,
+            $validated['attemptNumber'] ?? null,
+            $validated['attemptDurationSeconds'] ?? null,
+            $validated['attemptAnswered'],
+            $validated['attemptConnected'],
+            ContactAttemptDisposition::from($validated['attemptDisposition']),
+        );
+
+        unset($this->contactAttempts);
+
+        Flux::modal('record-contact-attempt')->close();
+        Flux::toast(variant: 'success', text: __('Contact attempt recorded.'));
+    }
+
+    /**
+     * Visible attempt history, ordered by actual event time with a stable tie-breaker.
+     *
+     * @return Collection<int, ContactAttempt>
+     */
+    #[Computed]
+    public function contactAttempts(): Collection
+    {
+        $user = Auth::user();
+
+        return $this->lead->contactAttempts()
+            ->visibleTo($user)
+            ->with([
+                'account' => fn ($query) => $query->visibleTo($user),
+                'contact',
+                'location',
+            ])
+            ->orderByDesc('occurred_at')
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    /**
      * The locations this person may send the Lead to: every active location for
      * someone who routes company-wide, otherwise only the locations they manage.
      *
@@ -1314,6 +1468,86 @@ new #[Title('Lead')] class extends AddressCapturePage {
             </dl>
         </div>
 
+        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="contact-attempts">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <flux:heading size="lg" level="2">{{ __('Contact attempts') }}</flux:heading>
+                    <flux:subheading>{{ __('A factual history of calls and messages. Manual entries are never provider-verified and do not change the lead lifecycle.') }}</flux:subheading>
+                </div>
+
+                @can('update', $lead)
+                    <flux:button size="sm" variant="primary" wire:click="openContactAttempt" data-test="record-contact-attempt">
+                        {{ __('Record attempt') }}
+                    </flux:button>
+                @endcan
+            </div>
+
+            @if ($this->contactAttempts->isEmpty())
+                <flux:text data-test="no-contact-attempts">{{ __('No contact attempts recorded yet.') }}</flux:text>
+            @else
+                <ul class="flex flex-col divide-y divide-zinc-200">
+                    @foreach ($this->contactAttempts as $attempt)
+                        <li wire:key="contact-attempt-{{ $attempt->id }}" class="flex flex-col gap-3 py-4 first:pt-0 last:pb-0" data-test="contact-attempt">
+                            <div class="flex flex-wrap items-start justify-between gap-3">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="font-semibold text-ink">{{ $attempt->disposition->label() }}</span>
+                                    <flux:badge size="sm" color="zinc">{{ $attempt->source->label() }}</flux:badge>
+                                    <flux:badge size="sm" color="zinc">{{ $attempt->direction->label() }} {{ $attempt->channel->label() }}</flux:badge>
+                                </div>
+
+                                <span class="text-sm text-zinc-500"><x-local-time :at="$attempt->occurred_at" /></span>
+                            </div>
+
+                            <dl class="grid gap-x-5 gap-y-2 text-sm sm:grid-cols-2">
+                                <div>
+                                    <dt class="text-zinc-500">{{ __('Responsible rep') }}</dt>
+                                    <dd class="text-ink">{{ $attempt->responsible_user_name }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-zinc-500">{{ __('Recorded by') }}</dt>
+                                    <dd class="text-ink">{{ $attempt->recordedBy() }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-zinc-500">{{ __('Answered / response received') }}</dt>
+                                    <dd class="text-ink">{{ $attempt->was_answered ? __('Yes') : __('No') }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-zinc-500">{{ __('Real two-way connection') }}</dt>
+                                    <dd class="text-ink">{{ $attempt->was_connected ? __('Yes — manually reported') : __('No') }}</dd>
+                                </div>
+                                @if ($attempt->displayNumber() !== null)
+                                    <div>
+                                        <dt class="text-zinc-500">{{ __('Number') }}</dt>
+                                        <dd class="tabular-nums text-ink">{{ $attempt->displayNumber() }}</dd>
+                                    </div>
+                                @endif
+                                @if ($attempt->durationLabel() !== null)
+                                    <div>
+                                        <dt class="text-zinc-500">{{ __('Duration') }}</dt>
+                                        <dd class="tabular-nums text-ink">{{ $attempt->durationLabel() }}</dd>
+                                    </div>
+                                @endif
+                                <div>
+                                    <dt class="text-zinc-500">{{ __('Lead lifecycle') }}</dt>
+                                    <dd class="text-ink">{{ $attempt->lifecycle_result->label() }} &middot; {{ $attempt->lead_status->label() }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-zinc-500">{{ __('Location at the time') }}</dt>
+                                    <dd class="text-ink">{{ $attempt->location?->name ?? __('Central (not yet routed)') }}</dd>
+                                </div>
+                                @if ($attempt->contact !== null && $attempt->account !== null)
+                                    <div class="sm:col-span-2">
+                                        <dt class="text-zinc-500">{{ __('Linked contact at the time') }}</dt>
+                                        <dd class="text-ink">{{ $attempt->contact->fullName() ?? __('Unnamed contact') }}</dd>
+                                    </div>
+                                @endif
+                            </dl>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </div>
+
         <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="lead-notes">
             <div>
                 <flux:heading size="lg" level="2">{{ __('Notes') }}</flux:heading>
@@ -1523,6 +1757,69 @@ new #[Title('Lead')] class extends AddressCapturePage {
         </div>
         </div>
     </div>
+
+    <flux:modal name="record-contact-attempt" class="w-full max-w-xl">
+        <form wire:submit="recordContactAttempt" class="flex flex-col gap-5">
+            <div>
+                <flux:heading size="lg">{{ __('Record contact attempt') }}</flux:heading>
+                <flux:subheading>{{ __('This is a manual factual record, not provider verification. It will not change status, assignment or follow-up.') }}</flux:subheading>
+            </div>
+
+            <flux:input wire:model="attemptOccurredAt" type="datetime-local" :label="__('When it actually happened')" />
+
+            <div class="grid gap-5 sm:grid-cols-2">
+                <flux:select wire:model.live="attemptChannel" :label="__('Channel')">
+                    @foreach (ContactAttemptChannel::cases() as $channel)
+                        <flux:select.option :value="$channel->value">{{ $channel->label() }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:select wire:model="attemptDirection" :label="__('Direction')">
+                    @foreach (ContactAttemptDirection::cases() as $direction)
+                        <flux:select.option :value="$direction->value">{{ $direction->label() }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            </div>
+
+            <div class="grid gap-5 sm:grid-cols-2">
+                <flux:input wire:model="attemptNumber" type="tel" inputmode="tel" autocomplete="off" :label="__('Number used, when applicable')" />
+
+                @if ($attemptChannel === ContactAttemptChannel::Phone->value)
+                    <flux:input wire:model="attemptDurationSeconds" type="number" min="0" max="86400" inputmode="numeric" :label="__('Call duration in seconds')" />
+                @endif
+            </div>
+
+            <flux:select wire:model.live="attemptDisposition" :label="__('Disposition')">
+                @foreach ((ContactAttemptChannel::tryFrom($attemptChannel)?->dispositions() ?? []) as $disposition)
+                    <flux:select.option :value="$disposition->value">{{ $disposition->label() }}</flux:select.option>
+                @endforeach
+            </flux:select>
+
+            @if ($attemptDisposition === ContactAttemptDisposition::Other->value)
+                <fieldset class="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4">
+                    <legend class="px-1 text-sm font-medium text-ink">{{ __('What factually happened') }}</legend>
+                    <flux:checkbox wire:model="attemptAnswered" :label="__('The attempt was answered or received a response')" />
+                    <flux:checkbox wire:model="attemptConnected" :label="__('There was a real two-way connection')" />
+                </fieldset>
+            @else
+                @php($selectedDisposition = ContactAttemptDisposition::tryFrom($attemptDisposition))
+                <flux:text class="text-sm">
+                    {{ __('Answered: :answered · Real two-way connection: :connected', [
+                        'answered' => $selectedDisposition?->answered() ? __('Yes') : __('No'),
+                        'connected' => $selectedDisposition?->connected() ? __('Yes') : __('No'),
+                    ]) }}
+                </flux:text>
+            @endif
+
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+
+                <flux:button type="submit" variant="primary" data-test="save-contact-attempt">{{ __('Record attempt') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 
     <flux:modal name="edit-lead" class="w-full max-w-2xl">
         <form wire:submit="update" class="flex flex-col gap-5">

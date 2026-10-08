@@ -85,6 +85,7 @@ use Illuminate\Support\Carbon;
  * @property-read LeadDisqualificationReason|null $disqualificationReason
  * @property-read User|null $disqualifiedBy
  * @property-read Lead|null $duplicateOf
+ * @property-read Collection<int, ContactAttempt> $contactAttempts
  * @property int|null $account_id
  * @property int|null $contact_id
  * @property int|null $property_id
@@ -373,6 +374,12 @@ class Lead extends Model
     public function statusChanges(): HasMany
     {
         return $this->hasMany(LeadStatusChange::class)->orderBy('id');
+    }
+
+    /** @return HasMany<ContactAttempt, $this> */
+    public function contactAttempts(): HasMany
+    {
+        return $this->hasMany(ContactAttempt::class);
     }
 
     /**

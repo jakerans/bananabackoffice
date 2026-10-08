@@ -1435,6 +1435,29 @@ push. Under decision 61, the completed work may merge and deploy to staging only
 after the required local checks, exact-commit GitHub jobs and owner browser review
 are complete.
 
+## 63. Slice 3 manual contact-attempt evidence foundation (2026-10-08)
+
+**Approved by Jacob.** Implement only the bounded contact-attempt record and Lead
+history foundation. An attempt is immutable evidence linked to its Lead and stores
+the responsible rep, manual source, channel, direction, actual event time, number,
+duration, factual answered/connection disposition, lifecycle result and the
+location, linked customer/contact, lifecycle status and impersonation provenance
+in effect when it was recorded.
+
+Manual entries must be identified as manual and never presented as provider
+verification. A sent message or voicemail alone is not a real connection. Manual
+records cannot claim a recording or transcript, and recording an attempt must not
+change Lead status, assignment, follow-up or Customer Activity. Every write must
+recheck current Lead/location authorization, and each history row remains scoped
+to its recorded location and currently visible related customer data.
+
+This approval covers the additive schema, enums/model/action, the manual recording
+form and Lead history, regression tests and handoff documentation. It does not
+authorize a provider integration, outbound call or message, dialer, queue, AI,
+nurture/cadence behavior, automated punishment or manager policy, B8, slice 4,
+production action or a force push. The implementation returns for owner review
+after local checks, rendered browser review and exact-commit GitHub checks.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
