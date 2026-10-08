@@ -97,7 +97,7 @@ test('a list that does not exist is not found', function () {
 |--------------------------------------------------------------------------
 */
 
-test('leadership sees settings under company with only this page in it', function () {
+test('leadership sees settings under company with only this page and the contact center in it', function () {
     $leader = User::factory()->withRoleEverywhere(Role::Leadership)->create();
 
     $navigation = app(Navigation::class);
@@ -111,7 +111,8 @@ test('leadership sees settings under company with only this page in it', functio
         ->pluck('id')
         ->all();
 
-    expect($visible)->toBe(['settings.lists']);
+    // Contact Center (slice 4a) is the only other Settings page Leadership holds.
+    expect($visible)->toBe(['settings.lists', 'settings.contact_center']);
 });
 
 test('the settings address takes leadership to this page', function () {

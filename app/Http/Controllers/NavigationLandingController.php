@@ -14,7 +14,7 @@ class NavigationLandingController extends Controller
 
         abort_unless($navigation->allows($request->user(), $settings), 403);
 
-        foreach (['settings.locations', 'settings.users', 'settings.lists'] as $id) {
+        foreach (['settings.locations', 'settings.users', 'settings.lists', 'settings.contact_center'] as $id) {
             $destination = $navigation->find($id) ?? abort(404);
 
             if ($destination->route !== null && $navigation->allows($request->user(), $destination)) {

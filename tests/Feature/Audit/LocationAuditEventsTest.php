@@ -104,3 +104,38 @@ test('deactivating a location that is already inactive records nothing more', fu
 
     expect(AuditEvent::query()->count())->toBe(0);
 });
+
+test('changing a location timezone records the old and new timezone', function () {
+    $location = Location::factory()->create();
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.locations')
+        ->call('editTimezone', $location->id)
+        ->set('editingTimezone', 'America/Los_Angeles')
+        ->call('saveTimezone')
+        ->assertHasNoErrors();
+
+    $event = AuditEvent::query()->sole();
+
+    expect($event->action)->toBe(AuditAction::LocationTimezoneChanged);
+    expect($event->action->value)->toBe('location.timezone_changed');
+    expect($event->actor->is($owner))->toBeTrue();
+    expect($event->subject->is($location))->toBeTrue();
+    expect($event->location->is($location))->toBeTrue();
+    expect($event->before())->toBe(['timezone' => 'America/New_York']);
+    expect($event->after())->toBe(['timezone' => 'America/Los_Angeles']);
+});
+
+test('saving the timezone a location already has records nothing', function () {
+    $location = Location::factory()->create(['timezone' => 'America/Chicago']);
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.locations')
+        ->call('editTimezone', $location->id)
+        ->call('saveTimezone')
+        ->assertHasNoErrors();
+
+    expect(AuditEvent::query()->count())->toBe(0);
+});

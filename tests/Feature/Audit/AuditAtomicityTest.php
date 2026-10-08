@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\ContactCenter\ChangeContactCenterSettings;
 use App\Actions\Leads\AssignLead;
 use App\Actions\Leads\CaptureLead;
 use App\Actions\Leads\CorrectLeadDisqualification;
@@ -20,6 +21,7 @@ use App\Actions\Lists\MoveListOption;
 use App\Actions\Lists\SetListOptionActive;
 use App\Actions\Lists\UpdateListOption;
 use App\Actions\Lists\UpdateProjectSizeRanges;
+use App\Actions\Locations\ChangeLocationTimezone;
 use App\Actions\Notes\RemoveNote;
 use App\Actions\Staff\CreateOwner;
 use App\Actions\Staff\DeactivateStaffMember;
@@ -34,6 +36,7 @@ use App\Enums\ManagedList;
 use App\Enums\Role;
 use App\Models\AccessGrant;
 use App\Models\Account;
+use App\Models\ContactCenterSettings;
 use App\Models\Lead;
 use App\Models\LeadAssignment;
 use App\Models\LeadChannel;
@@ -285,3 +288,37 @@ test('a lead\'s status is not changed when its audit event cannot be recorded', 
         fn (Lead $lead, User $manager) => app(ReopenLead::class)->handle($lead, 'A mistake.', $manager),
     ],
 ]);
+
+test('a location timezone is not changed when its audit event cannot be recorded', function () {
+    $location = Location::factory()->create();
+
+    expect(fn () => app(ChangeLocationTimezone::class)->handle($location, 'America/Denver'))->toThrow(RuntimeException::class);
+
+    expect($location->fresh()->timezone)->toBe('America/New_York');
+});
+
+test('no settings version is saved when its audit event cannot be recorded', function (string $method, array $arguments) {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    expect(fn () => app(ChangeContactCenterSettings::class)->{$method}($owner, 1, ...$arguments))->toThrow(RuntimeException::class);
+
+    expect(ContactCenterSettings::query()->count())->toBe(1);
+    expect(ContactCenterSettings::current()->version)->toBe(1);
+    expect(ContactCenterSettings::current()->hold_minutes)->toBe(5);
+})->with([
+    'cadence' => ['cadence', [[['type' => 'timed', 'waits_minutes' => [0]]]]],
+    'calling hours' => ['callingHours', [600, 1020]],
+    'calling days' => ['callingDays', [[1, 2]]],
+    'hold length' => ['holdLength', [9]],
+]);
+
+test('the settings page saves nothing when the audit event cannot be recorded', function () {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    expect(fn () => Livewire::actingAs($owner)
+        ->test('pages::settings.contact-center')
+        ->set('holdMinutes', '9')
+        ->call('saveHold'))->toThrow(RuntimeException::class);
+
+    expect(ContactCenterSettings::query()->count())->toBe(1);
+});

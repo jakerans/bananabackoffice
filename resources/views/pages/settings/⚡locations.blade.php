@@ -1,11 +1,13 @@
 <?php
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Locations\ChangeLocationTimezone;
 use App\Actions\Locations\DeactivateLocation;
 use App\Actions\Locations\UpdateServiceAreaPostalCodes;
 use App\Enums\AuditAction;
 use App\Models\Location;
 use App\Models\ServiceAreaPostalCode;
+use App\Support\Queue\LocationTimezones;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +24,11 @@ new #[Title('Locations')] class extends Component {
     public ?int $editingId = null;
 
     public string $editingName = '';
+
+    #[Locked]
+    public ?int $timezoneLocationId = null;
+
+    public string $editingTimezone = '';
 
     #[Locked]
     public ?int $serviceAreaLocationId = null;
@@ -132,6 +139,49 @@ new #[Title('Locations')] class extends Component {
 
         Flux::modal('rename-location')->close();
         Flux::toast(variant: 'success', text: __('Location renamed.'));
+    }
+
+    /**
+     * Open the timezone dialog for a location.
+     */
+    public function editTimezone(int $locationId): void
+    {
+        $location = Location::query()->findOrFail($locationId);
+
+        $this->authorize('update', $location);
+
+        $this->timezoneLocationId = $location->id;
+        $this->editingTimezone = $location->timezone;
+        $this->resetValidation('editingTimezone');
+
+        Flux::modal('location-timezone')->show();
+    }
+
+    /**
+     * Save the timezone of the location being edited.
+     */
+    public function saveTimezone(ChangeLocationTimezone $changeLocationTimezone): void
+    {
+        $location = Location::query()->findOrFail($this->timezoneLocationId);
+
+        $this->authorize('update', $location);
+
+        $changeLocationTimezone->handle($location, $this->editingTimezone);
+
+        $this->reset('timezoneLocationId', 'editingTimezone');
+        unset($this->locations);
+
+        Flux::modal('location-timezone')->close();
+        Flux::toast(variant: 'success', text: __('Timezone saved.'));
+    }
+
+    /**
+     * The location whose timezone is being edited.
+     */
+    #[Computed]
+    public function timezoneLocation(): ?Location
+    {
+        return $this->timezoneLocationId === null ? null : Location::query()->find($this->timezoneLocationId);
     }
 
     /**
@@ -324,6 +374,7 @@ new #[Title('Locations')] class extends Component {
                 <flux:table.columns>
                     <flux:table.column>{{ __('Location') }}</flux:table.column>
                     <flux:table.column>{{ __('Status') }}</flux:table.column>
+                    <flux:table.column>{{ __('Timezone') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('ZIP codes served') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('Access grants') }}</flux:table.column>
                     <flux:table.column align="end"><span class="sr-only">{{ __('Actions') }}</span></flux:table.column>
@@ -342,12 +393,15 @@ new #[Title('Locations')] class extends Component {
                                 @endif
                             </flux:table.cell>
 
+                            <flux:table.cell data-test="location-timezone-{{ $location->id }}">{{ LocationTimezones::label($location->timezone) }}</flux:table.cell>
+
                             <flux:table.cell align="end" class="tabular-nums">{{ $location->service_postal_codes_count }}</flux:table.cell>
                             <flux:table.cell align="end" class="tabular-nums">{{ $location->access_grants_count }}</flux:table.cell>
 
                             <flux:table.cell align="end">
                                 <div class="flex justify-end gap-2">
                                     <flux:button size="sm" wire:click="editServiceArea({{ $location->id }})">{{ __('Service area') }}</flux:button>
+                                    <flux:button size="sm" wire:click="editTimezone({{ $location->id }})">{{ __('Timezone') }}</flux:button>
                                     <flux:button size="sm" wire:click="edit({{ $location->id }})">{{ __('Rename') }}</flux:button>
 
                                     @if ($location->is_active)
@@ -416,6 +470,31 @@ new #[Title('Locations')] class extends Component {
                     </ul>
                 </div>
             @endif
+
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+
+                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="location-timezone" class="w-full max-w-md">
+        <form wire:submit="saveTimezone" class="flex flex-col gap-6">
+            <div>
+                <flux:heading size="lg">{{ __('Timezone: :location', ['location' => $this->timezoneLocation?->name]) }}</flux:heading>
+                <flux:subheading>
+                    {{ __('Calling hours for this location are applied in this timezone. Changing it moves no attempt that is already scheduled. Other screens keep company time.') }}
+                </flux:subheading>
+            </div>
+
+            <flux:select wire:model="editingTimezone" :label="__('Timezone')">
+                @foreach (LocationTimezones::options() as $identifier => $label)
+                    <flux:select.option :value="$identifier">{{ __($label) }} ({{ $identifier }})</flux:select.option>
+                @endforeach
+            </flux:select>
 
             <div class="flex justify-end gap-2">
                 <flux:modal.close>

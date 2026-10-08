@@ -17,6 +17,7 @@ enum Permission: string
     case ManageLocations = 'settings.locations.manage';
     case ManageUsers = 'settings.users.manage';
     case ManageLeadSalesLists = 'settings.lists.manage';
+    case ManageContactCenterSettings = 'settings.contact_center.manage';
     case ViewLeads = 'leads.view';
     case ManageLeads = 'leads.manage';
     case ViewUnroutedLeads = 'leads.view_unrouted';
@@ -30,6 +31,7 @@ enum Permission: string
     case ViewAccounts = 'accounts.view';
     case ManageAccounts = 'accounts.manage';
     case ArchiveAccounts = 'accounts.archive';
+    case WorkLeadQueue = 'leads.work_queue';
 
     /**
      * Company-level permissions only count when held through an all-locations grant.
@@ -41,6 +43,7 @@ enum Permission: string
             self::ManageLocations,
             self::ManageUsers,
             self::ManageLeadSalesLists,
+            self::ManageContactCenterSettings,
             self::ViewUnroutedLeads,
             self::RouteLeads,
             self::ArchiveAccounts => true,

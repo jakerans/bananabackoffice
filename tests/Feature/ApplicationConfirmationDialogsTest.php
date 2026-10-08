@@ -1,10 +1,12 @@
 <?php
 
+use App\Actions\ContactCenter\ChangeContactCenterSettings;
 use App\Actions\Leads\UnlinkLeadCustomer;
 use App\Enums\LeadStatus;
 use App\Enums\ManagedList;
 use App\Enums\Role;
 use App\Models\Account;
+use App\Models\ContactCenterSettings;
 use App\Models\Lead;
 use App\Models\LeadChannel;
 use App\Models\Location;
@@ -406,4 +408,32 @@ test('the native-dialog guard recognizes markup and supported browser aliases', 
 
 test('the native-dialog guard ignores application confirmation method names', function () {
     expect(usesApplicationNativeDialog('confirmArchiveAccount(); confirmUnlinkCustomer();'))->toBeFalse();
+});
+
+test('calling hours reset waits for confirmation and authorizes again', function () {
+    $leader = User::factory()->withRoleEverywhere(Role::Leadership)->create();
+    app(ChangeContactCenterSettings::class)->callingHours($leader, 1, 600, 1020);
+
+    $page = Livewire::actingAs($leader)
+        ->test('pages::settings.contact-center')
+        ->call('openResetHours');
+
+    expect(ContactCenterSettings::current()->calling_opens_at)->toBe(600);
+
+    $leader->accessGrants()->delete();
+    $leader->refresh();
+
+    $page->call('confirmResetHours')->assertForbidden();
+
+    expect(ContactCenterSettings::current()->calling_opens_at)->toBe(600);
+});
+
+test('the contact center page and the location timezone dialog use no native dialog', function () {
+    foreach (['⚡contact-center', '⚡locations'] as $page) {
+        $contents = file_get_contents(resource_path("views/pages/settings/{$page}.blade.php"));
+
+        expect(usesApplicationNativeDialog($contents))->toBeFalse($page);
+    }
+
+    expect(file_get_contents(resource_path('views/pages/settings/⚡contact-center.blade.php')))->toContain('<x-confirmation-modal');
 });

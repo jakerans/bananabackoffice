@@ -16,6 +16,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ManageLocations,
         Permission::ManageUsers,
         Permission::ManageLeadSalesLists,
+        Permission::ManageContactCenterSettings,
+        Permission::WorkLeadQueue,
         Permission::ViewLeads,
         Permission::ManageLeads,
         Permission::ViewUnroutedLeads,
@@ -37,6 +39,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ProductionAccess,
         Permission::ColorStudioAccess,
         Permission::ManageLeadSalesLists,
+        Permission::ManageContactCenterSettings,
+        Permission::WorkLeadQueue,
         Permission::ViewLeads,
         Permission::ManageLeads,
         Permission::ViewUnroutedLeads,
@@ -65,6 +69,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::TransferLeads,
         Permission::ReturnLeads,
         Permission::AssignLeads,
+        Permission::WorkLeadQueue,
         Permission::WriteNotes,
         Permission::RemoveNotes,
         Permission::WaiveContactWait,
@@ -79,6 +84,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::RouteLeads,
         Permission::ReturnLeads,
         Permission::AssignLeads,
+        Permission::WorkLeadQueue,
         Permission::WriteNotes,
         Permission::ViewAccounts,
         Permission::ManageAccounts,
@@ -125,6 +131,8 @@ test('company overview and settings are company-level permissions', function (Pe
     'view accounts' => [Permission::ViewAccounts, false],
     'manage accounts' => [Permission::ManageAccounts, false],
     'archive accounts' => [Permission::ArchiveAccounts, true],
+    'manage contact center settings' => [Permission::ManageContactCenterSettings, true],
+    'work the lead queue' => [Permission::WorkLeadQueue, false],
     'view leads' => [Permission::ViewLeads, false],
     'manage leads' => [Permission::ManageLeads, false],
     'marketing' => [Permission::MarketingAccess, false],
@@ -133,3 +141,21 @@ test('company overview and settings are company-level permissions', function (Pe
     'finance' => [Permission::FinanceAccess, false],
     'color studio' => [Permission::ColorStudioAccess, false],
 ]);
+
+test('only owner and leadership manage the contact center settings', function (Role $role) {
+    expect($role->allows(Permission::ManageContactCenterSettings))->toBe(in_array($role, [Role::Owner, Role::Leadership], true));
+})->with(Role::cases());
+
+test('the queue permission is held by exactly the four roles that work the queue', function (Role $role) {
+    expect($role->allows(Permission::WorkLeadQueue))->toBe(in_array($role, [
+        Role::Owner,
+        Role::Leadership,
+        Role::LocationManager,
+        Role::CallCenterAgent,
+    ], true));
+})->with(Role::cases());
+
+test('the permission values are the approved identifiers', function () {
+    expect(Permission::ManageContactCenterSettings->value)->toBe('settings.contact_center.manage');
+    expect(Permission::WorkLeadQueue->value)->toBe('leads.work_queue');
+});

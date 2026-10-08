@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Role;
+use App\Models\AuditEvent;
 use App\Models\Location;
 use App\Models\User;
 use Livewire\Livewire;
@@ -193,3 +194,94 @@ test('location actions are refused once the permission has been removed', functi
     'deactivate' => ['deactivate', ['location']],
     'reactivate' => ['reactivate', ['location']],
 ]);
+
+test('a location is created in the eastern timezone', function () {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    Livewire::actingAs($owner)->test('pages::settings.locations')->set('name', 'Lakeview')->call('create');
+
+    expect(Location::query()->sole()->timezone)->toBe('America/New_York');
+});
+
+test('an owner can change a location timezone to any listed zone', function (string $timezone) {
+    $location = Location::factory()->create();
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.locations')
+        ->call('editTimezone', $location->id)
+        ->assertSet('editingTimezone', 'America/New_York')
+        ->set('editingTimezone', $timezone)
+        ->call('saveTimezone')
+        ->assertHasNoErrors();
+
+    expect($location->fresh()->timezone)->toBe($timezone);
+})->with([
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Phoenix',
+    'America/Los_Angeles',
+    'America/Anchorage',
+    'Pacific/Honolulu',
+]);
+
+test('the timezone is shown on the locations page', function () {
+    Location::factory()->create(['name' => 'Lakeview', 'timezone' => 'America/Chicago']);
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    $this->actingAs($owner)->get(route('settings.locations'))->assertOk()->assertSee('Central');
+});
+
+test('a timezone outside the fixed list is refused', function (string $timezone) {
+    $location = Location::factory()->create();
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.locations')
+        ->call('editTimezone', $location->id)
+        ->set('editingTimezone', $timezone)
+        ->call('saveTimezone')
+        ->assertHasErrors('editingTimezone');
+
+    expect($location->fresh()->timezone)->toBe('America/New_York');
+    expect(AuditEvent::query()->count())->toBe(0);
+})->with(['Europe/London', 'UTC', 'Asia/Tokyo', 'america/chicago', 'EST', 'America/Puerto_Rico', '', 'not a zone']);
+
+test('only someone who may manage locations can change a timezone, even by a direct call', function (Role $role) {
+    $location = Location::factory()->create();
+    $user = User::factory()->withRoleEverywhere($role)->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::settings.locations')
+        ->assertForbidden();
+
+    expect($location->fresh()->timezone)->toBe('America/New_York');
+})->with([Role::Leadership, Role::LocationManager, Role::CallCenterAgent, Role::Finance, Role::SalesConsultant, Role::ProductionManager]);
+
+test('a timezone save is refused for an owner whose access was removed after the dialog opened', function () {
+    $location = Location::factory()->create();
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    $page = Livewire::actingAs($owner)
+        ->test('pages::settings.locations')
+        ->call('editTimezone', $location->id)
+        ->set('editingTimezone', 'America/Denver');
+
+    $owner->accessGrants()->delete();
+    $owner->refresh();
+
+    $page->call('saveTimezone')->assertForbidden();
+
+    expect($location->fresh()->timezone)->toBe('America/New_York');
+});
+
+test('the location being edited cannot be swapped from the browser', function () {
+    $location = Location::factory()->create();
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    Livewire::actingAs($owner)
+        ->test('pages::settings.locations')
+        ->call('editTimezone', $location->id)
+        ->set('timezoneLocationId', Location::factory()->create()->id);
+})->throws(Exception::class, 'Cannot update locked property: [timezoneLocationId]');

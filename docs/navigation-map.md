@@ -78,8 +78,8 @@ working URL is removed.
   valid external context. The five retained Center IDs require no session migration.
 - `/settings` needs a nested-navigation landing action instead of the root-only
   Center controller. It resolves and authorizes the compatibility entry, then
-  checks the existing landing order—Locations, Users and Access, Lead & Sales
-  Lists—and redirects to the first destination the user already has permission
+  checks the landing order—Locations, Users and Access, Lead & Sales
+  Lists, and (since step 4a) Contact Center—and redirects to the first destination the user already has permission
   to open. Direct Settings URLs keep their current controllers and server-side
   gates.
 - `/company`, `/marketing`, `/sales`, `/production`, `/finance` and `/color-studio`
@@ -128,17 +128,17 @@ controller must use the repository's Artisan convention. No dependency,
 database, permission enum, role, policy or domain-action file belongs in this
 slice.
 
-## Slice 4 navigation changes (approved, not built)
+## Slice 4 navigation changes (4a built; 4b and 4c not built)
 
-Approved for implementation on 2026-10-08 (decision 65). Nothing below exists
-until its step is merged. The plan is [slice-4-plan.md](slice-4-plan.md); the
+Approved for implementation on 2026-10-08 (decision 65). The rows marked 4a are
+built (job #10, awaiting review); the 4c row does not exist until its step is merged. The plan is [slice-4-plan.md](slice-4-plan.md); the
 permissions are in [permission-model.md](permission-model.md), "Slice 4".
 
 | Destination | Stable ID, route and URL | State and access | Step |
 | --- | --- | --- | --- |
-| Company → Settings → Contact Center | New ID `settings.contact_center`; route name `settings.contact_center`; `/settings/contact-center`. Listed after Lead & Sales Lists. | Live when built; `settings.contact_center.manage` (Owner and Leadership, all-locations grant only). | 4a |
-| Company and Company → Settings (entry) | No ID or URL change. `settings.contact_center.manage` joins the existing union of permissions that open the `company` Center and the `settings` node. `/settings` adds Contact Center as its fourth landing choice, after Locations, Users and Access, and Lead & Sales Lists. | Composition of a grant the person already holds. It opens no other Settings page. | 4a |
-| Company → Locations | No new item. The existing `settings.locations` page gains a timezone field for each Location. | Existing `settings.locations.manage`. | 4a |
+| Company → Settings → Contact Center | New ID `settings.contact_center`; route name `settings.contact_center`; `/settings/contact-center`. Listed after Lead & Sales Lists. | **Built.** Live; `settings.contact_center.manage` (Owner and Leadership, all-locations grant only). | 4a |
+| Company and Company → Settings (entry) | No ID or URL change. `settings.contact_center.manage` joins the existing union of permissions that open the `company` Center and the `settings` node. `/settings` adds Contact Center as its fourth landing choice, after Locations, Users and Access, and Lead & Sales Lists. | **Built.** The permission is added to the `company` and `settings` entry unions only, not to the list the unbuilt Settings pages borrow. It opens no other Settings page. | 4a |
+| Company → Locations | No new item. The existing `settings.locations` page gains a timezone field for each Location. | **Built.** Existing `settings.locations.manage`. | 4a |
 | Marketing → Contact Center → Call Queue | New ID `marketing.call_center.queue`; route name `marketing.call_center.queue`; `/marketing/contact-center/queue`. A third-row item after Leads. | Live when built; `leads.work_queue` (Owner, Leadership, Location Manager, Call Center Agent). | 4c |
 
 - **Contact Center still opens on Leads.** Its primary stays `shared.leads`, so
@@ -237,10 +237,11 @@ built it receives its own specific permission, recorded in
 - On small screens the center menu scrolls sideways.
 - Company Overview and Settings are company-level: they do not change with the
   selected location. Every other center follows the selected location.
-- Settings opens for anyone who may manage locations, manage users, or manage the
-  Lead & Sales Lists. Its unbuilt pages borrow the first two permissions only, so
-  someone who holds just the lists permission sees that one page and no other
-  Settings item, built or not.
+- Settings opens for anyone who may manage locations, manage users, manage the
+  Lead & Sales Lists, or (since step 4a) manage the Contact Center settings. Its
+  unbuilt pages borrow the first two permissions only, so someone who holds just
+  the lists or Contact Center permission sees that one page and no other Settings
+  item, built or not.
 
 ## Where each center opens
 

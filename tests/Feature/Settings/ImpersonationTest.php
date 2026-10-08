@@ -7,6 +7,7 @@ use App\Enums\AuditAction;
 use App\Enums\LeadStatus;
 use App\Enums\Role;
 use App\Models\AuditEvent;
+use App\Models\ContactCenterSettings;
 use App\Models\Lead;
 use App\Models\LeadChannel;
 use App\Models\Location;
@@ -800,4 +801,63 @@ test('an owner deactivated through the normal action cannot continue an imperson
     $this->get(route('dashboard'))->assertRedirect(route('login'));
 
     $this->assertGuest();
+});
+
+/*
+|--------------------------------------------------------------------------
+| Contact Center settings and location timezones (slice 4a)
+|--------------------------------------------------------------------------
+*/
+
+test('settings changed while impersonating record the staff member and the real owner', function () {
+    $owner = owner();
+    $leader = User::factory()->withRoleEverywhere(Role::Leadership)->create(['name' => 'Lena Leader']);
+
+    impersonate($owner, $leader);
+
+    $page = livewireSnapshot($this->get(route('settings.contact_center'))->assertOk());
+    sendLivewireAction($page, 'saveHold', updates: ['holdMinutes' => '12'])->assertOk();
+
+    expect(ContactCenterSettings::current()->hold_minutes)->toBe(12);
+    expect(ContactCenterSettings::current()->changed_by)->toBe($leader->id);
+
+    $event = AuditEvent::query()->where('action', AuditAction::ContactCenterHoldLengthChanged)->sole();
+    expect($event->actor_id)->toBe($leader->id);
+    expect($event->impersonator_id)->toBe($owner->id);
+    expect($event->impersonator_name)->toBe('Olive Owner');
+});
+
+test('the contact center page is authorized by the staff member alone while impersonating', function () {
+    $lakeview = Location::factory()->create();
+    $owner = owner();
+    $manager = User::factory()->withRoleAt(Role::LocationManager, $lakeview)->create();
+
+    $this->actingAs($owner);
+    $opened = livewireSnapshot($this->get(route('settings.contact_center'))->assertOk());
+
+    impersonate($owner, $manager);
+
+    $this->get(route('settings.contact_center'))->assertForbidden();
+
+    foreach (['saveCadence', 'saveHours', 'saveDays', 'saveHold', 'openResetHours', 'confirmResetHours'] as $action) {
+        sendLivewireAction($opened, $action, updates: ['holdMinutes' => '29'])->assertForbidden();
+    }
+
+    expect(ContactCenterSettings::query()->count())->toBe(1);
+    expect(AuditEvent::query()->where('action', '!=', AuditAction::StaffImpersonationStarted)->count())->toBe(0);
+});
+
+test('a timezone changed while impersonating is refused for a staff member who cannot manage locations', function () {
+    $lakeview = Location::factory()->create();
+    $owner = owner();
+    $leader = User::factory()->withRoleEverywhere(Role::Leadership)->create();
+
+    $this->actingAs($owner);
+    $locations = livewireSnapshot($this->get(route('settings.locations'))->assertOk());
+
+    impersonate($owner, $leader);
+
+    sendLivewireAction($locations, 'editTimezone', [$lakeview->id])->assertForbidden();
+
+    expect($lakeview->fresh()->timezone)->toBe('America/New_York');
 });

@@ -1,7 +1,7 @@
 # Slice 4 — Scheduled Work and the Due Queue: Implementation Plan
 
-Status: **Planned and approved for implementation (2026-10-08). Nothing in this
-document is built yet.** Jacob's decisions are 65 to 72 in
+Status: **Planned and approved for implementation (2026-10-08). Step 4a is built
+(job #10, awaiting review); 4b and 4c are not built.** Jacob's decisions are 65 to 72 and 74 in
 [decisions.md](decisions.md); decision 73 records the design below. Where this plan
 and those decisions disagree, the decisions win and the build stops to ask.
 
@@ -526,6 +526,11 @@ card records the existing `lead.disqualified` event. A contact attempt remains
 its own evidence and is still not an audit event or Customer Activity.
 
 ## Step 4a — Settings and timezones
+
+**Status: built (job #10), awaiting review.** What exists after 4a: the column,
+the table with version 1, both permissions, the page, the navigation item and the
+four audit events. Nothing reads the settings or `locations.timezone`, and
+`leads.work_queue` guards nothing. No cadence, queue, command or schedule exists.
 
 Builds: the `locations.timezone` column and its field on the Locations page; the
 `contact_center_settings` table with version 1; `settings.contact_center.manage`;
