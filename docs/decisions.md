@@ -1458,6 +1458,25 @@ nurture/cadence behavior, automated punishment or manager policy, B8, slice 4,
 production action or a force push. The implementation returns for owner review
 after local checks, rendered browser review and exact-commit GitHub checks.
 
+## 64. npm security fixes and merge guideline correction (2026-10-08)
+
+**Approved by Jacob.** Fix the critical npm security warnings reported by
+`npm audit`, using non-breaking updates only. This is the owner approval that
+[project-brief.md](project-brief.md) requires for a dependency change, and it is
+limited to these security fixes: no new package, no major or otherwise breaking
+upgrade, and no feature, permission or behaviour change.
+
+A critical warning that can only be fixed by a breaking or major version change,
+or that cannot be fixed at all, is not forced. It is left as it is and reported
+to Jacob with a plain-English recommendation. The before and after `npm audit`
+results are reported as they actually are and recorded in
+[security-notes.md](security-notes.md).
+
+The same approval corrects the merge line in `.ai/guidelines/collaboration.md`,
+which still described the per-checkpoint merge approval that decision 61
+superseded. It now matches decision 61 and [collaboration.md](collaboration.md).
+No rule changed; the short guideline was brought back in line with the record.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
