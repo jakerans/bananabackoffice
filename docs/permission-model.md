@@ -427,7 +427,7 @@ rule above is changed.
 | Permission | Scope | Allows | Step |
 | --- | --- | --- | --- |
 | `settings.contact_center.manage` | Company | Open Company > Settings > Contact Center and change the call cadence, calling hours and days, and hold length. Nothing else in Settings. | 4a |
-| `leads.work_queue` | Location | Open the Call Queue, be given the next due Lead, and skip it with a reason | 4b |
+| `leads.work_queue` | Location | Open the Call Queue, be given the next due Lead, and skip it with a reason | Added in 4a, guarding nothing yet (decision 74); first used in 4b |
 
 `settings.contact_center.manage` is a company-scope permission: it counts only
 when held through an all-locations grant.

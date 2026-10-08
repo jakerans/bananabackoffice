@@ -466,7 +466,7 @@ Two new permissions. Names are exact.
 | Permission | Enum case | Scope | Allows | Roles | Step |
 | --- | --- | --- | --- | --- | --- |
 | `settings.contact_center.manage` | `ManageContactCenterSettings` | Company (all-locations grant only; added to `isCompanyLevel()`) | Open Company > Settings > Contact Center and change the cadence, calling hours and days, and hold length | Owner, Leadership | 4a |
-| `leads.work_queue` | `WorkLeadQueue` | Location | Open the Call Queue, take the next due Lead, skip it with a reason | Owner, Leadership, Location Manager, Call Center Agent. **Not** Sales Consultant, Production Manager or Finance. | 4b |
+| `leads.work_queue` | `WorkLeadQueue` | Location | Open the Call Queue, take the next due Lead, skip it with a reason | Owner, Leadership, Location Manager, Call Center Agent. **Not** Sales Consultant, Production Manager or Finance. | Added to the enum and roles in 4a (decision 74); first used in 4b |
 
 Rules that use existing permissions, unchanged:
 
@@ -533,6 +533,11 @@ the Contact Center settings page; the navigation changes marked 4a; the four 4a
 audit events. **Nothing reads these settings yet.** No cadence, queue, command or
 schedule exists after 4a.
 
+Also in 4a, by decision 74: `leads.work_queue` (`WorkLeadQueue`, location scope,
+not in `isCompanyLevel()`) is added to the permission enum and to Owner,
+Leadership, Location Manager and Call Center Agent. Nothing reads it in 4a: no
+route, navigation item, policy or action. It widens no existing access.
+
 The settings page, one section each, each with its own Save:
 
 - **Call cadence.** Day 1: attempt 1 is always "right away"; each further attempt
@@ -558,6 +563,10 @@ Tests (Pest; every one runs on SQLite and on MySQL 8.4):
   grant cannot open the page; Location Manager, Call Center Agent, Sales
   Consultant, Production Manager and Finance are refused by URL and by direct
   Livewire call. `RoleTest` and the permission matrix agree.
+- Queue permission (decision 74): `leads.work_queue` is location-level; Owner,
+  Leadership, Location Manager and Call Center Agent hold it; Sales Consultant,
+  Production Manager and Finance do not; no route or navigation item uses it,
+  and every role's other permissions are exactly what they were.
 - Hours: 7:45 am, 9:15 pm, closing before opening, a 45-minute window and a value
   off the 15-minute grid are each refused on the server; narrowing inside the
   limits saves; Reset restores 480 and 1260 and is audited with `reset`.
@@ -577,7 +586,8 @@ Tests (Pest; every one runs on SQLite and on MySQL 8.4):
 
 ## Step 4b — The engine
 
-Builds: the 4b tables and columns; `leads.work_queue` in the enum and roles; the
+Builds: the 4b tables and columns; the first uses of `leads.work_queue` (already
+in the enum and roles since 4a, decision 74); the
 calculators (`app/Support/Queue/CallingHours.php`, `CadenceSchedule.php`); the
 actions in `app/Actions/Queue/` (`EnterLeadCadence`, `AdvanceLeadCadence`,
 `EndLeadCadence`, `ClaimNextLead`, `SkipHeldLead`, `EndQueueHold`,
