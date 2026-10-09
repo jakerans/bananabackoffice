@@ -138,7 +138,18 @@ new #[Title('Call Queue')] class extends Component {
             return null;
         }
 
-        return app(QueueEligibility::class)->mayWork(Auth::user(), $cadence->lead) ? $cadence : null;
+        if (! app(QueueEligibility::class)->mayWork(Auth::user(), $cadence->lead) || $this->hoursClosedFor($cadence)) {
+            return null;
+        }
+
+        return $cadence;
+    }
+
+    /** Whether calling hours at the Lead's Location are closed right now. Read only. */
+    private function hoursClosedFor(LeadCadence $cadence): bool
+    {
+        return ! CallingHours::fromSettings(ContactCenterSettings::current())
+            ->isOpen(now(), CallingHours::timezoneFor($cadence->lead->location));
     }
 
     /**
@@ -159,7 +170,9 @@ new #[Title('Call Queue')] class extends Component {
         $cadence = LeadCadence::query()->with('lead.location')->find($this->cadenceId);
 
         if ($cadence !== null && $cadence->hold_token === $this->holdToken && $cadence->held_by_user_id === Auth::id() && $cadence->isHeldAt(now())) {
-            return QueueHoldEndReason::AccessLost->notice();
+            return $cadence->lead !== null && app(QueueEligibility::class)->mayWork(Auth::user(), $cadence->lead) && $this->hoursClosedFor($cadence)
+                ? QueueHoldEndReason::OutsideCallingHours->notice()
+                : QueueHoldEndReason::AccessLost->notice();
         }
 
         $event = LeadQueueEvent::query()

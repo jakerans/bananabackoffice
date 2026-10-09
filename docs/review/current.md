@@ -85,7 +85,7 @@ Mapping of the plan's "Step 4c" > "Tests" list:
 | Count matches what Next lead would offer per role and scope; excludes outside hours, held by others, just skipped | `QueueScreenTest.php` "the count equals what next lead would offer, per role and scope", "the count leaves out…" |
 | Next lead shows one Lead; no list of due Leads; second session cannot get the same Lead | `QueueScreenTest.php` "next lead shows one lead and the page never lists the due leads", "a second session cannot obtain the same lead" (the engine's real-process race is still `QueueConcurrencyTest`) |
 | Logging from the card saves one attempt through the shared action, ends the hold, schedules next; Lead page form unchanged | `QueueScreenTest.php` "logging from the card…", "an attempt form left open past the hold still saves…"; slice 3 `LeadContactAttemptTest.php` unchanged and green |
-| Skip and Disqualify from the card incl. reason rules and permissions; stale card (hold expired, Lead moved, access revoked) saves nothing and shows the reason | `QueueScreenTest.php` "skip needs a reason, and Other needs a note", "disqualify from the card follows the existing reasons and permission", "a stale card saves nothing…", "a hold that ran out is explained as time running out…" |
+| Skip and Disqualify from the card incl. reason rules and permissions; stale card (hold expired, Lead moved, access revoked) saves nothing and shows the reason | `QueueScreenTest.php` "skip needs a reason, and Other needs a note", "disqualify from the card follows the existing reasons and permission" (missing reason, stale version), "a valid reason disqualifies the lead from the card…" (success path, cadence and hold ended), "the Duplicate reason takes an original… and a reason that needs a note is refused without one", "openDisqualify and disqualify are refused for a holder who may not change the status", "a stale card saves nothing…", "a hold that ran out is explained as time running out…" |
 | Summary numbers; Location Manager sees only their Locations; warning at 11 minutes and when missing, not at 9 | `QueueScreenTest.php` "the manager summary shows each number…", "a location manager sees only their locations numbers", "the timer warning shows at 11 minutes…" (11, never ran, 9) |
 | Times: Location-local time and ISO timestamp for Eastern and Pacific; nothing reads a device timezone | `QueueScreenTest.php` "the card shows the location time and the device time source for Eastern and Pacific locations", "nothing on the server reads a device timezone" |
 | Put back from both places with the dialog rules; marker and history hidden from people who may not assign | `QueueScreenTest.php` "put back from the page needs a note…", "put back is refused to a setter…", "the lead page shows the cadence panel, history and put back only where the person may assign" |
@@ -285,3 +285,11 @@ Use fictitious Leads only.
     same moment, then both press Skip (or log a call), and repeat many times. They
     must never be shown the same Lead at the same time. If they ever are, stop and
     tell the office.
+
+## Fix round 1 (job #12)
+
+- `queue-time` now formats with `year/month/day/hour/minute/timeZoneName` (no `dateStyle`/`timeStyle` mix, which threw a TypeError); a test runs the exact options in Node for Eastern and Pacific.
+- The card and the gone-hold notice now check the Location's calling hours on each poll (read only, hold untouched): "Calling hours have closed for this lead." Test: "when calling hours close the poll replaces the card…".
+- The shared attempt dialog's Cancel has `autofocus`.
+- Disqualify from the card has success-path, Duplicate/note and `changeStatus`-refusal tests.
+- The count test now restores the seeded pool between people and asserts Lakeview agent 2, Harbor manager 2, company-wide agent 5 and Owner 5 (both including the unrouted Lead) (including the unrouted Lead).

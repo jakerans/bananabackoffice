@@ -125,25 +125,47 @@ test('the count equals what next lead would offer, per role and scope', function
     dueLead($this->lakeview);
     dueLead($this->lakeview);
     dueLead($this->harbor);
+    dueLead($this->harbor);
     dueLead(null);
     dueLead($this->lakeview, ['due_at' => '2026-10-07 14:30:00']);
-    $heldByOther = dueLead($this->lakeview);
+    dueLead($this->lakeview);
     nextLead(User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create());
-    $skipped = dueLead($this->harbor);
 
     $due = app(DueQueue::class);
+    $snapshot = LeadCadence::query()->get()->mapWithKeys(fn ($cadence) => [$cadence->id => $cadence->getAttributes()])->all();
 
-    foreach ([$lakeviewAgent, $everywhere, $manager, $owner] as $person) {
+    // Each person is compared on the same seeded pool, restored between people.
+    $expected = [
+        'lakeview agent' => [$lakeviewAgent, 2],
+        'harbor manager' => [$manager, 2],
+        'everywhere agent' => [$everywhere, $due->dueNowCount($everywhere, now())],
+        'owner' => [$owner, $due->dueNowCount($owner, now())],
+    ];
+
+    foreach ($expected as $label => [$person, $number]) {
+        foreach ($snapshot as $id => $attributes) {
+            LeadCadence::query()->whereKey($id)->update($attributes);
+        }
+
         $counted = $due->dueNowCount($person, now());
         $offered = 0;
 
-        // Draw leads one by one the way Next lead does; the count must match what it can hand out.
         while (nextLeadFor($person)) {
             $offered++;
         }
 
-        expect($counted)->toBe($offered);
+        expect($counted)->toBe($offered, $label)->and($counted)->toBe($number, $label)->and($counted)->toBeGreaterThan(0, $label);
     }
+
+    foreach ($snapshot as $id => $attributes) {
+        LeadCadence::query()->whereKey($id)->update($attributes);
+    }
+
+    // The scopes really differ: company-wide people also get the unrouted lead (2 + 2 + 1).
+    expect($due->dueNowCount($lakeviewAgent, now()))->toBe(2)
+        ->and($due->dueNowCount($manager, now()))->toBe(2)
+        ->and($due->dueNowCount($everywhere, now()))->toBe(5)
+        ->and($due->dueNowCount($owner, now()))->toBe(5);
 });
 
 function nextLeadFor(User $person): bool
@@ -154,7 +176,7 @@ function nextLeadFor(User $person): bool
         return false;
     }
 
-    // Give it back so the same person is not stuck on it, and note it so it is not offered again.
+    // Take it out of the pool so the same person is offered the next one.
     LeadCadence::query()->whereKey($claim->cadence->id)->update(['state' => CadenceState::Connected->value, 'held_by_user_id' => null, 'hold_token' => null, 'held_at' => null, 'held_until' => null]);
 
     return true;
@@ -268,6 +290,26 @@ test('nothing on the server reads a device timezone', function () {
     expect($component)->toContain('Intl.DateTimeFormat')->not->toContain('wire:');
 });
 
+test('the device time formatter runs for Eastern and Pacific timestamps', function () {
+    $node = trim((string) shell_exec('command -v node'));
+
+    if ($node === '') {
+        $this->markTestSkipped('Node is not available to run the formatter.');
+    }
+
+    $component = file_get_contents(resource_path('views/components/queue-time.blade.php'));
+    preg_match('/new Intl\.DateTimeFormat\(undefined, (\{.*?\})\)/', $component, $match);
+
+    expect($match)->not->toBeEmpty();
+
+    foreach (['America/New_York' => 'EDT', 'America/Los_Angeles' => 'PDT'] as $zone => $abbreviation) {
+        $script = "const o = {$match[1]}; o.timeZone = process.argv[1]; console.log(new Intl.DateTimeFormat('en-US', o).format(new Date('2026-10-07T18:00:00+00:00')));";
+        $output = trim((string) shell_exec(escapeshellarg($node).' -e '.escapeshellarg($script).' '.escapeshellarg($zone).' 2>&1'));
+
+        expect($output)->toContain($abbreviation)->and($output)->toContain('Oct 7, 2026');
+    }
+});
+
 /*
 |--------------------------------------------------------------------------
 | Log, skip, disqualify
@@ -368,6 +410,66 @@ test('disqualify from the card follows the existing reasons and permission', fun
     expect($lead->fresh()->status)->toBe(LeadStatus::Working);
 });
 
+test('a valid reason disqualifies the lead from the card, ends its cadence and hold, and offers Next lead', function () {
+    $agent = setterAt($this->lakeview);
+    $lead = dueLead($this->lakeview, attributes: ['status' => LeadStatus::Working, 'assigned_user_id' => $agent->id]);
+    $reason = LeadDisqualificationReason::query()->where('is_active', true)->whereNull('special_handling')->where('requires_note', false)->orderBy('id')->firstOrFail();
+
+    queuePage($agent)->call('nextLead')->call('openDisqualify')
+        ->set('disqualificationReasonId', $reason->id)
+        ->call('disqualify')
+        ->assertHasNoErrors()
+        ->assertSee('You disqualified this lead.')
+        ->assertSee('Next lead');
+
+    $cadence = LeadCadence::query()->where('lead_id', $lead->id)->sole();
+
+    expect($lead->fresh()->status)->toBe(LeadStatus::Disqualified)
+        ->and($cadence->state)->not->toBe(CadenceState::InQueue)
+        ->and($cadence->held_by_user_id)->toBeNull()
+        ->and($cadence->hold_token)->toBeNull();
+});
+
+test('the Duplicate reason takes an original from the possible originals, and a reason that needs a note is refused without one', function () {
+    $agent = setterAt($this->lakeview);
+    $lead = dueLead($this->lakeview, attributes: ['status' => LeadStatus::Working, 'assigned_user_id' => $agent->id, 'inquiry_phone_normalized' => '5552017788']);
+    $original = Lead::factory()->at($this->lakeview)->create(['inquiry_phone_normalized' => '5552017788']);
+    $duplicate = LeadDisqualificationReason::query()->where('is_active', true)->where('special_handling', LeadDisqualificationReason::DUPLICATE)->firstOrFail();
+    $needsNote = LeadDisqualificationReason::query()->where('is_active', true)->whereNull('special_handling')->where('requires_note', true)->firstOrFail();
+
+    $page = queuePage($agent)->call('nextLead')->call('openDisqualify');
+
+    expect($page->instance()->possibleOriginals->pluck('id')->all())->toContain($original->id);
+
+    // A reason that needs a note is refused without one, and nothing is saved.
+    $page->set('disqualificationReasonId', $needsNote->id)->call('disqualify')->assertHasErrors('disqualificationNote');
+    expect($lead->fresh()->status)->toBe(LeadStatus::Working);
+
+    // Duplicate with neither an original nor a note is refused too.
+    $page->set('disqualificationReasonId', $duplicate->id)->call('disqualify')->assertHasErrors('duplicateOfId');
+    expect($lead->fresh()->status)->toBe(LeadStatus::Working);
+
+    $page->set('duplicateOfId', $original->id)->call('disqualify')->assertHasNoErrors()->assertSee('You disqualified this lead.');
+
+    expect($lead->fresh()->status)->toBe(LeadStatus::Disqualified)
+        ->and($lead->fresh()->duplicate_of_lead_id)->toBe($original->id);
+});
+
+test('openDisqualify and disqualify are refused for a holder who may not change the status', function () {
+    $agent = setterAt($this->lakeview);
+    $lead = dueLead($this->lakeview, attributes: ['status' => LeadStatus::Working, 'assigned_user_id' => $agent->id]);
+    $reason = LeadDisqualificationReason::query()->where('is_active', true)->whereNull('special_handling')->where('requires_note', false)->orderBy('id')->firstOrFail();
+
+    $page = queuePage($agent)->call('nextLead')->call('openDisqualify');
+
+    // The lead stops being active under the open card, so the holder fails changeStatus.
+    Lead::query()->whereKey($lead->id)->update(['status' => LeadStatus::Disqualified->value]);
+    expect($agent->can('changeStatus', $lead->fresh()))->toBeFalse();
+
+    $page->set('disqualificationReasonId', $reason->id)->call('disqualify')->assertForbidden();
+    queuePage($agent)->call('openDisqualify')->assertForbidden();
+});
+
 /*
 |--------------------------------------------------------------------------
 | Told at once
@@ -394,6 +496,25 @@ test('the page polls every ten seconds and polling never claims, extends or rele
     $page->call('refreshQueue');
 
     expect($held->fresh()->held_until->toDateTimeString())->toBe($until);
+});
+
+test('when calling hours close the poll replaces the card with the reason and changes nothing', function () {
+    $agent = setterAt($this->lakeview);
+    dueLead($this->lakeview, attributes: ['inquiry_name' => 'Hours Person']);
+
+    $page = queuePage($agent)->call('nextLead')->assertSee('Hours Person');
+    $before = LeadCadence::query()->get()->map->getAttributes()->all();
+    $events = LeadQueueEvent::query()->count();
+
+    // 10 pm Eastern is past closing, and the hold is moved to still be running.
+    $this->travelTo('2026-10-08 02:00:00');
+    LeadCadence::query()->update(['held_until' => now()->addMinutes(5)]);
+    $before = LeadCadence::query()->get()->map->getAttributes()->all();
+
+    $page->call('refreshQueue')->assertSee('Calling hours have closed for this lead.')->assertDontSeeHtml('data-test="queue-card"')->assertSee('Next lead');
+
+    expect(LeadCadence::query()->get()->map->getAttributes()->all())->toBe($before)
+        ->and(LeadQueueEvent::query()->count())->toBe($events);
 });
 
 test('when someone disqualifies the lead the card is replaced by the reason only', function () {

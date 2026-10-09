@@ -13,7 +13,7 @@
 <time
     datetime="{{ $at->toIso8601String() }}"
     x-data="{ device: '' }"
-    x-init="device = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short', timeZoneName: 'short' }).format(new Date($el.getAttribute('datetime')))"
+    x-init="device = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(new Date($el.getAttribute('datetime')))"
     data-test="queue-time"
     {{ $attributes }}
 ><span x-show="device" x-cloak x-text="device" data-test="queue-time-device"></span><span class="text-zinc-500" data-test="queue-time-location"><span x-show="device" x-cloak>&middot; </span>{{ __('Location time') }} {{ $local->format('M j, g:i A T') }}</span></time>

@@ -74,7 +74,7 @@
 
         <div class="flex justify-end gap-2">
             <flux:modal.close>
-                <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                <flux:button variant="ghost" autofocus>{{ __('Cancel') }}</flux:button>
             </flux:modal.close>
 
             <flux:button type="submit" variant="primary" data-test="save-contact-attempt">{{ __('Record attempt') }}</flux:button>
