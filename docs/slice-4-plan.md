@@ -233,7 +233,10 @@ look; nothing read there decides who gets a Lead.
 3. **For each candidate in turn, in its own transaction:**
    1. Take the locks below and read the current rows through them.
    2. Run the eligibility check on those rows. If it fails, write nothing and
-      try the next candidate.
+      try the next candidate. The same applies when the locked cadence row
+      already shows the candidate as taken, not due or out of the queue: it is
+      passed over without issuing the update (as built in job #11). The update
+      below still decides every claim that can succeed.
    3. Claim with one conditional update:
 
       ```sql
@@ -312,7 +315,9 @@ being handed out again once the hours have closed. An attempt the setter logs on
 it is still saved (failure contract).
 
 Because every path takes its locks in the same order, these waits do not form a
-cycle. If the database reports a deadlock anyway, the transaction is retried.
+cycle. If the database reports a deadlock anyway, the claim's transaction is
+retried. (Wording corrected for job #12: today only the claim retries. The
+hooked actions do not yet; see "Known limits and recorded follow-ups".)
 
 Why the update itself is safe on both engines: an `UPDATE` always reads the
 latest committed row and holds the row lock (MySQL InnoDB) or the single write
@@ -796,6 +801,48 @@ in queue on the Lead page. No new table, permission or audit event.
 - Every confirmation uses the shared Flux dialog: focus on Cancel, Escape closes,
   the target is resolved and authorized again on confirm.
 
+**Architect's readings for the 4c build (job #12).** None changes a rule; each
+settles a detail the list above leaves to the build, and each is reported in the
+handoff so Jacob can change it.
+
+- **Opening the page** follows the Leads page: the route and the navigation item
+  are gated by `leads.work_queue` in the person's current Location view, and
+  every Livewire action checks it again. Once the page is open, the pool, the
+  count and the summary cover every Location the person has that access at,
+  whichever Location the header shows (decision 73).
+- **The setter's "due now" count** is built from the same query the claim reads
+  its candidates from, so the two cannot drift. The Lead the setter is holding
+  is on the card and is not in the count.
+- **The manager part of the page** (summary and the cadence-finished list) is
+  shown to a person who may assign Leads somewhere, and covers exactly the
+  Locations where they may assign, plus unrouted Leads when the existing
+  company-wide rule lets them. "Due now" there means in the queue, due, not
+  held, and inside its Location's calling hours at this moment; "longest wait"
+  is how long the most overdue of those has been due; "held" lists the Lead and
+  the holder's name.
+- **A hold that is gone** is explained from the queue history for that hold
+  (`hold_token`). `hold_expired` means "time ran out" and nothing else; a logged
+  attempt always arrives as `hold_ended`. The notice gives the reason only: it
+  shows nothing about a Lead the person may no longer see.
+- **A call is never thrown away by the screen.** An attempt form that is open
+  when the hold runs out stays open, and its save goes through the shared
+  action if the person may still work the Lead (failure contract).
+- **Polling only reads.** It never claims, extends or releases a hold. The time
+  left is counted down in the browser from the stored `held_until`; the server
+  decides whether the hold still exists.
+- **The attempt form's own time field is unchanged** from slice 3 (company
+  time, decision 68). On the card it starts at "now". Only displayed queue
+  times use the device and Location timezones.
+- **Three 4b choices are confirmed now that they have a screen:** the timer does
+  not end a hold because calling hours closed (the card's poll and the next
+  Next lead do); a skip is accepted outside calling hours while the setter
+  still holds the Lead and may work it; Next lead by someone with no queue
+  access anywhere is refused as not authorized.
+- **A busy database during any queue-page save** is answered with a plain "try
+  again" message, not an error page. The engine's lock-order fix and retry for
+  the hooked actions (4b handoff, follow-up 1) is **not** part of 4c: Jacob's
+  goal for job #12 does not include it, and it stays a recorded follow-up.
+
 Tests:
 
 - Route and page: refused to a Sales Consultant, Production Manager, Finance, a
@@ -876,3 +923,9 @@ staging only. Production does not exist and nothing here authorizes it.
   conversation is logged as a connected attempt.
 - Queue events and the cadence state are append-only or guarded in the
   application, not by the database, like audit events (security-notes.md).
+- On MySQL, two staff actions on the same hold within the same few milliseconds
+  can end in a deadlock error for one of them; nothing is half-saved and the
+  person presses again. The fix (the Lead-before-cadence lock order in
+  `EndQueueHold::atLocation` and `RunQueueTick::releaseExpiredHold`, and a retry
+  around the hooked actions) is a recorded follow-up, not yet approved as a
+  job. It is not part of step 4c.
