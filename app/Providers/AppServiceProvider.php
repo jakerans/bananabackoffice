@@ -7,6 +7,7 @@ use App\Enums\ImpersonationEndReason;
 use App\Enums\Permission;
 use App\Models\Account;
 use App\Models\Contact;
+use App\Models\ContactCenterSettings;
 use App\Models\Lead;
 use App\Models\LeadChannel;
 use App\Models\LeadDisqualificationReason;
@@ -108,6 +109,7 @@ class AppServiceProvider extends ServiceProvider
             'account' => Account::class,
             'contact' => Contact::class,
             'property' => Property::class,
+            'contact_center_settings' => ContactCenterSettings::class,
         ]);
     }
 

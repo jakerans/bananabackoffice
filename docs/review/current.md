@@ -3,223 +3,198 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-08 · **Branch:** `office/9-slice-4-plan-scheduled-work-and-the-due`
-· **Pull request:** <https://github.com/jakerans/bananabackoffice/pull/3>
-**State:** Job #9 (Plan) is written, reviewed and approved by the Reviewer, and
-pushed. It is not merged yet. It changes documents only. No application code,
-test, setting or database change is in it. Nothing in slice 4 is built.
+**Updated:** 2026-10-09 · **Branch:** `office/10-slice-4a-location-timezones-and-cadence`
+**State:** Job #10 (Build, step 4a) is built, reviewed and pushed. Pull request:
+<https://github.com/jakerans/bananabackoffice/pull/4>. Both GitHub jobs passed.
+**It is not merged yet.** The office merges into `main` only if every GitHub check
+passes on the final commit; staging then deploys by itself. No staging deployment
+has been verified. Production is not touched and waits for Jacob.
 
 ## Step
 
-Slice 4 plan: scheduled work and the due queue. A planning job, not a build step.
+Slice 4, step 4a: location timezones and the Contact Center settings. Plan:
+[../slice-4-plan.md](../slice-4-plan.md) ("Step 4a"); decisions 65 to 74 in
+[../decisions.md](../decisions.md).
 
 ## Objective
 
-Record Jacob's fifteen slice 4 decisions (made in conversation on 2026-10-08) in
-the Backoffice documents, and write the implementation plan for slice 4 in three
-build steps: 4a settings and timezones, 4b the engine, 4c the queue screen.
+Put in place the configuration the 4b engine and 4c screen will read: each
+Location's timezone, the call cadence, the calling hours and days, and the hold
+length. After 4a nothing is scheduled, no queue exists, and no existing screen
+behaves differently.
 
 ## What changed
 
-Seven files, all under `docs/`. Nothing else is in the change.
-
-| Document | What changed |
-| --- | --- |
-| [../decisions.md](../decisions.md) | New decisions 65 to 73. 65 to 72 are Jacob's decisions as he gave them. 73 records the design and the choices made while planning. No existing entry was rewritten. |
-| [../slice-4-plan.md](../slice-4-plan.md) | New. The plan: the scheduler, timezone, retry and failure contracts, the atomic claim, the data model, permissions, navigation, audit events, the tests for steps 4a, 4b and 4c, and what the staging server needs. |
-| [../roadmap.md](../roadmap.md) | Slice 4 is now "planned and approved for implementation; not built", with its three steps and a new "Approved slice 4 boundary" section. The contracts that were pending are marked decided. |
-| [../permission-model.md](../permission-model.md) | A new "Slice 4" section: two new permissions, `settings.contact_center.manage` and `leads.work_queue`, with their matrix rows and rules. Marked approved, not built. |
-| [../navigation-map.md](../navigation-map.md) | A new "Slice 4 navigation changes" section: the Contact Center settings page and the Call Queue. Marked approved, not built. |
-| [../README.md](../README.md) | One row added to the document index for the plan. |
-| This file | Replaced with this handoff. |
-
-### What is recorded as approved
-
-- **Implementation approval.** Jacob's approval of this batch is his explicit
-  approval to build slice 4 as described in decisions 65 to 73 and the plan, and
-  nothing beyond it (decision 65).
-- **Two earlier decisions are changed, each by a new entry:**
-  - Decision 67 changes one slice 3 rule (decision 63): logging a contact attempt
-    now advances the cadence. It still never changes lifecycle status or assignee.
-  - Decision 68 supersedes the single company timezone in decision 40: each
-    Location has its own, default US Eastern.
-- **Two follow-ups are recorded and not authorized:** moving existing screens to
-  each Location's time (decision 68), and a confirmation text for Leads that
-  arrive outside calling hours once texting exists (decision 72).
-
-### The three build steps
-
-1. **4a — Settings and timezones.** A timezone on each Location. A Contact Center
-   page under Company > Settings for the cadence, calling hours and days, and the
-   hold length. Nothing uses the settings yet.
-2. **4b — The engine.** Every new Lead enters the cadence. Logging an attempt
-   schedules the next one. Taking, holding, skipping and putting back all work,
-   with no screen. The background timer runs every minute.
-3. **4c — The queue screen.** The Call Queue in Marketing > Contact Center: the
-   due-now count, Next lead, the card, the manager summary and the "Cadence
-   finished, no contact" list.
-
-Each step is built, checked on SQLite and MySQL 8.4, reviewed and reported on its
-own before the next begins. Details are in [../slice-4-plan.md](../slice-4-plan.md).
+- **Location timezone.** New column `locations.timezone` (default
+  `America/New_York`; existing Locations get it). Company > Locations has a
+  Timezone column and a Timezone button per Location, offering the plan's seven US
+  zones. Anyone who passes the existing `LocationPolicy::update` (Owner today) can
+  change it; the server refuses anything off the list. Audit event
+  `location.timezone_changed` with before and after. The list of zones lives in
+  one place, `app/Support/Queue/LocationTimezones.php`, for 4b to reuse.
+- **Settings storage.** New table `contact_center_settings`; the migration creates
+  version 1 with the exact defaults (day 1 waits 0, 30, 90; days 2 to 5 spread
+  3, 2, 2, 2: twelve attempts; 480 to 1260 minutes; all seven days; hold 5).
+  `changed_by` has its own index. Rows are never updated or deleted (the model
+  refuses both).
+- **Permissions.** `settings.contact_center.manage` (company-level, Owner and
+  Leadership). `leads.work_queue` (location-level, not company-level; Leadership,
+  Location Manager, Call Center Agent; Owner through all cases). Nothing reads
+  `leads.work_queue` outside `Permission.php` and `Role.php`, and a test keeps it
+  that way.
+- **The page.** Company > Settings > Contact Center at `/settings/contact-center`
+  (route and navigation ID `settings.contact_center`), four sections each with its
+  own Save: Call cadence (with total attempts shown), Calling hours (with Reset to
+  default through the shared confirmation dialog), Calling days, Hold length. It
+  says changes apply to attempts scheduled from now on and that hours are applied in
+  each Location's local time.
+- **Saving rules** (`app/Actions/ContactCenter/ChangeContactCenterSettings.php`):
+  everything is validated on the server to the plan's limits; a save inserts
+  `loaded version + 1`; a second save from the same loaded version is refused as
+  stale and writes nothing (and the page reloads the latest settings); the row and
+  its audit event are saved in one transaction; a save that changes nothing writes
+  neither; each section changes only its own fields. Audit events:
+  `contact_center.cadence_changed`, `contact_center.calling_hours_changed` (also
+  used for calling days, and carries `reset: true` for a reset) and
+  `contact_center.hold_length_changed`, recorded against the settings record under
+  the short name `contact_center_settings`.
+- **Navigation.** New Settings item after Lead & Sales Lists; the permission is
+  added to the `company` and `settings` entry lists only (not to the list the
+  unbuilt Settings pages borrow); `/settings` gains it as the fourth landing choice.
+- **Shared dialog.** `x-confirmation-modal` gained an optional `confirm-variant`
+  (default stays `danger`) so Reset to default is not drawn as a destructive button.
+  Every existing use is unchanged.
+- **Documents.** roadmap, slice-4-plan, permission-model, navigation-map and README
+  describe 4a as built and 4b and 4c as not built. This file replaced.
+- **Two fix rounds after review** (2 used of at most 3). Round 1: a test that an
+  existing Location receives the default timezone when the migration is applied
+  (`tests/Feature/Database/Migrations/AddTimezoneToLocationsTest.php`), corrections
+  to the rules in `permission-model.md`, and the out-of-range hours steps below.
+  Round 2: that migration test now removes the Location row it creates and always
+  restores the column.
 
 ## Tests and checks, with their real results
 
 | Check | Result |
 | --- | --- |
-| Complete local check (`composer test`), run by the office | **Passed** |
-| GitHub: Checks and tests (SQLite) | **Passed** — [run](https://github.com/jakerans/bananabackoffice/actions/runs/37855813862/job/113579588057) |
-| GitHub: Migrations and tests (MySQL 8.4) | **Passed** — [run](https://github.com/jakerans/bananabackoffice/actions/runs/37855813862/job/113579588438) |
-| Independent review by the Reviewer | **Approved**, after 2 fix rounds of at most 3 |
-| Click-through testing in a browser | **Not run.** The office has no test browser or test environment for this project yet. |
+| `composer test` (style, static analysis, every test), run by the office on SQLite | **Passed** |
+| GitHub: "Checks and tests (SQLite)" | **Passed** ([run](https://github.com/jakerans/bananabackoffice/actions/runs/37864436384/job/113607680480)) |
+| GitHub: "Migrations and tests (MySQL 8.4)" | **Passed** ([run](https://github.com/jakerans/bananabackoffice/actions/runs/37864436384/job/113607680313)) |
+| Code review (reviewer) | **Approved**, read-only |
+| Code review (Architect) | **Approved**, read-only |
+| Click-through testing in a browser | **Not run.** The office has no test browser or test environment for this project yet |
+| Staging deployment | **Not verified.** Nothing is merged yet |
 
-The job changed documents only, so the passing checks show that nothing existing
-was broken. They do not test the plan's content; that was the Reviewer's reading.
-The Architect wrote the plan, so the Architect's own approval is not an
-independent check.
+- Both reviews were read-only inspections of the code. Neither reviewer ran anything;
+  they relied on the office's `composer test` result.
+- The Architect review confirmed by reading that `leads.work_queue` is read by
+  nothing outside the enum and the role lists, and that no 4b or 4c file exists (no
+  `lead_cadences`, queue events, `QueueEligibility`, command, schedule entry, Call
+  Queue page or navigation item).
+- The tests for the plan's "Step 4a" > "Tests" list are in
+  `tests/Feature/Settings/ContactCenterSettingsTest.php` (new: migration defaults,
+  access by URL and direct Livewire call, single-location Leadership,
+  hours/days/cadence/hold refusals, versions, stale refusal, navigation, the
+  queue-permission-is-inert search), the new migration test named above, and the
+  extended `RoleTest`, `NavigationLandingControllerTest`, `NavigationTest`,
+  `SettingsNavigationTest`, `LocationsTest`, `LocationAuditEventsTest`,
+  `AuditAtomicityTest` (audit event made to fail), `ImpersonationTest` and
+  `ApplicationConfirmationDialogsTest` (the native-dialog guard over the new page).
+- Migration reversibility: the builder reported running the migrations fresh,
+  rolling them back and re-applying them locally on SQLite. The office's record
+  holds no separate result for that, so treat it as the builder's statement. The
+  migrations did run on MySQL 8.4 inside the passing GitHub job.
 
-The Reviewer confirmed that only the seven intended documentation files changed,
-that the plan satisfies the work order, and that the revised attempt-recording
-sequence keeps the append-only contract and the transactional retry guarantees.
+## Architectural decisions made while building
 
-### What the two fix rounds changed
+None that need a new entry in `decisions.md`. Small implementation choices:
 
-Both rounds changed only [../slice-4-plan.md](../slice-4-plan.md) and this file.
+- One action class, `ChangeContactCenterSettings`, has a method per section and also
+  checks `settings.contact_center.manage` itself, so no caller can skip the page's
+  check.
+- JSON values are rebuilt in one fixed key order before comparing, because MySQL
+  does not keep JSON key order (the lesson recorded in decision 38).
+- Reset to default restores only the opening and closing times, not the days.
+- The unique `version` index is the only guard against two simultaneous saves
+  (no row lock, as instructed); a unique-index refusal is reported as stale.
+- The shared confirmation dialog gained the optional `confirm-variant` described
+  above. This file was not on the work order's expected list.
 
-- **Round 1.** Skip cooldowns are now kept per Lead and per setter, so one
-  setter's skip cannot erase another's. The claim rechecks queue permission,
-  timezone, calling hours and skip cooldown before any Lead is returned,
-  including one the setter already holds. Deactivating a Location ends holds in
-  its own transaction. Each has tests listed in step 4b.
-- **Round 2.** A counted attempt is now inserted once with its cadence cycle and
-  step already set, and the cadence advances only after that insert succeeds. A
-  failure rolls back both, and a repeated submission never advances the cadence
-  twice.
+## Deviations from the plan
 
-## Architectural decisions made while planning
-
-The design is recorded in decision 73 and the plan. Three points from the fix
-rounds are worth knowing:
-
-- **Deactivating a Location normally has no holds to end.** The existing rule
-  refuses to deactivate a Location that still has active Leads. The new hook is a
-  safeguard for a Lead that reaches the Location mid-deactivation, and for state
-  a crash left behind. The refusal rule is unchanged.
-- **A hold taken just before calling hours are narrowed is not ended by the
-  save.** The setter's next press of Next lead ends it, with the reason "calling
-  hours have closed". Decision 71 lists disqualifying, routing and losing access
-  as the things that end a hold at once; hours were not added to that list.
-- **A skip cooldown is a fixed moment,** the skip time plus the hold length at
-  the time. It is not cleared early when an attempt is counted.
-
-## Deviations from the work order
-
-None. No conflict between documents was found that the new decisions do not
-settle, so no question stopped the job.
+- **Decision 74:** `leads.work_queue` arrives in 4a instead of 4b, as Jacob approved.
+  It is held by its four roles and guards nothing.
+- One existing test was **updated, not weakened**, because the access it checks was
+  meant to grow: `ListsTest` "leadership sees settings under company with only this
+  page in it" expected Leadership to see only Lead & Sales Lists in Settings. It now
+  expects Lead & Sales Lists and Contact Center, which is the intended 4a result.
+  No Slice 3 or Lead test was touched.
 
 ## Known limitations
 
-- **Nothing is built.** This job is a plan.
-- **Every new Lead is due straight away,** including one recorded while staff are
-  already talking to the customer, and one a Sales Consultant records for
-  themselves. Logging that first conversation as a connected attempt takes it out
-  of the queue.
-- **A Lead that leaves the queue does not return by itself.** Resuming a Deferred
-  Follow-up or reopening a disqualified Lead leaves it out until someone uses Put
-  back in queue.
-- **Between 4b and 4c** new Leads on staging will be in the cadence with no queue
-  screen to work them from. Staging holds fictitious data only.
-- **Leads that exist before 4b is deployed never enter the queue.**
-- **The staging server's scheduler has not been checked.** See below.
+- **Nothing reads the settings yet.** The cadence, hours, days, hold length and each
+  Location's timezone are stored and audited but drive nothing until 4b.
+- Existing screens (Received time, follow-up dates and the rest) keep company time;
+  the application timezone stays UTC.
+- Changing a Location's timezone moves nothing already scheduled (nothing is
+  scheduled yet).
+- **Nobody has seen this work in a browser.** The steps below are the first
+  click-through it will get.
+- The builder reported using `migrate:fresh` against the worktree's own local SQLite
+  file, which emptied that disposable local development database. No shared or
+  staging data was touched.
 
 ## Decisions needed from Jacob
 
-### 1. Confirm or change the eleven choices made while planning
+- None for 4a.
+- Still open from [../security-notes.md](../security-notes.md): whether to raise the
+  `vite-plus` pin from 0.3.0 to 0.3.3 as its own approved dependency change (it
+  carries the `tinypool` advisories). Needed before production; not changed here.
+- Before 4b: the Forge scheduler on staging (see the plan, "The server's scheduler
+  on staging"). Not needed for 4a.
 
-Jacob's decisions left these details open. Each was filled with the plainest
-reading and written into decision 73 and the plan. None adds a feature.
-**Recommendation: keep all eleven as written.** Any can be changed before or
-during the build. Choices 1, 2, 6 and 7 are the ones with a real alternative.
+## Browser review steps for Jacob (staging)
 
-1. **Day 1, "about 2 hours later".** Read as about two hours after the Lead
-   arrived: calls at once, 30 minutes later, then 90 minutes after that. The
-   other reading is two hours after the second call. Either can be set on the
-   settings page, so this only fixes the starting value.
-2. **"Spread evenly through calling hours".** The first call of the day is at
-   opening and the rest at equal gaps. With the default hours: 8:00 am, 12:20 pm
-   and 4:40 pm for a three-call day; 8:00 am and 2:30 pm for a two-call day.
-   The alternative is to centre them (about 10:10 am, 2:30 pm, 6:50 pm), which
-   avoids calling at the moment of opening but leaves the early morning unused.
-3. **What uses up an attempt.** An outbound phone call that did not connect. A
-   text or email that was only sent is kept as evidence and does not count. A
-   real two-way conversation on any channel takes the Lead out of the queue.
-4. **Skip reasons.** A short fixed list: No usable phone number; Needs a manager
-   to look at it; I cannot make this call right now; Other (with a note).
-5. **"Not offered straight back to the same setter".** Not for one hold length,
-   5 minutes by default. Everyone else is offered it at once.
-6. **Which Leads a setter is given.** Every due Lead at any Location they have
-   queue access at, whichever Location is selected at the top of the screen.
-   This differs from the Leads list, which follows the selected Location. It was
-   chosen because setters do not pick, and a Lead waiting at a Location nobody
-   has selected would otherwise go uncalled. The alternative, following the
-   selected Location, is more consistent with the Leads list but risks that.
-7. **Who counts as a manager.** Decision 71 gives Put back in queue to "people
-   who may already assign Leads there". Call Center Agents may already assign
-   Leads, so they get Put back in queue and see the manager summary too. In
-   practice everyone who works the queue sees the summary. Making this narrower
-   would need a new permission, which is outside what was approved.
-8. **Put back in queue** is offered for any Lead that has left the queue and is
-   New, Working or Qualified. A disqualified Lead must be reopened first, and a
-   Deferred Follow-up resumed first, under the existing rules. A "Cadence
-   finished" Lead starts again at attempt 1; any other carries on where it
-   stopped.
-9. **A Location's timezone** is set on the existing Locations page by whoever may
-   manage Locations (the Owner today), from a list of United States zones.
-10. **Limits on the settings page.** Hours move in 15-minute steps and must be at
-    least an hour long; at least one calling day; a hold of 1 to 30 minutes; a
-    cadence of up to 14 days with up to 6 calls a day.
-11. **Contact Center still opens on Leads.** Call Queue is added beside it.
+Staging: <https://bananabackoffice-xg8eqczb.on-forge.com>. Do this after the office
+has merged and staging has deployed; neither has happened yet. Use fictitious data
+only.
 
-### 2. Possibly one step in Forge, during step 4b
-
-The background timer needs Laravel's scheduler running every minute on the
-staging server. Backoffice has never had a scheduled task, so it may not be on.
-This has not been checked.
-
-- **What is needed:** one scheduler entry for the staging site in Forge (server
-  "BackOffice"), run as user `forge` every minute, with the command
-  `php artisan schedule:run`. If the site has a "Laravel scheduler" switch,
-  turning it on is the whole step. No queue worker, no new package, no paid
-  service.
-- **Who does it:** the office does not change Forge. Step 4b will check whether
-  it is already running and, if it is not, hand Jacob the exact step with the
-  real site path.
-- **If it is not on:** the queue still works. The manager summary shows a warning
-  that the timer has not run, and the tidy-up pass does not happen.
-
-Details: "The server's scheduler on staging" in the plan. Nothing is needed from
-Jacob for this now.
-
-### 3. Still open from an earlier job
-
-Three critical npm warnings remain, all from the `vite-plus` build tool, and wait
-for Jacob's decision on raising it from 0.3.0 to 0.3.3. The record is in
-[../security-notes.md](../security-notes.md), "npm dependency audit (2026-10-08)".
-Slice 4 does not touch it.
-
-## Browser review
-
-Not applicable: this job changes documents only and there is nothing new to see
-on any screen. Step 4c requires a browser review, and the plan says so.
-
-## Merge, staging and production
-
-- **Merge:** not merged yet. The office merges into `main` only if every GitHub
-  check passes on the final commit.
-- **Staging:** the project deploys to staging by itself after a merge. The office
-  does not deploy and has not verified any deployment. This change holds
-  documents only.
-- **Production:** not touched. Production always waits for Jacob.
-
-## What happens next
-
-Nothing starts by itself. Step 4a begins only when Jacob says so.
+1. **As Owner, change a Location's timezone.** Open Company > Locations. Each
+   Location shows a Timezone column (Eastern by default). Press Timezone on one,
+   pick Pacific, Save. You should see "Timezone saved" and the column now say
+   Pacific. Open it again and save without changing: nothing new is recorded.
+2. **Check the Contact Center defaults.** Open Company > Settings > Contact Center.
+   You should see: Day 1 with attempt 1 "Right away", then 30 and 90 minutes; days
+   2 to 5 with 3, 2, 2, 2 attempts; "Total attempts: 12"; opens 8:00 am, closes
+   9:00 pm; all seven days ticked; hold length 5. The page says changes apply to
+   attempts scheduled from now on and hours are applied in each Location's local
+   time.
+3. **Edit each of the four sections** and press that section's own Save: change a
+   wait or add a day (the total updates); narrow the hours to 9:00 am to 8:00 pm;
+   untick Sunday; set the hold to 10. Each Save shows a confirmation and changes
+   only its own section. Reload the page and the values stay.
+4. **Try hours outside 8 am to 9 pm.** The Opens and Closes lists offer only
+   8:00 am to 9:00 pm, so an outside value has to be forced: open the browser's
+   developer tools (F12), right-click the Opens list in the Calling hours section,
+   choose Inspect, double-click an option's `value` (for example 8:00 am, `480`)
+   and change it to `420` (7:00 am); select that option and press Save under
+   Calling hours. Repeat with the Closes list set to `1320` (10:00 pm). Each time
+   the server refuses with a message and nothing is saved; reload and the old hours
+   are still shown.
+5. **Try the other limits.** A closing time at or before the opening, or less than
+   an hour after it: refused with a message. Untick every day and Save: refused.
+   Set the hold to 0 or 31: refused. Make day 1's later wait 2 minutes: refused.
+   Nothing is saved on a refusal.
+6. **Reset to default.** Press Reset to default under Calling hours. A styled dialog
+   (not the browser's pop-up) opens with the cursor on Cancel; Escape and Cancel
+   close it and return focus to the Reset button. Confirm it and the hours return
+   to 8:00 am to 9:00 pm; the days and other settings stay as they were.
+7. **As a Leadership member with an all-locations grant**, open Company > Settings:
+   it lists Lead & Sales Lists and Contact Center only, and `/settings` opens Lead &
+   Sales Lists. Contact Center opens and saves. `/settings/locations` and
+   `/settings/users` are refused.
+8. **As a Location Manager or Call Center Agent**, the Contact Center item is not
+   shown and typing `/settings/contact-center` in the address bar is refused.
+9. **Confirm existing Lead screens look and behave as before** (Leads list, a Lead's
+   page, logging a contact attempt): nothing about them has changed, and there is no
+   Call Queue anywhere yet.

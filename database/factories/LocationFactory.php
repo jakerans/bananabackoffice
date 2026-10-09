@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Location;
+use App\Support\Queue\LocationTimezones;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,6 +21,7 @@ class LocationFactory extends Factory
         return [
             'name' => fake()->unique()->city(),
             'is_active' => true,
+            'timezone' => LocationTimezones::DEFAULT,
         ];
     }
 

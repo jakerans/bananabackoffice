@@ -1477,7 +1477,7 @@ which still described the per-checkpoint merge approval that decision 61
 superseded. It now matches decision 61 and [collaboration.md](collaboration.md).
 No rule changed; the short guideline was brought back in line with the record.
 
-## Slice 4 decisions (65 to 73)
+## Slice 4 decisions (65 to 74)
 
 Decided by Jacob in conversation on 2026-10-08 and recorded here by planning job
 #9. The technical plan is [slice-4-plan.md](slice-4-plan.md).
@@ -1684,6 +1684,21 @@ in the plan, and each is for Jacob to confirm or change:
   long; at least one calling day; a hold of 1 to 30 minutes; a cadence of 1 to 14
   days with 1 to 6 attempts a day.
 - **Contact Center still opens on Leads.** Call Queue is added beside it.
+
+## 74. The queue permission is added in step 4a (2026-10-08)
+
+**Approved by Jacob** in the goal of build job #10 (step 4a): "Add the new queue
+permission to Owner, Leadership, Location Manager and Call Center Agent as the
+plan defines, without widening any existing access."
+
+The plan had placed `leads.work_queue` in step 4b. This moves only the step in
+which it is added to the code: the permission (`WorkLeadQueue`, location scope)
+and its four role grants are added in 4a. Its name, scope, roles and rules are
+exactly as decisions 70 and 73 and the plan define them.
+
+In 4a the permission guards nothing: no route, navigation item, policy, action or
+screen reads it, so holding it changes what nobody can see or do. Step 4b builds
+the engine that uses it and step 4c the screen. Nothing else moves between steps.
 
 ## Future decisions already constrained by the brief
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Models\Location;
 use App\Models\User;
@@ -232,4 +233,36 @@ test('a route is matched to the navigation destination that owns it', function (
     expect(collect($navigation->destinationsForRoute('settings.users'))->pluck('id')->all())->toBe(['company', 'finance']);
     expect($navigation->destinationForRoute('dashboard'))->toBeNull();
     expect($navigation->destinationForRoute(null))->toBeNull();
+});
+
+test('the contact center settings item is in settings after the lists, live and routed', function () {
+    $navigation = app(Navigation::class);
+    $item = $navigation->find('settings.contact_center');
+
+    expect($item->label)->toBe('Contact Center');
+    expect($item->isLive())->toBeTrue();
+    expect($item->route)->toBe('settings.contact_center');
+    expect($item->permissions)->toBe([Permission::ManageContactCenterSettings]);
+    expect($navigation->destinationForRoute('settings.contact_center')?->id)->toBe('company');
+
+    $ids = collect($navigation->find('settings')->children)->pluck('id')->all();
+    expect(array_slice($ids, 0, 4))->toBe(['settings.company', 'settings.users', 'settings.lists', 'settings.contact_center']);
+});
+
+test('the new permission joins the company and settings entries only, not the borrowed list', function () {
+    $navigation = app(Navigation::class);
+
+    expect($navigation->center('company')->permissions)->toContain(Permission::ManageContactCenterSettings);
+    expect($navigation->find('settings')->permissions)->toContain(Permission::ManageContactCenterSettings);
+
+    foreach (['settings.company', 'settings.service_areas', 'settings.services', 'settings.pricing', 'settings.templates', 'settings.integrations', 'settings.audit_log'] as $id) {
+        expect($navigation->find($id)->permissions)->not->toContain(Permission::ManageContactCenterSettings, "[{$id}] borrows the Contact Center permission.");
+        expect($navigation->find($id)->permissions)->not->toContain(Permission::ManageLeadSalesLists);
+    }
+});
+
+test('the queue permission is used by no navigation item', function () {
+    $using = collect(allNavigationItems())->filter(fn (NavigationItem $item): bool => in_array(Permission::WorkLeadQueue, $item->permissions, true));
+
+    expect($using)->toBeEmpty();
 });

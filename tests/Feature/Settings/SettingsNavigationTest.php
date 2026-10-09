@@ -57,3 +57,16 @@ test('the finance role does not gain people and access', function () {
 
     $this->get(route('settings.users'))->assertForbidden();
 });
+
+test('the contact center page keeps company context', function () {
+    Location::factory()->create();
+
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    $this->actingAs($owner)
+        ->get(route('settings.contact_center'))
+        ->assertOk()
+        ->assertSee('aria-label="Company"', escape: false)
+        ->assertSee('aria-label="Settings"', escape: false)
+        ->assertSessionHas(Shell::LAST_CENTER_KEY, 'company');
+});

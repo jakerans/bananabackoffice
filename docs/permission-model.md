@@ -3,9 +3,11 @@
 Status: **Implemented rules and role grants through B7 are approved and built.**
 Canonical target guardrails are locked product direction. Any new permission,
 role grant or widening of scope still needs an approved implementation slice.
-**Slice 4 is such a slice: its two permissions are approved and not yet built.**
-They are set out under "Slice 4" at the end of this document and must not be
-described as implemented until their step is merged.
+**Slice 4 is such a slice. Step 4a added its two permissions to the code
+(`settings.contact_center.manage` and, by decision 74, `leads.work_queue`); the
+queue permission is held but guards nothing until step 4b.** The rest of slice 4
+is set out under "Slice 4" at the end of this document and must not be described
+as implemented until its step is merged.
 
 ## The idea in plain English
 
@@ -122,16 +124,21 @@ always limited to what the person's grants allow, in every view.
 | `settings.locations.manage` | Company | Manage locations |
 | `settings.users.manage` | Company | Manage staff and access grants |
 | `settings.lists.manage` | Company | Manage the Lead & Sales Lists page (added in step B2; held by Owner and Leadership) |
+| `settings.contact_center.manage` | Company | Manage the Contact Center settings page: call cadence, calling hours and days, hold length (added in step 4a; held by Owner and Leadership) |
+| `leads.work_queue` | Location | Work the Call Queue. **Held by Owner, Leadership, Location Manager and Call Center Agent since step 4a (decision 74), but guards nothing: no route, navigation item, policy or action reads it until step 4b.** |
 
-Only permissions that guard something real are defined. Finer permissions (view
-job costs, approve commissions, edit leads) are added when the feature is built.
+Permissions are defined when the feature they guard is built. Finer permissions
+(view job costs, approve commissions, edit leads) are added when the feature is
+built. The one exception is `leads.work_queue`, added in step 4a ahead of the
+queue it will guard (decision 74): it is held by its roles but read by nothing
+until step 4b.
 
 ## Implemented Center role matrix
 
 | Role | Company Overview | Marketing | Sales | Production | Finance | Color Studio | Settings |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | Owner | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
-| Leadership | Yes | Yes | Yes | Yes | No | Yes | Lead & Sales Lists only |
+| Leadership | Yes | Yes | Yes | Yes | No | Yes | Lead & Sales Lists and Contact Center only |
 | Finance | No | No | No | No | Yes | No | No |
 | Location Manager | No | Yes | Yes | Yes | No | Yes | No |
 | Call Center Agent | No | Yes | No | No | No | No | No |
@@ -347,6 +354,8 @@ they are not implemented grants and do not authorize that sequence.
 | `attachments.manage` | Location | Upload and remove attachments |
 | `history.view` | Location | See a record's audit history |
 | `settings.lists.manage` | Company | Manage the Lead & Sales Lists page in Settings, and nothing else there |
+| `settings.contact_center.manage` | Company | Manage the Contact Center settings page in Settings, and nothing else there (built in 4a) |
+| `leads.work_queue` | Location | Work the Call Queue (added to the code in 4a, decision 74; first used in 4b) |
 
 Company-scope permissions count only when held through an all-locations grant.
 
@@ -391,6 +400,8 @@ The owner approved this matrix at the final review on 2026-10-05.
 | Upload and remove attachments | Yes | Yes | Yes | No | Yes | Yes | No |
 | See a record's audit history | Yes | Yes | Yes | No | No | No | No |
 | Manage Lead & Sales Lists (all-locations grant only) | Yes | Yes | No | No | No | No | No |
+| Manage the Contact Center settings (all-locations grant only; built in 4a) | Yes | Yes | No | No | No | No | No |
+| Work the Call Queue (permission held since 4a; guards nothing until 4b) | Yes | Yes | Yes | Yes | No | No | No |
 
 Notes:
 
@@ -403,9 +414,11 @@ Notes:
 - Leadership granted at a single location works within that location. Seeing
   unrouted Leads, transferring Projects and managing the lists need an
   all-locations grant.
-- Leadership's permission is for the Lead & Sales Lists page specifically. It lets
-  them open Settings and see that one page. It gives no access to Locations, Users
-  and Access, or any other Settings page, which stay Owner-only.
+- Leadership holds two Settings permissions, each for one page: Lead & Sales Lists
+  (`settings.lists.manage`) and Contact Center (`settings.contact_center.manage`,
+  step 4a). They let Leadership open Settings and see those two pages. Neither gives
+  access to Locations, Users and Access, or any other Settings page, which stay
+  Owner-only, and neither opens the other's page.
 - Every correction of a Sold Amount is an audit event recording the old and new
   amounts.
 - Leads and Projects are each one shared page, shown in more than one center. A
@@ -417,8 +430,11 @@ Notes:
 
 ## Slice 4: the call queue and its settings
 
-Status: **approved for implementation on 2026-10-08 (decisions 65 to 73); not
-built.** Each permission is added to the code in the step named below. The full
+Status: **approved for implementation on 2026-10-08 (decisions 65 to 74).
+Step 4a is built: both permissions are in the code, and
+`settings.contact_center.manage` guards the Contact Center settings page.
+`leads.work_queue` is held by its four roles and read by nothing until step 4b.
+Steps 4b and 4c are not built.** Each permission is added to the code in the step named below. The full
 plan is [slice-4-plan.md](slice-4-plan.md). No existing permission, role grant or
 rule above is changed.
 
@@ -427,7 +443,7 @@ rule above is changed.
 | Permission | Scope | Allows | Step |
 | --- | --- | --- | --- |
 | `settings.contact_center.manage` | Company | Open Company > Settings > Contact Center and change the call cadence, calling hours and days, and hold length. Nothing else in Settings. | 4a |
-| `leads.work_queue` | Location | Open the Call Queue, be given the next due Lead, and skip it with a reason | 4b |
+| `leads.work_queue` | Location | Open the Call Queue, be given the next due Lead, and skip it with a reason | Added in 4a, guarding nothing yet (decision 74); first used in 4b |
 
 `settings.contact_center.manage` is a company-scope permission: it counts only
 when held through an all-locations grant.
@@ -469,7 +485,7 @@ when held through an all-locations grant.
    company-wide rule). No new permission. This includes Call Center Agents.
 6. **Queue history follows the Location it was recorded at,** like contact
    attempts, and is shown only to people who may assign Leads there.
-7. **Leadership will see two Settings pages,** each through a permission of its
+7. **Leadership sees two Settings pages (built in 4a),** each through a permission of its
    own: Lead & Sales Lists and Contact Center. `settings.lists.manage` still
    opens only the lists page (decision 37). Neither opens Locations or Users and
    Access.

@@ -187,6 +187,7 @@ class Navigation
             Permission::ManageLocations,
             Permission::ManageUsers,
             Permission::ManageLeadSalesLists,
+            Permission::ManageContactCenterSettings,
         ];
 
         return new NavigationItem(
@@ -353,13 +354,13 @@ class Navigation
     private function settings(): NavigationItem
     {
         // Unbuilt Settings pages borrow these two. They deliberately do not borrow the
-        // lists permission, so holding it shows the Lead & Sales Lists page and nothing else.
+        // lists or Contact Center permissions, so holding either shows its own page and nothing else.
         $permissions = [Permission::ManageLocations, Permission::ManageUsers];
 
         return new NavigationItem(
             id: 'settings',
             label: 'Settings',
-            permissions: [...$permissions, Permission::ManageLeadSalesLists],
+            permissions: [...$permissions, Permission::ManageLeadSalesLists, Permission::ManageContactCenterSettings],
             state: NavigationState::Live,
             route: 'settings.home',
             icon: 'cog-6-tooth',
@@ -380,6 +381,13 @@ class Navigation
                     permissions: [Permission::ManageLeadSalesLists],
                     state: NavigationState::Live,
                     route: 'settings.lists',
+                ),
+                new NavigationItem(
+                    id: 'settings.contact_center',
+                    label: 'Contact Center',
+                    permissions: [Permission::ManageContactCenterSettings],
+                    state: NavigationState::Live,
+                    route: 'settings.contact_center',
                 ),
                 new NavigationItem('settings.service_areas', 'Service Areas', $permissions),
                 new NavigationItem('settings.services', 'Services and Products', $permissions),

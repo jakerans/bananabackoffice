@@ -46,6 +46,8 @@ enum Role: string
                 Permission::ColorStudioAccess,
                 // The one Settings page Leadership may use. It opens no other.
                 Permission::ManageLeadSalesLists,
+                // The Contact Center settings page, also a company-wide Settings page of its own.
+                Permission::ManageContactCenterSettings,
                 Permission::ViewLeads,
                 Permission::ManageLeads,
                 Permission::ViewUnroutedLeads,
@@ -54,6 +56,7 @@ enum Role: string
                 Permission::ReturnLeads,
                 Permission::AssignLeads,
                 Permission::WaiveContactWait,
+                Permission::WorkLeadQueue,
                 Permission::WriteNotes,
                 Permission::RemoveNotes,
                 Permission::ViewAccounts,
@@ -79,6 +82,7 @@ enum Role: string
                 Permission::AssignLeads,
                 // Managers, not the Call Center, may let a lead be closed as "unable to contact" early.
                 Permission::WaiveContactWait,
+                Permission::WorkLeadQueue,
                 Permission::WriteNotes,
                 // A manager may remove anyone's note from view. Everyone else only their own.
                 Permission::RemoveNotes,
@@ -93,6 +97,7 @@ enum Role: string
                 Permission::RouteLeads,
                 Permission::ReturnLeads,
                 Permission::AssignLeads,
+                Permission::WorkLeadQueue,
                 Permission::WriteNotes,
                 Permission::ViewAccounts,
                 Permission::ManageAccounts,

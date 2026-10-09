@@ -29,6 +29,7 @@ test('settings redirects to the first existing destination the user may manage',
     'locations' => [Permission::ManageLocations, 'settings.locations'],
     'users and access' => [Permission::ManageUsers, 'settings.users'],
     'lead and sales lists' => [Permission::ManageLeadSalesLists, 'settings.lists'],
+    'contact center' => [Permission::ManageContactCenterSettings, 'settings.contact_center'],
 ]);
 
 test('settings is forbidden when the user has none of its existing permissions', function () {
@@ -48,4 +49,16 @@ test('a settings-only permission enters company without granting executive board
 
     $this->get(route('settings.home'))->assertRedirect(route('settings.users'));
     $this->get(route('company.performance'))->assertForbidden();
+});
+
+test('the settings landing order is locations, users, lists, then contact center', function () {
+    $user = User::factory()->create();
+
+    Gate::before(fn (User $authenticatedUser, mixed $ability): ?bool => $authenticatedUser->is($user) && in_array(
+        $ability instanceof Permission ? $ability->value : $ability,
+        [Permission::ManageLeadSalesLists->value, Permission::ManageContactCenterSettings->value],
+        true,
+    ) ? true : null);
+
+    $this->actingAs($user)->get(route('settings.home'))->assertRedirect(route('settings.lists'));
 });

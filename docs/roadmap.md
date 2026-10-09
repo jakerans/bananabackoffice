@@ -4,8 +4,10 @@
 
 **Checkpoint A — Secure branded foundation — is approved and merged into `main`
 (2026-10-04).**
-**Current: slice 3 is verified and merged into `main`. Slice 4 is planned and
-approved for implementation (2026-10-08); none of it is built.** Its plan is
+**Current: slice 3 is verified and merged into `main`. Slice 4 is approved for
+implementation (2026-10-08) in three steps. Step 4a (location timezones and the
+Contact Center settings) is built on its own branch and awaiting review; 4b and
+4c are not built.** Its plan is
 [slice-4-plan.md](slice-4-plan.md). The B1–B7 record and older unbuilt plan are in
 [checkpoint-b.md](checkpoint-b.md). Jacob approved the five-slice order; slices 1
 to 3 are merged. Each step of slice 4, and every later slice, still stops for
@@ -17,7 +19,7 @@ by the B7 merge was explicitly allowed and is verified separately. See
 "Integration checkpoint" below. **B8 to B12 are not built.**
 
 Slices 1 to 3 are completed and merged after B7. Slice 4 is authorized as
-described in decisions 65 to 73 and nothing beyond it. B8, Projects, production
+described in decisions 65 to 74 and nothing beyond it. B8, Projects, production
 readiness, slice 5 and other downstream implementation remain unauthorized.
 The older future steps below remain historical planning context.
 
@@ -49,7 +51,7 @@ received that approval.
 | 1 | Five-Center shell alignment | **LOCKED:** Marketing, Sales, Production, Finance and Company; Settings under Company; Color Studio external. | **Approved, built, verified and merged into `main` (2026-10-07).** The current-ID/current-route/access compatibility map is in [navigation-map.md](navigation-map.md). Shell/navigation only; no new workspace behavior or permission expansion. |
 | 2 | Shared Customer Activity and unified Notes | **LOCKED:** shared records, context/provenance/history-preserving Notes, and Activity made from major business events rather than every audit event. | **Approved, built, verified and merged into `main` (2026-10-07).** Reuses existing customer, Lead note and curated audit evidence; every related Lead, note and event location remains permission-scoped, and no raw audit payload or sensitive finance field is rendered. |
 | 3 | Contact-attempt evidence foundation | **LOCKED:** each attempt is durable evidence with actor, channel, time and outcome; suspicious patterns go to manager review, with no automated punishment. **PENDING:** provider choice. | **Approved, built, verified and merged into `main` (2026-10-08).** Manual records are explicitly not provider-verified, preserve current actor/location/contact/lifecycle evidence, and cannot change lifecycle state. No provider selection, cadence enforcement or personnel policy is introduced. |
-| 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow; scope, exits, order, holds and failure rules (decisions 65, 67, 70, 71). **CONFIGURABLE:** cadence, calling hours and days, hold length (decisions 66, 69, 70). The scheduler, timezone, retry and failure contracts are **decided** (decisions 68, 71 and 73) and specified in [slice-4-plan.md](slice-4-plan.md). | **Planned and approved for implementation (2026-10-08, decision 65); not built.** Three reviewed steps: 4a settings and timezones, 4b engine, 4c queue screen. No dialer, provider, outbound message, popup, snooze tray, Aged Leads, AI or penalties. B7 follow-ups are not reinterpreted as automated nurture. |
+| 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow; scope, exits, order, holds and failure rules (decisions 65, 67, 70, 71). **CONFIGURABLE:** cadence, calling hours and days, hold length (decisions 66, 69, 70). The scheduler, timezone, retry and failure contracts are **decided** (decisions 68, 71 and 73) and specified in [slice-4-plan.md](slice-4-plan.md). | **Approved for implementation (2026-10-08, decision 65). 4a built and awaiting review; 4b and 4c not built.** Three reviewed steps: 4a settings and timezones, 4b engine, 4c queue screen. No dialer, provider, outbound message, popup, snooze tray, Aged Leads, AI or penalties. B7 follow-ups are not reinterpreted as automated nurture. |
 | 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales. **PENDING:** exact Project creation transition and Pending ownership/validity policy. | **Order approved; not planned or authorized.** Contract/design slice only; do not implement Projects or invent the pending rules. |
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
@@ -87,16 +89,16 @@ assignment or follow-up side effect. Provider integrations, outbound communicati
 dialers, queues, AI, cadence/nurture rules, management penalties and slice 4 are
 outside this implementation.
 
-### Approved slice 4 boundary (planned, not built)
+### Approved slice 4 boundary (4a built and awaiting review; 4b and 4c not built)
 
-Jacob's decisions are 65 to 72 in [decisions.md](decisions.md); the design is
+Jacob's decisions are 65 to 72 and 74 in [decisions.md](decisions.md); the design is
 decision 73 and [slice-4-plan.md](slice-4-plan.md). His approval of the planning
 batch on 2026-10-08 is the implementation approval for exactly this and nothing
 beyond it.
 
 | Step | Delivers | State |
 | --- | --- | --- |
-| 4a | A timezone on each Location; the Contact Center settings page under Company > Settings (cadence, calling hours and days, hold length) with its permission and audit events | Approved; not built |
+| 4a | A timezone on each Location; the Contact Center settings page under Company > Settings (cadence, calling hours and days, hold length) with its permission and audit events | **Built** (job #10, awaiting review): `locations.timezone`, `contact_center_settings` version 1, the two permissions (`leads.work_queue` added here by decision 74, guarding nothing), the page at `/settings/contact-center`, the four audit events. Nothing reads these settings yet. |
 | 4b | The engine: every new Lead enters the cadence; a logged attempt advances it; the atomic claim, holds, skips, Put back in queue; the every-minute background timer. No screen. | Approved; not built |
 | 4c | The Call Queue in Marketing > Contact Center: due-now count, Next lead, the card, the manager summary and the "Cadence finished, no contact" list | Approved; not built |
 

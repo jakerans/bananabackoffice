@@ -5,6 +5,7 @@
     'action',
     'confirmLabel',
     'error' => null,
+    'confirmVariant' => 'danger',
 ])
 
 <flux:modal :name="$name" class="w-full max-w-lg">
@@ -23,7 +24,7 @@
                 <flux:button type="button" variant="ghost" autofocus>{{ __('Cancel') }}</flux:button>
             </flux:modal.close>
 
-            <flux:button type="submit" variant="danger" data-test="confirmation-submit">{{ $confirmLabel }}</flux:button>
+            <flux:button type="submit" :variant="$confirmVariant" data-test="confirmation-submit">{{ $confirmLabel }}</flux:button>
         </div>
     </form>
 </flux:modal>

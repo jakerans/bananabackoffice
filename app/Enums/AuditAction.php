@@ -24,6 +24,7 @@ enum AuditAction: string
     case LocationDeactivated = 'location.deactivated';
     case LocationReactivated = 'location.reactivated';
     case LocationServiceAreaChanged = 'location.service_area_changed';
+    case LocationTimezoneChanged = 'location.timezone_changed';
     case ListOptionAdded = 'list_option.added';
     case ListOptionRenamed = 'list_option.renamed';
     case ListOptionReclassified = 'list_option.reclassified';
@@ -72,4 +73,7 @@ enum AuditAction: string
     case NoteAddedWhileImpersonating = 'note.added_while_impersonating';
     case NoteRemoved = 'note.removed';
     case ProjectSizeRangeChanged = 'project_size.range_changed';
+    case ContactCenterCadenceChanged = 'contact_center.cadence_changed';
+    case ContactCenterCallingHoursChanged = 'contact_center.calling_hours_changed';
+    case ContactCenterHoldLengthChanged = 'contact_center.hold_length_changed';
 }

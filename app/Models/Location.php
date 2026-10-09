@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Queue\LocationTimezones;
 use Database\Factories\LocationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -17,10 +18,11 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $name
  * @property bool $is_active
+ * @property string $timezone
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'is_active'])]
+#[Fillable(['name', 'is_active', 'timezone'])]
 class Location extends Model
 {
     /** @use HasFactory<LocationFactory> */
@@ -33,6 +35,7 @@ class Location extends Model
      */
     protected $attributes = [
         'is_active' => true,
+        'timezone' => LocationTimezones::DEFAULT,
     ];
 
     /**
