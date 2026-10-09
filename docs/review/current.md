@@ -151,7 +151,14 @@ merged and deployed). Use fictitious data only.
    wait or add a day (the total updates); narrow the hours to 9:00 am to 8:00 pm;
    untick Sunday; set the hold to 10. Each Save shows a confirmation and changes
    only its own section. Reload the page and the values stay.
-4. **Try to break the limits.** The hour lists offer only 8:00 am to 9:00 pm. Try a
+4. **Try to break the limits.** First, hours outside 8 am to 9 pm: the Opens and
+   Closes lists offer only 8:00 am to 9:00 pm, so to send a value outside that range
+   open the browser's developer tools (F12), right-click the Opens list in the
+   Calling hours section, choose Inspect, double-click an option's `value` (for
+   example 8:00 am, `480`) and change it to `420` (7:00 am); select that option and
+   press Save under Calling hours. Repeat with the Closes list set to `1320` (10:00
+   pm). Each time the server refuses with a message and nothing is saved; reload and
+   the old hours are still shown. Then the other limits. The hour lists offer only 8:00 am to 9:00 pm. Try a
    closing time at or before the opening, or less than an hour after it: it is
    refused with a message. Untick every day and Save: refused. Set the hold to 0 or
    31: refused. Make day 1's later wait 2 minutes: refused. Nothing is saved on a

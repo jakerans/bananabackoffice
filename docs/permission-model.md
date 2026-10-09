@@ -127,8 +127,11 @@ always limited to what the person's grants allow, in every view.
 | `settings.contact_center.manage` | Company | Manage the Contact Center settings page: call cadence, calling hours and days, hold length (added in step 4a; held by Owner and Leadership) |
 | `leads.work_queue` | Location | Work the Call Queue. **Held by Owner, Leadership, Location Manager and Call Center Agent since step 4a (decision 74), but guards nothing: no route, navigation item, policy or action reads it until step 4b.** |
 
-Only permissions that guard something real are defined. Finer permissions (view
-job costs, approve commissions, edit leads) are added when the feature is built.
+Permissions are defined when the feature they guard is built. Finer permissions
+(view job costs, approve commissions, edit leads) are added when the feature is
+built. The one exception is `leads.work_queue`, added in step 4a ahead of the
+queue it will guard (decision 74): it is held by its roles but read by nothing
+until step 4b.
 
 ## Implemented Center role matrix
 
@@ -411,9 +414,11 @@ Notes:
 - Leadership granted at a single location works within that location. Seeing
   unrouted Leads, transferring Projects and managing the lists need an
   all-locations grant.
-- Leadership's permission is for the Lead & Sales Lists page specifically. It lets
-  them open Settings and see that one page. It gives no access to Locations, Users
-  and Access, or any other Settings page, which stay Owner-only.
+- Leadership holds two Settings permissions, each for one page: Lead & Sales Lists
+  (`settings.lists.manage`) and Contact Center (`settings.contact_center.manage`,
+  step 4a). They let Leadership open Settings and see those two pages. Neither gives
+  access to Locations, Users and Access, or any other Settings page, which stay
+  Owner-only, and neither opens the other's page.
 - Every correction of a Sold Amount is an audit event recording the old and new
   amounts.
 - Leads and Projects are each one shared page, shown in more than one center. A
