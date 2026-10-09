@@ -25,8 +25,10 @@ class EndQueueHold
      *
      * Exactly one history entry is written, naming the holder: "hold ended"
      * with the reason, or "hold expired" when its time had already run out and
-     * nothing had tidied it up yet. A cadence with no hold is left alone and
-     * nothing is recorded. The due time is not touched.
+     * nothing had tidied it up yet. A logged attempt is the exception: it
+     * always writes "hold ended" with its own reason, also for a hold whose
+     * time had run out (docs/slice-4-plan.md, contract 4). A cadence with no
+     * hold is left alone and nothing is recorded. The due time is not touched.
      *
      * The caller must be inside a transaction and hold the cadence row's lock,
      * having dealt with its own row first (docs/slice-4-plan.md, "Locks").
@@ -47,7 +49,8 @@ class EndQueueHold
 
         $holderId = $cadence->held_by_user_id;
         $token = $cadence->hold_token;
-        $expired = ! $cadence->isHeldAt(now());
+        $byAttempt = in_array($reason, [QueueHoldEndReason::AttemptLogged, QueueHoldEndReason::AttemptLoggedByOther], true);
+        $expired = ! $byAttempt && ! $cadence->isHeldAt(now());
 
         $released = DB::table('lead_cadences')
             ->where('id', $cadence->id)
@@ -94,6 +97,17 @@ class EndQueueHold
      */
     public function forStaffMember(User $staff, bool $onlyIfTheyMayNoLongerWorkIt = false, ?User $actor = null): bool
     {
+        // The Lead row is locked before its cadence row, as the claim does it.
+        // Writing the history entry needs the Lead row; taking it only then,
+        // with the cadence row already locked, can deadlock with a claim that
+        // holds the Lead and waits for the cadence. This first read is only a
+        // hint about which Lead: the locking read below finds the hold.
+        $heldLeadId = LeadCadence::query()->where('held_by_user_id', $staff->id)->value('lead_id');
+
+        if ($heldLeadId !== null) {
+            Lead::query()->whereKey($heldLeadId)->lockForUpdate()->first();
+        }
+
         $cadence = LeadCadence::query()->where('held_by_user_id', $staff->id)->lockForUpdate()->first();
 
         if ($cadence === null) {

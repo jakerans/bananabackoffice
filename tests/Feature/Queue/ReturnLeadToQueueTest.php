@@ -253,6 +253,35 @@ test('the caller\'s stale copy of the lead decides nothing', function () {
     expect($this->cadence->fresh()->state)->toBe(CadenceState::Connected);
 });
 
+test('the caller\'s stale copy of themselves decides nothing', function (Closure $change) {
+    connect($this->lead, $this->consultant);
+
+    // Loaded, with their grants, while they were still allowed.
+    $stale = User::query()->with('accessGrants')->findOrFail($this->manager->id);
+    expect($stale->can('returnToQueue', $this->lead->fresh()))->toBeTrue();
+
+    $change($this);
+
+    $cadence = (array) DB::table('lead_cadences')->where('id', $this->cadence->id)->first();
+    $history = LeadQueueEvent::query()->count();
+    $audit = AuditEvent::query()->count();
+
+    // The copy in hand still says yes; the rows as they are now say no.
+    expect($stale->is_active)->toBeTrue();
+    expect($stale->accessGrants)->toHaveCount(1);
+    expect(fn () => app(ReturnLeadToQueue::class)->handle($this->lead, 'Back in the queue.', $stale))->toThrow(AuthorizationException::class);
+
+    expect((array) DB::table('lead_cadences')->where('id', $this->cadence->id)->first())->toBe($cadence);
+    expect($this->cadence->fresh()->state)->toBe(CadenceState::Connected);
+    expect(LeadQueueEvent::query()->count())->toBe($history);
+    expect(AuditEvent::query()->count())->toBe($audit);
+})->with([
+    'deactivated since' => [fn ($test) => DB::table('users')->where('id', $test->manager->id)->update(['is_active' => false])],
+    'their grant revoked since' => [fn ($test) => DB::table('access_grants')->where('user_id', $test->manager->id)->delete()],
+    'their grant moved to another location since' => [fn ($test) => DB::table('access_grants')->where('user_id', $test->manager->id)->update(['location_id' => $test->riverside->id])],
+    'removed since' => [fn ($test) => DB::table('users')->where('id', $test->manager->id)->delete()],
+]);
+
 test('the change, its history entry and its audit event are saved together or not at all', function (string $failing) {
     connect($this->lead, $this->consultant);
 

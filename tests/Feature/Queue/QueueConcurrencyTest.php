@@ -12,13 +12,10 @@ use Tests\Support\QueueProcesses;
  * starting line and runs the application's own actions. A process that ends
  * in a deadlock, a "database is locked" or any other error fails the test.
  *
- * On SQLite a write transaction whose earlier read has gone stale is refused
- * at once, and the application retries it three times. The two tests that
- * start a crowd (eight setters; one setter in four tabs) could use those
- * retries up on one database file, so their processes take the write lock as
- * each transaction begins and wait their turn. The change-during-a-claim tests
- * keep the application's own mode and so meet the refusal and the retry for
- * real. MySQL is the same in every test.
+ * The processes use the application's own database settings, with nothing
+ * changed for the test. On SQLite a write that meets another process's write
+ * is refused at once, and the application retries it three times; MySQL waits
+ * on row locks instead.
  *
  * Every process uses one fixed clock: Wednesday 7 October 2026, 10:00 am
  * Eastern, which is 4:00 am in Honolulu.
@@ -130,7 +127,7 @@ test('eight processes claim from five due leads: five succeed, each lead has one
     $results = $this->processes->together(array_map(
         fn (int $setter): array => ['claim', ['user' => $setter]],
         array_values($made['setters']),
-    ), queueSqliteWrites: true);
+    ));
 
     expectCleanRun($results);
 
@@ -174,7 +171,7 @@ test('one setter pressing next lead in four tabs at once holds exactly one lead'
         'leads' => array_fill_keys(['l1', 'l2', 'l3'], 'open'),
     ]);
 
-    $results = $this->processes->together(array_fill(0, 4, ['claim', ['user' => $made['setters']['s1']]]), queueSqliteWrites: true);
+    $results = $this->processes->together(array_fill(0, 4, ['claim', ['user' => $made['setters']['s1']]]));
 
     expectCleanRun($results);
 

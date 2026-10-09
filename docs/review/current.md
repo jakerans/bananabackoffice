@@ -5,7 +5,7 @@ No secrets or customer information belong here.
 
 **Updated:** 2026-10-09 · **Branch:** `office/11-slice-4b-scheduling-engine-and-atomic-du`
 **State:** Job #11 (Build, step 4b) is built and committed on its branch, awaiting
-review. It is **not pushed, has no pull request, and is not merged.** The two
+review after **fix round 1** (see "Fix round 1" below). It is **not pushed, has no pull request, and is not merged.** The two
 GitHub jobs have not run on it. Nothing is deployed to staging. Production is not
 touched and waits for Jacob.
 
@@ -22,6 +22,69 @@ captured Lead enters the phone cadence; a logged contact attempt advances it; on
 setter can atomically be given one due Lead under a timed hold; skip, Put back in
 queue and the every-minute background timer exist as actions and a command.
 Nothing is visible to staff until step 4c.
+
+## Fix round 1
+
+The first review did not approve the work. Three things were fixed, and nothing
+else was changed.
+
+1. **The SQLite concurrency proof now runs on the application's own settings.**
+   The test processes used to change SQLite for the two crowd tests (write
+   transactions that queue, "IMMEDIATE", and a five-second wait). Both are gone:
+   `tests/Support/queue-process.php` no longer touches the database
+   configuration at all, on either engine. To make the eight-process test
+   reliable that way, one thing changed in the application, in `ClaimNextLead`:
+   after the locked read of the candidate's cadence row, a candidate that the
+   row already shows as taken, not due or out of the queue is passed over
+   **without issuing the update that could not have won.** The conditional
+   update still decides every claim that can succeed. On SQLite a beaten
+   caller therefore no longer competes for the write lock on its way to the
+   next candidate, which is what used up the three retries. Nothing particular
+   to one database is used. Measured both ways, same machine, same tests:
+   without the change 14 of 80 runs failed (always the eight-process test,
+   always one process told "try again", never a Lead given twice or lost);
+   with it, see the results table.
+2. **A logged attempt always ends a hold with `hold_ended`.** `EndQueueHold`
+   used to write `hold_expired` when the hold's time had already run out. For a
+   logged attempt it now writes exactly one `hold_ended`, reason
+   `attempt_logged` (the holder logged it) or `attempt_logged_by_other`, also
+   when the hold had lapsed but was still recorded, as contract 4 says. The
+   regression test that asserted the old behaviour now asserts the rule, and a
+   second one covers someone else's attempt on a lapsed hold.
+3. **Put back in queue reads the person again.** `ReturnLeadToQueue` now reads
+   the person's `users` row and their access grants again inside its
+   transaction (in the claim's lock order: person, grants, then the Lead) and
+   authorizes that current person. A copy loaded before they were deactivated
+   or lost their grant no longer decides anything. New tests pass a stale copy
+   after each of: deactivated, grant revoked, grant moved to another Location,
+   person removed; each is refused and the cadence row, the queue history and
+   the audit history are unchanged.
+
+### Found while checking fix round 1, and fixed: a MySQL deadlock when a claimer is deactivated
+
+This was not one of the three review points. It is reported here because it
+failed a required test and could not honestly be left.
+
+The first full run on MySQL in this round failed once, in the real-concurrency
+test "the claimer is deactivated": the deactivating process ended in MySQL's
+"Deadlock found" error (nothing was saved wrongly; the deactivation was rolled
+back and would have had to be pressed again). MySQL's own deadlock report showed
+the cause. `DeactivateStaffMember` (and `RevokeAccess`) locked the held Lead's
+cadence row and then wrote the history entry, and that insert needs the Lead
+row. A second setter's claim holds the Lead row and waits for the cadence row.
+Each waited for the other. The plan's "every path takes its locks in the same
+order" did not count the lock the history insert takes on the Lead row.
+
+The fix is in `EndQueueHold::forStaffMember` only: it now locks the Lead row
+before the cadence row, the same order as the claim. The hold is still found by
+a locking read of `lead_cadences`, as the plan requires; a plain read before it
+only says which Lead row to lock first. No behaviour changed. The earlier
+builder runs (4 of 4, and one full suite) had simply not met it.
+
+**Still open, for the Architect (see "Decisions needed"):** the same kind of
+hidden lock exists in rarer pairs that no test races, and the plan's stated
+remedy ("if the database reports a deadlock anyway, the transaction is
+retried") is implemented for the claim only, not for the hooked actions.
 
 ## What changed
 
@@ -48,15 +111,17 @@ Nothing is visible to staff until step 4c.
   - *Claim:* the existing hold is rechecked first (returned again only if still
     eligible; otherwise ended with its reason). Then up to ten candidates are read
     as a hint, and each is tried in its own short transaction: lock and read the
-    current rows, run the eligibility check, then one conditional `UPDATE` decides.
+    current rows, run the eligibility check, then one conditional `UPDATE` decides
+    (a candidate the locked row already shows as taken is passed over without it).
     Deadlocks and a busy database are retried three times, then answered "try
     again". No `SKIP LOCKED`, advisory lock or anything one database alone offers.
   - *Skip:* fixed enum `QueueSkipReason` (four values; Other needs a note). Releases
     the hold, leaves `due_at` alone and stores that setter's `cooldown_until` on the
     `skipped` event. Nothing counts skips.
   - *Put back in queue:* needs a note; restarts (new cycle) a finished cadence or
-    one with no attempts left, otherwise resumes; a conditional update so a double
-    submit changes nothing; the change, its queue event and its audit event
+    one with no attempts left, otherwise resumes; the person, their grants and
+    the Lead are read again and authorized as they are now; a conditional update
+    so a double submit changes nothing; the change, its queue event and its audit event
     `lead.returned_to_queue` save together or not at all. New
     `LeadPolicy::returnToQueue`.
   - *Tick:* heartbeat, release expired holds, repair what a crash left behind. It
@@ -93,13 +158,14 @@ Nothing is visible to staff until step 4c.
 
 | Check | Result |
 | --- | --- |
-| `composer test` (style, static analysis, every test), run by the builder on SQLite, on the final code | **Passed.** Pint passed, PHPStan 0 errors, 1,927 tests passed (9,287 assertions), 5 minutes 23 seconds. An earlier run the same day was **stopped by Composer's 300-second limit** with style and static analysis passed and the tests still running; the same tests run directly (`php artisan test`) passed, 1,927. See "Deviations" for the one-line fix |
-| Whole suite on MySQL, run by the builder, on the final code | **Passed**, 1,927 tests (9,287 assertions), on a private throwaway MySQL 8.4.11 started under `/tmp` on the office machine for this purpose (not staging, not the GitHub database). This is not the GitHub job |
-| Migrations on SQLite: fresh, roll back the four 4b migrations, re-apply | **Passed**, on a temporary SQLite file. `lead_cadences` empty afterwards |
-| Migrations on MySQL 8.4.11 (same private instance): apply to an empty database, roll back the four, re-apply | **Passed** |
+| `composer test` (style, static analysis, every test), run by the builder on SQLite, on the final code of fix round 1 | **Passed.** Pint passed, PHPStan 0 errors, 1,932 tests passed (9,334 assertions), 4 minutes 42 seconds |
+| Whole suite on MySQL, run by the builder (a private throwaway MySQL 8.4.11 under `/tmp` on the office machine; not staging, not the GitHub database; this is not the GitHub job) | **First run of this round: 1 failed of 1,932**, the real-concurrency test "the claimer is deactivated", with a MySQL deadlock in the deactivating process (see "Found while checking fix round 1"). **After that fix, on the final code: passed**, 1,932 tests (9,334 assertions) |
+| Migrations on SQLite: fresh, roll back the four 4b migrations, re-apply | **Passed in the first build. Not run again in fix round 1:** no migration was changed |
+| Migrations on MySQL 8.4.11 (same private instance) | Apply, roll back the four, re-apply: **passed in the first build, not run again.** In fix round 1 every migration was applied to a new empty database: **passed** |
 | `php artisan schedule:list` | **Shows** `* * * * *  php artisan backoffice:queue-tick` |
-| Real-concurrency tests repeated on their own, before the fix below | **SQLite: 2 of 12 runs failed**, both times the eight-process test, both times because one process was told "try again"; no Lead was given twice or lost. MySQL: 4 of 4 passed |
-| Real-concurrency tests repeated on their own, on the final code | **SQLite: 8 of 8 runs of the whole file passed, and the two crowd tests alone passed 30 of 30. MySQL 8.4.11: 4 of 4 runs of the whole file passed.** No deadlock, "database is locked" or "try again" in any of them |
+| SQLite real-concurrency crowd tests (eight processes; four tabs) on the application's own settings, **without** the fix-round-1 change to the claim | **14 of 80 runs failed**, every time the eight-process test with one process told "try again"; no Lead given twice or lost. (A first 25 runs happened to pass; the next 80 did not.) |
+| SQLite real-concurrency tests on the final code, application's own settings, nothing changed for the test | **Crowd tests alone: 200 of 200 runs passed** (110 on a quiet machine; 90 with three copies running at once to load it). **Whole file: 18 of 18 passed** (4 of them after the last code change, plus the `composer test` run). No "try again", "database is locked" or deadlock in any |
+| MySQL 8.4.11 real-concurrency tests | Before the deadlock fix: whole file 4 of 4 passed, then the one failure above inside the full suite. **On the final code: the three "change takes a Lead away" races 25 of 25 passed; whole file 6 of 6 passed; and once more inside the full suite** |
 | Rows left in the shared MySQL database after the concurrency tests | **None** (Leads, cadences, queue events, users all at zero; only the migration's settings row) |
 | `composer test` run by the office | **Not yet** |
 | GitHub: "Checks and tests (SQLite)" | **Not yet** (not pushed) |
@@ -149,12 +215,11 @@ should know about:
   SQLite it takes the single write lock at the start of the transaction, which
   avoids a stale-read refusal later. Existing behaviour of those actions is
   otherwise unchanged.
-- **A hold whose time had already run out is recorded as `hold_expired`, whoever
-  tidies it up** (the claim, the tick, or an action that would otherwise have ended
-  it). So a logged attempt writes exactly one `hold_ended` (`attempt_logged` or
-  `attempt_logged_by_other`) when the hold was still running, and one
-  `hold_expired` when it had already lapsed. One event either way, always naming
-  the holder.
+- **A hold whose time had already run out is recorded as `hold_expired` when the
+  claim, the tick or a change to the Lead, the person or the Location tidies it
+  up. A logged attempt is the exception** (contract 4): it always writes exactly
+  one `hold_ended`, `attempt_logged` or `attempt_logged_by_other`, naming the
+  holder, whether or not the hold's time had run out. One event either way.
 - **The tick does not end a hold because calling hours closed.** The plan gives the
   tick two repairs only (a Lead that left; access lost). A hold outside calling
   hours ends at its own time or on the setter's next Next lead.
@@ -162,19 +227,15 @@ should know about:
   the Lead and may still work it: giving a Lead back is never refused for the hour.
 - **Next lead by someone who may not work the queue anywhere is refused as not
   authorized**, rather than answered "nothing due".
-- **SQLite settings of the concurrency test processes.** The application's own
-  SQLite settings are unchanged. The test processes give their temporary database
-  a five-second wait. In the two tests that start a crowd (eight setters; one
-  setter in four tabs) the processes also take SQLite's write lock as each
-  transaction begins, so they wait their turn. Why: with the application's
-  default, SQLite refuses at once a transaction whose earlier read has gone
-  stale, the claim retries three times as the plan says, and eight processes on
-  one file sometimes used all three up, so one was told "try again" and the test
-  failed (seen in 2 of 12 repeat runs before this was set). The five
-  change-during-a-claim tests keep the application's default, so real processes
-  still meet that refusal and the retry. No assertion was changed and MySQL is
-  the same in every test. This matters only to the SQLite test run: staging and
-  production are MySQL. See "Known limitations".
+- **The concurrency test processes change no database setting.** On SQLite they
+  run with the application's own transaction mode and no wait, so a write that
+  meets another process's write is refused at once and the application's three
+  retries have to cope; they do, since fix round 1 (above).
+- **A candidate the locked row shows as taken is passed over without the
+  update** (fix round 1). The plan's step 3 says "claim with one conditional
+  update; zero rows means someone else did". The update is still the only thing
+  that gives a Lead; what is skipped is an update whose `WHERE` the row just
+  read under its lock already fails. The outcome is the same on both engines.
 
 ## Deviations from the plan
 
@@ -210,19 +271,20 @@ should know about:
   with their attempt 1 due until 4c gives staff a way to work them.
 - **Staging timer: not known to be running** (below). Without it the queue is still
   correct; only the heartbeat and the tidy-up pass are missing.
+- **On MySQL, two staff actions on the same hold in the same instant can end in
+  a deadlock error for one of them** (not the claim, which retries). Nothing is
+  half-saved; the action is pressed again. See "Decisions needed".
 - A Lead that leaves the queue does not come back by itself (resume and reopen do
   not put it back).
 - Queue history and the cadence columns on contact attempts are append-only in the
   application, not enforced by the database, like audit events.
 - The MySQL result above is the builder's, on MySQL 8.4.11 on the office machine.
   The GitHub MySQL 8.4 job is the one that counts and has not run yet.
-- The real-concurrency tests add roughly 80 seconds to each full run.
-- **On SQLite, eight people pressing Next lead in the same instant can
-  occasionally get "try again" from the application as it is configured**, after
-  its three retries (see "SQLite settings of the concurrency test processes").
-  No Lead was ever given twice or lost when that happened. It does not arise on
-  MySQL, which staging uses, and SQLite is used only for tests and local
-  development. Nothing was changed in the application for it.
+- The real-concurrency tests add roughly 70 to 80 seconds to each full run.
+- On SQLite, as the application is configured, a claim that collides four times
+  in a row is still answered "try again", as the plan says. In the repeat runs
+  of fix round 1 that never happened with eight processes at once. SQLite is
+  used only for tests and local development; staging is MySQL.
 
 ### Staging timer
 
@@ -260,8 +322,27 @@ minutes old. (The on-screen warning arrives with 4c.)
 
 ## Decisions needed from Jacob
 
-- **None for the code.** Nothing needed a product or architecture decision the
-  documents do not hold.
+- **None that blocks this step.** One point for the Architect, with a
+  recommendation:
+  **Deadlocks between two changes to the same hold on MySQL.** Every history
+  entry carries links to the Lead, the cadence, the Location, the person who
+  acted and the person affected, and MySQL briefly locks each of those rows when
+  the entry is written. The plan's lock order does not count those locks. The
+  one pair the tests race (a claim against deactivating or revoking the
+  claimer) is fixed in this round. Pairs that remain possible, all needing two
+  staff actions on the same hold in the same few milliseconds: deactivating a
+  person while a manager routes the Lead that person holds, or while another
+  setter takes over that person's expired hold; deactivating a Location while a
+  Lead there is being claimed. What happens then: MySQL stops one of the two
+  with an error, nothing is half-saved, and the person presses the button
+  again. A claim is retried by itself; the other actions are not.
+  Options: (a) accept and record it as a known limit for the pilot
+  (recommended: it is rare, loses nothing and the fix is not small);
+  (b) in a later step, make the hooked actions safe to run twice and retry
+  them on a deadlock, as the plan already says the claim does; (c) drop the
+  database links from `lead_queue_events` to people, keeping the IDs, which
+  removes most of these waits but weakens the database's own checking.
+  Nothing was done about (b) or (c) here.
 - **An action, not a decision:** enable the scheduler for the staging site (above).
   It can be done before or after 4b is merged.
 - Still open from [../security-notes.md](../security-notes.md): the `vite-plus` pin

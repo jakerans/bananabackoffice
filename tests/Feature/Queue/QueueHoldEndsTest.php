@@ -236,9 +236,28 @@ test('an attempt logged by the former holder after their hold expired is still s
     expect($attempt->cadence_step)->toBe(1);
     expect($this->cadence->fresh()->attempts_made)->toBe(1);
 
-    // Its time had already run out, so the history says expired, not ended.
-    expect(holdEnding()->type)->toBe(QueueEventType::HoldExpired);
-    expect(queueHistory($this->lead))->toBe(['entered', 'claimed', 'hold_expired', 'attempt_counted']);
+    // A logged attempt always ends the hold as its own, also one whose time
+    // had run out: one "hold ended" naming the holder, never "hold expired".
+    $ending = holdEnding();
+
+    expect($ending->type)->toBe(QueueEventType::HoldEnded);
+    expect($ending->reason)->toBe('attempt_logged');
+    expect($ending->contact_attempt_id)->toBe($attempt->id);
+    expect(queueHistory($this->lead))->toBe(['entered', 'claimed', 'hold_ended:attempt_logged', 'attempt_counted']);
+});
+
+test('an attempt logged by someone else on a hold whose time ran out ends it as logged by other', function () {
+    $this->travelTo('2026-10-07 14:07:00');
+
+    $attempt = logAttempt($this->lead, $this->manager);
+
+    $ending = holdEnding();
+
+    expect($ending->type)->toBe(QueueEventType::HoldEnded);
+    expect($ending->reason)->toBe('attempt_logged_by_other');
+    expect($ending->contact_attempt_id)->toBe($attempt->id);
+    expect(LeadQueueEvent::query()->where('type', QueueEventType::HoldExpired)->count())->toBe(0);
+    expect(queueHistory($this->lead))->toBe(['entered', 'claimed', 'hold_ended:attempt_logged_by_other', 'attempt_counted']);
 });
 
 test('when someone else now holds the lead the former holder\'s late attempt still counts and ends that hold', function () {

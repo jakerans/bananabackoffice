@@ -228,6 +228,14 @@ class ClaimNextLead
         }
 
         $before = LeadCadence::query()->lockForUpdate()->find($cadenceId);
+
+        // The row as it is now already says the update below cannot win:
+        // nothing is written, so a caller who was beaten does not compete for
+        // the database's write lock on its way to the next candidate.
+        if ($before === null || ! $before->isInQueue() || $before->due_at === null || $before->due_at->gt($moment) || $before->isHeldAt($moment)) {
+            return null;
+        }
+
         $token = (string) Str::uuid();
         $until = $moment->copy()->addMinutes($check->settings->hold_minutes);
 
@@ -245,7 +253,7 @@ class ClaimNextLead
                 'updated_at' => $moment,
             ]);
 
-        if ($won !== 1 || $before === null) {
+        if ($won !== 1) {
             // Someone else got it, or the caller skipped it a moment ago.
             return null;
         }

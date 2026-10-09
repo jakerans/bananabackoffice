@@ -6,6 +6,7 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Enums\CadenceState;
 use App\Enums\QueueEventType;
+use App\Models\AccessGrant;
 use App\Models\ContactCenterSettings;
 use App\Models\Lead;
 use App\Models\LeadCadence;
@@ -34,8 +35,10 @@ class ReturnLeadToQueue
      * next opening. The Lead's status, assignee and lifecycle revision are not
      * touched.
      *
-     * The Lead is read again and the person is authorized again here, against
-     * the Lead as it is now. The change, its history entry and its audit
+     * The person, their access grants and the Lead are read again here, and
+     * the person as they are now is authorized against the Lead as it is now:
+     * a copy loaded before they were deactivated or lost a grant decides
+     * nothing. The change, its history entry and its audit
      * event are saved together or not at all. The change is made only if the
      * Lead is still out of the queue, so a second submit changes nothing.
      *
@@ -47,6 +50,15 @@ class ReturnLeadToQueue
         $note = trim((string) $note);
 
         DB::transaction(function () use ($lead, $note, $actor): void {
+            // The same order as the claim: the person, their grants, then the Lead.
+            $actor = User::query()->sharedLock()->find($actor->id);
+
+            if ($actor === null) {
+                throw new AuthorizationException;
+            }
+
+            $actor->setRelation('accessGrants', AccessGrant::query()->where('user_id', $actor->id)->sharedLock()->get());
+
             $current = Lead::query()->lockForUpdate()->findOrFail($lead->id);
 
             Gate::forUser($actor)->authorize('returnToQueue', $current);
