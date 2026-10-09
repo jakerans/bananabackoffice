@@ -12,6 +12,7 @@ before starting work, and update them in the same change that alters what they d
 | [roadmap.md](roadmap.md) | Checkpoints, the current checkpoint, and what has been built. |
 | [checkpoint-b.md](checkpoint-b.md) | The B1–B7 as-built record and the older unbuilt B8–B12 plan retained as historical context. |
 | [slice-4-plan.md](slice-4-plan.md) | The approved plan for slice 4: the call cadence, the due queue and its three build steps. Steps 4a and 4b are merged; 4c (the Call Queue screen) is built and awaiting review. |
+| [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) | The slice 5 rulebook for appointment issuance and ownership handoff (decisions 75 to 84). Design only: nothing in it is built or approved to build. Later appointment work must follow it. |
 | [navigation-map.md](navigation-map.md) | Every center and menu item, its stable ID, and whether it is built yet. |
 | [permission-model.md](permission-model.md) | Who can do what, and where. Roles, permissions, location rules. |
 | [design-system.md](design-system.md) | How the Backoffice design system is applied in code. |

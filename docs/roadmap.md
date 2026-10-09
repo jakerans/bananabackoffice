@@ -21,9 +21,13 @@ by the B7 merge was explicitly allowed and is verified separately. See
 "Integration checkpoint" below. **B8 to B12 are not built.**
 
 Slices 1 to 3 are completed and merged after B7. Slice 4 is authorized as
-described in decisions 65 to 74 and nothing beyond it. B8, Projects, production
-readiness, slice 5 and other downstream implementation remain unauthorized.
-The older future steps below remain historical planning context.
+described in decisions 65 to 74 and nothing beyond it. **Slice 5's rulebook is
+written** ([slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md),
+decisions 75 to 84, job #13): it is design only and authorizes no build. B8,
+Projects, production readiness, appointment implementation and other downstream
+implementation remain unauthorized. The older future steps below remain
+historical planning context; the rulebook replaces their Project-from-Qualified
+assumption with "a Project is created when the sale is Won" (decision 82).
 
 The former launch target of B1 to B9 and production-readiness timing around B7 or
 B8 are historical planning assumptions. They remain useful context but are not
@@ -54,7 +58,7 @@ received that approval.
 | 2 | Shared Customer Activity and unified Notes | **LOCKED:** shared records, context/provenance/history-preserving Notes, and Activity made from major business events rather than every audit event. | **Approved, built, verified and merged into `main` (2026-10-07).** Reuses existing customer, Lead note and curated audit evidence; every related Lead, note and event location remains permission-scoped, and no raw audit payload or sensitive finance field is rendered. |
 | 3 | Contact-attempt evidence foundation | **LOCKED:** each attempt is durable evidence with actor, channel, time and outcome; suspicious patterns go to manager review, with no automated punishment. **PENDING:** provider choice. | **Approved, built, verified and merged into `main` (2026-10-08).** Manual records are explicitly not provider-verified, preserve current actor/location/contact/lifecycle evidence, and cannot change lifecycle state. No provider selection, cadence enforcement or personnel policy is introduced. |
 | 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow; scope, exits, order, holds and failure rules (decisions 65, 67, 70, 71). **CONFIGURABLE:** cadence, calling hours and days, hold length (decisions 66, 69, 70). The scheduler, timezone, retry and failure contracts are **decided** (decisions 68, 71 and 73) and specified in [slice-4-plan.md](slice-4-plan.md). | **Approved for implementation (2026-10-08, decision 65). 4a merged; 4b built and awaiting review; 4c not built.** Three reviewed steps: 4a settings and timezones, 4b engine, 4c queue screen. No dialer, provider, outbound message, popup, snooze tray, Aged Leads, AI or penalties. B7 follow-ups are not reinterpreted as automated nurture. |
-| 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales. **PENDING:** exact Project creation transition and Pending ownership/validity policy. | **Order approved; not planned or authorized.** Contract/design slice only; do not implement Projects or invent the pending rules. |
+| 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales, under the fourteen rules in [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75 to 82), including: a Project is created when the sale is Won (decision 82). **CONFIGURABLE:** appointment length (default 90 minutes), the 30-day release after a cancellation, the Pending ownership period. **PENDING:** the Pending ownership period is provisional at 30 days until Sales Leadership confirms (decision 83); offer validity; the cancellation reasons; which salesperson an issued Lead counts for after a reassignment or re-issue; no-shows and appointment outcomes (decision 84). | **Rulebook written (job #13, 2026-10-09), design only. Nothing is built and no implementation is proposed or approved.** No code, table, permission, screen or Project. Later appointment work must follow the rulebook and needs its own reviewed plan and Jacob's explicit approval. |
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
@@ -486,7 +490,7 @@ outcome, because Backoffice is to be the system of record from launch.
 | — | **Integration checkpoint:** B1 to B6 merged into `main` and verified on staging | Complete (2026-10-06). See below. |
 | B7 | Qualification milestone, legitimate disqualification and Deferred Follow-up; lifecycle history and concurrency; Follow-ups view | Reconciled, owner-approved and merged into `main` (2026-10-07), including review corrections and accessible application confirmation dialogs. See decisions 55 to 58. |
 | — | **Production-readiness checkpoint** (historical timing) | Not authorized. Its former placement before B8a is pending replacement by the reconciled roadmap. |
-| B8 | Projects; the shared Projects page. Two reviewed steps, B8a and B8b. | Historical approved-in-principle plan from decision 54; not current implementation authority and pending revalidation. |
+| B8 | Projects; the shared Projects page. Two reviewed steps, B8a and B8b. | Historical approved-in-principle plan from decision 54; not current implementation authority and pending revalidation. Its Project-from-Qualified starting point is replaced as the target rule by decision 82: a Project is created when the sale is Won. |
 | B9 | Sales outcome: Won with Sold Amount, Lost | Historical sequence; not authorized and pending revalidation. |
 | B10 | Attachments and project photos | Historical sequence; not authorized and pending revalidation. |
 | B11 | Timeline and record history | Historical sequence; target Activity/Notes direction is reconciled above. Not authorized. |
