@@ -3,9 +3,12 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-08 · **Branch:** `office/10-slice-4a-location-timezones-and-cadence`
-**State:** Job #10 (Build, step 4a) is built and committed on its branch. It is not
-pushed and has no pull request yet; the office does both after review.
+**Updated:** 2026-10-09 · **Branch:** `office/10-slice-4a-location-timezones-and-cadence`
+**State:** Job #10 (Build, step 4a) is built, reviewed and pushed. Pull request:
+<https://github.com/jakerans/bananabackoffice/pull/4>. Both GitHub jobs passed.
+**It is not merged yet.** The office merges into `main` only if every GitHub check
+passes on the final commit; staging then deploys by itself. No staging deployment
+has been verified. Production is not touched and waits for Jacob.
 
 ## Step
 
@@ -37,9 +40,8 @@ behaves differently.
 - **Permissions.** `settings.contact_center.manage` (company-level, Owner and
   Leadership). `leads.work_queue` (location-level, not company-level; Leadership,
   Location Manager, Call Center Agent; Owner through all cases). Nothing reads
-  `leads.work_queue`: a search of `app/`, `routes/`, `resources/`, `config/` and
-  `bootstrap/` finds it only in `Permission.php` and `Role.php`, and a test keeps
-  it that way.
+  `leads.work_queue` outside `Permission.php` and `Role.php`, and a test keeps it
+  that way.
 - **The page.** Company > Settings > Contact Center at `/settings/contact-center`
   (route and navigation ID `settings.contact_center`), four sections each with its
   own Save: Call cadence (with total attempts shown), Calling hours (with Reset to
@@ -64,29 +66,44 @@ behaves differently.
   Every existing use is unchanged.
 - **Documents.** roadmap, slice-4-plan, permission-model, navigation-map and README
   describe 4a as built and 4b and 4c as not built. This file replaced.
+- **Two fix rounds after review** (2 used of at most 3). Round 1: a test that an
+  existing Location receives the default timezone when the migration is applied
+  (`tests/Feature/Database/Migrations/AddTimezoneToLocationsTest.php`), corrections
+  to the rules in `permission-model.md`, and the out-of-range hours steps below.
+  Round 2: that migration test now removes the Location row it creates and always
+  restores the column.
 
 ## Tests and checks, with their real results
 
-- `composer test` (style, static analysis, every test), run on this branch after the
-  last code change: **Pint passed; PHPStan passed with 0 errors; Pest passed, 1698
-  tests, 1698 passed, 7239 assertions.** (SQLite, the local database.)
-- Every test under the plan's "Step 4a" > "Tests" exists and passes. New:
-  `tests/Feature/Settings/ContactCenterSettingsTest.php` (migration defaults, access
-  by URL and direct Livewire call for every role, single-location Leadership,
+| Check | Result |
+| --- | --- |
+| `composer test` (style, static analysis, every test), run by the office on SQLite | **Passed** |
+| GitHub: "Checks and tests (SQLite)" | **Passed** ([run](https://github.com/jakerans/bananabackoffice/actions/runs/37864436384/job/113607680480)) |
+| GitHub: "Migrations and tests (MySQL 8.4)" | **Passed** ([run](https://github.com/jakerans/bananabackoffice/actions/runs/37864436384/job/113607680313)) |
+| Code review (reviewer) | **Approved**, read-only |
+| Code review (Architect) | **Approved**, read-only |
+| Click-through testing in a browser | **Not run.** The office has no test browser or test environment for this project yet |
+| Staging deployment | **Not verified.** Nothing is merged yet |
+
+- Both reviews were read-only inspections of the code. Neither reviewer ran anything;
+  they relied on the office's `composer test` result.
+- The Architect review confirmed by reading that `leads.work_queue` is read by
+  nothing outside the enum and the role lists, and that no 4b or 4c file exists (no
+  `lead_cadences`, queue events, `QueueEligibility`, command, schedule entry, Call
+  Queue page or navigation item).
+- The tests for the plan's "Step 4a" > "Tests" list are in
+  `tests/Feature/Settings/ContactCenterSettingsTest.php` (new: migration defaults,
+  access by URL and direct Livewire call, single-location Leadership,
   hours/days/cadence/hold refusals, versions, stale refusal, navigation, the
-  queue-permission-is-inert search). Extended: `RoleTest`,
-  `NavigationLandingControllerTest`, `NavigationTest`, `SettingsNavigationTest`,
-  `LocationsTest`, `LocationAuditEventsTest`, `AuditAtomicityTest` (audit event made
-  to fail), `ImpersonationTest`, `ApplicationConfirmationDialogsTest` (including the
-  native-dialog guard over the new page).
-- Migrations were run fresh and rolled back and re-applied locally on SQLite; they
-  are reversible like the existing ones. They use only plain columns, a json column
-  and a seeded insert, written to be valid on MySQL 8.4. **Not run here: MySQL 8.4.**
-- **Office to fill in after the push:** "Checks and tests (SQLite)": ______ ·
-  "Migrations and tests (MySQL 8.4)": ______ . I have not claimed either.
-- No 4b or 4c file exists: no `lead_cadences`, queue events, `QueueEligibility`,
-  command, schedule entry, Call Queue page or navigation item. `routes/console.php`
-  is unchanged.
+  queue-permission-is-inert search), the new migration test named above, and the
+  extended `RoleTest`, `NavigationLandingControllerTest`, `NavigationTest`,
+  `SettingsNavigationTest`, `LocationsTest`, `LocationAuditEventsTest`,
+  `AuditAtomicityTest` (audit event made to fail), `ImpersonationTest` and
+  `ApplicationConfirmationDialogsTest` (the native-dialog guard over the new page).
+- Migration reversibility: the builder reported running the migrations fresh,
+  rolling them back and re-applying them locally on SQLite. The office's record
+  holds no separate result for that, so treat it as the builder's statement. The
+  migrations did run on MySQL 8.4 inside the passing GitHub job.
 
 ## Architectural decisions made while building
 
@@ -100,6 +117,8 @@ None that need a new entry in `decisions.md`. Small implementation choices:
 - Reset to default restores only the opening and closing times, not the days.
 - The unique `version` index is the only guard against two simultaneous saves
   (no row lock, as instructed); a unique-index refusal is reported as stale.
+- The shared confirmation dialog gained the optional `confirm-variant` described
+  above. This file was not on the work order's expected list.
 
 ## Deviations from the plan
 
@@ -109,7 +128,7 @@ None that need a new entry in `decisions.md`. Small implementation choices:
   meant to grow: `ListsTest` "leadership sees settings under company with only this
   page in it" expected Leadership to see only Lead & Sales Lists in Settings. It now
   expects Lead & Sales Lists and Contact Center, which is the intended 4a result.
-  Every other existing test is unchanged. No Slice 3 or Lead test was touched.
+  No Slice 3 or Lead test was touched.
 
 ## Known limitations
 
@@ -119,9 +138,11 @@ None that need a new entry in `decisions.md`. Small implementation choices:
   the application timezone stays UTC.
 - Changing a Location's timezone moves nothing already scheduled (nothing is
   scheduled yet).
-- While running the migrations locally I used `migrate:fresh` against this
-  worktree's own local SQLite file, which emptied that local development database.
-  It is a disposable local copy; no shared or staging data was touched.
+- **Nobody has seen this work in a browser.** The steps below are the first
+  click-through it will get.
+- The builder reported using `migrate:fresh` against the worktree's own local SQLite
+  file, which emptied that disposable local development database. No shared or
+  staging data was touched.
 
 ## Decisions needed from Jacob
 
@@ -134,8 +155,9 @@ None that need a new entry in `decisions.md`. Small implementation choices:
 
 ## Browser review steps for Jacob (staging)
 
-Staging: <https://bananabackoffice-xg8eqczb.on-forge.com> (after the office has
-merged and deployed). Use fictitious data only.
+Staging: <https://bananabackoffice-xg8eqczb.on-forge.com>. Do this after the office
+has merged and staging has deployed; neither has happened yet. Use fictitious data
+only.
 
 1. **As Owner, change a Location's timezone.** Open Company > Locations. Each
    Location shows a Timezone column (Eastern by default). Press Timezone on one,
@@ -151,28 +173,28 @@ merged and deployed). Use fictitious data only.
    wait or add a day (the total updates); narrow the hours to 9:00 am to 8:00 pm;
    untick Sunday; set the hold to 10. Each Save shows a confirmation and changes
    only its own section. Reload the page and the values stay.
-4. **Try to break the limits.** First, hours outside 8 am to 9 pm: the Opens and
-   Closes lists offer only 8:00 am to 9:00 pm, so to send a value outside that range
-   open the browser's developer tools (F12), right-click the Opens list in the
-   Calling hours section, choose Inspect, double-click an option's `value` (for
-   example 8:00 am, `480`) and change it to `420` (7:00 am); select that option and
-   press Save under Calling hours. Repeat with the Closes list set to `1320` (10:00
-   pm). Each time the server refuses with a message and nothing is saved; reload and
-   the old hours are still shown. Then the other limits. The hour lists offer only 8:00 am to 9:00 pm. Try a
-   closing time at or before the opening, or less than an hour after it: it is
-   refused with a message. Untick every day and Save: refused. Set the hold to 0 or
-   31: refused. Make day 1's later wait 2 minutes: refused. Nothing is saved on a
-   refusal.
-5. **Reset to default.** Press Reset to default under Calling hours. A styled dialog
+4. **Try hours outside 8 am to 9 pm.** The Opens and Closes lists offer only
+   8:00 am to 9:00 pm, so an outside value has to be forced: open the browser's
+   developer tools (F12), right-click the Opens list in the Calling hours section,
+   choose Inspect, double-click an option's `value` (for example 8:00 am, `480`)
+   and change it to `420` (7:00 am); select that option and press Save under
+   Calling hours. Repeat with the Closes list set to `1320` (10:00 pm). Each time
+   the server refuses with a message and nothing is saved; reload and the old hours
+   are still shown.
+5. **Try the other limits.** A closing time at or before the opening, or less than
+   an hour after it: refused with a message. Untick every day and Save: refused.
+   Set the hold to 0 or 31: refused. Make day 1's later wait 2 minutes: refused.
+   Nothing is saved on a refusal.
+6. **Reset to default.** Press Reset to default under Calling hours. A styled dialog
    (not the browser's pop-up) opens with the cursor on Cancel; Escape and Cancel
    close it and return focus to the Reset button. Confirm it and the hours return
    to 8:00 am to 9:00 pm; the days and other settings stay as they were.
-6. **As a Leadership member with an all-locations grant**, open Company > Settings:
+7. **As a Leadership member with an all-locations grant**, open Company > Settings:
    it lists Lead & Sales Lists and Contact Center only, and `/settings` opens Lead &
    Sales Lists. Contact Center opens and saves. `/settings/locations` and
    `/settings/users` are refused.
-7. **As a Location Manager or Call Center Agent**, the Contact Center item is not
+8. **As a Location Manager or Call Center Agent**, the Contact Center item is not
    shown and typing `/settings/contact-center` in the address bar is refused.
-8. **Confirm existing Lead screens look and behave as before** (Leads list, a Lead's
+9. **Confirm existing Lead screens look and behave as before** (Leads list, a Lead's
    page, logging a contact attempt): nothing about them has changed, and there is no
    Call Queue anywhere yet.
