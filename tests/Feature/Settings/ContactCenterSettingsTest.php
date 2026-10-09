@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Support\Navigation\Navigation;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
@@ -666,23 +667,51 @@ test('the unbuilt settings pages do not borrow the contact center permission', f
 
 /*
 |--------------------------------------------------------------------------
-| The queue permission is inert in step 4a
+| The queue permission opens no screen until step 4c
 |--------------------------------------------------------------------------
+|
+| Step 4b is its first use: the queue engine's one eligibility rule reads it.
+| What stays true after 4b is that no route, navigation item or page does.
+|
 */
 
-test('nothing but the enum and the role lists reads the queue permission', function () {
+test('nothing but the enum, the role lists and the queue\'s eligibility rule reads the queue permission', function () {
     $offenders = collect(['app', 'routes', 'resources', 'config', 'bootstrap'])
         ->map(fn (string $directory) => base_path($directory))
         ->filter(fn (string $directory): bool => is_dir($directory))
         ->flatMap(fn (string $directory) => iterator_to_array(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS))))
         ->filter(fn (SplFileInfo $file): bool => $file->isFile())
-        ->reject(fn (SplFileInfo $file): bool => in_array(basename($file->getPathname()), ['Permission.php', 'Role.php'], true))
+        ->filter(fn (SplFileInfo $file): bool => preg_match('/WorkLeadQueue|leads\.work_queue/', (string) file_get_contents($file->getPathname())) === 1)
+        ->map(fn (SplFileInfo $file): string => str_replace(base_path().DIRECTORY_SEPARATOR, '', $file->getPathname()))
+        ->sort()
+        ->values()
+        ->all();
+
+    expect($offenders)->toBe([
+        'app/Enums/Permission.php',
+        'app/Enums/Role.php',
+        'app/Support/Queue/QueueEligibility.php',
+    ]);
+});
+
+test('no route, page or navigation code mentions the queue permission', function () {
+    $mentions = collect(['routes', 'resources', 'app/Http', 'app/Livewire', 'app/Support/Navigation', 'app/Providers', 'app/Policies'])
+        ->map(fn (string $directory) => base_path($directory))
+        ->filter(fn (string $directory): bool => is_dir($directory))
+        ->flatMap(fn (string $directory) => iterator_to_array(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS))))
+        ->filter(fn (SplFileInfo $file): bool => $file->isFile())
         ->filter(fn (SplFileInfo $file): bool => preg_match('/WorkLeadQueue|leads\.work_queue/', (string) file_get_contents($file->getPathname())) === 1)
         ->map(fn (SplFileInfo $file): string => $file->getPathname())
         ->values()
         ->all();
 
-    expect($offenders)->toBe([]);
+    expect($mentions)->toBe([]);
+
+    $routed = collect(Route::getRoutes()->getRoutes())
+        ->filter(fn ($route): bool => str_contains(json_encode($route->gatherMiddleware()).$route->uri().$route->getName(), 'work_queue')
+            || preg_match('#(^|/)queue(/|$)#', $route->uri()) === 1);
+
+    expect($routed)->toBeEmpty();
 });
 
 test('holding the queue permission opens no extra page', function () {

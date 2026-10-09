@@ -3,8 +3,10 @@
 namespace App\Actions\Leads;
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Queue\EndQueueHold;
 use App\Enums\AssignmentEndReason;
 use App\Enums\AuditAction;
+use App\Enums\QueueHoldEndReason;
 use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +17,7 @@ class ReturnLeadToCentral
     public function __construct(
         private RecordAuditEvent $recordAuditEvent,
         private UnassignLead $unassignLead,
+        private EndQueueHold $endQueueHold,
     ) {}
 
     /**
@@ -23,6 +26,10 @@ class ReturnLeadToCentral
      * Its assignee is cleared: the assignment belonged to the location it is
      * leaving. Its status does not change. After this, only people who may see
      * unrouted Leads can see it.
+     *
+     * Anyone holding the Lead from the call queue has that hold ended in the
+     * same transaction. Its place in the cadence and its due time stay as
+     * they are.
      *
      * The caller is responsible for checking that the actor may return Leads from
      * this location.
@@ -52,6 +59,10 @@ class ReturnLeadToCentral
         }
 
         DB::transaction(function () use ($lead, $origin, $reason, $actor): void {
+            // The Lead row is locked before anything else, with a write that
+            // changes nothing: the order a queue claim relies on.
+            DB::table('leads')->where('id', $lead->id)->update(['id' => DB::raw('id')]);
+
             $this->unassignLead->handle($lead, AssignmentEndReason::LocationChanged, $actor);
 
             $lead->location_id = null;
@@ -69,6 +80,8 @@ class ReturnLeadToCentral
                 location: $origin,
                 reason: trim($reason),
             );
+
+            $this->endQueueHold->forLead($lead, QueueHoldEndReason::Moved, $actor);
         });
     }
 }

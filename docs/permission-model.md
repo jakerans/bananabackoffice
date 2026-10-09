@@ -3,9 +3,11 @@
 Status: **Implemented rules and role grants through B7 are approved and built.**
 Canonical target guardrails are locked product direction. Any new permission,
 role grant or widening of scope still needs an approved implementation slice.
-**Slice 4 is such a slice. Step 4a added its two permissions to the code
-(`settings.contact_center.manage` and, by decision 74, `leads.work_queue`); the
-queue permission is held but guards nothing until step 4b.** The rest of slice 4
+**Slice 4 is such a slice. Step 4a (merged) added its two permissions to the
+code (`settings.contact_center.manage` and, by decision 74, `leads.work_queue`).
+Step 4b (built, awaiting review) is the queue permission's first use: the queue
+engine's one eligibility rule reads it. No page, route or navigation item uses
+it until step 4c.** The rest of slice 4
 is set out under "Slice 4" at the end of this document and must not be described
 as implemented until its step is merged.
 
@@ -431,10 +433,13 @@ Notes:
 ## Slice 4: the call queue and its settings
 
 Status: **approved for implementation on 2026-10-08 (decisions 65 to 74).
-Step 4a is built: both permissions are in the code, and
+Step 4a is merged: both permissions are in the code, and
 `settings.contact_center.manage` guards the Contact Center settings page.
-`leads.work_queue` is held by its four roles and read by nothing until step 4b.
-Steps 4b and 4c are not built.** Each permission is added to the code in the step named below. The full
+Step 4b is built (job #11, awaiting review): `leads.work_queue` is read in one
+place, the queue's eligibility rule (`app/Support/Queue/QueueEligibility.php`),
+and `LeadPolicy::returnToQueue` exists. Both are reached only through actions:
+there is no Call Queue page, route or navigation item until step 4c, which is
+not built.** Each permission is added to the code in the step named below. The full
 plan is [slice-4-plan.md](slice-4-plan.md). No existing permission, role grant or
 rule above is changed.
 
@@ -443,7 +448,7 @@ rule above is changed.
 | Permission | Scope | Allows | Step |
 | --- | --- | --- | --- |
 | `settings.contact_center.manage` | Company | Open Company > Settings > Contact Center and change the call cadence, calling hours and days, and hold length. Nothing else in Settings. | 4a |
-| `leads.work_queue` | Location | Open the Call Queue, be given the next due Lead, and skip it with a reason | Added in 4a, guarding nothing yet (decision 74); first used in 4b |
+| `leads.work_queue` | Location | Open the Call Queue, be given the next due Lead, and skip it with a reason | Added in 4a (decision 74); first used in 4b, by the engine only; the Call Queue page it opens is 4c |
 
 `settings.contact_center.manage` is a company-scope permission: it counts only
 when held through an all-locations grant.

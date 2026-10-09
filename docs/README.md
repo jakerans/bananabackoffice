@@ -11,7 +11,7 @@ before starting work, and update them in the same change that alters what they d
 | [product-architecture.md](product-architecture.md) | The canonical target product structure, domain boundaries and direction. Its status labels describe product certainty, not permission to implement. |
 | [roadmap.md](roadmap.md) | Checkpoints, the current checkpoint, and what has been built. |
 | [checkpoint-b.md](checkpoint-b.md) | The B1–B7 as-built record and the older unbuilt B8–B12 plan retained as historical context. |
-| [slice-4-plan.md](slice-4-plan.md) | The approved plan for slice 4: the call cadence, the due queue and its three build steps. Step 4a is built; 4b and 4c are not. |
+| [slice-4-plan.md](slice-4-plan.md) | The approved plan for slice 4: the call cadence, the due queue and its three build steps. Step 4a is merged; 4b (the engine, no screen) is built and awaiting review; 4c is not built. |
 | [navigation-map.md](navigation-map.md) | Every center and menu item, its stable ID, and whether it is built yet. |
 | [permission-model.md](permission-model.md) | Who can do what, and where. Roles, permissions, location rules. |
 | [design-system.md](design-system.md) | How the Backoffice design system is applied in code. |
@@ -79,6 +79,11 @@ each server's environment settings. See [decisions.md](decisions.md), decision 2
 | The five managed lists and their Settings page | `app/Enums/ManagedList.php`, `app/Models/ManagedListOption.php`, `app/Actions/Lists/`, `resources/views/pages/settings/⚡lists.blade.php` |
 | Contact Center settings (versioned rows) and their page | `app/Models/ContactCenterSettings.php`, `app/Actions/ContactCenter/`, `resources/views/pages/settings/⚡contact-center.blade.php` |
 | Location timezone and the list of allowed zones | `app/Support/Queue/LocationTimezones.php`, `app/Actions/Locations/ChangeLocationTimezone.php` |
+| Call cadence and queue: the cadence row, its history and the timer's heartbeat | `app/Models/LeadCadence.php`, `app/Models/LeadQueueEvent.php`, `app/Models/SchedulerHeartbeat.php` |
+| Calling hours, when an attempt is due, and "may this person be given this Lead now?" | `app/Support/Queue/CallingHours.php`, `app/Support/Queue/CadenceSchedule.php`, `app/Support/Queue/QueueEligibility.php` |
+| Queue actions (enter, advance, end, claim, skip, end hold, put back, tick) | `app/Actions/Queue/` |
+| The every-minute queue timer | `app/Console/Commands/QueueTick.php`, `routes/console.php` |
+| Real-concurrency test support (separate PHP processes; tests only) | `tests/Support/QueueProcesses.php`, `tests/Support/queue-process.php` |
 | Recording an audit event | `app/Actions/Audit/RecordAuditEvent.php`, `app/Enums/AuditAction.php`, `app/Models/AuditEvent.php` |
 | The short names records are stored under | `app/Providers/AppServiceProvider.php` (`configureRecordNames`) |
 | Application shell | `resources/views/layouts/app.blade.php`, `resources/views/components/shell/` |

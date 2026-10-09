@@ -45,6 +45,8 @@ use LogicException;
  * @property ContactAttemptDisposition $disposition
  * @property LeadStatus $lead_status
  * @property ContactAttemptLifecycleResult $lifecycle_result
+ * @property int|null $cadence_cycle The cadence cycle this attempt counted in. Empty when it did not count.
+ * @property int|null $cadence_step The cadence step it used up. Written with the row, never afterwards.
  * @property string|null $recording_reference
  * @property string|null $transcript_reference
  * @property Carbon $created_at
@@ -93,6 +95,8 @@ class ContactAttempt extends Model
             'disposition' => ContactAttemptDisposition::class,
             'lead_status' => LeadStatus::class,
             'lifecycle_result' => ContactAttemptLifecycleResult::class,
+            'cadence_cycle' => 'integer',
+            'cadence_step' => 'integer',
         ];
     }
 

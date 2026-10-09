@@ -1,7 +1,8 @@
 # Slice 4 — Scheduled Work and the Due Queue: Implementation Plan
 
-Status: **Planned and approved for implementation (2026-10-08). Step 4a is built
-(job #10, awaiting review); 4b and 4c are not built.** Jacob's decisions are 65 to 72 and 74 in
+Status: **Planned and approved for implementation (2026-10-08). Step 4a is
+merged into `main` (job #10). Step 4b is built (job #11, awaiting review). 4c is
+not built.** Jacob's decisions are 65 to 72 and 74 in
 [decisions.md](decisions.md); decision 73 records the design below. Where this plan
 and those decisions disagree, the decisions win and the build stops to ask.
 
@@ -161,7 +162,11 @@ is never changed afterwards.
    the effect from the table: for a counted attempt, `attempts_made + 1`,
    `last_counted_attempt_at`, and the next `due_at` or `finished_no_contact`;
    for a connection, end the cadence. Then end any hold and write the queue
-   events.
+   events. Ending a hold here always writes exactly one `hold_ended` event
+   naming the holder as `affected_user_id`: reason `attempt_logged` when the
+   holder logged the attempt, `attempt_logged_by_other` when someone else did.
+   (Clarified by the Architect for job #11: the reason list had no value for
+   the holder's own attempt. No rule changed.)
 
 If the insert fails, or anything after it fails, the whole transaction rolls
 back: there is never an attempt without its cadence change, or a cadence change
@@ -434,7 +439,7 @@ delete in the application like audit events and the status history.
 | --- | --- |
 | `id`, `lead_id` (FK, restrict), `lead_cadence_id` (FK, restrict) | Each with its own index. |
 | `type` | `entered`, `claimed`, `hold_expired`, `hold_ended`, `skipped`, `attempt_counted`, `ended`, `finished_no_contact`, `returned_to_queue`. |
-| `reason` | For `hold_ended`: `disqualified`, `deferred_follow_up`, `moved`, `access_lost`, `attempt_logged_by_other`, `outside_calling_hours`, `skip_cooldown`. For `ended`: `connected`, `disqualified`, `deferred_follow_up`. For `skipped`: the skip reason. |
+| `reason` | For `hold_ended`: `disqualified`, `deferred_follow_up`, `moved`, `access_lost`, `attempt_logged` (the holder logged an attempt on the Lead they hold), `attempt_logged_by_other` (someone else did), `outside_calling_hours`, `skip_cooldown`. For `ended`: `connected`, `disqualified`, `deferred_follow_up`. For `skipped`: the skip reason. |
 | `note` | The skip note, or the required note on a return to the queue. |
 | `cycle`, `step` | The cadence position at that moment. |
 | `hold_token`, `contact_attempt_id` (nullable FK) | |
@@ -527,10 +532,10 @@ its own evidence and is still not an audit event or Customer Activity.
 
 ## Step 4a — Settings and timezones
 
-**Status: built (job #10), awaiting review.** What exists after 4a: the column,
-the table with version 1, both permissions, the page, the navigation item and the
-four audit events. Nothing reads the settings or `locations.timezone`, and
-`leads.work_queue` guards nothing. No cadence, queue, command or schedule exists.
+**Status: merged into `main` (job #10).** What 4a added: the column, the table
+with version 1, both permissions, the page, the navigation item and the four
+audit events. In 4a itself nothing read the settings or `locations.timezone`,
+and `leads.work_queue` guarded nothing; step 4b is their first reader.
 
 Builds: the `locations.timezone` column and its field on the Locations page; the
 `contact_center_settings` table with version 1; `settings.contact_center.manage`;
@@ -590,6 +595,11 @@ Tests (Pest; every one runs on SQLite and on MySQL 8.4):
 - No native confirmation dialog is introduced (the existing regression test).
 
 ## Step 4b — The engine
+
+**Status: built (job #11), awaiting review.** Everything listed under "Builds"
+exists, with no screen, route or navigation item. The staging scheduler could
+not be checked from where the step was built: see "The server's scheduler on
+staging" and the handoff in [review/current.md](review/current.md).
 
 Builds: the 4b tables and columns; the first uses of `leads.work_queue` (already
 in the enum and roles since 4a, decision 74); the
@@ -817,7 +827,9 @@ Tests:
 ## The server's scheduler on staging
 
 Slice 4 needs Laravel's scheduler to run every minute on the staging server. It
-is not known to be enabled: the application has never had a scheduled task.
+is not known to be enabled: the application had no scheduled task before step
+4b. **Step 4b could not check it** (its builder has no view of the staging
+server or of Forge), so it remains unknown; 4c repeats the check.
 
 **Exactly what is needed:** one scheduler entry for the staging site, running as
 user `forge`, every minute:

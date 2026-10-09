@@ -52,6 +52,7 @@ enum AuditAction: string
     case LeadDisqualified = 'lead.disqualified';
     case LeadDisqualificationCorrected = 'lead.disqualification_corrected';
     case LeadReopened = 'lead.reopened';
+    case LeadReturnedToQueue = 'lead.returned_to_queue';
     case AccountCreated = 'account.created';
     case AccountEdited = 'account.edited';
     case AccountArchived = 'account.archived';

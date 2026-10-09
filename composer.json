@@ -71,6 +71,7 @@
             "phpstan analyse"
         ],
         "test": [
+            "Composer\\Config::disableProcessTimeout",
             "@php artisan config:clear --ansi",
             "@lint:check",
             "@types:check",

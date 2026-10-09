@@ -3,6 +3,7 @@
 namespace App\Actions\Leads;
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Queue\EnterLeadCadence;
 use App\Enums\AuditAction;
 use App\Enums\LeadStatus;
 use App\Enums\Role;
@@ -29,6 +30,7 @@ class CaptureLead
     public function __construct(
         private RecordAuditEvent $recordAuditEvent,
         private AssignLead $assignLead,
+        private EnterLeadCadence $enterLeadCadence,
     ) {}
 
     /**
@@ -56,6 +58,9 @@ class CaptureLead
      * linked to that customer as it is saved, with the person and property it is
      * about when those are given. Both must belong to that customer. The inquiry
      * is still recorded as it was received.
+     *
+     * Every Lead recorded here enters the phone cadence in the same
+     * transaction: the Lead and its cadence are saved together or not at all.
      *
      * The caller is responsible for checking that the person may capture a Lead
      * for this location, and may see the customer it is recorded for; this action
@@ -191,11 +196,13 @@ class CaptureLead
                 location: $location,
             );
 
-            if ($location !== null && $capturedBy->holdsRoleAt(Role::SalesConsultant, $location)) {
-                $lead->setRelation('location', $location);
+            $lead->setRelation('location', $location);
 
+            if ($location !== null && $capturedBy->holdsRoleAt(Role::SalesConsultant, $location)) {
                 $this->assignLead->handle($lead, $capturedBy, $capturedBy);
             }
+
+            $this->enterLeadCadence->handle($lead, $capturedBy);
 
             return $lead;
         });
