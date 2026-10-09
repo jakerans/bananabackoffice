@@ -3,164 +3,162 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-09 · **Branch:** `office/13-slice-5-appointment-and-ownership-handof`
-· **Pull request:** [#7](https://github.com/jakerans/bananabackoffice/pull/7)
+**Updated:** 2026-10-09 · **Branch:** `checkpoint-docs-slice-4-5-status`
 
-**State:** Job #13 is written, reviewed and pushed. It is **documents only**. No
-application code, table, permission, screen or test was added or changed. The
-office's record shows the work order approved by Jacob in the office on Oct 8,
-6:18 pm. The pull request is **not merged yet**: the office merges into `main`
-after this report, and only if every GitHub check passes on the final commit.
-Staging has not been verified by anyone. Production is not touched.
+**State:** slices 1 to 4 and the slice 5 rulebook are merged into `main`
+(pull requests #2 to #7). Both GitHub jobs passed on the `main` commit that holds
+all of it (`1a30c8d`), and Forge deployed that commit to staging. **Nothing is
+waiting to be built, and nothing further is authorized.** What is waiting is
+Jacob's review of the Call Queue (slice 4, step 4c), which nobody has yet looked
+at in a browser, and the decisions listed below.
 
-## Step
-
-Slice 5: the appointment issuance and ownership handoff rulebook. Design only.
-
-Objective: write Jacob's fourteen decisions from conversation on 2026-10-08 into
-the project documents, so that later appointment work has one rulebook to
-follow, without building anything and without implementing Projects.
+This change is **documents only**. It corrects status lines that still said step
+4b or 4c was "awaiting review" or "not built" after they were merged, records the
+staging scheduler check, and makes the two wording corrections the Reviewer
+suggested for job #13.
 
 ## What changed
 
-One commit on the branch ("Architect: document updates for job #13"), touching
-five files, all under `docs`:
-
 | Document | Change |
 | --- | --- |
-| [../slice-5-appointment-rulebook.md](../slice-5-appointment-rulebook.md) | **New.** The fourteen rules, what counts as issued, what is still open, two readings to confirm, and the gaps a later build plan must bring to Jacob. |
-| [../decisions.md](../decisions.md) | **Decisions 75 to 84** added. |
-| [../roadmap.md](../roadmap.md) | The slice 5 row, the "Where we are" paragraph and the historical B8 row now point at the rulebook and decision 82. |
-| [../README.md](../README.md) | The rulebook is listed. |
-| This file | Replaced with the job #13 handoff. |
+| [../roadmap.md](../roadmap.md) | "Where we are", the slice 4 row, the slice 4 boundary heading and the 4c row now say merged. The slice 5 row says the rulebook is merged and cites decisions 75 to 83 (was 75 to 82). The staging scheduler paragraph records that it is off. |
+| [../slice-4-plan.md](../slice-4-plan.md) | The two status lines say 4c is merged. "The server's scheduler on staging" records the check and the site's real directory. |
+| [../README.md](../README.md), [../navigation-map.md](../navigation-map.md), [../permission-model.md](../permission-model.md) | The 4c status wording says merged. No rule, permission or navigation entry changed. |
+| [../slice-5-appointment-rulebook.md](../slice-5-appointment-rulebook.md) | Rule 12, last sentence: "otherwise cannot take an unassigned Lead", so it no longer reads as contradicting the released-Lead exception above it. No change of meaning. |
+| This file | Replaced with this handoff. The job #12 and job #13 handoffs are in the Git history. |
 
-In one paragraph: a Qualified, routed Lead with a customer and property address
-can be booked with a salesperson; saving the appointment is the moment the Lead
-is "issued" and handed to Sales with the new status Appointment Booked. The
-rulebook then covers rescheduling, moving to another salesperson, a customer
-cancelling (with a 30-day window before the Lead goes to the call center's
-Cancelled Appointments group), sending a Lead back by hand, "booked in error",
-the cancellation reasons list, a salesperson picking a released Lead back up, a
-Project being created only when the sale is Won, and provisional Pending
-ownership of 30 days.
+No application code, table, permission or screen changed. **One test was
+corrected, not weakened:** "only the enum, the role lists, the eligibility rule
+and the Call Queue route and navigation item read the queue permission" in
+`tests/Feature/Settings/ContactCenterSettingsTest.php` compared file paths
+written with `/` against paths Windows writes with `\`, so it passed on GitHub
+and failed on the Windows development machine. It now compares them with `/` on
+every system. The list of files it expects is unchanged.
 
-Three earlier decisions are changed by Jacob's newer ones, and each change is
-written where it applies:
-
-- **Decision 54** (and decision 27, and the historical B8 sequence): a Project
-  is no longer assumed to come from a Qualified Lead. It is created when the
-  sale is Won (decision 82). The affected historical permission rows are listed
-  in the rulebook, rule 13. They are not in the code and were not rewritten.
-- **Decision 39:** the managed lists were fixed at five. A sixth, cancellation
-  reasons, is reserved (decision 79). It is not created yet.
-- **Decision 44:** Sales Consultants still do not claim Leads, with one narrow
-  exception: taking back a Lead they were issued before (decision 81).
-
-## Tests and checks, with their real results
+## Checks, with their real results
 
 | Check | Result |
 | --- | --- |
-| `composer test` (style, static analysis, every test), run by the office | **Passed.** |
-| GitHub "Checks and tests (SQLite)" | **Passed.** [Run](https://github.com/jakerans/bananabackoffice/actions/runs/37933803939/job/113830741098) |
-| GitHub "Migrations and tests (MySQL 8.4)" | **Passed.** [Run](https://github.com/jakerans/bananabackoffice/actions/runs/37933803939/job/113830740835) |
-| Independent review (the Reviewer, read-only) | **Approved**, with two notes that did not block. They are under "Open follow-ups" below. |
-| Architect review | Not an independent check: the Architect wrote this plan. The independent check was the Reviewer's. |
-| Fix rounds | 0 used, of at most 3. |
-| Click-through testing | **Not run.** The office has no test browser or test environment for this project yet. Nothing visible changed in this job. |
-| Merge into `main` | **Not done yet.** |
-| Staging | **Not verified.** The project deploys to staging by itself after a merge; the office does not deploy and has not checked any deployment. |
-| Production | Not touched. It always waits for Jacob. |
+| GitHub "Checks and tests (SQLite)" on `main` at `1a30c8d` | **Passed** (run 37935214310). |
+| GitHub "Migrations and tests (MySQL 8.4)" on `main` at `1a30c8d` | **Passed** (same run). |
+| Staging deployment of `1a30c8d` | **Finished** in Forge, 2026-10-09 13:12 UTC. The three earlier slice 4 merges also deployed and finished. |
+| Staging pages looked at after those deployments | **Not done.** Forge reports the deployments finished; nobody has opened staging since. |
+| Staging scheduler | **Checked in Forge: off.** See below. |
+| Open pull requests | None. |
+| `composer test` on this branch, on the Windows development machine | **Passed:** style, static analysis, and 1,973 tests (1,972 passed, 1 skipped, 9,579 assertions) in 219 seconds. The skipped test is the device-time formatter (see "Known limitations"). Before the test correction below, the same run had one failure, described under "What changed". |
+| GitHub jobs on this branch | Reported with the merge; not recorded here. |
 
-The passing checks show that the application's existing tests still pass with
-these documents added. They do not test the rulebook itself, which is prose.
+## Staging scheduler: off
 
-## Architectural decisions made while building
+Forge reports the staging site's Laravel scheduler as not enabled, and neither
+the site nor the server has a scheduled job that runs `schedule:run`. Nothing
+was changed.
 
-None beyond Jacob's fourteen. Two readings of his decisions against the existing
-documents were needed to write the rules down; both are labelled "to confirm"
-and are the two decisions below.
+Effect: the Call Queue still hands out Leads, holds them and records attempts.
+What does not run is the every-minute timer, so expired holds are only cleared
+when someone next presses Next lead, and managers see the yellow "The queue
+timer has not run lately" warning.
 
-## Deviations from the approved plan
+To turn it on, either of these (one step, staging only):
 
-None recorded.
+1. In Forge, open server "BackOffice", the staging site, and switch on the
+   Laravel scheduler if the site offers it; or
+2. add a scheduled job: user `forge`, every minute, command
+   `php /home/forge/bananabackoffice-xg8eqczb.on-forge.com/current/artisan schedule:run`.
+
+The implementation agent can do the second through Forge if Jacob says so.
 
 ## Decisions needed from Jacob
 
-1. **Confirm what "a manager" means in the rulebook.** It is written as Owner,
-   Leadership or Location Manager at the Lead's Location, and **not** a Call
-   Center Agent, because that is how the documents already use the word and
-   because your booking rule names the Call Center Agent separately. The effect:
-   a Call Center Agent can book and can rebook a Lead from Cancelled
-   Appointments, but cannot reschedule a salesperson's existing appointment,
-   move it to another salesperson, send an issued Lead back, or mark one
-   "booked in error". Recommendation: confirm. If you want agents to be able to
-   reschedule when a customer calls in, say so and it becomes a rule.
-2. **Confirm that a Sales Consultant who books their own Lead books it for
-   themselves only.** Picking a colleague would be handing a Lead out, which
-   decision 44 keeps with management and the call center. Recommendation:
-   confirm.
+From slice 4, step 4c (the Call Queue):
 
-Neither blocks this job. Both are marked "to confirm" in the rulebook and in
-decision 84.
+1. **Should a Call Center Agent see the manager part of the Call Queue?** As
+   built they do, at their own Locations (summary, timer warning,
+   cadence-finished list, Put back in queue), because the existing role may
+   assign Leads. Keeping it needs nothing. Hiding it is a product decision about
+   the role. Recommendation: decide after seeing it (step 9 below).
+2. **Skip after calling hours close.** As built the card disappears when hours
+   close, so no skip reason is recorded and the hold simply ends.
+   Recommendation: keep.
+3. **The MySQL deadlock follow-up.** Two actions on the same hold within
+   milliseconds can end in an error for one of them; nothing is half-saved.
+   Approve it as its own job, or leave it recorded. Recommendation: approve it
+   before real setters use the queue.
+4. **The staging scheduler:** say whether to turn it on (above).
 
-## Open follow-ups
+From slice 5 (the appointment rulebook). Neither blocks anything today:
 
-From the Reviewer. Neither blocked approval, and neither has been made:
+5. **Confirm what "a manager" means:** Owner, Leadership or Location Manager at
+   the Lead's Location, and not a Call Center Agent. Effect: an agent can book
+   and rebook, but cannot reschedule a salesperson's appointment, move it, send
+   an issued Lead back or mark one "booked in error". Recommendation: confirm.
+6. **Confirm that a Sales Consultant booking their own Lead books it for
+   themselves only.** Recommendation: confirm.
 
-1. **Roadmap, slice 5 row:** the reference beside "fourteen rules" reads
-   decisions 75 to 82. Consider changing it to 75 to 83, because rule 14 maps
-   to decision 83.
-2. **Rulebook, rule 12, last sentence:** consider "otherwise cannot take an
-   unassigned Lead", so it does not appear to contradict the released-Lead
-   exception written just above it.
+And what comes next:
 
-Both are wording corrections with no change of meaning. Recommendation: make
-them in the next documents change.
+7. **Which work to plan next.** The approved five-slice order is finished.
+   Building appointments from the rulebook, Projects and the sales outcome, and
+   production readiness are all unauthorized and need their own plan.
 
-## Known limitations
+## Browser review of the Call Queue
 
-- **The rulebook has gaps on purpose.** The fourteen decisions do not say, for
-  example, which status a Lead shows after it goes back to Contact Center, what
-  happens to an appointment when its Lead moves to another Location or is
-  disqualified, or what happens when the company (not the customer) cancels.
-  These are listed in the rulebook under "Not decided here" so that the build
-  plan asks instead of guessing. No rule was invented for them.
-- **Still open, as you recorded:** which salesperson an issued Lead counts for
-  after a reassignment or re-issue; offer validity; the cancellation reasons
-  themselves; no-shows and appointment outcomes. The Pending ownership period is
-  provisional until Sales Leadership confirms.
-- **Nothing is authorized to be built.** Appointment work needs its own plan
-  and Jacob's approval, and must follow the rulebook.
-- **Documents not changed by this job:**
-  [../permission-model.md](../permission-model.md) and
-  [../checkpoint-b.md](../checkpoint-b.md) still show the historical Project
-  rows as they were (already marked historical there);
-  [../product-architecture.md](../product-architecture.md) still lists the
-  Pending ownership period as pending, which stays true; and the slice 4 status
-  lines in the roadmap were left as job #12 wrote them.
+Nobody has looked at this screen in a browser. It can be reviewed locally at
+`http://backoffice.test` (the local copy is up to date, migrated and rebuilt) or
+on staging. Use fictitious Leads only.
 
-## Browser review
+1. **Each role's menu.** As an Owner, a Leadership user, a Location Manager and a
+   Call Center Agent in turn: Marketing > Contact Center shows **Leads** and
+   **Call Queue**. As a Sales Consultant, a Production Manager and a Finance
+   user: no Call Queue, and typing `/marketing/contact-center/queue` gives
+   "forbidden". Clicking Contact Center itself still opens Leads.
+2. **Next lead.** As a Call Center Agent open Call Queue. You see "N leads due
+   now" and **Next lead**, and no list of Leads. Press it. One card appears.
+3. **The card and its times.** Name, phone, Location, "Attempt 1 of …", what was
+   asked for, earlier attempts, a countdown for the hold, and a link to the full
+   Lead. Each time shows your device's time and, beside it, the Location's time.
+   Compare a Lead at an Eastern Location with one at a Pacific Location.
+4. **Log attempt.** The dialog says outbound phone call, has no channel or
+   direction choice, and starts with the cursor on Cancel. Choose "No answer",
+   enter a duration and save. The card is replaced by "Your call was logged."
+   The Lead page shows one new attempt and the next attempt scheduled.
+5. **Skip.** Saving with no reason is refused; "Other" with no note is refused;
+   with a note it saves. Escape closes any dialog and focus returns to the
+   button you pressed.
+6. **Disqualify.** Choose a reason (try Duplicate and its "original" choice) and
+   save. The card is replaced by a message and Next lead.
+7. **The gone-hold message.** Hold a card. In another browser, as a manager,
+   disqualify that Lead, move it to another Location, or wait out the hold.
+   Within about 10 seconds the card is replaced by a short reason and shows
+   nothing about the Lead. Also open Log attempt, let the hold run out, and
+   save: the call should still be saved.
+8. **Nothing due, and closing time.** With no Lead due: "Nothing is due for you
+   right now." Outside calling hours it also says when they open.
+9. **Manager summary and timer warning.** As a Location Manager or Owner: Due
+   now, Longest wait, Leads held now, and Cadence finished, no contact. A
+   Location Manager sees only their own Locations' numbers. The yellow timer
+   warning shows while the scheduler is off. Then open the page as a Call Center
+   Agent and note that the same manager part shows; that is decision 1.
+10. **Cadence-finished list.** Press **Put back in queue**: the dialog needs a
+    note. After saving, the Lead leaves the list.
+11. **Put back from the Lead page.** A Lead whose cadence finished shows a "Call
+    queue" panel with its state, history and Put back in queue. A Sales
+    Consultant who can open the Lead does not see the panel.
+12. **Two-person test.** Two setters, two browsers, same Location, at least ten
+    Leads due. Both press Next lead at the same moment, then skip or log, many
+    times over. They must never be shown the same Lead at the same time.
 
-Not applicable: nothing visible changed.
+## Known limitations carried forward
 
-## Still waiting from job #12 (slice 4, step 4c: the Call Queue screen)
-
-The repository this job started from shows pull request #6 merged into `main`.
-**This job did not verify the staging deployment, and nobody has yet looked at
-the Call Queue in a browser.** The full job #12 handoff, with the twelve
-browser-review steps, the Forge scheduler step and the fourteen follow-ups, is
-an earlier version of this file in the Git history ("Architect: review handoff
-for job #12"). Its decisions are still waiting:
-
-1. Should a Call Center Agent see the manager part of the Call Queue (summary,
-   timer warning, cadence-finished list, Put back in queue)? Recommendation:
-   decide after seeing it on staging.
-2. Skip after calling hours close: keep as built (the card disappears and the
-   hold simply ends)? Recommendation: keep.
-3. Confirm or change the other readings and builder's choices in that handoff.
-4. Whether to approve the MySQL deadlock follow-up as its own job.
-5. Whether staging's scheduler is on in Forge. The Call Queue's yellow timer
-   warning, seen as a manager two minutes after a deployment, tells you.
-
-Also still to do from that handoff: the browser review, the two-person test, and
-recording the final test count and duration.
+- The fourteen follow-ups from the job #12 handoff are still open and none is
+  authorized. The ones a reviewer will notice on screen: the held and
+  cadence-finished lists stop at 25 with no notice; the card shows the Lead's
+  inquiry phone while the attempt form pre-fills the linked contact's phone; and
+  losing access while the Skip dialog is open shows a "forbidden" page instead
+  of the access-changed notice.
+- The device-time formatter test skips itself on the Windows development
+  machine, because it looks for Node with a command Windows does not have.
+  This is follow-up 8 of the job #12 handoff and is unchanged.
+- Leads captured since step 4b are already due, so the first "due now" count on
+  a database with existing Leads will be large.
+- Staging runs PHP 8.5 while local development and both GitHub jobs use PHP 8.4.

@@ -6,7 +6,7 @@ role grant or widening of scope still needs an approved implementation slice.
 **Slice 4 is such a slice. Step 4a (merged) added its two permissions to the
 code (`settings.contact_center.manage` and, by decision 74, `leads.work_queue`).
 Step 4b (merged) is the queue permission's first use: the queue
-engine's one eligibility rule reads it. Step 4c (built, awaiting review) makes it
+engine's one eligibility rule reads it. Step 4c (merged) makes it
 open the Call Queue page: its one route and its one navigation item.** The rest of slice 4
 is set out under "Slice 4" at the end of this document and must not be described
 as implemented until its step is merged.
@@ -437,7 +437,7 @@ Step 4a is merged: both permissions are in the code, and
 `settings.contact_center.manage` guards the Contact Center settings page.
 Step 4b is merged (job #11): `leads.work_queue` is read by the queue's
 eligibility rule (`app/Support/Queue/QueueEligibility.php`), and
-`LeadPolicy::returnToQueue` exists. Step 4c is built (job #12, awaiting review):
+`LeadPolicy::returnToQueue` exists. Step 4c is merged (job #12):
 `leads.work_queue` now also gates the Call Queue route and navigation item, and
 every action on that page checks it again. The page's manager part (summary,
 cadence-finished list, queue history, Put back in queue) belongs to people who

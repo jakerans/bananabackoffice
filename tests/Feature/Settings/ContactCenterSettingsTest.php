@@ -682,7 +682,7 @@ test('only the enum, the role lists, the eligibility rule and the Call Queue rou
         ->flatMap(fn (string $directory) => iterator_to_array(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS))))
         ->filter(fn (SplFileInfo $file): bool => $file->isFile())
         ->filter(fn (SplFileInfo $file): bool => preg_match('/WorkLeadQueue|leads\.work_queue/', (string) file_get_contents($file->getPathname())) === 1)
-        ->map(fn (SplFileInfo $file): string => str_replace(base_path().DIRECTORY_SEPARATOR, '', $file->getPathname()))
+        ->map(fn (SplFileInfo $file): string => str_replace(DIRECTORY_SEPARATOR, '/', str_replace(base_path().DIRECTORY_SEPARATOR, '', $file->getPathname())))
         ->sort()
         ->values()
         ->all();

@@ -2,7 +2,8 @@
 
 Status: **Planned and approved for implementation (2026-10-08). Step 4a is
 merged into `main` (job #10). Step 4b is merged into `main` (job #11). Step 4c is
-built (job #12, awaiting review).** Jacob's decisions are 65 to 72 and 74 in
+merged into `main` (job #12, 2026-10-09); Jacob's browser review of it is still
+owed.** Jacob's decisions are 65 to 72 and 74 in
 [decisions.md](decisions.md); decision 73 records the design below. Where this plan
 and those decisions disagree, the decisions win and the build stops to ask.
 
@@ -768,9 +769,10 @@ Tests:
 
 ## Step 4c — The queue screen
 
-**Status: built (job #12), awaiting review.** The staging scheduler still could not
-be checked from where the step was built; the manager summary's timer warning is
-now how Jacob can tell (see "The server's scheduler on staging").
+**Status: merged into `main` (job #12, 2026-10-09). Jacob's browser review and the
+two-person test are still owed.** The staging scheduler could not be checked from
+where the step was built. It was checked in Forge afterwards and is off (see "The
+server's scheduler on staging").
 
 Builds: the Call Queue page and its navigation item; the card; the shared
 contact-attempt form; the skip dialog; Disqualify on the card; the manager
@@ -877,10 +879,17 @@ Tests:
 
 ## The server's scheduler on staging
 
-Slice 4 needs Laravel's scheduler to run every minute on the staging server. It
-is not known to be enabled: the application had no scheduled task before step
-4b. **Step 4b could not check it** (its builder has no view of the staging
-server or of Forge), so it remains unknown; 4c repeats the check.
+Slice 4 needs Laravel's scheduler to run every minute on the staging server. The
+application had no scheduled task before step 4b, and neither 4b's nor 4c's
+builder could see the staging server or Forge.
+
+**Checked in Forge on 2026-10-09, after 4c was merged: it is off.** Forge reports
+the staging site's Laravel scheduler as not enabled, and neither the site nor
+the server has a scheduled job that runs `schedule:run` (the server's only two
+jobs are Forge's own maintenance jobs). The site uses zero-downtime deployments,
+so its directory is
+`/home/forge/bananabackoffice-xg8eqczb.on-forge.com/current`. Nothing was
+changed: turning the scheduler on waits for Jacob.
 
 **Exactly what is needed:** one scheduler entry for the staging site, running as
 user `forge`, every minute:

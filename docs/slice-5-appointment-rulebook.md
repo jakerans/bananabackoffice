@@ -148,7 +148,7 @@ make the move** (rule 7).
 
 This is a narrow exception to decision 44 ("Sales Consultants do not claim
 Leads"). It covers only a Lead that this same salesperson was issued before.
-A Sales Consultant still cannot take an unassigned Lead or a colleague's Lead.
+A Sales Consultant otherwise cannot take an unassigned Lead or a colleague's Lead.
 
 ### 13. A Project is created when the sale is Won
 
