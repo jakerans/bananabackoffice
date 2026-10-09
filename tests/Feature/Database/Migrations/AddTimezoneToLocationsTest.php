@@ -12,15 +12,24 @@ test('a Location that existed before the timezone migration receives America/New
     $migration->down();
     expect(Schema::hasColumn('locations', 'timezone'))->toBeFalse();
 
-    DB::table('locations')->insert([
-        'name' => 'Lakeside Studio',
-        'is_active' => true,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    try {
+        DB::table('locations')->insert([
+            'name' => 'Lakeside Studio',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
-    $migration->up();
+        $migration->up();
 
-    expect(Schema::hasColumn('locations', 'timezone'))->toBeTrue();
-    expect(DB::table('locations')->where('name', 'Lakeside Studio')->value('timezone'))->toBe('America/New_York');
+        expect(Schema::hasColumn('locations', 'timezone'))->toBeTrue();
+        expect(DB::table('locations')->where('name', 'Lakeside Studio')->value('timezone'))->toBe('America/New_York');
+    } finally {
+        // On MySQL these schema changes commit the test transaction, so remove the row explicitly.
+        if (! Schema::hasColumn('locations', 'timezone')) {
+            $migration->up();
+        }
+
+        DB::table('locations')->where('name', 'Lakeside Studio')->delete();
+    }
 });
