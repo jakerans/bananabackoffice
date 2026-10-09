@@ -1700,6 +1700,150 @@ In 4a the permission guards nothing: no route, navigation item, policy, action o
 screen reads it, so holding it changes what nobody can see or do. Step 4b builds
 the engine that uses it and step 4c the screen. Nothing else moves between steps.
 
+## Slice 5 decisions (75 to 84)
+
+Decided by Jacob in conversation on 2026-10-08 and recorded here by planning job
+#13. The full rulebook is
+[slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md); its rule
+numbers are given in brackets. **Design only: none of these decisions authorizes
+code, a table, a permission, a screen or Projects.**
+
+## 75. Slice 5 is a design rulebook, and later appointment work must follow it (2026-10-08)
+
+**Approved by Jacob.** Slice 5 delivers the rulebook for appointment issuance and
+the handoff of ownership from Contact Center to Sales, and nothing else. Later
+appointment work must follow it. Building any part needs its own reviewed plan
+and Jacob's explicit approval.
+
+Rules out: treating the rulebook as implementation approval; filling a gap in it
+by guessing.
+
+## 76. When a Lead can be booked, and who can book it (2026-10-08)
+
+**Approved by Jacob.** (Rules 1, 2 and 5.)
+
+- A Lead can be booked only when it is Qualified, routed to a Location and
+  linked to a customer with a property address.
+- A booking needs a salesperson, a date and time, and a length. The length
+  defaults to 90 minutes.
+- Owner, Leadership, Location Manager and Call Center Agent can book. A Sales
+  Consultant can book only a Lead already assigned to them.
+- The chosen salesperson must have Sales Consultant access at the Lead's
+  Location.
+- Backoffice refuses to book a salesperson into a time that overlaps another
+  Backoffice appointment. Personal calendar conflicts wait for Google Calendar.
+
+## 77. "Issued" happens when the appointment is saved (2026-10-08)
+
+**Approved by Jacob.** (Rules 3 and 4.) The moment the appointment is saved: the
+Lead is assigned to the salesperson; it gets a new status, **Appointment
+Booked**; it leaves the call queue; the issued time is stored permanently so
+Leads Issued can be counted; an Activity entry is written; and the salesperson
+is notified in the app and by an email with a link and no customer details.
+
+Qualified keeps its meaning from decision 55. **Once appointments are built,
+Appointment Booked is one of the things that removes a Lead from the slice 4
+call queue,** alongside the exits in decision 67. Slice 4 is not changed now.
+
+## 78. Rescheduling, and moving an appointment to another salesperson (2026-10-08)
+
+**Approved by Jacob.** (Rules 6 and 7.)
+
+- **Reschedule:** the salesperson or a manager changes the time. Same
+  salesperson, still issued, one issued Lead. The old time is kept in history.
+- **A different salesperson:** only a manager. It is a handoff with an Activity
+  entry and a notification, and history shows both people.
+
+## 79. Customer cancellation, Cancelled Appointments and cancellation reasons (2026-10-08)
+
+**Approved by Jacob.** (Rules 8 and 11.)
+
+- A cancelled appointment is kept as a cancelled record with who cancelled and a
+  reason. The Lead stays with the salesperson to rebook and still counts as
+  issued.
+- Not rebooked within 30 days of the cancellation (an adjustable setting), it
+  comes off the salesperson's list automatically and goes to the call center in
+  its own group, **Cancelled Appointments**.
+- Cancelled Appointments is a saved segment, selectable on its own for the call
+  queue and, once broadcasts exist, for reactivation texts and emails under the
+  consent, suppression and send-window safeguards in
+  [product-architecture.md](product-architecture.md).
+- A call center rebooking may go to any salesperson and is recorded as a
+  re-issue with full history.
+- **Cancellation reasons are a managed list on the existing Lead & Sales Lists
+  page.** The list is reserved; the reasons come from Sales Leadership.
+
+**This supersedes the part of decision 39** that fixed the managed lists at
+five. Nothing is added until appointment work is approved.
+
+## 80. Sending an issued Lead back, and "booked in error" (2026-10-08)
+
+**Approved by Jacob.** (Rules 9 and 10.)
+
+- A manager can send any issued Lead back to Contact Center by hand with a note.
+  It re-enters the call queue.
+- A manager can mark an appointment "booked in error" with a note. The handoff
+  is undone, the Lead returns to Contact Center and it does not count as issued.
+  Manager-only and recorded.
+
+## 81. A salesperson may pick a released Lead back up (2026-10-08)
+
+**Approved by Jacob.** (Rule 12.) When a Lead was released from a salesperson to
+the call center, after a cancellation or an expired Pending, and the homeowner
+contacts that salesperson, the salesperson can take it back with a short note
+and continue where it left off: same history, same bid, no new issued count. It
+leaves the call center groups and an Activity entry is written. If it has
+already been rebooked with a different salesperson, a manager must make the
+move.
+
+**This is a narrow exception to decision 44** ("Sales Consultants do not claim
+Leads"). It covers only a Lead that the same salesperson was issued before.
+Everything else in decision 44 stands.
+
+## 82. A Project is created when the sale is Won (2026-10-08)
+
+**Approved by Jacob** as the target rule. (Rule 13.) Before Won, the record is
+the Lead and its appointment.
+
+**This replaces the Project-from-Qualified assumption in decision 54** (and the
+same idea in decision 27) **and the historical B8 sequence.** It settles the
+"exact Project creation point" that decision 59 left open. Nothing is built and
+Projects stay unauthorized.
+
+The historical permission rows it affects are listed in the rulebook, rule 13:
+`leads.convert`, `projects.create` and `projects.sales_outcome`, with their
+matrix rows in [permission-model.md](permission-model.md). None is in the code.
+Creating a Project directly with no Lead, and where Pending and Lost are
+recorded, are not decided here and need revalidation before any Project work.
+
+## 83. Pending ownership, provisional (2026-10-08)
+
+**Decided by Jacob, provisional until Sales Leadership confirms.** (Rule 14.)
+The salesperson owns a Pending for an adjustable period, starting at 30 days,
+then it releases to Contact Center Rehash. **Offer Valid Until is a separate
+concept and stays open.**
+
+## 84. What slice 5 leaves open (2026-10-08)
+
+**Recorded by Jacob as open.** Nothing below may be assumed:
+
+- which salesperson an issued Lead counts for after a reassignment or a re-issue
+  (Sales Leadership);
+- offer validity (Sales Leadership);
+- the cancellation reasons themselves (Sales Leadership);
+- no-shows and appointment outcomes, which belong to the later after-action
+  report.
+
+Two readings made while writing the rulebook, for Jacob to confirm or change:
+
+- **"A manager"** means Owner, Leadership or Location Manager at the Lead's
+  Location, not a Call Center Agent, as decision 52 already uses the word.
+- **A Sales Consultant booking their own Lead books it for themselves,** because
+  decision 44 keeps handing out Leads with management and the call center.
+
+Gaps the decisions do not cover are listed in the rulebook under "Not decided
+here". The appointment build plan brings them to Jacob.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
