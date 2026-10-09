@@ -1,10 +1,25 @@
 <?php
 
+use App\Actions\Leads\RecordManualContactAttempt;
+use App\Actions\Queue\ClaimNextLead;
+use App\Actions\Queue\EnterLeadCadence;
+use App\Enums\ContactAttemptChannel;
+use App\Enums\ContactAttemptDirection;
+use App\Enums\ContactAttemptDisposition;
+use App\Models\ContactAttempt;
+use App\Models\ContactCenterSettings;
+use App\Models\Lead;
+use App\Models\LeadCadence;
+use App\Models\LeadQueueEvent;
+use App\Models\Location;
 use App\Models\ProjectSize;
 use App\Models\Service;
 use App\Models\User;
+use App\Support\Queue\QueueClaim;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Livewire\Drawer\Utils;
 use Livewire\Livewire;
@@ -143,4 +158,112 @@ function sendLivewireAction(array $snapshot, string $method, array $params = [],
             'calls' => [['method' => $method, 'params' => $params, 'path' => '']],
         ]],
     ]);
+}
+
+/**
+ * Put a Lead in the call queue the way capture does, due now unless told otherwise.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function enterQueue(Lead $lead, array $overrides = []): LeadCadence
+{
+    $cadence = app(EnterLeadCadence::class)->handle($lead);
+
+    $cadence->forceFill(['due_at' => now(), ...$overrides])->save();
+
+    return $cadence;
+}
+
+/**
+ * Press "Next lead" as a staff member.
+ */
+function nextLead(User $user): QueueClaim
+{
+    return app(ClaimNextLead::class)->handle($user);
+}
+
+/**
+ * Log a contact attempt through the slice 3 action: an outbound phone call
+ * that nobody answered, made now, unless told otherwise.
+ *
+ * @param  array<string, mixed>  $facts
+ */
+function logAttempt(Lead $lead, User $by, array $facts = []): ContactAttempt
+{
+    $facts += [
+        'submissionId' => Str::uuid()->toString(),
+        'channel' => ContactAttemptChannel::Phone,
+        'direction' => ContactAttemptDirection::Outbound,
+        'occurredAt' => now(),
+        'number' => '555-201-3344',
+        'durationSeconds' => 20,
+        'wasAnswered' => false,
+        'wasConnected' => false,
+        'disposition' => ContactAttemptDisposition::NoAnswer,
+    ];
+
+    if (is_string($facts['occurredAt'])) {
+        $facts['occurredAt'] = CarbonImmutable::parse($facts['occurredAt'], 'UTC');
+    }
+
+    if (! $facts['channel']->supportsDuration()) {
+        $facts['durationSeconds'] = null;
+    }
+
+    return app(RecordManualContactAttempt::class)->handle($lead, $by, ...$facts);
+}
+
+/**
+ * A Lead's queue history as short words, oldest first: "hold_ended:moved".
+ *
+ * @return list<string>
+ */
+function queueHistory(Lead $lead): array
+{
+    return LeadQueueEvent::query()
+        ->where('lead_id', $lead->id)
+        ->orderBy('id')
+        ->get()
+        ->map(fn (LeadQueueEvent $event): string => $event->reason === null ? $event->type->value : "{$event->type->value}:{$event->reason}")
+        ->all();
+}
+
+/**
+ * Save a new version of the Contact Center settings, as the settings page does,
+ * without going through its permission check.
+ *
+ * @param  array<string, mixed>  $changes
+ */
+function saveQueueSettings(array $changes): ContactCenterSettings
+{
+    $current = ContactCenterSettings::current();
+
+    $next = new ContactCenterSettings;
+    $next->forceFill([
+        'version' => $current->version + 1,
+        'cadence' => $current->cadence,
+        'calling_opens_at' => $current->calling_opens_at,
+        'calling_closes_at' => $current->calling_closes_at,
+        'calling_days' => $current->calling_days,
+        'hold_minutes' => $current->hold_minutes,
+        ...$changes,
+    ])->save();
+
+    return $next;
+}
+
+/**
+ * A Lead in the call queue, due now, at a location or unrouted.
+ *
+ * @param  array<string, mixed>  $cadence
+ * @param  array<string, mixed>  $attributes
+ */
+function dueLead(?Location $location = null, array $cadence = [], array $attributes = []): Lead
+{
+    $factory = $location === null ? Lead::factory() : Lead::factory()->at($location);
+    $lead = $factory->create($attributes);
+
+    enterQueue($lead, $cadence);
+
+    return $lead;
 }
