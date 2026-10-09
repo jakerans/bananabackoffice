@@ -19,6 +19,8 @@
             <flux:subheading>{{ $description }}</flux:subheading>
         </div>
 
+        {{ $slot }}
+
         <div class="flex justify-end gap-2">
             <flux:modal.close>
                 <flux:button type="button" variant="ghost" autofocus>{{ __('Cancel') }}</flux:button>

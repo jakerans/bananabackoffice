@@ -233,6 +233,7 @@ class Navigation
                 new NavigationItem('marketing.performance', 'Performance', $permissions, route: 'marketing.performance'),
                 new NavigationItem('marketing.call_center', 'Contact Center', $permissions, primary: 'shared.leads', children: [
                     $this->leads(),
+                    $this->callQueue(),
                 ]),
                 new NavigationItem('shared.inbox', 'Inbox', $permissions),
                 new NavigationItem('marketing.campaigns', 'Campaigns', $permissions),
@@ -414,6 +415,21 @@ class Navigation
             permissions: [Permission::ViewLeads],
             state: NavigationState::Live,
             route: 'leads',
+        );
+    }
+
+    /**
+     * The Call Queue is in Marketing > Contact Center only. It is opened by the
+     * queue permission, and the Contact Center still opens on Leads.
+     */
+    private function callQueue(): NavigationItem
+    {
+        return new NavigationItem(
+            id: 'marketing.call_center.queue',
+            label: 'Call Queue',
+            permissions: [Permission::WorkLeadQueue],
+            state: NavigationState::Live,
+            route: 'marketing.call_center.queue',
         );
     }
 

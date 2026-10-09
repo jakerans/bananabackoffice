@@ -6,9 +6,10 @@
 (2026-10-04).**
 **Current: slice 3 is verified and merged into `main`. Slice 4 is approved for
 implementation (2026-10-08) in three steps. Step 4a (location timezones and the
-Contact Center settings) is merged into `main`. Step 4b (the scheduling engine
-and the atomic due queue, no screen) is built on its own branch (job #11) and
-awaiting review. 4c is not built.** Its plan is
+Contact Center settings) and step 4b (the scheduling engine and the atomic due
+queue) are merged into `main`. Step 4c (the Call Queue screen and manager tools)
+is built on its own branch (job #12) and awaiting review: with it, slice 4 is
+fully built.** Its plan is
 [slice-4-plan.md](slice-4-plan.md). The B1–B7 record and older unbuilt plan are in
 [checkpoint-b.md](checkpoint-b.md). Jacob approved the five-slice order; slices 1
 to 3 are merged. Each step of slice 4, and every later slice, still stops for
@@ -90,7 +91,7 @@ assignment or follow-up side effect. Provider integrations, outbound communicati
 dialers, queues, AI, cadence/nurture rules, management penalties and slice 4 are
 outside this implementation.
 
-### Approved slice 4 boundary (4a merged; 4b built and awaiting review; 4c not built)
+### Approved slice 4 boundary (4a and 4b merged; 4c built and awaiting review)
 
 Jacob's decisions are 65 to 72 and 74 in [decisions.md](decisions.md); the design is
 decision 73 and [slice-4-plan.md](slice-4-plan.md). His approval of the planning
@@ -100,8 +101,8 @@ beyond it.
 | Step | Delivers | State |
 | --- | --- | --- |
 | 4a | A timezone on each Location; the Contact Center settings page under Company > Settings (cadence, calling hours and days, hold length) with its permission and audit events | **Merged into `main`** (job #10): `locations.timezone`, `contact_center_settings` version 1, the two permissions (`leads.work_queue` added here by decision 74), the page at `/settings/contact-center`, the four audit events. |
-| 4b | The engine: every new Lead enters the cadence; a logged attempt advances it; the atomic claim, holds, skips, Put back in queue; the every-minute background timer. No screen. | **Built** (job #11, awaiting review): `lead_cadences`, `lead_queue_events`, `scheduler_heartbeats` and the two cadence columns on `contact_attempts`; the calculators and the one eligibility rule in `app/Support/Queue/`; the actions in `app/Actions/Queue/`; the hooks in capture, contact attempts, disqualify, Deferred Follow-up, routing, access and Location deactivation; `backoffice:queue-tick` scheduled every minute; `lead.returned_to_queue` and `LeadPolicy::returnToQueue`. From deployment, newly captured Leads enter the cadence and logged attempts move it. Nothing is visible to staff: no page, route or navigation item uses it. |
-| 4c | The Call Queue in Marketing > Contact Center: due-now count, Next lead, the card, the manager summary and the "Cadence finished, no contact" list | Approved; not built |
+| 4b | The engine: every new Lead enters the cadence; a logged attempt advances it; the atomic claim, holds, skips, Put back in queue; the every-minute background timer. No screen. | **Merged into `main`** (job #11): `lead_cadences`, `lead_queue_events`, `scheduler_heartbeats` and the two cadence columns on `contact_attempts`; the calculators and the one eligibility rule in `app/Support/Queue/`; the actions in `app/Actions/Queue/`; the hooks in capture, contact attempts, disqualify, Deferred Follow-up, routing, access and Location deactivation; `backoffice:queue-tick` scheduled every minute; `lead.returned_to_queue` and `LeadPolicy::returnToQueue`. From deployment, newly captured Leads enter the cadence and logged attempts move it. Nothing was visible to staff until 4c. |
+| 4c | The Call Queue in Marketing > Contact Center: due-now count, Next lead, the card, the manager summary and the "Cadence finished, no contact" list | **Built** (job #12, awaiting review): the page at `/marketing/contact-center/queue` (`marketing.call_center.queue`, `leads.work_queue`), the setter's card with the shared attempt form, skip and disqualify, the 10-second poll, the manager summary with the timer warning, the "Cadence finished, no contact" list, and the cadence panel, queue history and Put back in queue on the Lead page. No new table, permission or audit event. |
 
 One recorded change to slice 3: logging a contact attempt now advances the
 cadence (decision 67). It still never changes lifecycle status or assignee.

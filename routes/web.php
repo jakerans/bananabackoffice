@@ -42,6 +42,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('leads/{lead}', 'pages::leads.show')->can('view', 'lead')->name('leads.show');
     Route::livewire('leads/{lead}/customer', 'pages::leads.customer')->can('resolveCustomer', 'lead')->name('leads.customer');
 
+    // The Call Queue is a Marketing > Contact Center page. It is opened by the queue permission,
+    // like Leads; every action on it checks the permission again and each Lead by its own location.
+    Route::livewire('marketing/contact-center/queue', 'pages::marketing.call-queue')->can(Permission::WorkLeadQueue)->name('marketing.call_center.queue');
+
     // Customers is one shared page too. A customer has no location: each one is authorized by
     // what the person can already see of it, never by the location that happens to be selected.
     Route::livewire('customers', 'pages::customers.index')->can(Permission::ViewAccounts)->name('customers');

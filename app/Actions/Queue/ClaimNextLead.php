@@ -7,6 +7,7 @@ use App\Enums\QueueEventType;
 use App\Enums\QueueHoldEndReason;
 use App\Models\LeadCadence;
 use App\Models\User;
+use App\Support\Queue\DueQueue;
 use App\Support\Queue\QueueClaim;
 use App\Support\Queue\QueueEligibility;
 use App\Support\Queue\QueueHistory;
@@ -190,19 +191,8 @@ class ClaimNextLead
         $neverCalled = 'c.cycle = 1 and c.attempts_made = 0';
 
         /** @var Collection<int, object{id: int, lead_id: int}> */
-        return DB::table('lead_cadences as c')
-            ->join('leads as l', 'l.id', '=', 'c.lead_id')
-            ->where('c.state', CadenceState::InQueue->value)
-            ->where('c.due_at', '<=', $moment)
-            ->where(fn (Builder $query) => $query->whereNull('c.held_by_user_id')->orWhere('c.held_until', '<=', $moment))
-            ->where(function (Builder $query) use ($scope): void {
-                $query->whereIn('l.location_id', $scope['locations']);
-
-                if ($scope['unrouted']) {
-                    $query->orWhereNull('l.location_id');
-                }
-            })
-            ->whereNotExists($this->runningCooldown($caller, $moment, 'c.id'))
+        return DueQueue::candidateQuery($scope, $moment)
+            ->whereNotExists(DueQueue::runningCooldown($caller->id, $moment, 'c.id'))
             ->whereNotIn('c.id', $tried)
             ->orderByRaw("case when {$neverCalled} then 0 else 1 end")
             ->orderByRaw("case when {$neverCalled} then l.received_at end desc")
@@ -244,7 +234,7 @@ class ClaimNextLead
             ->where('state', CadenceState::InQueue->value)
             ->where('due_at', '<=', $moment)
             ->where(fn (Builder $query) => $query->whereNull('held_by_user_id')->orWhere('held_until', '<=', $moment))
-            ->whereNotExists($this->runningCooldown($caller, $moment, 'lead_cadences.id'))
+            ->whereNotExists(DueQueue::runningCooldown($caller->id, $moment, 'lead_cadences.id'))
             ->update([
                 'held_by_user_id' => $caller->id,
                 'hold_token' => $token,
@@ -268,23 +258,6 @@ class ClaimNextLead
         $this->history->record($before, QueueEventType::Claimed, $check->lead, $caller, holdToken: $token);
 
         return $before;
-    }
-
-    /**
-     * A skip by the caller on that cadence whose cooldown is still running.
-     *
-     * @return Closure(Builder): void
-     */
-    private function runningCooldown(User $caller, CarbonInterface $moment, string $cadenceColumn): Closure
-    {
-        return function (Builder $query) use ($caller, $moment, $cadenceColumn): void {
-            $query->selectRaw('1')
-                ->from('lead_queue_events as e')
-                ->whereColumn('e.lead_cadence_id', $cadenceColumn)
-                ->where('e.type', QueueEventType::Skipped->value)
-                ->where('e.affected_user_id', $caller->id)
-                ->where('e.cooldown_until', '>', $moment);
-        };
     }
 
     private function given(LeadCadence $cadence, bool $alreadyHeld = false, ?QueueHoldEndReason $endedHold = null): QueueClaim
