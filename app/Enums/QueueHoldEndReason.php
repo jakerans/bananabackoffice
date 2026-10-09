@@ -27,4 +27,39 @@ enum QueueHoldEndReason: string
 
     /** The holder skipped this Lead a moment ago and their cooldown is still running. */
     case SkipCooldown = 'skip_cooldown';
+
+    /**
+     * How the history words it.
+     */
+    public function label(): string
+    {
+        return match ($this) {
+            self::Disqualified => 'The lead was disqualified',
+            self::DeferredFollowUp => 'A follow-up was scheduled',
+            self::Moved => 'The lead was moved to another location',
+            self::AccessLost => 'The setter may no longer work this lead',
+            self::AttemptLogged => 'The setter logged a call',
+            self::AttemptLoggedByOther => 'Someone else logged a call',
+            self::OutsideCallingHours => 'Calling hours closed for this lead',
+            self::SkipCooldown => 'The setter had skipped this lead a moment ago',
+        };
+    }
+
+    /**
+     * What the setter who held the Lead is told when the hold is gone. It says
+     * why and nothing about the Lead itself.
+     */
+    public function notice(): string
+    {
+        return match ($this) {
+            self::Disqualified => 'This lead was disqualified, so it is no longer yours to call.',
+            self::DeferredFollowUp => 'A follow-up was scheduled for this lead, so it left the queue.',
+            self::Moved => 'This lead was moved to another location.',
+            self::AccessLost => 'Your access to this lead changed.',
+            self::AttemptLogged => 'Your call was logged.',
+            self::AttemptLoggedByOther => 'Someone else logged a call on this lead.',
+            self::OutsideCallingHours => 'Calling hours have closed for this lead.',
+            self::SkipCooldown => 'You skipped this lead a moment ago, so it is not offered to you yet.',
+        };
+    }
 }

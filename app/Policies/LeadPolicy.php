@@ -170,6 +170,16 @@ class LeadPolicy
     }
 
     /**
+     * Determine whether the user can see the Lead's place in the call queue:
+     * its cadence state and marker, and its queue history. It belongs to the
+     * people who hand out Leads where the Lead is, like Put back in queue.
+     */
+    public function manageQueue(User $user, Lead $lead): bool
+    {
+        return $this->view($user, $lead) && $this->distributes($user, $lead);
+    }
+
+    /**
      * Legacy permission lookup retained with existing role grants. No current
      * lifecycle action accepts a contact-wait waiver or nonresponse closure.
      */

@@ -11,3 +11,9 @@ parameters:
         - routes/
 
     level: 7
+
+    ignoreErrors:
+        # Used only by Livewire single-file pages (resources/views/pages), which are not analysed.
+        -
+            identifier: trait.unused
+            path: app/Livewire/Concerns/RecordsContactAttempts.php

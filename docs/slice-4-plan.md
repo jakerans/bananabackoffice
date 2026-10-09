@@ -1,8 +1,8 @@
 # Slice 4 — Scheduled Work and the Due Queue: Implementation Plan
 
 Status: **Planned and approved for implementation (2026-10-08). Step 4a is
-merged into `main` (job #10). Step 4b is built (job #11, awaiting review). 4c is
-not built.** Jacob's decisions are 65 to 72 and 74 in
+merged into `main` (job #10). Step 4b is merged into `main` (job #11). Step 4c is
+built (job #12, awaiting review).** Jacob's decisions are 65 to 72 and 74 in
 [decisions.md](decisions.md); decision 73 records the design below. Where this plan
 and those decisions disagree, the decisions win and the build stops to ask.
 
@@ -601,7 +601,7 @@ Tests (Pest; every one runs on SQLite and on MySQL 8.4):
 
 ## Step 4b — The engine
 
-**Status: built (job #11), awaiting review.** Everything listed under "Builds"
+**Status: merged into `main` (job #11).** Everything listed under "Builds"
 exists, with no screen, route or navigation item. The staging scheduler could
 not be checked from where the step was built: see "The server's scheduler on
 staging" and the handoff in [review/current.md](review/current.md).
@@ -767,6 +767,10 @@ Tests:
 - Every test refuses real outgoing requests, as the suite already does.
 
 ## Step 4c — The queue screen
+
+**Status: built (job #12), awaiting review.** The staging scheduler still could not
+be checked from where the step was built; the manager summary's timer warning is
+now how Jacob can tell (see "The server's scheduler on staging").
 
 Builds: the Call Queue page and its navigation item; the card; the shared
 contact-attempt form; the skip dialog; Disqualify on the card; the manager

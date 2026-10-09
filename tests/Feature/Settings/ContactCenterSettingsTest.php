@@ -667,15 +667,15 @@ test('the unbuilt settings pages do not borrow the contact center permission', f
 
 /*
 |--------------------------------------------------------------------------
-| The queue permission opens no screen until step 4c
+| The queue permission opens one screen: the Call Queue (step 4c)
 |--------------------------------------------------------------------------
 |
-| Step 4b is its first use: the queue engine's one eligibility rule reads it.
-| What stays true after 4b is that no route, navigation item or page does.
+| The engine's eligibility rule reads it (4b); the Call Queue's route and
+| navigation item are gated by it (4c). Nothing else is.
 |
 */
 
-test('nothing but the enum, the role lists and the queue\'s eligibility rule reads the queue permission', function () {
+test('only the enum, the role lists, the eligibility rule and the Call Queue route and navigation item read the queue permission', function () {
     $offenders = collect(['app', 'routes', 'resources', 'config', 'bootstrap'])
         ->map(fn (string $directory) => base_path($directory))
         ->filter(fn (string $directory): bool => is_dir($directory))
@@ -690,38 +690,37 @@ test('nothing but the enum, the role lists and the queue\'s eligibility rule rea
     expect($offenders)->toBe([
         'app/Enums/Permission.php',
         'app/Enums/Role.php',
+        'app/Support/Navigation/Navigation.php',
+        'app/Support/Queue/DueQueue.php',
         'app/Support/Queue/QueueEligibility.php',
+        'resources/views/pages/marketing/⚡call-queue.blade.php',
+        'routes/web.php',
     ]);
 });
 
-test('no route, page or navigation code mentions the queue permission', function () {
-    $mentions = collect(['routes', 'resources', 'app/Http', 'app/Livewire', 'app/Support/Navigation', 'app/Providers', 'app/Policies'])
-        ->map(fn (string $directory) => base_path($directory))
-        ->filter(fn (string $directory): bool => is_dir($directory))
-        ->flatMap(fn (string $directory) => iterator_to_array(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS))))
-        ->filter(fn (SplFileInfo $file): bool => $file->isFile())
-        ->filter(fn (SplFileInfo $file): bool => preg_match('/WorkLeadQueue|leads\.work_queue/', (string) file_get_contents($file->getPathname())) === 1)
-        ->map(fn (SplFileInfo $file): string => $file->getPathname())
+test('exactly one route and one navigation item are opened by the queue permission', function () {
+    $routed = collect(Route::getRoutes()->getRoutes())
+        ->filter(fn ($route): bool => str_contains(json_encode($route->gatherMiddleware()), 'work_queue'))
+        ->map(fn ($route): string => $route->getName())
         ->values()
         ->all();
 
-    expect($mentions)->toBe([]);
+    expect($routed)->toBe(['marketing.call_center.queue']);
 
-    $routed = collect(Route::getRoutes()->getRoutes())
-        ->filter(fn ($route): bool => str_contains(json_encode($route->gatherMiddleware()).$route->uri().$route->getName(), 'work_queue')
-            || preg_match('#(^|/)queue(/|$)#', $route->uri()) === 1);
+    $items = collect(app(Navigation::class)->destinations())
+        ->flatMap(fn ($destination) => $destination->flatten())
+        ->filter(fn ($item) => in_array(Permission::WorkLeadQueue, $item->permissions, true))
+        ->map(fn ($item) => $item->id)
+        ->unique()
+        ->values()
+        ->all();
 
-    expect($routed)->toBeEmpty();
+    expect($items)->toBe(['marketing.call_center.queue']);
 });
 
-test('holding the queue permission opens no extra page', function () {
+test('holding the queue permission opens no settings page', function () {
     $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
     $navigation = app(Navigation::class);
 
-    $ids = collect(app(Navigation::class)->destinations())
-        ->flatMap(fn ($destination) => $destination->flatten())
-        ->filter(fn ($item) => in_array(Permission::WorkLeadQueue, $item->permissions, true));
-
-    expect($ids)->toBeEmpty();
     expect($navigation->allows($agent, $navigation->find('settings')))->toBeFalse();
 });

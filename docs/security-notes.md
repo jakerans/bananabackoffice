@@ -148,6 +148,26 @@ another location has dealt with. Staff are told so without being shown who.
   audit event names the Owner as well. The Owner's own permissions are not added:
   viewing as a Sales Consultant cannot reopen a Lead.
 
+### Call queue screen (added 2026-10-09, slice 4 step 4c)
+
+- **The held Lead is never named by the browser.** The page keeps the cadence ID
+  and hold token as locked Livewire state; every action (Next lead, poll, log,
+  skip, disqualify, Put back) authorizes `leads.work_queue` again and re-reads
+  the Lead and the person on the server. Logging uses `LeadPolicy::update` plus
+  the queue's eligibility rule, disqualify uses `changeStatus` and the existing
+  reasons and lifecycle-version check, Put back uses `returnToQueue`.
+- **A hold grants nothing** and the page never reads or changes the assignee.
+- **The gone-hold notice gives a reason only,** never anything about a Lead the
+  person may no longer see. The poll only reads.
+- **The summary, the held list, the cadence-finished list and the queue history
+  are shown only where the person may assign Leads,** and cover only those
+  Locations.
+- **The device timezone is display only:** formatted in the browser from a
+  server-rendered ISO timestamp, never sent to or read by the server.
+- A busy database on the page's own saves is answered with "try again"; the
+  MySQL lock-order follow-up from 4b is still open.
+- Every dialog is the shared Flux confirmation pattern; no native dialog.
+
 ### Call queue engine (added 2026-10-09, slice 4 step 4b)
 
 - **Who may be given a Lead is decided in one place,** on rows read through

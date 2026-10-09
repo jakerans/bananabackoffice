@@ -128,10 +128,10 @@ controller must use the repository's Artisan convention. No dependency,
 database, permission enum, role, policy or domain-action file belongs in this
 slice.
 
-## Slice 4 navigation changes (4a merged; 4b adds none; 4c not built)
+## Slice 4 navigation changes (4a merged; 4b adds none; 4c built, awaiting review)
 
 Approved for implementation on 2026-10-08 (decision 65). The rows marked 4a are
-merged into `main` (job #10). Step 4b (the engine, job #11) adds no navigation item, route or page. The 4c row does not exist until its step is merged. The plan is [slice-4-plan.md](slice-4-plan.md); the
+merged into `main` (job #10). Step 4b (the engine, job #11) added no navigation item, route or page. The 4c row is built (job #12, awaiting review). The plan is [slice-4-plan.md](slice-4-plan.md); the
 permissions are in [permission-model.md](permission-model.md), "Slice 4".
 
 | Destination | Stable ID, route and URL | State and access | Step |
@@ -139,7 +139,7 @@ permissions are in [permission-model.md](permission-model.md), "Slice 4".
 | Company → Settings → Contact Center | New ID `settings.contact_center`; route name `settings.contact_center`; `/settings/contact-center`. Listed after Lead & Sales Lists. | **Built.** Live; `settings.contact_center.manage` (Owner and Leadership, all-locations grant only). | 4a |
 | Company and Company → Settings (entry) | No ID or URL change. `settings.contact_center.manage` joins the existing union of permissions that open the `company` Center and the `settings` node. `/settings` adds Contact Center as its fourth landing choice, after Locations, Users and Access, and Lead & Sales Lists. | **Built.** The permission is added to the `company` and `settings` entry unions only, not to the list the unbuilt Settings pages borrow. It opens no other Settings page. | 4a |
 | Company → Locations | No new item. The existing `settings.locations` page gains a timezone field for each Location. | **Built.** Existing `settings.locations.manage`. | 4a |
-| Marketing → Contact Center → Call Queue | New ID `marketing.call_center.queue`; route name `marketing.call_center.queue`; `/marketing/contact-center/queue`. A third-row item after Leads. | Live when built; `leads.work_queue` (Owner, Leadership, Location Manager, Call Center Agent). | 4c |
+| Marketing → Contact Center → Call Queue | New ID `marketing.call_center.queue`; route name `marketing.call_center.queue`; `/marketing/contact-center/queue`. A third-row item after Leads. | **Built.** Live; `leads.work_queue` (Owner, Leadership, Location Manager, Call Center Agent). Opened like Leads, in the person's current Location view. | 4c |
 
 - **Contact Center still opens on Leads.** Its primary stays `shared.leads`, so
   no one's landing page changes.

@@ -18,4 +18,19 @@ enum QueueEventType: string
     case Ended = 'ended';
     case FinishedNoContact = 'finished_no_contact';
     case ReturnedToQueue = 'returned_to_queue';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::Entered => 'Entered the call queue',
+            self::Claimed => 'Given to a setter',
+            self::HoldExpired => 'Hold ran out',
+            self::HoldEnded => 'Hold ended',
+            self::Skipped => 'Skipped',
+            self::AttemptCounted => 'Attempt counted',
+            self::Ended => 'Left the call queue',
+            self::FinishedNoContact => 'Cadence finished, no contact',
+            self::ReturnedToQueue => 'Put back in the call queue',
+        };
+    }
 }

@@ -261,8 +261,13 @@ test('the new permission joins the company and settings entries only, not the bo
     }
 });
 
-test('the queue permission is used by no navigation item', function () {
-    $using = collect(allNavigationItems())->filter(fn (NavigationItem $item): bool => in_array(Permission::WorkLeadQueue, $item->permissions, true));
+test('the queue permission is used by the Call Queue item and no other navigation item', function () {
+    $using = collect(allNavigationItems())
+        ->filter(fn (NavigationItem $item): bool => in_array(Permission::WorkLeadQueue, $item->permissions, true))
+        ->map(fn (NavigationItem $item): string => $item->id)
+        ->unique()
+        ->values()
+        ->all();
 
-    expect($using)->toBeEmpty();
+    expect($using)->toBe(['marketing.call_center.queue']);
 });
