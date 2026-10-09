@@ -1,7 +1,8 @@
 # Slice 4 — Scheduled Work and the Due Queue: Implementation Plan
 
-Status: **Planned and approved for implementation (2026-10-08). Step 4a is built
-(job #10, awaiting review); 4b and 4c are not built.** Jacob's decisions are 65 to 72 and 74 in
+Status: **Planned and approved for implementation (2026-10-08). Step 4a is
+merged into `main` (job #10). Step 4b is built (job #11, awaiting review). 4c is
+not built.** Jacob's decisions are 65 to 72 and 74 in
 [decisions.md](decisions.md); decision 73 records the design below. Where this plan
 and those decisions disagree, the decisions win and the build stops to ask.
 
@@ -531,10 +532,10 @@ its own evidence and is still not an audit event or Customer Activity.
 
 ## Step 4a — Settings and timezones
 
-**Status: built (job #10), awaiting review.** What exists after 4a: the column,
-the table with version 1, both permissions, the page, the navigation item and the
-four audit events. Nothing reads the settings or `locations.timezone`, and
-`leads.work_queue` guards nothing. No cadence, queue, command or schedule exists.
+**Status: merged into `main` (job #10).** What 4a added: the column, the table
+with version 1, both permissions, the page, the navigation item and the four
+audit events. In 4a itself nothing read the settings or `locations.timezone`,
+and `leads.work_queue` guarded nothing; step 4b is their first reader.
 
 Builds: the `locations.timezone` column and its field on the Locations page; the
 `contact_center_settings` table with version 1; `settings.contact_center.manage`;
@@ -594,6 +595,11 @@ Tests (Pest; every one runs on SQLite and on MySQL 8.4):
 - No native confirmation dialog is introduced (the existing regression test).
 
 ## Step 4b — The engine
+
+**Status: built (job #11), awaiting review.** Everything listed under "Builds"
+exists, with no screen, route or navigation item. The staging scheduler could
+not be checked from where the step was built: see "The server's scheduler on
+staging" and the handoff in [review/current.md](review/current.md).
 
 Builds: the 4b tables and columns; the first uses of `leads.work_queue` (already
 in the enum and roles since 4a, decision 74); the
@@ -821,7 +827,9 @@ Tests:
 ## The server's scheduler on staging
 
 Slice 4 needs Laravel's scheduler to run every minute on the staging server. It
-is not known to be enabled: the application has never had a scheduled task.
+is not known to be enabled: the application had no scheduled task before step
+4b. **Step 4b could not check it** (its builder has no view of the staging
+server or of Forge), so it remains unknown; 4c repeats the check.
 
 **Exactly what is needed:** one scheduler entry for the staging site, running as
 user `forge`, every minute:

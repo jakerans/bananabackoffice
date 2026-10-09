@@ -128,10 +128,10 @@ controller must use the repository's Artisan convention. No dependency,
 database, permission enum, role, policy or domain-action file belongs in this
 slice.
 
-## Slice 4 navigation changes (4a built; 4b and 4c not built)
+## Slice 4 navigation changes (4a merged; 4b adds none; 4c not built)
 
 Approved for implementation on 2026-10-08 (decision 65). The rows marked 4a are
-built (job #10, awaiting review); the 4c row does not exist until its step is merged. The plan is [slice-4-plan.md](slice-4-plan.md); the
+merged into `main` (job #10). Step 4b (the engine, job #11) adds no navigation item, route or page. The 4c row does not exist until its step is merged. The plan is [slice-4-plan.md](slice-4-plan.md); the
 permissions are in [permission-model.md](permission-model.md), "Slice 4".
 
 | Destination | Stable ID, route and URL | State and access | Step |

@@ -148,6 +148,33 @@ another location has dealt with. Staff are told so without being shown who.
   audit event names the Owner as well. The Owner's own permissions are not added:
   viewing as a Sales Consultant cannot reopen a Lead.
 
+### Call queue engine (added 2026-10-09, slice 4 step 4b)
+
+- **Who may be given a Lead is decided in one place,** on rows read through
+  locks at the moment of the claim: the person is active, holds
+  `leads.work_queue` for the Lead's own Location (an all-locations grant for an
+  unrouted Lead) and passes the existing "work this Lead" rule. Nothing sent by
+  a browser and nothing worked out earlier in the request is trusted. Through
+  impersonation only the staff member's access counts.
+- **A hold grants nothing.** It is not assignment and gives no access the person
+  did not already have. Skipping and Put back in queue re-read the Lead and
+  authorize again on current rows.
+- **The database, not only the code, refuses the two worst mistakes:** a second
+  cadence for one Lead and a second held Lead for one person (unique indexes),
+  and a cadence step used twice (unique index on `contact_attempts`).
+- **Queue history is append-only in the application, not in the database,** like
+  audit events and the status history: `lead_queue_events` and the two cadence
+  columns on `contact_attempts` refuse update and delete in code. A row changed
+  by hand in the database would not be stopped.
+- Put back in queue saves its change, its history entry and its audit event
+  (`lead.returned_to_queue`) in one transaction. Taking, skipping, expiring and
+  counting are operational history, not audit events, by design.
+- The timer's failure log carries only the part that failed, a cadence ID and
+  the exception class: no name, number or message text.
+- The concurrency tests start separate PHP processes through a script under
+  `tests/` that refuses to run outside the testing environment. It is not an
+  application command or route.
+
 ### Open: must be handled before real staff use the systemThese are not blocking for development, but they must be closed before Backoffice
 is used with real accounts on a server.
 

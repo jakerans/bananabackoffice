@@ -94,20 +94,21 @@ final class QueueProcesses
      * back by its own "delay_ms".
      *
      * @param  list<array{0: string, 1?: array<string, mixed>}>  $jobs
+     * @param  bool  $queueSqliteWrites  For a crowd of processes on SQLite: write transactions wait their turn instead of being refused. Ignored on MySQL.
      * @return list<array<string, mixed>> In the order the jobs were given.
      */
-    public function together(array $jobs): array
+    public function together(array $jobs, bool $queueSqliteWrites = false): array
     {
         File::ensureDirectoryExists($this->line);
         File::cleanDirectory($this->line);
 
-        $pool = Process::pool(function (Pool $pool) use ($jobs): void {
+        $pool = Process::pool(function (Pool $pool) use ($jobs, $queueSqliteWrites): void {
             foreach ($jobs as $runner => [$operation, $arguments]) {
                 $pool->as((string) $runner)
                     ->path(base_path())
                     ->env($this->environment)
                     ->timeout(120)
-                    ->command($this->command($operation, ($arguments ?? []) + ['now' => self::NOW, 'line' => $this->line, 'runner' => $runner]));
+                    ->command($this->command($operation, ($arguments ?? []) + ['now' => self::NOW, 'line' => $this->line, 'runner' => $runner, 'queue_sqlite_writes' => $queueSqliteWrites]));
             }
         })->start();
 

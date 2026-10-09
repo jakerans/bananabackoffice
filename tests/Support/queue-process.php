@@ -56,8 +56,18 @@ $arguments = json_decode((string) base64_decode((string) ($argv[2] ?? ''), true)
 // unless it is told how long it may wait. The application sets no wait; the
 // temporary database of these tests is given five seconds. A transaction
 // whose earlier read has gone stale is still refused at once, wait or no wait.
+//
+// That refusal is what the application retries three times. A crowd of
+// processes can use those up on one database file, so a test that starts a
+// crowd asks for write transactions that queue ("IMMEDIATE": the write lock
+// is taken when the transaction begins, and waited for). The other tests keep
+// the application's own mode, so real processes still meet the refusal and
+// the retry.
 if (DB::connection()->getDriverName() === 'sqlite') {
-    config(['database.connections.sqlite.busy_timeout' => 5000]);
+    config([
+        'database.connections.sqlite.busy_timeout' => 5000,
+        'database.connections.sqlite.transaction_mode' => ($arguments['queue_sqlite_writes'] ?? false) ? 'IMMEDIATE' : 'DEFERRED',
+    ]);
     DB::purge();
 }
 
