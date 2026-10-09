@@ -4,6 +4,7 @@ namespace App\Actions\Staff;
 
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Leads\ReleaseUnworkableAssignments;
+use App\Actions\Queue\EndQueueHold;
 use App\Enums\AuditAction;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,7 @@ class DeactivateStaffMember
     public function __construct(
         private RecordAuditEvent $recordAuditEvent,
         private ReleaseUnworkableAssignments $releaseUnworkableAssignments,
+        private EndQueueHold $endQueueHold,
     ) {}
 
     /**
@@ -25,7 +27,8 @@ class DeactivateStaffMember
      * access, but they must sign in again: nothing from before deactivation
      * comes back to life. Leads they were responsible for become unassigned, so
      * no Lead is left with someone who cannot work it; reactivating does not
-     * give those back.
+     * give those back. A Lead they hold from the call queue is taken back at
+     * once.
      *
      * @throws ValidationException
      */
@@ -51,6 +54,8 @@ class DeactivateStaffMember
             }
 
             $this->releaseUnworkableAssignments->handle($staff);
+
+            $this->endQueueHold->forStaffMember($staff);
 
             Password::broker('invitations')->deleteToken($staff);
 

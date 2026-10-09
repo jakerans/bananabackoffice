@@ -3,6 +3,7 @@
 namespace App\Actions\Locations;
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Queue\EndQueueHold;
 use App\Enums\AuditAction;
 use App\Models\Location;
 use Illuminate\Support\Facades\DB;
@@ -10,7 +11,10 @@ use Illuminate\Validation\ValidationException;
 
 class DeactivateLocation
 {
-    public function __construct(private RecordAuditEvent $recordAuditEvent) {}
+    public function __construct(
+        private RecordAuditEvent $recordAuditEvent,
+        private EndQueueHold $endQueueHold,
+    ) {}
 
     /**
      * Take a location out of operation.
@@ -20,11 +24,20 @@ class DeactivateLocation
      * transferred to another location or returned to central. Nothing overrides
      * this. Once Projects exist, active Projects must block it the same way.
      *
+     * No grant covers a deactivated location, so every hold from the call
+     * queue on a Lead here is ended in the same transaction. The refusal above
+     * means there is normally none; this is for a Lead that reaches the
+     * location while it is being deactivated and for state a crash left behind.
+     *
      * @throws ValidationException
      */
     public function handle(Location $location): void
     {
         DB::transaction(function () use ($location): void {
+            // The Location row is locked before anything else, with a write
+            // that changes nothing: the order a queue claim relies on.
+            DB::table('locations')->where('id', $location->id)->update(['id' => DB::raw('id')]);
+
             $activeLeads = $location->leads()->active()->count();
 
             if ($activeLeads > 0) {
@@ -42,6 +55,8 @@ class DeactivateLocation
             if ($location->wasChanged('is_active')) {
                 $this->recordAuditEvent->handle(AuditAction::LocationDeactivated, $location, location: $location);
             }
+
+            $this->endQueueHold->atLocation($location);
         });
     }
 }

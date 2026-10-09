@@ -161,6 +161,11 @@ class ChangeContactCenterSettings
 
         try {
             return DB::transaction(function () use ($actor, $loadedVersion, $decide): bool {
+                // The version being replaced is locked first, with a write that
+                // changes nothing, so a queue claim reading the settings either
+                // finishes before this save or waits for it.
+                DB::table('contact_center_settings')->where('version', $loadedVersion)->update(['id' => DB::raw('id')]);
+
                 $current = ContactCenterSettings::current();
 
                 if ($current->version !== $loadedVersion) {

@@ -2,8 +2,11 @@
 
 namespace App\Policies;
 
+use App\Enums\CadenceState;
+use App\Enums\LeadStatus;
 use App\Enums\Permission;
 use App\Models\Lead;
+use App\Models\LeadCadence;
 use App\Models\Location;
 use App\Models\User;
 
@@ -145,6 +148,25 @@ class LeadPolicy
     public function reopen(User $user, Lead $lead): bool
     {
         return ! $lead->isActive() && $this->update($user, $lead) && $this->distributes($user, $lead);
+    }
+
+    /**
+     * Determine whether the user can put the Lead back in the call queue.
+     *
+     * It belongs to the people who hand out Leads where it is. The Lead must
+     * have a cadence that has left the queue, and be New, Working or
+     * Qualified: a disqualified Lead is reopened first and a Deferred
+     * Follow-up is resumed first.
+     */
+    public function returnToQueue(User $user, Lead $lead): bool
+    {
+        if (! in_array($lead->status, [LeadStatus::New, LeadStatus::Working, LeadStatus::Qualified], true) || ! $this->distributes($user, $lead)) {
+            return false;
+        }
+
+        $state = LeadCadence::query()->where('lead_id', $lead->id)->value('state');
+
+        return $state instanceof CadenceState && $state !== CadenceState::InQueue;
     }
 
     /**

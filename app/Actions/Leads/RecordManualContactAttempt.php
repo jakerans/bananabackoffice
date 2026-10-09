@@ -2,6 +2,7 @@
 
 namespace App\Actions\Leads;
 
+use App\Actions\Queue\AdvanceLeadCadence;
 use App\Enums\ContactAttemptChannel;
 use App\Enums\ContactAttemptDirection;
 use App\Enums\ContactAttemptDisposition;
@@ -20,14 +21,26 @@ use Illuminate\Validation\ValidationException;
 
 class RecordManualContactAttempt
 {
-    public function __construct(private Impersonation $impersonation) {}
+    public function __construct(
+        private Impersonation $impersonation,
+        private AdvanceLeadCadence $advanceLeadCadence,
+    ) {}
 
     /**
-     * Record a human-entered attempt without changing the Lead in any way.
+     * Record a human-entered attempt without changing the Lead in any way:
+     * not its status, its assignee or its lifecycle revision.
      *
      * Source, current linked Contact, location, lifecycle state, responsible
      * staff identity and impersonation provenance are derived here, never from
      * browser-controlled values.
+     *
+     * For a Lead in the call queue the attempt also moves its cadence
+     * (decision 67), in this order and in this one transaction: the Lead row
+     * is locked; a replayed submission is answered with the existing attempt
+     * before the cadence is read; what the attempt is to the cadence is
+     * decided; the attempt is inserted once, already carrying its cadence
+     * position when it counts; only then is the cadence advanced and any hold
+     * ended. The attempt row is never updated.
      *
      * @throws ValidationException
      */
@@ -84,6 +97,8 @@ class RecordManualContactAttempt
                 return $existingAttempt;
             }
 
+            $effect = $this->advanceLeadCadence->decide($currentLead, $channel, $direction, $wasConnected, $occurredAt);
+
             $attempt = new ContactAttempt;
 
             $attempt->forceFill([
@@ -109,10 +124,14 @@ class RecordManualContactAttempt
                 'disposition' => $disposition,
                 'lead_status' => $currentLead->status,
                 'lifecycle_result' => ContactAttemptLifecycleResult::NoChange,
+                'cadence_cycle' => $effect->counts() ? $effect->cycle : null,
+                'cadence_step' => $effect->counts() ? $effect->step : null,
                 'recording_reference' => null,
                 'transcript_reference' => null,
                 'created_at' => now(),
             ])->save();
+
+            $this->advanceLeadCadence->apply($effect, $attempt, $currentLead, $responsibleUser);
 
             return $attempt;
         });

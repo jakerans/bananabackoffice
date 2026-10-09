@@ -3,7 +3,9 @@
 namespace App\Actions\Leads;
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Queue\EndLeadCadence;
 use App\Enums\AuditAction;
+use App\Enums\CadenceEndReason;
 use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
 use App\Models\Lead;
@@ -18,6 +20,7 @@ class MoveLeadToNurture
         private ChangeLeadLifecycle $changeLeadLifecycle,
         private RecordAuditEvent $recordAuditEvent,
         private RecordLeadStatusChange $recordLeadStatusChange,
+        private EndLeadCadence $endLeadCadence,
     ) {}
 
     /**
@@ -32,6 +35,10 @@ class MoveLeadToNurture
      * and note, with the status left as it is.
      *
      * Nurture is never a disqualification and never a lost sale.
+     *
+     * The callback takes over from the call queue: the Lead's phone cadence
+     * ends, with any hold on it, in the same transaction. Resuming the Lead
+     * later does not put it back.
      *
      * The caller is responsible for checking that the person may do this.
      *
@@ -76,6 +83,8 @@ class MoveLeadToNurture
                 'follow_up_on' => $date->toDateString(),
                 'follow_up_note' => $note,
             ])->save();
+
+            $this->endLeadCadence->forLead($lead, CadenceEndReason::DeferredFollowUp, $actor);
 
             $this->recordLeadStatusChange->handle(
                 $lead,

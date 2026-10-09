@@ -3,8 +3,10 @@
 namespace App\Actions\Leads;
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Queue\EndLeadCadence;
 use App\Enums\AssignmentEndReason;
 use App\Enums\AuditAction;
+use App\Enums\CadenceEndReason;
 use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
 use App\Models\Lead;
@@ -21,6 +23,7 @@ class DisqualifyLead
         private RecordAuditEvent $recordAuditEvent,
         private RecordLeadStatusChange $recordLeadStatusChange,
         private UnassignLead $unassignLead,
+        private EndLeadCadence $endLeadCadence,
     ) {}
 
     /**
@@ -29,7 +32,8 @@ class DisqualifyLead
      *
      * It ends anyone's responsibility for the Lead, so the current assignment is
      * closed (and kept in the assignment history) and the Lead is left with
-     * nobody assigned.
+     * nobody assigned. It also takes the Lead out of the call queue, and ends
+     * any hold on it, in the same transaction.
      *
      * Everything else about the Lead is kept exactly as it is: the inquiry, its
      * attribution, its services and size, and its links to a customer.
@@ -96,6 +100,8 @@ class DisqualifyLead
 
             $lead->setRelation('disqualificationReason', $reason);
             $lead->setRelation('duplicateOf', $duplicateOf);
+
+            $this->endLeadCadence->forLead($lead, CadenceEndReason::Disqualified, $actor);
 
             $this->recordLeadStatusChange->handle(
                 $lead,

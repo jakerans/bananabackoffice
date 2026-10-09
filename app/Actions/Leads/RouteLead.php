@@ -3,8 +3,10 @@
 namespace App\Actions\Leads;
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Queue\EndQueueHold;
 use App\Enums\AssignmentEndReason;
 use App\Enums\AuditAction;
+use App\Enums\QueueHoldEndReason;
 use App\Models\Lead;
 use App\Models\Location;
 use App\Models\User;
@@ -18,6 +20,7 @@ class RouteLead
     public function __construct(
         private RecordAuditEvent $recordAuditEvent,
         private UnassignLead $unassignLead,
+        private EndQueueHold $endQueueHold,
         private ServiceAreaResolver $serviceAreas,
     ) {}
 
@@ -29,6 +32,10 @@ class RouteLead
      * responsible for working it: any change of location is a handoff, so the
      * current assignee is always cleared, even if they also work at the
      * destination. The Lead's status does not change.
+     *
+     * Anyone holding the Lead from the call queue has that hold ended in the
+     * same transaction. Its place in the cadence and its due time stay as
+     * they are.
      *
      * A transfer needs a reason. The location the Lead's address suggested, from
      * its service area, is recorded beside the one chosen.
@@ -71,6 +78,10 @@ class RouteLead
         $suggested = $address === null ? null : $this->serviceAreas->locationFor($address);
 
         DB::transaction(function () use ($lead, $destination, $origin, $reason, $actor, $suggested): void {
+            // The Lead row is locked before anything else, with a write that
+            // changes nothing: the order a queue claim relies on.
+            DB::table('leads')->where('id', $lead->id)->update(['id' => DB::raw('id')]);
+
             $this->unassignLead->handle($lead, AssignmentEndReason::LocationChanged, $actor);
 
             $lead->forceFill([
@@ -90,6 +101,8 @@ class RouteLead
                 location: $destination,
                 reason: $reason,
             );
+
+            $this->endQueueHold->forLead($lead, QueueHoldEndReason::Moved, $actor);
         });
     }
 }
