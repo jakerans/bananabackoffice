@@ -161,7 +161,11 @@ is never changed afterwards.
    the effect from the table: for a counted attempt, `attempts_made + 1`,
    `last_counted_attempt_at`, and the next `due_at` or `finished_no_contact`;
    for a connection, end the cadence. Then end any hold and write the queue
-   events.
+   events. Ending a hold here always writes exactly one `hold_ended` event
+   naming the holder as `affected_user_id`: reason `attempt_logged` when the
+   holder logged the attempt, `attempt_logged_by_other` when someone else did.
+   (Clarified by the Architect for job #11: the reason list had no value for
+   the holder's own attempt. No rule changed.)
 
 If the insert fails, or anything after it fails, the whole transaction rolls
 back: there is never an attempt without its cadence change, or a cadence change
@@ -434,7 +438,7 @@ delete in the application like audit events and the status history.
 | --- | --- |
 | `id`, `lead_id` (FK, restrict), `lead_cadence_id` (FK, restrict) | Each with its own index. |
 | `type` | `entered`, `claimed`, `hold_expired`, `hold_ended`, `skipped`, `attempt_counted`, `ended`, `finished_no_contact`, `returned_to_queue`. |
-| `reason` | For `hold_ended`: `disqualified`, `deferred_follow_up`, `moved`, `access_lost`, `attempt_logged_by_other`, `outside_calling_hours`, `skip_cooldown`. For `ended`: `connected`, `disqualified`, `deferred_follow_up`. For `skipped`: the skip reason. |
+| `reason` | For `hold_ended`: `disqualified`, `deferred_follow_up`, `moved`, `access_lost`, `attempt_logged` (the holder logged an attempt on the Lead they hold), `attempt_logged_by_other` (someone else did), `outside_calling_hours`, `skip_cooldown`. For `ended`: `connected`, `disqualified`, `deferred_follow_up`. For `skipped`: the skip reason. |
 | `note` | The skip note, or the required note on a return to the queue. |
 | `cycle`, `step` | The cadence position at that moment. |
 | `hold_token`, `contact_attempt_id` (nullable FK) | |
