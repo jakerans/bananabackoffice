@@ -4,11 +4,14 @@ How this file is used: [../collaboration.md](../collaboration.md), "Review hando
 No secrets or customer information belong here.
 
 **Updated:** 2026-10-09 · **Branch:** `office/13-slice-5-appointment-and-ownership-handof`
-· **Pull request:** not opened yet (the office opens it after the review)
+· **Pull request:** [#7](https://github.com/jakerans/bananabackoffice/pull/7)
 
-**State:** Job #13 (Plan) is written and waiting for review. It is **documents
-only**. No application code, table, permission, screen or test was added or
-changed, and no check was run by this job. Nothing is deployed by it.
+**State:** Job #13 is written, reviewed and pushed. It is **documents only**. No
+application code, table, permission, screen or test was added or changed. The
+office's record shows the work order approved by Jacob in the office on Oct 8,
+6:18 pm. The pull request is **not merged yet**: the office merges into `main`
+after this report, and only if every GitHub check passes on the final commit.
+Staging has not been verified by anyone. Production is not touched.
 
 ## Step
 
@@ -20,12 +23,16 @@ follow, without building anything and without implementing Projects.
 
 ## What changed
 
+One commit on the branch ("Architect: document updates for job #13"), touching
+five files, all under `docs`:
+
 | Document | Change |
 | --- | --- |
 | [../slice-5-appointment-rulebook.md](../slice-5-appointment-rulebook.md) | **New.** The fourteen rules, what counts as issued, what is still open, two readings to confirm, and the gaps a later build plan must bring to Jacob. |
 | [../decisions.md](../decisions.md) | **Decisions 75 to 84** added. |
 | [../roadmap.md](../roadmap.md) | The slice 5 row, the "Where we are" paragraph and the historical B8 row now point at the rulebook and decision 82. |
 | [../README.md](../README.md) | The rulebook is listed. |
+| This file | Replaced with the job #13 handoff. |
 
 In one paragraph: a Qualified, routed Lead with a customer and property address
 can be booked with a salesperson; saving the appointment is the moment the Lead
@@ -49,17 +56,33 @@ written where it applies:
 - **Decision 44:** Sales Consultants still do not claim Leads, with one narrow
   exception: taking back a Lead they were issued before (decision 81).
 
-No conflict was found that Jacob's decisions leave unsettled, so the job did not
-stop for a question.
-
 ## Tests and checks, with their real results
 
 | Check | Result |
 | --- | --- |
-| `composer test` | **Not run by this job.** It changes documents only. |
-| GitHub "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)" | **Not run yet.** The office runs them on the pull request after the review. |
-| Browser review | Not applicable: nothing visible changed. |
-| Staging and production | Not touched. |
+| `composer test` (style, static analysis, every test), run by the office | **Passed.** |
+| GitHub "Checks and tests (SQLite)" | **Passed.** [Run](https://github.com/jakerans/bananabackoffice/actions/runs/37933803939/job/113830741098) |
+| GitHub "Migrations and tests (MySQL 8.4)" | **Passed.** [Run](https://github.com/jakerans/bananabackoffice/actions/runs/37933803939/job/113830740835) |
+| Independent review (the Reviewer, read-only) | **Approved**, with two notes that did not block. They are under "Open follow-ups" below. |
+| Architect review | Not an independent check: the Architect wrote this plan. The independent check was the Reviewer's. |
+| Fix rounds | 0 used, of at most 3. |
+| Click-through testing | **Not run.** The office has no test browser or test environment for this project yet. Nothing visible changed in this job. |
+| Merge into `main` | **Not done yet.** |
+| Staging | **Not verified.** The project deploys to staging by itself after a merge; the office does not deploy and has not checked any deployment. |
+| Production | Not touched. It always waits for Jacob. |
+
+The passing checks show that the application's existing tests still pass with
+these documents added. They do not test the rulebook itself, which is prose.
+
+## Architectural decisions made while building
+
+None beyond Jacob's fourteen. Two readings of his decisions against the existing
+documents were needed to write the rules down; both are labelled "to confirm"
+and are the two decisions below.
+
+## Deviations from the approved plan
+
+None recorded.
 
 ## Decisions needed from Jacob
 
@@ -80,6 +103,20 @@ stop for a question.
 Neither blocks this job. Both are marked "to confirm" in the rulebook and in
 decision 84.
 
+## Open follow-ups
+
+From the Reviewer. Neither blocked approval, and neither has been made:
+
+1. **Roadmap, slice 5 row:** the reference beside "fourteen rules" reads
+   decisions 75 to 82. Consider changing it to 75 to 83, because rule 14 maps
+   to decision 83.
+2. **Rulebook, rule 12, last sentence:** consider "otherwise cannot take an
+   unassigned Lead", so it does not appear to contradict the released-Lead
+   exception written just above it.
+
+Both are wording corrections with no change of meaning. Recommendation: make
+them in the next documents change.
+
 ## Known limitations
 
 - **The rulebook has gaps on purpose.** The fourteen decisions do not say, for
@@ -92,6 +129,8 @@ decision 84.
   after a reassignment or re-issue; offer validity; the cancellation reasons
   themselves; no-shows and appointment outcomes. The Pending ownership period is
   provisional until Sales Leadership confirms.
+- **Nothing is authorized to be built.** Appointment work needs its own plan
+  and Jacob's approval, and must follow the rulebook.
 - **Documents not changed by this job:**
   [../permission-model.md](../permission-model.md) and
   [../checkpoint-b.md](../checkpoint-b.md) still show the historical Project
@@ -100,13 +139,17 @@ decision 84.
   Pending ownership period as pending, which stays true; and the slice 4 status
   lines in the roadmap were left as job #12 wrote them.
 
+## Browser review
+
+Not applicable: nothing visible changed.
+
 ## Still waiting from job #12 (slice 4, step 4c: the Call Queue screen)
 
 The repository this job started from shows pull request #6 merged into `main`.
 **This job did not verify the staging deployment, and nobody has yet looked at
 the Call Queue in a browser.** The full job #12 handoff, with the twelve
 browser-review steps, the Forge scheduler step and the fourteen follow-ups, is
-the previous version of this file in the Git history ("Architect: review handoff
+an earlier version of this file in the Git history ("Architect: review handoff
 for job #12"). Its decisions are still waiting:
 
 1. Should a Call Center Agent see the manager part of the Call Queue (summary,
