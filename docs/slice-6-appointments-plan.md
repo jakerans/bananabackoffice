@@ -2,8 +2,9 @@
 
 Status: **the three steps are approved in order (2026-10-10, decisions 90 to
 96). Step 6a is built and merged into `main` (2026-10-10); see "Step 6a as
-built" below. Step 6b is built (2026-10-10) and waits for Jacob's review and
-his word to merge; see "Step 6b as built" below.** Step 6c is an outline.
+built" below. Step 6b is built and merged into `main` (2026-10-10); see "Step
+6b as built" below. Step 6c is planned in detail below and is NOT approved: it
+waits for Jacob's answers to questions 23 to 28.**
 Jacob answered every question the 6b plan asked on 2026-10-10 (decisions 97 to
 114). It follows the rulebook in
 [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75
@@ -394,15 +395,90 @@ Readings made while building, none of them a new rule:
 - **The order of the Cancellation Reasons list:** Jacob listed "Other" first.
   It is stored last, as the other lists keep theirs, and can be reordered.
 
-## Step 6c — Release and return (outline)
+## Step 6c — Release and return (proposed, not approved)
 
-A daily timer releases a cancelled Lead that was not rebooked within 30 days
-(an adjustable setting) to the Cancelled Appointments group. **That group gets
-its own button on the Call Queue and is worked as hot Leads, beside new Leads
-(decision 98).** The call center re-issues from it. A salesperson can take back
-a Lead they were issued before. Planned in detail after 6b; its plan settles
-how "beside new Leads" appears on the screen and where a released Lead starts
-in the cadence.
+Planned on 2026-10-10 after step 6b was merged. **Nothing here is approved to
+build.** It follows rule 8 (its last three points) and rule 12, and decisions
+98 and 114. It depends on questions 23 to 28 under "Decisions needed".
+
+### What a person sees
+
+**The salesperson**, in Sales > Calendar under "To rebook": each cancelled
+Lead now says how many days are left before it goes back to the call center.
+A Lead that has gone back moves to a third list, **Released from you**, for as
+long as it can still be taken back.
+
+**After 30 days** (an adjustable setting, question 26) with no new
+appointment, the timer takes the Lead from the salesperson. It is then exactly
+as a Lead a manager sent back: Qualified, with nobody, marked as having come
+back from Sales, and still counted as issued (rule 8). The salesperson is told
+by the bell (question 27).
+
+**The call center**, on the Call Queue: a second button, **Next cancelled
+appointment**, with its own count, beside "Next lead" (decision 98, question
+24). The Lead it hands out carries the "Cancelled appointment: this lead came
+back from Sales" notice built in 6b, so the agent knows which script to use
+before they dial. Which Leads are in this group is question 23.
+
+**Booking one from the group** is an ordinary booking: any salesperson rule 2
+allows, a new issued Lead with its full history kept (rule 8, "re-issue"), and
+the Lead leaves the group.
+
+**Taking a Lead back** (rule 12): the salesperson it was released from sees
+**Take back** on the Lead page and in "Released from you". It asks for a short
+note. The Lead returns to them as Appointment cancelled, to be booked, with
+the same history and no new issued count; it leaves the call queue, and an
+agent who was holding it is told why. Who may do this, and for how long, is
+question 28. If the Lead has already been booked with someone else, only a
+manager can move it (rule 7), which 6b already built.
+
+**Contact Center settings** gain one number: the days a cancelled Lead stays
+with its salesperson.
+
+### What it stores
+
+| Table | Change |
+| --- | --- |
+| `lead_cadences` | Which queue the Lead is in: the ordinary one or Cancelled Appointments. Each "Next" button reads only its own. |
+| `leads` | Who the Lead was released from and when, so "Released from you" and Take back know whose it was. Cleared when it is booked or disqualified. |
+| `contact_center_settings` | The number of days, kept with the settings' history like the other values. |
+
+No new permission is proposed. The release is done by the timer that already
+runs every minute; it writes the same history, audit event and notice as a
+manager's Send back, saying it was the timer.
+
+### Readings this plan makes
+
+Built this way unless Jacob says otherwise. None is a new rule.
+
+- **A released Lead still counts as issued,** and booking it from the group is
+  a new issue (rule 8). A Lead taken back by its salesperson is not (rule 12).
+- **The 30 days are counted from the latest cancellation.** A Lead cancelled,
+  rebooked and cancelled again starts a new 30 days.
+- **A Lead with no salesperson** (theirs lost access) is still released at 30
+  days; there is nobody to tell.
+- **A Lead is not released while an appointment is upcoming,** and one that is
+  booked again in time simply never is.
+
+### Tests
+
+Feature tests for: release at exactly the configured number of days and not
+before; a Lead rebooked in time is never released; the setting's limits and
+who may change it; what a released Lead looks like, including its issue; the
+salesperson is told; "Next cancelled appointment" hands out only that group
+and "Next lead" never does, with both counts right and Location and calling
+hours respected as today; two agents pressing the new button at the same
+moment (real processes); booking from the group is a new issue; Take back
+needs the right person and a note, adds no count, ends an agent's hold, and is
+refused once the Lead has been booked with someone else; the Calendar's three
+lists show only what the person may see; and the migrations on MySQL 8.4,
+with every new stored value checked against the length of its column.
+
+### Not in 6c
+
+Pending and Rehash (rule 14), reactivation texts or emails to the Cancelled
+Appointments group, a calendar grid, and whether a passed appointment was held
+or missed.
 
 ## Decisions needed
 
@@ -547,6 +623,48 @@ Raised by Jacob's answers to the plan's readings (decisions 100 to 102):
     report (decision 84). *Alternative:* also let the passed appointment be
     marked "Missed" now. That starts recording outcomes ahead of the
     after-action report.
+
+**Needed before step 6c is approved.** Each has a recommendation, so "agreed to
+all" is an answer.
+
+23. **Which Leads belong in Cancelled Appointments?** *Recommended:* every
+    Lead that comes back to the Contact Center with its last appointment
+    cancelled: released at 30 days, sent back by a manager, or moved to
+    another Location. They need the same script (decision 114), so they belong
+    behind the same button. A Lead that comes back after an appointment that
+    took place or was missed stays in the ordinary queue. This would change
+    decision 105 for the Leads a manager sends back with a cancelled
+    appointment. *Alternative:* only Leads released at 30 days; a manager's
+    send-back stays in the ordinary queue as built.
+24. **How does the button work "beside new Leads"** (decision 98)?
+    *Recommended:* two buttons side by side, each with its own count: "Next
+    lead" and "Next cancelled appointment". "Next lead" never hands out a
+    cancelled appointment, so the agent always knows which script they are
+    about to use. Within the group, the Lead that came back most recently is
+    handed out first. *Alternative:* one button that hands out new Leads, then
+    cancelled appointments, then follow-ups, with the notice telling the agent
+    which it is.
+25. **How often is a Lead in the group called?** *Recommended:* the same
+    cadence and calling hours as every other Lead, from attempt 1. When its
+    attempts run out it goes on the manager's "finished, no contact" list like
+    any other. *Alternative:* a shorter cadence of its own, which is a second
+    set of settings.
+26. **The 30 days.** *Recommended:* one number on Contact Center settings,
+    from 1 to 180 days, starting at 30, changed by the people who change those
+    settings today (Owner and Leadership). A Lead is released once that many
+    full days have passed since its cancellation was recorded, whatever the
+    time of day.
+27. **Is the salesperson warned before a Lead is taken?** *Recommended:* yes.
+    "To rebook" shows the days left, the bell warns them 5 days before, and
+    tells them again when it is released. No email. *Alternative:* told only
+    when it is released.
+28. **Who may take a Lead back, and for how long** (rule 12)? *Recommended:*
+    only the salesperson a Lead was released from by the timer, while it is
+    still with the Contact Center at the same Location and they still have
+    Sales Consultant access there. There is no time limit: the homeowner may
+    call months later. A Lead a manager sent back cannot be taken back that
+    way, because a manager chose to take it. *Alternative:* a limit, for
+    example 90 days after release.
 
 Still open with Sales Leadership and not needed for 6b: which salesperson an
 issued Lead counts for after a move or re-issue; the real cancellation reasons;

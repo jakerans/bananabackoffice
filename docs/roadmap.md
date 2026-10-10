@@ -73,9 +73,11 @@ manager can mark it "booked in error"; the salesperson is told by a bell in
 the header and by email; Sales > Calendar lists upcoming appointments. Steps 6b
 and 6c are approved in order only: each is planned after the step before it is
 reviewed and still needs decisions of its own. **Step 6b (reschedule, move,
-cancel, book again, send back) is built (2026-10-10)** under decisions 97 to
-114 and waits for Jacob's review and his word to merge. Step 6c (the 30-day
-release and the Cancelled Appointments button) is not planned in detail.
+cancel, book again, send back) is built and merged into `main` (2026-10-10)**
+under decisions 97 to 114. **Step 6c (the 30-day release, the Cancelled
+Appointments button, and a salesperson taking a released Lead back) is planned
+in detail (2026-10-10) and is not approved:** it waits for Jacob's answers to
+the plan's questions 23 to 28.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

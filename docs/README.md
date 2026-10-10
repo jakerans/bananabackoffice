@@ -13,7 +13,7 @@ before starting work, and update them in the same change that alters what they d
 | [checkpoint-b.md](checkpoint-b.md) | The B1–B7 as-built record and the older unbuilt B8–B12 plan retained as historical context. |
 | [slice-4-plan.md](slice-4-plan.md) | The approved plan for slice 4: the call cadence, the due queue and its three build steps. All three steps (4a, 4b and 4c) are merged; the owner's browser review of 4c (the Call Queue screen) is still owed. |
 | [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) | The slice 5 rulebook for appointment issuance and ownership handoff (decisions 75 to 84). Design only: nothing in it is built or approved to build. Later appointment work must follow it. |
-| [slice-6-appointments-plan.md](slice-6-appointments-plan.md) | The plan for appointment booking, built from the slice 5 rulebook in three steps. Step 6a is built and merged; 6b is built and waits for review; 6c is an outline. |
+| [slice-6-appointments-plan.md](slice-6-appointments-plan.md) | The plan for appointment booking, built from the slice 5 rulebook in three steps. Steps 6a and 6b are built and merged; 6c is planned and waits for decisions. |
 | [navigation-map.md](navigation-map.md) | Every center and menu item, its stable ID, and whether it is built yet. |
 | [permission-model.md](permission-model.md) | Who can do what, and where. Roles, permissions, location rules. |
 | [design-system.md](design-system.md) | How the Backoffice design system is applied in code. |
