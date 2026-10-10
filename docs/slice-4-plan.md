@@ -969,6 +969,12 @@ staging only. Production does not exist and nothing here authorizes it.
   for one of them. The Lead-before-cadence lock order is now used in
   `EndQueueHold::atLocation` and `RunQueueTick::releaseExpiredHold`, and the
   hooked actions run again from the start (contract 5, "Locks").
+- On the Call Queue page a message that belongs to no field of the page is
+  shown until the page's next ten-second refresh and no longer: the framework
+  only carries a field's own error from one request to the next. Field errors
+  stay (the put-back note was moved to its field for this reason on
+  2026-10-09). The refusal "This lead was just changed by someone else" in the
+  Disqualify dialog is still of the disappearing kind.
 - Still not retried, on purpose: the timer's own work (it logs the failure and
   its next run tries again), Skip and Put back in queue (the page answers "try
   again"), and capturing a new Lead. The other lifecycle changes (qualify,

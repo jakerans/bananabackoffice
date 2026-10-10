@@ -137,8 +137,9 @@ Decided by Jacob on 2026-10-09, after the 4c handoff:
   reports a deadlock.
 - **Jacob's browser review of 4c was done on 2026-10-09** on the local site, by
   the implementation agent at his request. The queue works as designed; three
-  display faults were found and are listed in
-  [review/current.md](review/current.md).
+  display faults were found and fixed the same day (doubled error messages in
+  the Skip and Disqualify dialogs, a Put back message the page's refresh wiped,
+  and a stray separator in the Lead page's queue history).
 
 Known follow-ups recorded with this slice, none of them authorized:
 

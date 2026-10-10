@@ -3,15 +3,17 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-09 · **Branch:** `checkpoint-queue-deadlock-fix`
+**Updated:** 2026-10-09 · **Branch:** `checkpoint-call-queue-review-fixes` (two steps, one commit each, the second on top of the first)
 
-**State:** the MySQL deadlock fix (decision 87) is built on its own branch and
-waiting for Jacob's word to merge. Nothing visible changed. The browser review
-of the Call Queue (slice 4, step 4c) was done the same day and is reported
-below; it found three display faults that are not fixed yet.
+**State:** two approved steps are built and waiting for Jacob's word to merge.
+First the MySQL deadlock fix (decision 87; branch
+`checkpoint-queue-deadlock-fix`, commit `bc8e5a9`), which changes nothing
+visible. On top of it, the fixes for the three display faults found in the
+browser review of the Call Queue (commit "Fix three display faults found in the
+Call Queue browser review"). Merging this branch merges both.
 
-**Approved and not yet built:** the three display faults, and the switch that
-lets a Call Center Agent see the manager part of the Call Queue (decision 85).
+**Approved and not yet built:** the switch that lets a Call Center Agent see
+the manager part of the Call Queue (decision 85).
 
 ## Step
 
@@ -65,7 +67,9 @@ existing real-process tests still pass.
 | Check | Result |
 | --- | --- |
 | `composer test` on the Windows development machine (style, static analysis, every test) | **Passed:** 1,983 tests (1,982 passed, 1 skipped, 9,947 assertions) in 282 seconds. Before this step it was 1,973 tests in about 220 to 235 seconds. The skipped test is the device-time formatter (see the end of this file). |
-| GitHub "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)" | Reported with the branch; not recorded here. |
+| GitHub "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)", deadlock fix alone (`bc8e5a9`) | **Both passed** (run 38014935318). This is the proof on MySQL: the forced deadlocks, the three raced pairs and every earlier real-process test, with the stricter error check. |
+| `composer test` with the display fixes on top, Windows development machine | **Passed:** 1,984 tests (1,983 passed, 1 skipped, 9,958 assertions) in 277 seconds. |
+| The same two GitHub jobs with the display fixes on top | Reported with the branch; not recorded here. |
 | A private MySQL 8.4 instance | **Not run.** None is installed on the development machine. The GitHub MySQL 8.4 job is the proof on MySQL. |
 | Browser review | Not applicable to this step: nothing visible changed. |
 | Merge into `main`, staging | **Not done.** Waiting for Jacob. |
@@ -120,7 +124,8 @@ What the new tests prove:
 
 Done on the local site by the implementation agent at Jacob's request, signed in
 as the seeded fictitious staff. **The queue works as designed. Three display
-faults were found; none is fixed yet.**
+faults were found, and all three are fixed on this branch** (see "The display
+fixes" below).
 
 | Step | Result |
 | --- | --- |
@@ -137,14 +142,42 @@ faults were found; none is fixed yet.**
 | 11. Lead page panel | Pass. The Sales Consultant sees none of it. |
 | 12. Two people | Partly. A manager in the browser and an agent from the command line were given different Leads. Two buttons were not pressed at the same instant; the eight-process test covers that. |
 
-Faults:
+Faults, as first seen:
 
 - **A. Skip dialog:** each error message appears twice, and "choose a reason"
   stays on screen after a reason is chosen.
-- **B. Put back in queue (both pages):** an empty note is refused but no message
-  appears. The error is attached to a field name the screen does not show.
+- **B. Put back in queue:** an empty note is refused, but a few seconds later
+  no message is on screen.
 - **C. Lead page queue history:** an entry with no reason starts with a stray
   "·" before the person's name.
+
+### The display fixes
+
+- **A.** On the Call Queue page the Skip and Disqualify dialogs printed each
+  field's error twice: a labelled field shows its own error, and a second copy
+  had been placed beside it. The four second copies are removed, and choosing
+  a skip reason now clears the earlier message.
+- **B.** The real cause, found on a second look: the message did appear, and
+  the Call Queue page's ten-second refresh then wiped it. The framework keeps
+  an error from one request to the next only when it is named after a field of
+  the page, and this one was named "note". It is now the note field's own
+  error on both the Call Queue page and the Lead page, shown beside the note
+  and cleared before each save. (The Lead page has no refresh, so there the
+  message had stayed; it moved from the top of the dialog to beside the note.)
+- **C.** A separator is now printed only between two things.
+
+Tests, all in `tests/Feature/Queue/QueueScreenTest.php`: each message is in the
+page exactly once; choosing a skip reason clears the message; the put-back
+message is still there after the page's refresh; and a history entry reads
+"Avery Agent · attempt 1", never "· Avery Agent · attempt 1". Two existing
+assertions changed with the behaviour: the put-back error is now expected under
+the note field's name on both pages. Nothing was removed.
+
+**One more of the same kind, not fixed:** on the Call Queue page, a refusal that
+belongs to no field also disappears at the next refresh. The one a person can
+meet is in the Disqualify dialog: "This lead was just changed by someone else,
+so nothing was saved." It shows for up to ten seconds and then goes. Nothing
+is saved wrongly; the person just loses the explanation. See "Decisions needed".
 
 How it was tested, where that differs from a person at two browsers: the second
 person in steps 7 and 12 was the application's own actions run from the command
@@ -158,10 +191,16 @@ Left on the local database only: seven seeded fictitious staff, three Locations
 
 ## Decisions needed from Jacob
 
-1. **Merge the deadlock fix?** It redeploys staging. Nothing visible changes.
-2. **What to plan after the three faults and the agent switch:** building
-   appointments from the rulebook, Projects and the sales outcome, or production
-   readiness. Each needs its own plan and approval.
+1. **Merge this branch?** It carries the deadlock fix and the three display
+   fixes, and redeploys staging.
+2. **The disappearing "changed by someone else" message on the Call Queue
+   page.** Keep it as is, or show it in a way that stays until the person has
+   read it. Recommendation: show it as the same kind of notice the page
+   already uses when a card goes away, which stays until the next action. It
+   is a small change and was not in the three faults, so it waits for your yes.
+3. **What to plan after the agent switch:** building appointments from the
+   rulebook, Projects and the sales outcome, or production readiness. Each
+   needs its own plan and approval.
 
 ## Known limitations carried forward
 
