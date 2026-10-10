@@ -153,14 +153,15 @@ class LeadPolicy
     /**
      * Determine whether the user can put the Lead back in the call queue.
      *
-     * It belongs to the people who hand out Leads where it is. The Lead must
+     * It belongs to the people who hand out Leads where it is; a Call Center
+     * Agent also needs their manager-view switch (decision 85). The Lead must
      * have a cadence that has left the queue, and be New, Working or
      * Qualified: a disqualified Lead is reopened first and a Deferred
      * Follow-up is resumed first.
      */
     public function returnToQueue(User $user, Lead $lead): bool
     {
-        if (! in_array($lead->status, [LeadStatus::New, LeadStatus::Working, LeadStatus::Qualified], true) || ! $this->distributes($user, $lead)) {
+        if (! in_array($lead->status, [LeadStatus::New, LeadStatus::Working, LeadStatus::Qualified], true) || ! $this->managesQueue($user, $lead)) {
             return false;
         }
 
@@ -172,11 +173,12 @@ class LeadPolicy
     /**
      * Determine whether the user can see the Lead's place in the call queue:
      * its cadence state and marker, and its queue history. It belongs to the
-     * people who hand out Leads where the Lead is, like Put back in queue.
+     * people who hand out Leads where the Lead is, like Put back in queue; a
+     * Call Center Agent also needs their manager-view switch (decision 85).
      */
     public function manageQueue(User $user, Lead $lead): bool
     {
-        return $this->view($user, $lead) && $this->distributes($user, $lead);
+        return $this->view($user, $lead) && $this->managesQueue($user, $lead);
     }
 
     /**
@@ -193,6 +195,21 @@ class LeadPolicy
     /**
      * Whether the user hands out Leads where this Lead is, whatever its status.
      */
+    /**
+     * Whether the person has the manager part of the call queue where this
+     * Lead is: they hand out Leads there, and a Call Center Agent also needs
+     * the switch Leadership sets for them (decision 85).
+     */
+    private function managesQueue(User $user, Lead $lead): bool
+    {
+        if ($lead->isUnrouted()) {
+            return $user->managesQueueAcrossAllLocations()
+                && $user->hasPermissionAcrossAllLocations(Permission::ViewUnroutedLeads);
+        }
+
+        return $lead->location !== null && $user->managesQueueAt($lead->location);
+    }
+
     private function distributes(User $user, Lead $lead): bool
     {
         if ($lead->isUnrouted()) {

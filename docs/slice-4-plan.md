@@ -544,6 +544,7 @@ New `AuditAction` cases, each saved in the same transaction as its change
 | `ContactCenterCallingHoursChanged` | `contact_center.calling_hours_changed` | The settings record | Opening, closing, calling days; `reset: true` when Reset to default was used | 4a |
 | `ContactCenterHoldLengthChanged` | `contact_center.hold_length_changed` | The settings record | Hold minutes | 4a |
 | `LeadReturnedToQueue` | `lead.returned_to_queue` | The Lead | The cadence state, cycle and step before and after, and the required note | 4b |
+| `StaffQueueManagerViewChanged` | `staff.queue_manager_view_changed` | The Call Center Agent | Whether their manager-view switch is on | Decision 85 |
 
 Only what actually changed is recorded; a save that changes nothing records
 nothing. The settings record gets the short fixed name `contact_center_settings`.
@@ -842,9 +843,11 @@ handoff so Jacob can change it.
   company-wide rule lets them. "Due now" there means in the queue, due, not
   held, and inside its Location's calling hours at this moment; "longest wait"
   is how long the most overdue of those has been due; "held" lists the Lead and
-  the holder's name. **Changed by decision 85 (2026-10-09), not built yet:** a
-  Call Center Agent is to see this part only when Leadership switches it on.
-  Until that is built, agents see it as described here.
+  the holder's name. **Changed by decision 85 (built 2026-10-09):** a Call
+  Center Agent has this part, and the Call queue panel and Put back in queue
+  on the Lead page, only when their own manager-view switch is on. The switch
+  is set by Owner and Leadership on the Contact Center settings page. Everyone
+  else who may assign Leads is unaffected.
 - **A hold that is gone** is explained from the queue history for that hold
   (`hold_token`). `hold_expired` means "time ran out" and nothing else; a logged
   attempt always arrives as `hold_ended`. The notice gives the reason only: it

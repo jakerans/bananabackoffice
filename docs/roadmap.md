@@ -13,9 +13,9 @@ commit. The staging scheduler is on. The browser review of 4c was done on
 2026-10-09 (see "Slice 4 boundary" below).** Its plan is
 [slice-4-plan.md](slice-4-plan.md). The B1–B7 record and older unbuilt plan are in
 [checkpoint-b.md](checkpoint-b.md). Jacob approved the five-slice order. **The
-MySQL deadlock fix is built (decision 87, 2026-10-09). One change is approved
-and not yet built: the switch, one for each Call Center Agent, that lets them
-see the Call Queue's manager part (decision 85).** Nothing else after slice 5's
+MySQL deadlock fix is built (decision 87, 2026-10-09), and so is the switch, one
+for each Call Center Agent, that lets them see the Call Queue's manager part
+(decision 85, 2026-10-09).** Nothing else after slice 5's
 rulebook is planned or authorized, and every later slice still stops for owner
 review.
 
@@ -128,8 +128,10 @@ Decided by Jacob on 2026-10-09, after the 4c handoff:
   Leadership switches it on** (decision 85): one switch for each agent,
   starting off, changed by Owner and Leadership on the Contact Center settings
   page, covering the manager part of both the Call Queue page and the Lead
-  page. Approved, not built: until it is, agents see the manager part as 4c
-  built it.
+  page. **Built on 2026-10-09:** a new section on the Contact Center settings
+  page, the column `users.queue_manager_view`, and the audit event
+  `staff.queue_manager_view_changed`. No permission or role grant changed.
+  Once deployed, every agent's switch is off until someone turns it on.
 - **Skip after calling hours close stays as built** (decision 86).
 - **The MySQL deadlock fix is built** (decision 87, 2026-10-09): the Lead row
   is locked before the cadence row wherever a hold is ended, and the actions

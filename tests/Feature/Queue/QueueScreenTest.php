@@ -584,6 +584,12 @@ test('a location manager sees only their locations numbers', function () {
     expect($summary['dueNow'])->toBe(1)->and($summary['finishedCount'])->toBe(1);
 
     queuePage($manager)->assertSee('Mine Person')->assertDontSee('Elsewhere Person');
+
+    // A Call Center Agent has the manager part only once it is switched on for them (decision 85).
+    queuePage($setter)->assertDontSee('Mine Person')->assertDontSee('Elsewhere Person');
+
+    $setter->forceFill(['queue_manager_view' => true])->save();
+
     queuePage($setter)->assertSee('Mine Person')->assertDontSee('Elsewhere Person');
 });
 

@@ -1885,8 +1885,24 @@ Jacob answered the open questions later the same day (2026-10-09):
   left the exact coverage to the builder, who chose both so that an agent does
   not keep a manager tool through the Lead page.
 
-With these answers the switch is approved to build ("you build everything",
-2026-10-09). It is not built yet.
+With these answers the switch was approved to build ("you build everything",
+2026-10-09).
+
+**Built on 2026-10-09.** How it was built:
+
+- The switch is a yes or no on the person, not a permission and not a role
+  grant. An agent with it off still assigns Leads and works the queue as
+  before; only the manager part of the queue is withheld.
+- One rule decides it everywhere: the person may assign Leads at that Location,
+  and where that comes from Call Center Agent access their switch must be on.
+  A person who is an agent and also a Location Manager at the same Location
+  keeps the manager part there whatever the switch says.
+- It is changed on Company > Settings > Contact Center, in a new section
+  "Manager view for Call Center Agents" that lists every active person with
+  Call Center Agent access. Each switch saves by itself and writes the audit
+  event `staff.queue_manager_view_changed`.
+- When this reaches staging or production, every agent's switch is off, so
+  agents stop seeing the manager part until someone switches it on for them.
 
 ## 86. Skip after calling hours close stays as built (2026-10-09)
 

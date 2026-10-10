@@ -3,17 +3,21 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-09 · **Branch:** `checkpoint-call-queue-review-fixes` (two steps, one commit each, the second on top of the first)
+**Updated:** 2026-10-09 · **Branch:** `checkpoint-agent-queue-manager-switch` (three steps, each on top of the one before)
 
-**State:** two approved steps are built and waiting for Jacob's word to merge.
-First the MySQL deadlock fix (decision 87; branch
-`checkpoint-queue-deadlock-fix`, commit `bc8e5a9`), which changes nothing
-visible. On top of it, the fixes for the three display faults found in the
-browser review of the Call Queue (commit "Fix three display faults found in the
-Call Queue browser review"). Merging this branch merges both.
+**State:** three approved steps are built and waiting for Jacob's word to merge.
+Each is its own commit, stacked in this order, and each lower branch can be
+merged without the ones above it:
 
-**Approved and not yet built:** the switch that lets a Call Center Agent see
-the manager part of the Call Queue (decision 85).
+1. **The MySQL deadlock fix** (decision 87): branch
+   `checkpoint-queue-deadlock-fix`. Nothing visible changes.
+2. **The three display faults** found in the browser review of the Call Queue:
+   branch `checkpoint-call-queue-review-fixes`.
+3. **The manager-view switch for Call Center Agents** (decision 85): this
+   branch. It adds one section to the Contact Center settings page, and it
+   needs a browser look (steps under "Step 3" below).
+
+Nothing else is approved to build.
 
 ## Step
 
@@ -69,7 +73,7 @@ existing real-process tests still pass.
 | `composer test` on the Windows development machine (style, static analysis, every test) | **Passed:** 1,983 tests (1,982 passed, 1 skipped, 9,947 assertions) in 282 seconds. Before this step it was 1,973 tests in about 220 to 235 seconds. The skipped test is the device-time formatter (see the end of this file). |
 | GitHub "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)", deadlock fix alone (`bc8e5a9`) | **Both passed** (run 38014935318). This is the proof on MySQL: the forced deadlocks, the three raced pairs and every earlier real-process test, with the stricter error check. |
 | `composer test` with the display fixes on top, Windows development machine | **Passed:** 1,984 tests (1,983 passed, 1 skipped, 9,958 assertions) in 277 seconds. |
-| The same two GitHub jobs with the display fixes on top | Reported with the branch; not recorded here. |
+| The same two GitHub jobs with the display fixes on top (`a59807c`) | **Both passed** (run 38015705071). A second pass on MySQL 8.4 for the deadlock tests. |
 | A private MySQL 8.4 instance | **Not run.** None is installed on the development machine. The GitHub MySQL 8.4 job is the proof on MySQL. |
 | Browser review | Not applicable to this step: nothing visible changed. |
 | Merge into `main`, staging | **Not done.** Waiting for Jacob. |
@@ -189,18 +193,138 @@ tests cover each of these.
 Left on the local database only: seven seeded fictitious staff, three Locations
 (one set to Pacific) and 14 fictitious Leads named "Queue Review … (Sample)".
 
+## Step 3: the manager-view switch for Call Center Agents (decision 85)
+
+Objective: a Call Center Agent sees the manager part of the call queue only
+when Owner or Leadership has switched it on for that one person.
+
+### What changed
+
+- **One rule, in one place** (`User::managesQueueAt` and
+  `managesQueueAcrossAllLocations`): the person may assign Leads there, and
+  where that comes from Call Center Agent access their switch must be on. The
+  two policies (`LeadPolicy::manageQueue`, `returnToQueue`) and the manager
+  summary's scope (`DueQueue::managerScope`) use it.
+- **What an agent with the switch off no longer has:** on the Call Queue page
+  the summary, the timer warning, the "Cadence finished, no contact" list and
+  Put back in queue; on a Lead the "Call queue" panel, the queue history and
+  Put back in queue. Everything else is as before: Next lead, the card, Log
+  attempt, Skip, Disqualify, and assigning Leads.
+- **Who is not affected:** Owner, Leadership and Location Manager, and a person
+  who is an agent and also a Location Manager at the same Location.
+- **The switch itself:** a yes or no on the person (`users.queue_manager_view`,
+  one new migration, off by default). Not a permission; no role grant changed.
+- **Where it is changed:** Company > Settings > Contact Center, a new last
+  section "Manager view for Call Center Agents". It lists every active person
+  with Call Center Agent access, with where they work, and one switch each. A
+  switch saves by itself when it is changed
+  (`app/Actions/ContactCenter/SetQueueManagerView.php`).
+- **Audit:** each change writes `staff.queue_manager_view_changed`, about the
+  agent, with the person who changed it.
+- **Documents:** decision 85, the permission model, the slice 4 plan, the
+  roadmap, the security notes and the README's "Where things live".
+- **No** new permission, role grant, navigation item, route or package.
+
+### When this is deployed
+
+**Every agent's switch starts off.** From the deployment, Call Center Agents
+stop seeing the manager part until someone switches it on for them. That is
+what decision 85 asks for; it is here so nobody is surprised.
+
+### Tests
+
+New `tests/Feature/Queue/QueueManagerViewTest.php`:
+
+| What | Test |
+| --- | --- |
+| The rule, as a matrix of twelve people against both policies | "who has the manager part of the queue for a lead" |
+| The summary's scope, including an agent who also manages one Location | "the manager part covers only the locations the person has it for" |
+| The Call Queue page with the switch off and then on, and that the agent can still work a Lead | "an agent works the queue without the manager part until it is switched on" |
+| Switching it off under an open dialog | "switching it off while a put-back dialog is open refuses the save" |
+| The Lead page panel | "the call queue panel on a lead follows the switch" |
+| Who may change it, the audit event, and no event when nothing changes | "owner and leadership switch it on and off…", "nobody else may change the switch, including the agent themselves" |
+| Refusing a person who is not an agent | "a person who is not a call center agent cannot be switched" |
+| The settings page: the list, the empty state, saving at once, a made-up or wrong ID, and a person who lost the settings permission | the five "settings page" tests |
+
+`composer test` with this step on top, on the Windows development machine:
+**passed**, 2,015 tests (2,014 passed, 1 skipped, 10,091 assertions) in 276
+seconds. The two GitHub jobs for this step are reported with the branch and not
+recorded here; this step has a migration, so the MySQL 8.4 job is the one that
+shows it applies there.
+
+Three existing tests changed with the rule, as decision 85 requires; none was
+removed. In `ReturnLeadToQueueTest`, "a call center agent" may no longer put a
+Lead back (three new rows cover an agent switched on, switched on elsewhere,
+and one who is also the Location Manager), and the unrouted test's agent now
+has the switch on, with a new line that an agent with it off is refused. In
+`QueueScreenTest`, "a location manager sees only their locations numbers" now
+checks the agent with the switch off and then on.
+
+### Architectural decisions made while building
+
+- **A yes or no on the person, not a permission.** A permission here belongs to
+  a role, and this is decided person by person. Making it a permission would
+  have needed a new kind of grant.
+- **The switches live on the Contact Center settings page,** which Owner and
+  Leadership already manage, not on each person's page in Users and Access.
+  One list, one place.
+- **A person who may assign through another role keeps the manager part.** The
+  switch only narrows what Call Center Agent access gives.
+
+### Browser review for Jacob
+
+Not looked at in a browser yet (each browser action needs an approval click, so
+this one is left for you or for a go-ahead). On the local site, signed in as an
+Owner:
+
+1. Open Company > Settings > Contact Center and scroll to the last section,
+   **Manager view for Call Center Agents**. It lists Casey Callcenter with "All
+   locations" and a switch that is off. Managers and other roles are not
+   listed.
+2. View Backoffice as Casey Callcenter and open Marketing > Contact Center >
+   Call Queue. You see the due count and Next lead, and none of: the four
+   summary numbers, the yellow timer warning, the "Cadence finished, no
+   contact" list.
+3. Return to the Owner, switch Casey on. A message confirms it. View as Casey
+   again: the summary, the warning and the list are back.
+4. As Casey, open a Lead whose cadence finished: the "Call queue" panel shows.
+   Switch Casey off and reload the Lead: the panel is gone.
+5. View as Morgan Manager: the manager part shows whatever Casey's switch says.
+
+### Known limitations
+
+- The switch can be changed for an agent who is deactivated only once they are
+  active again: the list shows active people. A deactivated agent keeps
+  whatever their switch was.
+- A person given Call Center Agent access later starts with the switch off,
+  and a person who loses it keeps the stored value, which then means nothing.
+- The settings page does not say who last changed a switch; the audit event
+  does, and there is still no screen for reading audit events.
+
+## A timing-dependent test to watch
+
+During one local run of the queue tests on this branch, the existing step 4b
+test "a change that takes a lead away while it is being claimed…" (the access
+revoked case) failed with "The claim never got in first". That test needs both
+orders of a real race to happen at least once within its rounds, and in that run
+one order never did. It passed when run again, in every full local run, and in
+all GitHub runs. It asserts nothing about correctness when it fails this way,
+but it can fail a run on a busy machine. Not changed; mentioned so a red run is
+recognised.
+
 ## Decisions needed from Jacob
 
-1. **Merge this branch?** It carries the deadlock fix and the three display
-   fixes, and redeploys staging.
+1. **Merge?** Say which: only the deadlock fix, the deadlock fix and the
+   display fixes, or all three. Each merge redeploys staging, and the third
+   switches every agent's manager part off until it is switched on.
 2. **The disappearing "changed by someone else" message on the Call Queue
    page.** Keep it as is, or show it in a way that stays until the person has
    read it. Recommendation: show it as the same kind of notice the page
    already uses when a card goes away, which stays until the next action. It
    is a small change and was not in the three faults, so it waits for your yes.
-3. **What to plan after the agent switch:** building appointments from the
-   rulebook, Projects and the sales outcome, or production readiness. Each
-   needs its own plan and approval.
+3. **What to plan next:** building appointments from the rulebook, Projects and
+   the sales outcome, or production readiness. Each needs its own plan and
+   approval. Nothing is being built until you choose.
 
 ## Known limitations carried forward
 

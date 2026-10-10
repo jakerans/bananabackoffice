@@ -86,6 +86,7 @@ each server's environment settings. See [decisions.md](decisions.md), decision 2
 | Queue actions (enter, advance, end, claim, skip, end hold, put back, tick) | `app/Actions/Queue/` |
 | The every-minute queue timer | `app/Console/Commands/QueueTick.php`, `routes/console.php` |
 | Real-concurrency test support (separate PHP processes; tests only) | `tests/Support/QueueProcesses.php`, `tests/Support/queue-process.php` |
+| The call queue: engine, screen and settings | `app/Actions/Queue/`, `app/Support/Queue/`, `resources/views/pages/marketing/⚡call-queue.blade.php`, `resources/views/pages/settings/⚡contact-center.blade.php`, `app/Actions/ContactCenter/` |
 | Recording an audit event | `app/Actions/Audit/RecordAuditEvent.php`, `app/Enums/AuditAction.php`, `app/Models/AuditEvent.php` |
 | The short names records are stored under | `app/Providers/AppServiceProvider.php` (`configureRecordNames`) |
 | Application shell | `resources/views/layouts/app.blade.php`, `resources/views/components/shell/` |

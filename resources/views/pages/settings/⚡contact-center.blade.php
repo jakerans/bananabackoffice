@@ -1,10 +1,15 @@
 <?php
 
 use App\Actions\ContactCenter\ChangeContactCenterSettings;
+use App\Actions\ContactCenter\SetQueueManagerView;
 use App\Enums\Permission;
+use App\Enums\Role;
+use App\Models\AccessGrant;
 use App\Models\ContactCenterSettings;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Flux\Flux;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -32,6 +37,14 @@ new #[Title('Contact Center settings')] class extends Component {
     public string $holdMinutes = '';
 
     /**
+     * Each Call Center Agent's manager-view switch, by staff ID. A switch
+     * saves by itself the moment it is changed.
+     *
+     * @var array<int, bool>
+     */
+    public array $managerView = [];
+
+    /**
      * Mount the component.
      */
     public function mount(): void
@@ -39,6 +52,79 @@ new #[Title('Contact Center settings')] class extends Component {
         $this->authorize(Permission::ManageContactCenterSettings);
 
         $this->loadSettings();
+        $this->loadManagerView();
+    }
+
+    /**
+     * Every active person with Call Center Agent access.
+     *
+     * @return Collection<int, User>
+     */
+    #[Computed]
+    public function agents(): Collection
+    {
+        return User::query()
+            ->where('is_active', true)
+            ->whereHas('accessGrants', fn ($grants) => $grants->where('role', Role::CallCenterAgent))
+            ->with('accessGrants.location')
+            ->orderBy('name')
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
+     * Where a person's Call Center Agent access applies, in words.
+     */
+    protected function agentAccess(User $agent): string
+    {
+        $grants = $agent->accessGrants->filter(fn (AccessGrant $grant): bool => $grant->role === Role::CallCenterAgent);
+
+        if ($grants->contains(fn (AccessGrant $grant): bool => $grant->isCompanyWide())) {
+            return __('All locations');
+        }
+
+        return $grants->map(fn (AccessGrant $grant): ?string => $grant->location?->name)->filter()->sort()->implode(', ');
+    }
+
+    /**
+     * Show every switch as it is saved now.
+     */
+    private function loadManagerView(): void
+    {
+        unset($this->agents);
+
+        $this->managerView = $this->agents->mapWithKeys(fn (User $agent): array => [$agent->id => $agent->queue_manager_view])->all();
+    }
+
+    /**
+     * Save one agent's switch as soon as it is changed. The person is found
+     * again from the ID and the action checks that they are a Call Center
+     * Agent, so a made-up ID or anyone else's cannot be switched.
+     */
+    public function updatedManagerView(mixed $value, ?string $key = null): void
+    {
+        $this->authorize(Permission::ManageContactCenterSettings);
+        $this->resetValidation('agent');
+
+        $agent = $key !== null && ctype_digit($key) ? User::query()->find((int) $key) : null;
+
+        if ($agent === null) {
+            $this->loadManagerView();
+
+            return;
+        }
+
+        try {
+            $changed = app(SetQueueManagerView::class)->handle(auth()->user(), $agent, (bool) $value);
+        } finally {
+            $this->loadManagerView();
+        }
+
+        if ($changed) {
+            Flux::toast(variant: 'success', text: $agent->queue_manager_view
+                ? __(':name now sees the manager part of the Call Queue.', ['name' => $agent->name])
+                : __(':name no longer sees the manager part of the Call Queue.', ['name' => $agent->name]));
+        }
     }
 
     /**
@@ -439,6 +525,32 @@ new #[Title('Contact Center settings')] class extends Component {
             <flux:button type="submit" variant="primary" data-test="save-hold">{{ __('Save hold length') }}</flux:button>
         </div>
     </form>
+
+    {{-- Manager view for Call Center Agents --}}
+    <div class="flex flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-6" data-test="manager-view-section">
+        <div>
+            <flux:heading size="lg" level="2">{{ __('Manager view for Call Center Agents') }}</flux:heading>
+            <flux:text>{{ __('Switched on, an agent also sees the manager part of the Call Queue where they work: the summary, the timer warning, the "Cadence finished, no contact" list and Put back in queue, and the Call queue panel on a lead. It is off until you switch it on, and each switch saves by itself. Owners, Leadership and Location Managers always see the manager part.') }}</flux:text>
+        </div>
+
+        <flux:error name="agent" />
+
+        @if ($this->agents->isEmpty())
+            <flux:text data-test="manager-view-empty">{{ __('Nobody has Call Center Agent access yet.') }}</flux:text>
+        @else
+            <ul class="divide-y divide-zinc-200">
+                @foreach ($this->agents as $agent)
+                    <li wire:key="manager-view-{{ $agent->id }}" class="py-3 first:pt-0 last:pb-0" data-test="manager-view-agent">
+                        <flux:switch
+                            wire:model.live="managerView.{{ $agent->id }}"
+                            :label="$agent->name"
+                            :description="$this->agentAccess($agent)"
+                        />
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </div>
 
     <x-confirmation-modal
         name="reset-calling-hours-confirmation"
