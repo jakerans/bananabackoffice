@@ -39,7 +39,7 @@ detail is **PENDING** and must not be guessed.
 
 | Environment | Where | Database | Email |
 | --- | --- | --- | --- |
-| Local | Herd, `http://backoffice.test` | SQLite | Log file or local mail catcher; nothing real is sent |
+| Local | Herd, `https://backoffice.test` (Herd's "Secure" option, on since 2026-10-10) | SQLite | Log file or local mail catcher; nothing real is sent |
 | Staging | Forge, `https://bananabackoffice-xg8eqczb.on-forge.com`, deploys from `main` | MySQL 8.4 | Resend, real email |
 | Production | Not set up yet | MySQL 8.4 | Resend |
 
