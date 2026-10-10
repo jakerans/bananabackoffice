@@ -388,7 +388,13 @@ test('skip needs a reason, and Other needs a note', function () {
     $page = queuePage($agent)->call('nextLead')->call('openSkip');
 
     $page->call('skip')->assertHasErrors('skipReason');
-    $page->set('skipReason', 'other')->call('skip')->assertHasErrors('skipNote');
+
+    // Each message is shown once, and choosing a reason clears what was said about the last choice.
+    expect(substr_count($page->html(), 'Choose why you are skipping this lead.'))->toBe(1);
+    $page->set('skipReason', 'other')->assertHasNoErrors();
+
+    $page->call('skip')->assertHasErrors('skipNote');
+    expect(substr_count($page->html(), 'Say briefly why you are skipping this lead.'))->toBe(1);
     $page->set('skipNote', 'Number belongs to a business')->call('skip')->assertHasNoErrors()->assertSee('You skipped this lead');
 
     expect(queueHistory($lead))->toContain('skipped:other');
@@ -402,6 +408,7 @@ test('disqualify from the card follows the existing reasons and permission', fun
     $page = queuePage($agent)->call('nextLead')->call('openDisqualify');
 
     $page->call('disqualify')->assertHasErrors('disqualificationReasonId');
+    expect(substr_count($page->html(), 'Choose why this lead is being disqualified.'))->toBe(1);
     $page->set('disqualificationReasonId', $reason->id);
 
     // Someone else changes the lead while the dialog is open: nothing is saved.
@@ -610,7 +617,12 @@ test('put back from the page needs a note, resolves the lead on the server and u
 
     $page = queuePage($manager)->assertSee('Put back in queue')->call('openPutBack', $lead->id);
 
-    $page->call('putBack')->assertHasErrors('note');
+    // Refused, and the person is told why, once, beside the note.
+    $page->call('putBack')->assertHasErrors('putBackNote');
+    expect(substr_count($page->html(), 'Say why this lead is going back in the queue.'))->toBe(1);
+
+    // The message is kept under the field's own name, so the page's ten-second refresh does not wipe it.
+    $page->call('refreshQueue')->assertHasErrors('putBackNote')->assertSee('Say why this lead is going back in the queue.');
     expect(LeadCadence::query()->where('lead_id', $lead->id)->value('state'))->toBe(CadenceState::FinishedNoContact);
 
     $page->set('putBackNote', 'Customer asked us to try again')->call('putBack')->assertHasNoErrors();
@@ -638,13 +650,35 @@ test('the lead page shows the cadence panel, history and put back only where the
 
     Livewire::actingAs($manager)->test('pages::leads.show', ['lead' => $lead])
         ->assertSeeHtml('data-test="cadence-panel"')->assertSeeHtml('data-test="queue-history"')->assertSee('Put back in queue')
-        ->call('openPutBack')->set('putBackNote', '')->call('putBack')->assertHasErrors('note')
+        ->call('openPutBack')->set('putBackNote', '')->call('putBack')->assertHasErrors('putBackNote')->assertSee('Say why this lead is going back in the queue.')
         ->set('putBackNote', 'Trying a second round')->call('putBack')->assertHasNoErrors();
 
     expect(LeadCadence::query()->where('lead_id', $lead->id)->value('state'))->toBe(CadenceState::InQueue);
 
     Livewire::actingAs($setter)->test('pages::leads.show', ['lead' => $lead])
         ->assertDontSeeHtml('data-test="cadence-panel"')->assertDontSee('Queue history')->call('openPutBack')->assertForbidden();
+});
+
+test('a queue history entry never starts with a separator', function () {
+    $manager = User::factory()->withRoleEverywhere(Role::LocationManager)->create();
+    $agent = setterAt($this->lakeview);
+    $lead = dueLead($this->lakeview);
+
+    // "Attempt counted" names a person and has no reason and no note.
+    logAttempt($lead, $agent);
+
+    $html = Livewire::actingAs($manager)->test('pages::leads.show', ['lead' => $lead])->html();
+
+    // The words of each entry's second line, as a person reads them.
+    preg_match_all('/<li[^>]*data-test="queue-event".*?<div class="text-zinc-700">(.*?)<\/div>\s*<\/li>/s', $html, $entries);
+
+    $lines = array_map(
+        fn (string $entry): string => trim((string) preg_replace('/\s+/', ' ', html_entity_decode(strip_tags((string) preg_replace('/<!--.*?-->/s', '', $entry))))),
+        $entries[1],
+    );
+
+    // Newest first: the attempt, with the separator only between the person and the attempt number; then entering.
+    expect($lines)->toBe(['Avery Agent · attempt 1', 'attempt 1']);
 });
 
 /*

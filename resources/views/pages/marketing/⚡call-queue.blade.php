@@ -349,6 +349,11 @@ new #[Title('Call Queue')] class extends Component {
         Flux::modal('skip-lead')->show();
     }
 
+    public function updatedSkipReason(): void
+    {
+        $this->resetValidation(['skipReason', 'skipNote']);
+    }
+
     public function skip(SkipHeldLead $skipHeldLead): void
     {
         $this->authorize(Permission::WorkLeadQueue);
@@ -523,7 +528,19 @@ new #[Title('Call Queue')] class extends Component {
 
         $this->authorize('returnToQueue', $lead);
 
-        if (! $this->guardBusy(fn () => $returnLeadToQueue->handle($lead, $this->putBackNote, Auth::user()))) {
+        $this->resetValidation('putBackNote');
+
+        try {
+            $done = $this->guardBusy(fn () => $returnLeadToQueue->handle($lead, $this->putBackNote, Auth::user()));
+        } catch (ValidationException $exception) {
+            // The action speaks of its "note". Here that is the note field, and
+            // only an error kept under a field's own name survives the next refresh.
+            throw array_key_exists('note', $exception->errors())
+                ? ValidationException::withMessages(['putBackNote' => $exception->errors()['note']])
+                : $exception;
+        }
+
+        if (! $done) {
             return;
         }
 
@@ -814,11 +831,9 @@ new #[Title('Call Queue')] class extends Component {
                 <flux:select.option :value="$reason->value">{{ $reason->label() }}</flux:select.option>
             @endforeach
         </flux:select>
-        <flux:error name="skipReason" />
 
         @if ($skipReason === QueueSkipReason::Other->value)
             <flux:textarea wire:model="skipNote" rows="2" :label="__('Say briefly why (required)')" data-test="skip-note" />
-            <flux:error name="skipNote" />
         @endif
     </x-confirmation-modal>
 
@@ -836,7 +851,6 @@ new #[Title('Call Queue')] class extends Component {
                     <flux:select.option :value="$reason->id" wire:key="reason-{{ $reason->id }}">{{ $reason->name }}</flux:select.option>
                 @endforeach
             </flux:select>
-            <flux:error name="disqualificationReasonId" />
 
             <flux:text>{{ __('No response alone is not a reason to disqualify. Use Skip, or schedule a follow-up from the full lead.') }}</flux:text>
 
@@ -871,7 +885,6 @@ new #[Title('Call Queue')] class extends Component {
                 rows="3"
                 :label="$this->chosenReason?->needsNote() ? __('Explanation (required)') : __('Note (optional)')"
             />
-            <flux:error name="disqualificationNote" />
 
             <div class="flex justify-end gap-2">
                 <flux:modal.close>
@@ -891,7 +904,6 @@ new #[Title('Call Queue')] class extends Component {
             action="putBack"
             :confirm-label="__('Put back in queue')"
             confirm-variant="primary"
-            error="note"
         >
             <flux:textarea wire:model="putBackNote" rows="3" :label="__('Why it is going back (required)')" data-test="put-back-note" />
         </x-confirmation-modal>
