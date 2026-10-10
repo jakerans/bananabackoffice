@@ -483,8 +483,9 @@ PHP 8.4.
   (decisions.md, 22). Replies on staging go to `admin@bananapainting.com`, an
   interim address. The permanent reply-to inbox, and production's, are still to
   be named.
-- Passkeys only work over a secure address. The local site is served over plain
-  `http`, so passkeys cannot be tried locally until Herd's HTTPS option is turned on.
+- Passkeys only work over a secure address. The local site was served over plain
+  `http` until 2026-10-10, when Jacob turned on Herd's HTTPS option; it is now at
+  `https://backoffice.test`. Passkeys have not been tried locally since.
 
 ## Checkpoint B
 

@@ -3,16 +3,18 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-10 · **Branch:** `checkpoint-call-queue-kept-notices`
+**Updated:** 2026-10-10 · **Branch:** `checkpoint-docs-switch-review-and-local-https` (documents only)
 
 **State:** Jacob approved and the implementation agent merged three steps into
 `main` on 2026-10-10: the MySQL deadlock fix (decision 87), the three display
 faults from the Call Queue browser review, and the manager-view switch for Call
-Center Agents (decision 85). Their handoff is the previous version of this file
-in the Git history. One small approved fix is built on this branch and waits
-for Jacob's word to merge.
+Center Agents (decision 85). The fix that keeps a refusal on the Call Queue
+page was merged the same day. The earlier handoffs are previous versions of
+this file in the Git history.
 
-**Nothing else is approved to build.**
+**Nothing is waiting to be built, and nothing further is approved.** This
+branch only records what was checked after those merges; it is documents only
+and waits for Jacob's word to merge.
 
 ## The merge of the three steps
 
@@ -30,7 +32,10 @@ section, "Manager view for Call Center Agents".
 
 ## Step: keep a refusal on the Call Queue page until it has been read
 
-Jacob approved this on 2026-10-10 ("fix the disappearing message").
+Jacob approved this on 2026-10-10 ("fix the disappearing message") and its
+merge the same day ("Merge it"). It is `main` commit `4e188c3`: both GitHub
+jobs passed on it (run 38053748850), Forge finished deploying it to staging at
+12:55 UTC, and the queue timer on staging had run 42 seconds before it was read.
 
 Objective: on the Call Queue page, a refusal such as "This lead was just changed
 by someone else, so nothing was saved." must stay on screen until the person's
@@ -58,7 +63,7 @@ next action. It used to vanish within ten seconds.
 | Check | Result |
 | --- | --- |
 | `composer test` on the Windows development machine | **Passed:** style, static analysis, and 2,018 tests (2,017 passed, 1 skipped, 10,115 assertions) in 293 seconds. |
-| Both GitHub jobs on this branch | Reported with the branch; not recorded here. |
+| Both GitHub jobs on its branch (`6d92187`) | **Passed** (run 38051184352). |
 | Browser | **Not looked at in a browser.** The fault itself was seen in a browser on 2026-10-09; the fix is proved by the tests below, which fail without it. |
 
 New tests in `tests/Feature/Queue/QueueScreenTest.php`:
@@ -78,24 +83,32 @@ No existing test changed.
 - This is specific to the Call Queue page. If another page is ever given a
   timer of its own, it will need the same care.
 
-## Still owed from the merged steps
+## Browser look at the manager-view switch (done 2026-10-10)
 
-**A browser look at the manager-view switch.** Nobody has seen it in a browser.
-On the local site or staging, signed in as an Owner:
+Done on the local site by the implementation agent at Jacob's request, signed in
+as the seeded fictitious Owner. **It works as designed.**
 
-1. Open Company > Settings > Contact Center and scroll to the last section,
-   **Manager view for Call Center Agents**. It lists each active Call Center
-   Agent with where they work and a switch that is off. Other roles are not
-   listed.
-2. View Backoffice as an agent and open Marketing > Contact Center > Call
-   Queue. You see the due count and Next lead, and none of: the four summary
-   numbers, the yellow timer warning, the "Cadence finished, no contact" list.
-3. Return to the Owner and switch that agent on. A message confirms it. View as
-   the agent again: the summary and the list are back.
-4. As the agent, open a Lead whose cadence finished: the "Call queue" panel
-   shows. Switch the agent off and reload the Lead: the panel is gone.
-5. View as a Location Manager: the manager part shows whatever any agent's
-   switch says.
+| Step | Result |
+| --- | --- |
+| 1. The settings section | Pass. "Manager view for Call Center Agents" is the last section of Company > Settings > Contact Center. It listed the one fictitious agent, Casey Callcenter, with "All locations" and a switch that was off. No other role was listed. |
+| 2. The agent's view with the switch off | Pass. The Call Queue showed the due count and Next lead, and none of the summary numbers, the timer warning, the cadence-finished list or Put back in queue. A Lead whose cadence had finished opened with no "Call queue" panel. |
+| 3. Switching on | Pass. One click on the settings page; the switch showed on at once and was saved. As the agent, the summary, the timer warning and the cadence-finished list were back, with Put back in queue. |
+| 4. The Lead page | Pass with the switch on: the "Call queue" panel, its history and Put back in queue showed. |
+| 5. Switching off again, and the Location Manager | Checked from the command line, not in the browser: switching the agent off through the application's own action took the manager part away from the agent, and the Location Manager had it throughout. The automated tests cover both. |
+
+Not seen: the confirmation message after a switch is changed. The page was read
+as text a moment later and the message was not in it; whether it showed and
+went, or the reading missed it, is not known. The switch itself was saved.
+
+The local agent's switch was put back to off afterwards.
+
+## The local site is now served over HTTPS
+
+On 2026-10-10 Jacob turned on Herd's "Secure" option for the local site, to see
+whether it would stop the Claude desktop app asking for approval on every
+browser action. It did not. The site stays at `https://backoffice.test`: the
+local `.env` address was changed to match (that file is not in version control),
+and passkeys can now be tried locally. Nothing in the application changed.
 
 ## A timing-dependent test to watch
 
@@ -108,7 +121,8 @@ so a red run is recognised.
 
 ## Decisions needed from Jacob
 
-1. **Merge this fix?** It redeploys staging.
+1. **Merge this documents change?** It redeploys staging and changes nothing
+   there.
 2. **What to plan next:** building appointments from the rulebook, Projects and
    the sales outcome, or production readiness. Each needs its own plan and
    approval. Nothing is being built until you choose.
