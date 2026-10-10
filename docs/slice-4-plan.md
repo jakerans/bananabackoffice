@@ -787,8 +787,8 @@ Tests:
 
 ## Step 4c — The queue screen
 
-**Status: merged into `main` (job #12, 2026-10-09). Jacob's browser review and the
-two-person test are still owed.** The staging scheduler could not be checked from
+**Status: merged into `main` (job #12, 2026-10-09). The browser review was done
+on 2026-10-09 by the implementation agent at Jacob's request.** The staging scheduler could not be checked from
 where the step was built. It was checked in Forge afterwards and is off (see "The
 server's scheduler on staging").
 
