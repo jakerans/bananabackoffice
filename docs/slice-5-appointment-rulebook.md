@@ -199,6 +199,7 @@ the policy itself is still `PENDING` in the architecture (5.5).
 | Appointment saved (rule 3) | Counts. The issued time is kept permanently. |
 | Reschedule, same salesperson (rule 6) | Still one issued Lead. |
 | Customer cancels (rule 8) | Still counts as issued. |
+| Rebooked with the same salesperson after a cancellation | No new issued count (decision 99, 2026-10-10). |
 | Booked in error (rule 10) | Does not count as issued. |
 | Salesperson picks a released Lead back up (rule 12) | No new issued count. |
 | Moved to a different salesperson (rule 7), or re-issued by the call center (rule 8) | Recorded with full history. **Which salesperson it counts for is open** (Sales Leadership). |
@@ -238,6 +239,15 @@ confirmed both on 2026-10-09 (decisions 88 and 89).** They are rules now.
 
 These are gaps the fourteen decisions do not cover. They are listed so the build
 plan asks instead of guessing. None is a rule.
+
+The slice 6 plan has since asked them. Answered so far: decisions 90 to 96
+(time zone, the in-app notice, the names, what the existing actions do while an
+appointment stands) and decisions 97 to 99 (a returned Lead is Qualified;
+Cancelled Appointments gets its own button; a rebooking with the same
+salesperson adds no count). Still open, in
+[slice-6-appointments-plan.md](slice-6-appointments-plan.md), questions 12 to
+18: who a returned Lead is assigned to, where it restarts in the cadence, and a
+cancellation that does not come from the customer.
 
 - **Which status a Lead shows, and who (if anyone) it is assigned to, after it
   goes back to Contact Center** under rules 8, 9, 10 and 14.

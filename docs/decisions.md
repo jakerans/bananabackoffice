@@ -2030,6 +2030,47 @@ to then (or nobody), and, if it was in the call queue, back in it at the
 attempt it had reached. The issue does not count (rule 10). It needs a manager
 and a note and is recorded.
 
+## Slice 6 decisions before step 6b (97 to 99)
+
+Given by Jacob on 2026-10-10 in answer to questions 8, 9 and 11 of the slice 6
+plan. Question 10 (a cancellation that does not come from the customer) was not
+answered and is asked again with the step 6b plan. Nothing here approves a
+build: step 6b still needs its plan approved.
+
+## 97. A Lead that comes back to Contact Center is Qualified (2026-10-10)
+
+**Decided by Jacob.** A Lead that goes back from Sales to Contact Center (a
+manager sends it back, or it is released after a cancellation) shows the status
+Qualified again.
+
+**Not settled: who it is assigned to.** The plan recommended "nobody". Jacob's
+answer read "it should come back as qualified and assigned to somebody". The
+step 6b plan asks which is meant, and who "somebody" would be. Nothing is built
+on either reading until he says.
+
+## 98. Cancelled Appointments gets its own button, worked as hot Leads (2026-10-10)
+
+**Decided by Jacob.** The Cancelled Appointments group (rulebook, rule 8) is not
+mixed into the one shared call queue. It gets its own button on the Call Queue.
+These Leads "need to be prioritized next to new leads because those are very
+hot leads".
+
+Jacob's message said "canceled deployments"; it is read as cancelled
+appointments, the group question 9 asked about. The group and its button are
+built in step 6c. How "next to new Leads" appears on the screen is settled in
+the 6c plan.
+
+## 99. Rebooking after a cancellation adds no issued count (2026-10-10)
+
+**Decided by Jacob.** After a cancellation the Lead can be booked again with
+the same salesperson, and that rebooking does **not** add to Leads Issued: it
+is one Lead that was issued and brought back.
+
+The reason, in Jacob's words: salespeople are "heavily tracked on NSLI" (Net
+Sales per Lead Issued), a second count "would actually negatively impact their
+NSLI, and we want to encourage them to get canceled bookings back on the
+calendar".
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
