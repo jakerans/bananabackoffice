@@ -2230,6 +2230,35 @@ when it is handed out, and on the Lead page. It says whether its appointment
 was cancelled, by whom and for which reason, or that a manager sent it back
 and why. The marker stays until the Lead is booked again or disqualified.
 
+## Slice 6 decisions for step 6c (115 and 116)
+
+Given by Jacob on 2026-10-10 in answer to questions 25 and 26 of the step 6c
+plan. His answers to 23 and 24 are recorded below as far as they go; 27 and 28
+he asked to have explained, and they are asked again. Step 6c is not approved.
+
+## 115. Cancelled appointments are called on the same schedule as every other Lead (2026-10-10)
+
+**Decided by Jacob** ("correct"). A Lead in the Cancelled Appointments group is
+called on the same cadence and within the same calling hours as every other
+Lead, starting at attempt 1. There is no second set of settings.
+
+## 116. The days before a cancelled Lead is released are one setting (2026-10-10)
+
+**Decided by Jacob** ("yes"). One number on Contact Center settings, from 1 to
+180 days, starting at 30, changed by the people who change those settings
+today (Owner and Leadership). A Lead is released once that many full days have
+passed since its cancellation was recorded.
+
+**Said by Jacob on questions 23 and 24, not yet a decision.** On 23: the
+cancelled appointment queue "should only have appointments that were cancelled
+that are not disqualified". On 24: "it should probably just be a new queue",
+with the note that he is not sure how the queues work today, and that what
+matters is that a cancelled appointment gets called and the call center knows
+it is a cancelled booking to be rebooked. Both read as agreeing with the plan's
+recommendations (a separate queue with its own button, holding every cancelled
+Lead that has come back to the Contact Center). They are confirmed with him
+before anything is built on them.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

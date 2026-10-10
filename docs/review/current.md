@@ -6,8 +6,10 @@ No secrets or customer information belong here.
 **Updated:** 2026-10-10 · **Branch:** `checkpoint-slice-6c-plan`
 
 **State:** a plan waiting for decisions. Slice 6, step 6c is planned in detail
-and **nothing of it is built or approved.** It needs Jacob's answers to six
-questions, below. This branch holds documents only.
+and **nothing of it is built or approved.** Jacob answered questions 25 and 26
+on 2026-10-10 (decisions 115 and 116). Questions 23 and 24 need his
+confirmation, and 27 and 28 he asked to have explained; all four are below.
+This branch holds documents only.
 
 Step 6b is built, reviewed in the browser and **merged into `main` on
 2026-10-10** (`9f7dc63`) at Jacob's word ("merge and continue"). After that
@@ -60,8 +62,8 @@ Each has a recommendation, so "agreed to all" is an answer. They are questions
 | --- | --- | --- |
 | 23 | Which Leads belong in Cancelled Appointments? | Every Lead that comes back to the Contact Center with its last appointment cancelled: released at 30 days, sent back by a manager, or moved to another Location. They need the same script. **This changes what 6b built for a manager's send-back,** which today goes into the ordinary queue (decision 105). |
 | 24 | How does the button work "beside new Leads"? | Two buttons side by side, each with its own count. "Next lead" never hands out a cancelled appointment, so the agent always knows which script is next. The most recent return is handed out first. |
-| 25 | How often is a Lead in the group called? | The same cadence and calling hours as every other Lead, from attempt 1. |
-| 26 | The 30 days. | One number on Contact Center settings, 1 to 180, starting at 30, changed by Owner and Leadership. A Lead is released once that many full days have passed since the cancellation. |
+| 25 | How often is a Lead in the group called? | **Answered (decision 115):** the same cadence and calling hours as every other Lead, from attempt 1. |
+| 26 | The 30 days. | **Answered (decision 116):** one number on Contact Center settings, 1 to 180, starting at 30, changed by Owner and Leadership. A Lead is released once that many full days have passed since the cancellation. |
 | 27 | Is the salesperson warned before a Lead is taken? | Yes: "To rebook" shows the days left, the bell warns 5 days before and tells them again at release. No email. |
 | 28 | Who may take a Lead back, and for how long? | Only the salesperson it was released from by the timer, while it is still with the Contact Center at the same Location. No time limit. Not a Lead a manager sent back. |
 

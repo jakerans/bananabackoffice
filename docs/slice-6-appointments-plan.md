@@ -4,7 +4,8 @@ Status: **the three steps are approved in order (2026-10-10, decisions 90 to
 96). Step 6a is built and merged into `main` (2026-10-10); see "Step 6a as
 built" below. Step 6b is built and merged into `main` (2026-10-10); see "Step
 6b as built" below. Step 6c is planned in detail below and is NOT approved: it
-waits for Jacob's answers to questions 23 to 28.**
+waits for Jacob's answers to questions 23, 24, 27 and 28 (25 and 26 are
+decisions 115 and 116).**
 Jacob answered every question the 6b plan asked on 2026-10-10 (decisions 97 to
 114). It follows the rulebook in
 [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75
@@ -644,12 +645,12 @@ all" is an answer.
     handed out first. *Alternative:* one button that hands out new Leads, then
     cancelled appointments, then follow-ups, with the notice telling the agent
     which it is.
-25. **How often is a Lead in the group called?** *Recommended:* the same
+25. **How often is a Lead in the group called?** **Answered (decision 115):** the same
     cadence and calling hours as every other Lead, from attempt 1. When its
     attempts run out it goes on the manager's "finished, no contact" list like
     any other. *Alternative:* a shorter cadence of its own, which is a second
     set of settings.
-26. **The 30 days.** *Recommended:* one number on Contact Center settings,
+26. **The 30 days.** **Answered (decision 116):** one number on Contact Center settings,
     from 1 to 180 days, starting at 30, changed by the people who change those
     settings today (Owner and Leadership). A Lead is released once that many
     full days have passed since its cancellation was recorded, whatever the
