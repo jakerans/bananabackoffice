@@ -80,6 +80,45 @@ new #[Title('Call Queue')] class extends Component {
     public string $putBackNote = '';
 
     /**
+     * Refusals that belong to no field of this page, by name: for example
+     * "this lead was just changed by someone else". The framework carries
+     * only a field's own error from one request to the next, and this page
+     * asks again every ten seconds, so these are kept here and shown again on
+     * each request until the person's next action clears the messages.
+     *
+     * @var array<string, list<string>>
+     */
+    #[Locked]
+    public array $keptErrors = [];
+
+    /**
+     * Show the kept refusals again. This runs after the framework has put
+     * back the field errors it carries itself.
+     */
+    public function hydrate(): void
+    {
+        foreach ($this->keptErrors as $name => $messages) {
+            foreach ($messages as $message) {
+                $this->addError($name, $message);
+            }
+        }
+    }
+
+    /**
+     * Keep whatever refusals are on screen now that the framework will not
+     * carry. Clearing the messages, as every dialog does when it opens,
+     * leaves nothing to keep.
+     */
+    public function dehydrate(): void
+    {
+        $this->keptErrors = array_filter(
+            $this->getErrorBag()->toArray(),
+            fn (string $name): bool => ! property_exists($this, explode('.', $name)[0]),
+            ARRAY_FILTER_USE_KEY,
+        );
+    }
+
+    /**
      * Mount the component. If the person is already holding a Lead (a reload,
      * a second tab) the card comes back; nothing is claimed.
      */
@@ -264,6 +303,7 @@ new #[Title('Call Queue')] class extends Component {
         $claim = $claimNextLead->handle(Auth::user());
 
         $this->endedNotice = null;
+        $this->resetValidation();
 
         if ($claim->given()) {
             $this->cadenceId = $claim->cadence->id;

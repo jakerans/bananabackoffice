@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Support\Navigation\Navigation;
 use App\Support\Queue\DueQueue;
 use Illuminate\Support\Str;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 
 /*
@@ -415,6 +416,51 @@ test('disqualify from the card follows the existing reasons and permission', fun
     Lead::query()->whereKey($lead->id)->increment('lifecycle_version');
     $page->call('disqualify')->assertHasErrors('stale');
     expect($lead->fresh()->status)->toBe(LeadStatus::Working);
+});
+
+test('a refusal that belongs to no field stays through the page refresh until the next action', function () {
+    $agent = setterAt($this->lakeview);
+    $lead = dueLead($this->lakeview, attributes: ['status' => LeadStatus::Working, 'assigned_user_id' => $agent->id]);
+    $reason = LeadDisqualificationReason::query()->where('is_active', true)->where(fn ($q) => $q->whereNull('special_handling')->orWhere('special_handling', '!=', LeadDisqualificationReason::UNABLE_TO_CONTACT))->orderBy('id')->firstOrFail();
+    $refusal = 'This lead was just changed by someone else, so nothing was saved.';
+
+    $page = queuePage($agent)->call('nextLead')->call('openDisqualify')->set('disqualificationReasonId', $reason->id);
+
+    Lead::query()->whereKey($lead->id)->increment('lifecycle_version');
+
+    $page->call('disqualify')->assertHasErrors('stale')->assertSee($refusal);
+
+    // The ten-second refresh, twice: the message is still there, said once more each time and not doubled.
+    $page->call('refreshQueue')->assertHasErrors('stale')->assertSee($refusal);
+    $page->call('refreshQueue')->assertHasErrors('stale')->assertSee($refusal);
+    expect($page->errors()->get('stale'))->toHaveCount(1);
+
+    // The person's next action clears it.
+    $page->call('openDisqualify')->assertHasNoErrors()->assertDontSee($refusal);
+    $page->call('refreshQueue')->assertHasNoErrors()->assertDontSee($refusal);
+
+    expect($lead->fresh()->status)->toBe(LeadStatus::Working);
+});
+
+test('pressing next lead clears an earlier refusal', function () {
+    $agent = setterAt($this->lakeview);
+    $lead = dueLead($this->lakeview, attributes: ['status' => LeadStatus::Working, 'assigned_user_id' => $agent->id]);
+    $reason = LeadDisqualificationReason::query()->where('is_active', true)->where(fn ($q) => $q->whereNull('special_handling')->orWhere('special_handling', '!=', LeadDisqualificationReason::UNABLE_TO_CONTACT))->orderBy('id')->firstOrFail();
+
+    $page = queuePage($agent)->call('nextLead')->call('openDisqualify')->set('disqualificationReasonId', $reason->id);
+
+    Lead::query()->whereKey($lead->id)->increment('lifecycle_version');
+
+    $page->call('disqualify')->assertHasErrors('stale');
+    $page->call('nextLead')->assertHasNoErrors();
+    $page->call('refreshQueue')->assertHasNoErrors();
+});
+
+test('the browser cannot plant a refusal of its own', function () {
+    $agent = setterAt($this->lakeview);
+
+    expect(fn () => queuePage($agent)->set('keptErrors', ['stale' => ['Something the server never said.']]))
+        ->toThrow(CannotUpdateLockedPropertyException::class);
 });
 
 test('a valid reason disqualifies the lead from the card, ends its cadence and hold, and offers Next lead', function () {
