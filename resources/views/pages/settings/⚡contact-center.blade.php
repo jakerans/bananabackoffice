@@ -36,6 +36,8 @@ new #[Title('Contact Center settings')] class extends Component {
 
     public string $holdMinutes = '';
 
+    public string $releaseDays = '';
+
     /**
      * Each Call Center Agent's manager-view switch, by staff ID. A switch
      * saves by itself the moment it is changed.
@@ -140,6 +142,7 @@ new #[Title('Contact Center settings')] class extends Component {
         $this->loadHours($settings);
         $this->loadDays($settings);
         $this->loadHold($settings);
+        $this->loadReleaseDays($settings);
 
         $this->resetValidation();
     }
@@ -167,6 +170,11 @@ new #[Title('Contact Center settings')] class extends Component {
     private function loadHold(ContactCenterSettings $settings): void
     {
         $this->holdMinutes = (string) $settings->hold_minutes;
+    }
+
+    private function loadReleaseDays(ContactCenterSettings $settings): void
+    {
+        $this->releaseDays = (string) $settings->cancelled_release_days;
     }
 
     /**
@@ -317,6 +325,13 @@ new #[Title('Contact Center settings')] class extends Component {
         $this->authorize(Permission::ManageContactCenterSettings);
 
         $this->saved(fn () => $change->holdLength(auth()->user(), $this->loadedVersion, $this->holdMinutes), __('Hold length saved.'), fn () => $this->loadHold(ContactCenterSettings::current()));
+    }
+
+    public function saveReleaseDays(ChangeContactCenterSettings $change): void
+    {
+        $this->authorize(Permission::ManageContactCenterSettings);
+
+        $this->saved(fn () => $change->releaseDays(auth()->user(), $this->loadedVersion, $this->releaseDays), __('Days saved.'), fn () => $this->loadReleaseDays(ContactCenterSettings::current()));
     }
 
     /**
@@ -523,6 +538,29 @@ new #[Title('Contact Center settings')] class extends Component {
 
         <div class="flex justify-end">
             <flux:button type="submit" variant="primary" data-test="save-hold">{{ __('Save hold length') }}</flux:button>
+        </div>
+    </form>
+
+    {{-- Cancelled appointments --}}
+    <form wire:submit="saveReleaseDays" class="flex flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-6" data-test="release-section">
+        <div>
+            <flux:heading size="lg" level="2">{{ __('Cancelled appointments') }}</flux:heading>
+            <flux:text>{{ __('How many days a lead whose appointment was cancelled stays with its salesperson to be booked again. After that it goes back to the call center, in the Cancelled appointments queue. The salesperson is warned :days days before.', ['days' => ContactCenterSettings::RELEASE_WARNING_DAYS]) }}</flux:text>
+        </div>
+
+        <flux:input
+            wire:model="releaseDays"
+            type="number"
+            inputmode="numeric"
+            :min="ContactCenterSettings::MINIMUM_RELEASE_DAYS"
+            :max="ContactCenterSettings::MAXIMUM_RELEASE_DAYS"
+            :label="__('Days')"
+            class="max-w-40 tabular-nums"
+            data-test="release-days"
+        />
+
+        <div class="flex justify-end">
+            <flux:button type="submit" variant="primary" data-test="save-release-days">{{ __('Save days') }}</flux:button>
         </div>
     </form>
 

@@ -192,6 +192,8 @@ class BookAppointment
             'status' => LeadStatus::AppointmentBooked,
             'status_changed_at' => $moment,
             'returned_from_sales_at' => null,
+            'released_from_user_id' => null,
+            'released_from_sales_at' => null,
             ...($issues ? ['first_issued_at' => $lead->first_issued_at ?? $moment, 'last_issued_at' => $moment] : []),
         ])->save();
 

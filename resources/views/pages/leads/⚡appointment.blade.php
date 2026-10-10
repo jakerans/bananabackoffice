@@ -7,6 +7,7 @@ use App\Actions\Appointments\MoveAppointment;
 use App\Actions\Appointments\RescheduleAppointment;
 use App\Actions\Appointments\SendLeadBackToContactCenter;
 use App\Actions\Appointments\StopCountingLeadAsIssued;
+use App\Actions\Appointments\TakeLeadBackFromContactCenter;
 use App\Enums\CancellationParty;
 use App\Enums\Permission;
 use App\Enums\Role;
@@ -64,6 +65,8 @@ new class extends Component {
     public string $issuedCount = '';
 
     public string $sendBackNote = '';
+
+    public string $takeBackNote = '';
 
     /** The Lead's lifecycle revision when a dialog was opened, so a save refuses a Lead that has changed since. */
     #[Locked]
@@ -498,6 +501,33 @@ new class extends Component {
         Flux::toast(variant: 'success', text: __('The lead is back with the Contact Center and in the call queue.'));
     }
 
+    public function openTakeBack(): void
+    {
+        $this->authorize('takeBack', $this->lead);
+
+        $this->takeBackNote = '';
+        $this->resetValidation();
+        $this->knownLifecycleVersion = (int) $this->lead->lifecycle_version;
+
+        Flux::modal('take-lead-back')->show();
+    }
+
+    /**
+     * The salesperson the Lead was released from takes it back, with a note.
+     */
+    public function takeBack(TakeLeadBackFromContactCenter $takeLeadBackFromContactCenter): void
+    {
+        $this->authorize('takeBack', $this->lead);
+        $this->resetValidation();
+
+        $takeLeadBackFromContactCenter->handle($this->lead, $this->takeBackNote, Auth::user(), $this->knownLifecycleVersion);
+
+        $this->changed();
+
+        Flux::modal('take-lead-back')->close();
+        Flux::toast(variant: 'success', text: __('This lead is yours again. Book its appointment when you have a time.'));
+    }
+
     public function openBookedInError(): void
     {
         $this->authorize('manageAppointment', $this->lead);
@@ -596,6 +626,28 @@ new class extends Component {
     @endphp
 
     <x-lead.sales-return :lead="$lead" />
+
+    @can('takeBack', $lead)
+        <div class="flex flex-col gap-2" data-test="take-back">
+            <flux:text>{{ __('This lead was released from you because it was not booked again in time. If the customer has come back to you, you can take it back.') }}</flux:text>
+
+            <div>
+                <flux:button wire:click="openTakeBack" data-test="take-lead-back">{{ __('Take this lead back') }}</flux:button>
+            </div>
+        </div>
+
+        <x-confirmation-modal
+            name="take-lead-back"
+            :title="__('Take this lead back?')"
+            :description="__('It becomes yours again, to book. It leaves the call queue and does not count as a new issued lead.')"
+            action="takeBack"
+            :confirm-label="__('Take it back')"
+            confirm-variant="primary"
+            :error="['stale']"
+        >
+            <flux:textarea wire:model="takeBackNote" rows="2" :label="__('Why you are taking it back (required)')" data-test="take-back-note" />
+        </x-confirmation-modal>
+    @endcan
 
     @if ($appointment !== null)
         @php

@@ -5,6 +5,7 @@ use App\Actions\Appointments\CancelAppointment;
 use App\Actions\Leads\RecordManualContactAttempt;
 use App\Actions\Queue\ClaimNextLead;
 use App\Actions\Queue\EnterLeadCadence;
+use App\Enums\CallQueue;
 use App\Enums\CancellationParty;
 use App\Enums\ContactAttemptChannel;
 use App\Enums\ContactAttemptDirection;
@@ -195,9 +196,9 @@ function enterQueue(Lead $lead, array $overrides = []): LeadCadence
 /**
  * Press "Next lead" as a staff member.
  */
-function nextLead(User $user): QueueClaim
+function nextLead(User $user, CallQueue $queue = CallQueue::Main): QueueClaim
 {
-    return app(ClaimNextLead::class)->handle($user);
+    return app(ClaimNextLead::class)->handle($user, $queue);
 }
 
 /**
@@ -264,6 +265,7 @@ function saveQueueSettings(array $changes): ContactCenterSettings
         'calling_closes_at' => $current->calling_closes_at,
         'calling_days' => $current->calling_days,
         'hold_minutes' => $current->hold_minutes,
+        'cancelled_release_days' => $current->cancelled_release_days,
         ...$changes,
     ])->save();
 

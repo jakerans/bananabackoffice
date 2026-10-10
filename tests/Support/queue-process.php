@@ -31,6 +31,7 @@ use App\Actions\Queue\EnterLeadCadence;
 use App\Actions\Queue\RunQueueTick;
 use App\Actions\Staff\DeactivateStaffMember;
 use App\Actions\Staff\RevokeAccess;
+use App\Enums\CallQueue;
 use App\Enums\ContactAttemptChannel;
 use App\Enums\ContactAttemptDirection;
 use App\Enums\ContactAttemptDisposition;
@@ -205,7 +206,11 @@ $operations = [
             $lead = $lead->create(['received_at' => now()->subMinutes(10)]);
             $cadence = app(EnterLeadCadence::class)->handle($lead);
 
-            $cadence->forceFill(['due_at' => now()->subMinute()])->save();
+            // "cancelled": these Leads wait in the Cancelled Appointments queue instead of the ordinary one.
+            $cadence->forceFill([
+                'due_at' => now()->subMinute(),
+                'queue' => in_array($key, $arguments['cancelled'] ?? [], true) ? CallQueue::CancelledAppointments : CallQueue::Main,
+            ])->save();
 
             $made['leads'][$key] = $lead->id;
             $made['cadences'][$key] = $cadence->id;
@@ -216,7 +221,7 @@ $operations = [
 
     'claim' => function () use ($arguments): array {
         try {
-            $claim = app(ClaimNextLead::class)->handle(User::query()->findOrFail($arguments['user']));
+            $claim = app(ClaimNextLead::class)->handle(User::query()->findOrFail($arguments['user']), CallQueue::from($arguments['queue'] ?? CallQueue::Main->value));
         } catch (AuthorizationException) {
             return ['status' => 'refused', 'lead' => null, 'ended_hold' => null];
         }

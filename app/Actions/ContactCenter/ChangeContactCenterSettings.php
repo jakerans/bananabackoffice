@@ -153,6 +153,43 @@ class ChangeContactCenterSettings
     }
 
     /**
+     * Save how many days a Lead whose appointment was cancelled stays with its
+     * salesperson before it is released to the Contact Center (decisions 116
+     * and 119). A change applies to Leads already waiting as well: each is
+     * measured against the number in force when the timer looks at it.
+     *
+     * @return bool Whether a new version was saved.
+     *
+     * @throws ValidationException
+     */
+    public function releaseDays(User $actor, int $loadedVersion, mixed $days): bool
+    {
+        $wanted = $this->wholeNumber($days);
+
+        if ($wanted === null || $wanted < ContactCenterSettings::MINIMUM_RELEASE_DAYS || $wanted > ContactCenterSettings::MAXIMUM_RELEASE_DAYS) {
+            throw ValidationException::withMessages([
+                'releaseDays' => __('The number of days must be a whole number from :min to :max.', [
+                    'min' => ContactCenterSettings::MINIMUM_RELEASE_DAYS,
+                    'max' => ContactCenterSettings::MAXIMUM_RELEASE_DAYS,
+                ]),
+            ]);
+        }
+
+        return $this->save($actor, $loadedVersion, function (ContactCenterSettings $current) use ($wanted): ?array {
+            if ($current->cancelled_release_days === $wanted) {
+                return null;
+            }
+
+            return [
+                ['cancelled_release_days' => $wanted],
+                AuditAction::ContactCenterReleaseDaysChanged,
+                ['cancelled_release_days' => $current->cancelled_release_days],
+                ['cancelled_release_days' => $wanted],
+            ];
+        });
+    }
+
+    /**
      * @param  Closure(ContactCenterSettings): (array{0: array<string, mixed>, 1: AuditAction, 2: array<string, mixed>, 3: array<string, mixed>}|null)  $decide
      */
     private function save(User $actor, int $loadedVersion, Closure $decide): bool
@@ -188,6 +225,7 @@ class ChangeContactCenterSettings
                     'calling_closes_at' => $current->calling_closes_at,
                     'calling_days' => $current->calling_days,
                     'hold_minutes' => $current->hold_minutes,
+                    'cancelled_release_days' => $current->cancelled_release_days,
                     ...$changes,
                     'changed_by' => $actor->getKey(),
                     'changed_by_name' => $actor->name,

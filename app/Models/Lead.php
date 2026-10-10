@@ -95,6 +95,9 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $first_issued_at When the Lead was first issued to Sales, among issues that still count.
  * @property Carbon|null $last_issued_at
  * @property Carbon|null $returned_from_sales_at When it last came back from Sales to Contact Center; empty once booked again.
+ * @property int|null $released_from_user_id The salesperson the timer released it from, who may take it back (decision 120).
+ * @property Carbon|null $released_from_sales_at
+ * @property Carbon|null $release_warned_at When its salesperson was last warned that it would be released.
  * @property-read Collection<int, Appointment> $appointments
  */
 class Lead extends Model
@@ -122,6 +125,8 @@ class Lead extends Model
             'first_issued_at' => 'datetime',
             'last_issued_at' => 'datetime',
             'returned_from_sales_at' => 'datetime',
+            'released_from_sales_at' => 'datetime',
+            'release_warned_at' => 'datetime',
             'follow_up_on' => 'date',
             'last_disqualified_at' => 'datetime',
             'disqualification_category' => DisqualificationCategory::class,
@@ -415,6 +420,26 @@ class Lead extends Model
     public function isWithSales(): bool
     {
         return $this->status->isWithSales();
+    }
+
+    /**
+     * The salesperson the Lead was released from when it was not booked
+     * again in time (rulebook, rule 8). Only they may take it back (rule 12).
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function releasedFrom(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'released_from_user_id');
+    }
+
+    /**
+     * Whether the Lead is with the Contact Center after being released from a
+     * salesperson, and so can still be taken back by them.
+     */
+    public function wasReleasedFromSales(): bool
+    {
+        return $this->released_from_user_id !== null && $this->status === LeadStatus::Qualified;
     }
 
     /**

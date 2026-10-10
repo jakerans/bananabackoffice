@@ -25,4 +25,5 @@ enum LeadStatusEvent: string
     case AppointmentCancelled = 'appointment_cancelled';
     case AppointmentRebooked = 'appointment_rebooked';
     case ReturnedFromSales = 'returned_from_sales';
+    case TakenBackBySales = 'taken_back_by_sales';
 }

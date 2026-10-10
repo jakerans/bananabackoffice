@@ -74,10 +74,10 @@ the header and by email; Sales > Calendar lists upcoming appointments. Steps 6b
 and 6c are approved in order only: each is planned after the step before it is
 reviewed and still needs decisions of its own. **Step 6b (reschedule, move,
 cancel, book again, send back) is built and merged into `main` (2026-10-10)**
-under decisions 97 to 114. **Step 6c (the 30-day release, the Cancelled
-Appointments button, and a salesperson taking a released Lead back) is planned
-in detail (2026-10-10) and is not approved:** it waits for Jacob's answers to
-the plan's questions 23 to 28.
+under decisions 97 to 114. **Step 6c (the release after 14 days, the Cancelled
+Appointments queue with its own button, and a salesperson taking a released
+Lead back) is built (2026-10-10)** under decisions 115 to 120 and waits for
+Jacob's review and his word to merge. With it slice 6 is complete as planned.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

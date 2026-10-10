@@ -2257,7 +2257,55 @@ matters is that a cancelled appointment gets called and the call center knows
 it is a cancelled booking to be rebooked. Both read as agreeing with the plan's
 recommendations (a separate queue with its own button, holding every cancelled
 Lead that has come back to the Contact Center). They are confirmed with him
-before anything is built on them.
+before anything is built on them. **Confirmed the same day: decision 117.**
+
+## Slice 6 decisions that complete the step 6c plan (117 to 120)
+
+Given by Jacob on 2026-10-10 after the queue as it works today, and questions
+27 and 28, were explained to him. With them every question the step 6c plan
+asked is answered, and **step 6c is built under decision 90.**
+
+## 117. Cancelled appointments are a queue of their own (2026-10-10)
+
+**Decided by Jacob** ("Yes, you're correct... I think it's a good idea for 23
+and 24"). There is a second call queue, Cancelled Appointments, with its own
+button beside "Next lead" and its own count. It holds every Lead that has come
+back to the Contact Center with its last appointment cancelled and is not
+disqualified: released after the waiting period, sent back by a manager, or
+moved to another Location or returned to central. "Next lead" never hands one
+out, so the agent knows before dialling that it is a cancelled booking to try
+to rebook. The Lead that came back most recently is handed out first.
+
+A Lead whose appointment is cancelled still stays with its salesperson first
+(rule 8). The call center gets it after the waiting period, or sooner when a
+manager sends it back.
+
+**This changes decision 105** for a Lead that comes back with a cancelled
+appointment: it goes into this queue, not the ordinary one. A Lead that comes
+back after an appointment whose time passed still goes into the ordinary queue.
+
+## 118. The salesperson is warned before a Lead is released (2026-10-10)
+
+**Decided by Jacob** ("that looks fine. I don't mind that warning"). Sales >
+Calendar shows how many days are left on each cancelled Lead. The bell warns
+the salesperson 5 days before the Lead is released and tells them again when
+it is. No email.
+
+## 119. The waiting period starts at 14 days, not 30 (2026-10-10)
+
+**Decided by Jacob** ("Let's change it from 30 days to 14 days"). A cancelled
+Lead that is not booked again stays with its salesperson for 14 days. This
+replaces the 30 days in rule 8 and the starting value in decision 116. It is
+still one adjustable number on Contact Center settings, from 1 to 180.
+
+## 120. Who may take a released Lead back (2026-10-10)
+
+**Decided by Jacob,** carrying out rule 12. Only the salesperson a Lead was
+released from by the timer may take it back, with a short note. A Lead a
+manager sent back cannot be taken back that way; a manager can still hand it
+over. There is no time limit: it can be taken back for as long as it is still
+with the Contact Center and has not been booked with someone else or
+disqualified.
 
 ## Future decisions already constrained by the brief
 

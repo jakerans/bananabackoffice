@@ -123,7 +123,7 @@ test('every action of the page is refused to someone who lost the permission aft
     $page->call($method)->assertForbidden();
 
     expect(ContactCenterSettings::query()->count())->toBe(1);
-})->with(['saveCadence', 'saveHours', 'saveDays', 'saveHold', 'openResetHours', 'confirmResetHours', 'addDay', 'addDay1Attempt']);
+})->with(['saveCadence', 'saveHours', 'saveDays', 'saveHold', 'saveReleaseDays', 'openResetHours', 'confirmResetHours', 'addDay', 'addDay1Attempt']);
 
 test('the contact center permission opens only this page', function () {
     $leader = leader();

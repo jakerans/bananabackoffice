@@ -51,6 +51,7 @@ enum AuditAction: string
     case LeadAppointmentCancelled = 'lead.appointment_cancelled';
     case LeadAppointmentRebooked = 'lead.appointment_rebooked';
     case LeadReturnedFromSales = 'lead.returned_from_sales';
+    case LeadTakenBackBySales = 'lead.taken_back_by_sales';
     case LeadReceivedTimeCorrected = 'lead.received_time_corrected';
     case LeadQualified = 'lead.qualified';
     case LeadReturnedToWorking = 'lead.returned_to_working';
@@ -85,4 +86,5 @@ enum AuditAction: string
     case ContactCenterCadenceChanged = 'contact_center.cadence_changed';
     case ContactCenterCallingHoursChanged = 'contact_center.calling_hours_changed';
     case ContactCenterHoldLengthChanged = 'contact_center.hold_length_changed';
+    case ContactCenterReleaseDaysChanged = 'contact_center.release_days_changed';
 }

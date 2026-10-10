@@ -17,6 +17,9 @@ enum CadenceEndReason: string
     /** An appointment was booked: the Lead is with Sales now. */
     case AppointmentBooked = 'appointment_booked';
 
+    /** The salesperson it was released from took it back: the Lead is with Sales again (rulebook, rule 12). */
+    case TakenBackBySales = 'taken_back_by_sales';
+
     /**
      * The state the cadence is left in.
      */
@@ -26,7 +29,7 @@ enum CadenceEndReason: string
             self::Connected => CadenceState::Connected,
             self::Disqualified => CadenceState::Disqualified,
             self::DeferredFollowUp => CadenceState::DeferredFollowUp,
-            self::AppointmentBooked => CadenceState::AppointmentBooked,
+            self::AppointmentBooked, self::TakenBackBySales => CadenceState::AppointmentBooked,
         };
     }
 }

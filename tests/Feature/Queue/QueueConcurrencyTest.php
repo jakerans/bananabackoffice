@@ -164,6 +164,51 @@ test('eight processes claim from five due leads: five succeed, each lead has one
     expect($events)->toHaveCount(10);
 });
 
+test('six processes press the two buttons at once: each queue hands out only its own leads, one holder each', function () {
+    $made = $this->processes->run('setup', [
+        'locations' => ['open' => OPEN_ZONE],
+        'setters' => array_fill_keys(['m1', 'm2', 'm3', 'c1', 'c2', 'c3'], null),
+        'leads' => array_fill_keys(['main1', 'main2', 'cancelled1', 'cancelled2'], 'open'),
+        'cancelled' => ['cancelled1', 'cancelled2'],
+    ]);
+
+    expect(array_key_exists('error', $made))->toBeFalse(json_encode($made));
+
+    $queues = ['m1' => 'main', 'm2' => 'main', 'm3' => 'main', 'c1' => 'cancelled_appointments', 'c2' => 'cancelled_appointments', 'c3' => 'cancelled_appointments'];
+
+    $results = $this->processes->together(array_map(
+        fn (string $setter): array => ['claim', ['user' => $made['setters'][$setter], 'queue' => $queues[$setter]]],
+        array_keys($queues),
+    ));
+
+    expectCleanRun($results);
+
+    $setters = array_keys($queues);
+    $given = ['main' => [], 'cancelled_appointments' => []];
+
+    foreach ($results as $index => $result) {
+        if ($result['status'] === 'given') {
+            $given[$queues[$setters[$index]]][] = $result['lead'];
+        } else {
+            expect($result['status'])->toBe('nothing_due', json_encode($result));
+        }
+    }
+
+    sort($given['main']);
+    sort($given['cancelled_appointments']);
+
+    // Three people pressed each button for two Leads: two got one, one was told nothing is due.
+    expect($given['main'])->toBe(collect([$made['leads']['main1'], $made['leads']['main2']])->sort()->values()->all());
+    expect($given['cancelled_appointments'])->toBe(collect([$made['leads']['cancelled1'], $made['leads']['cancelled2']])->sort()->values()->all());
+
+    $state = $this->processes->run('inspect', ['above' => $this->processes->baseline()]);
+    $holders = collect($state['cadences'])->pluck('held_by_user_id', 'lead_id');
+
+    // Every Lead has exactly one holder, and no setter holds two.
+    expect($holders->filter()->count())->toBe(4);
+    expect($holders->unique()->count())->toBe(4);
+});
+
 test('one setter pressing next lead in four tabs at once holds exactly one lead', function () {
     $made = $this->processes->run('setup', [
         'locations' => ['open' => OPEN_ZONE],

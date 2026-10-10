@@ -3,9 +3,9 @@
 Status: **the three steps are approved in order (2026-10-10, decisions 90 to
 96). Step 6a is built and merged into `main` (2026-10-10); see "Step 6a as
 built" below. Step 6b is built and merged into `main` (2026-10-10); see "Step
-6b as built" below. Step 6c is planned in detail below and is NOT approved: it
-waits for Jacob's answers to questions 23, 24, 27 and 28 (25 and 26 are
-decisions 115 and 116).**
+6b as built" below. Step 6c is built (2026-10-10) and waits for Jacob's review
+and his word to merge; see "Step 6c as built" below.** Jacob answered every
+question the 6c plan asked (decisions 115 to 120).
 Jacob answered every question the 6b plan asked on 2026-10-10 (decisions 97 to
 114). It follows the rulebook in
 [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75
@@ -396,11 +396,13 @@ Readings made while building, none of them a new rule:
 - **The order of the Cancellation Reasons list:** Jacob listed "Other" first.
   It is stored last, as the other lists keep theirs, and can be reordered.
 
-## Step 6c — Release and return (proposed, not approved)
+## Step 6c — Release and return (built 2026-10-10)
 
-Planned on 2026-10-10 after step 6b was merged. **Nothing here is approved to
-build.** It follows rule 8 (its last three points) and rule 12, and decisions
-98 and 114. It depends on questions 23 to 28 under "Decisions needed".
+Planned on 2026-10-10 after step 6b was merged, and built the same day once
+Jacob had answered every question (decisions 115 to 120). It follows rule 8
+(its last three points) and rule 12, and decisions 98 and 114. **Where the
+lines below say 30 days, the waiting period is 14 days (decision 119).** What
+was built is under "Step 6c as built".
 
 ### What a person sees
 
@@ -480,6 +482,63 @@ with every new stored value checked against the length of its column.
 Pending and Rehash (rule 14), reactivation texts or emails to the Cancelled
 Appointments group, a calendar grid, and whether a passed appointment was held
 or missed.
+
+### Step 6c as built (2026-10-10)
+
+Built as planned above, with the answers in decisions 115 to 120. What a
+reader of the code should know:
+
+- **Two queues.** `lead_cadences.queue` says which a Lead is in
+  (`App\Enums\CallQueue`: main, or cancelled appointments). `ClaimNextLead`
+  and `DueQueue` take the queue and read only that one, so neither button can
+  hand out the other's Leads. In Cancelled Appointments the Lead that came
+  back most recently goes first. A person still holds one Lead at a time,
+  whichever button it came from.
+- **Which queue a returned Lead joins** is decided in one place,
+  `ResumeLeadCadence::afterReturnFromSales`: Cancelled Appointments when its
+  latest appointment is cancelled, the ordinary queue otherwise. This is what
+  changed for a manager's send-back (decision 117).
+- **The release** is `app/Actions/Appointments/ReleaseCancelledLead.php`, run
+  by the every-minute timer (`RunQueueTick`), which now also warns. A released
+  Lead goes through the same `ReturnLeadFromSales` as a Lead sent back, with
+  nobody recorded as having done it, and remembers who it was released from
+  (`leads.released_from_user_id`, `released_from_sales_at`).
+- **The wait is counted from when the Lead became Appointment cancelled**
+  (`leads.status_changed_at`), not from the appointment's own record, so it
+  starts again when a salesperson takes a Lead back. The number of days is
+  read each time the timer looks, so a change applies to Leads already
+  waiting.
+- **The warning** is sent once per wait (`leads.release_warned_at`), five days
+  before the release. A waiting period of five days or fewer has none.
+- **Take back** is `TakeLeadBackFromContactCenter`, allowed by
+  `LeadPolicy::takeBack`. The Lead returns as Appointment cancelled with its
+  salesperson, its cadence ends with the new reason "taken back by sales", and
+  an agent holding it is told.
+- **The setting** is `contact_center_settings.cancelled_release_days`, saved
+  like the other sections of that page: a new version each time, with an audit
+  event (`contact_center.release_days_changed`).
+- **Tables:** one column on `lead_cadences`, three on `leads`, one on
+  `contact_center_settings`. Three migrations. Every new stored name was
+  checked against the length of the column that holds it.
+
+Readings made while building, none of them a new rule:
+
+- **A Lead sent back as "should never have been booked" with a cancelled
+  appointment still goes into Cancelled Appointments.** The queue is chosen by
+  the appointment, not by the manager's answer; the manager's note is on the
+  notice the agent reads.
+- **Leads already in the ordinary queue when this is deployed stay there,**
+  including any that came back from Sales under step 6b. Only Leads that come
+  back from now on are sorted.
+- **A manager sees every released Lead at their Locations** in Sales >
+  Calendar, with whose it was. Only the salesperson can take it back; the
+  manager's way is to book or assign it.
+- **The Call Queue page's manager summary** shows the cancelled appointments
+  due as a second figure under "Due now". Held and finished Leads are listed
+  together for both queues.
+- **The timer does this work itself.** Everything else it does is a repair of
+  something already decided; the release is the one thing only it does. If the
+  timer stops, Leads stay with their salespeople until it runs again.
 
 ## Decisions needed
 
@@ -625,8 +684,9 @@ Raised by Jacob's answers to the plan's readings (decisions 100 to 102):
     marked "Missed" now. That starts recording outcomes ahead of the
     after-action report.
 
-**Needed before step 6c is approved.** Each has a recommendation, so "agreed to
-all" is an answer.
+**Asked before step 6c was approved. All are answered (2026-10-10):** 23 and
+24 by decision 117; 25 by 115; 26 by 116, with the starting value changed to
+14 days by 119; 27 by 118; 28 by 120.
 
 23. **Which Leads belong in Cancelled Appointments?** *Recommended:* every
     Lead that comes back to the Contact Center with its last appointment

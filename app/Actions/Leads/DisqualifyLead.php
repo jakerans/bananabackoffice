@@ -130,6 +130,8 @@ class DisqualifyLead
             'follow_up_on' => null,
             'follow_up_note' => null,
             'returned_from_sales_at' => null,
+            'released_from_user_id' => null,
+            'released_from_sales_at' => null,
         ])->save();
 
         $lead->setRelation('disqualificationReason', $reason);

@@ -5,6 +5,7 @@ use App\Actions\Leads\RecordManualContactAttempt;
 use App\Actions\Queue\ClaimNextLead;
 use App\Actions\Queue\ReturnLeadToQueue;
 use App\Actions\Queue\SkipHeldLead;
+use App\Enums\CallQueue;
 use App\Enums\Permission;
 use App\Enums\QueueEventType;
 use App\Enums\QueueHoldEndReason;
@@ -298,9 +299,32 @@ new #[Title('Call Queue')] class extends Component {
 
     public function nextLead(ClaimNextLead $claimNextLead): void
     {
+        $this->claimFrom($claimNextLead, CallQueue::Main);
+    }
+
+    /**
+     * The second button: the next Lead that came back from Sales with its
+     * appointment cancelled (decision 117).
+     */
+    public function nextCancelledAppointment(ClaimNextLead $claimNextLead): void
+    {
+        $this->claimFrom($claimNextLead, CallQueue::CancelledAppointments);
+    }
+
+    /**
+     * How many cancelled appointments the second button could give this
+     * person right now.
+     */
+    public function cancelledDueNow(): int
+    {
+        return app(DueQueue::class)->dueNowCount(Auth::user(), now(), CallQueue::CancelledAppointments);
+    }
+
+    private function claimFrom(ClaimNextLead $claimNextLead, CallQueue $queue): void
+    {
         $this->authorize(Permission::WorkLeadQueue);
 
-        $claim = $claimNextLead->handle(Auth::user());
+        $claim = $claimNextLead->handle(Auth::user(), $queue);
 
         $this->endedNotice = null;
         $this->resetValidation();
@@ -318,7 +342,7 @@ new #[Title('Call Queue')] class extends Component {
         $this->holdToken = null;
 
         if ($claim->status === QueueClaim::TRY_AGAIN) {
-            Flux::toast(variant: 'danger', text: __('The system was busy. Please press Next lead again.'));
+            Flux::toast(variant: 'danger', text: __('The system was busy. Please press the button again.'));
         } elseif ($claim->endedHold !== null) {
             $this->endedNotice = $claim->endedHold->notice();
         }
@@ -770,11 +794,27 @@ new #[Title('Call Queue')] class extends Component {
 
                 <flux:button variant="primary" wire:click="nextLead" wire:loading.attr="disabled" data-test="next-lead">{{ __('Next lead') }}</flux:button>
             </div>
+
+            {{-- Cancelled appointments are a queue of their own, so the setter knows the script before dialling (decision 117). --}}
+            @php($cancelledDue = $this->cancelledDueNow())
+
+            <div class="flex flex-wrap items-center justify-between gap-4 border-t border-zinc-200 pt-4" data-test="cancelled-queue">
+                <div>
+                    <flux:heading size="lg" level="2" data-test="cancelled-due-now">{{ trans_choice(':count cancelled appointment due now|:count cancelled appointments due now', $cancelledDue) }}</flux:heading>
+                    <flux:text>{{ __('Leads whose appointment was cancelled, to call and try to rebook.') }}</flux:text>
+                </div>
+
+                <flux:button :variant="$cancelledDue > 0 ? 'primary' : 'filled'" wire:click="nextCancelledAppointment" wire:loading.attr="disabled" data-test="next-cancelled-appointment">{{ __('Next cancelled appointment') }}</flux:button>
+            </div>
         </div>
     @endif
 
     @if ($this->card !== null)
-        <flux:text data-test="due-now">{{ trans_choice(':count other lead due now|:count other leads due now', $this->dueNow) }}</flux:text>
+        <flux:text data-test="due-now">
+            {{ trans_choice(':count other lead due now|:count other leads due now', $this->dueNow) }}
+            &middot;
+            <span data-test="cancelled-due-now">{{ trans_choice(':count cancelled appointment due now|:count cancelled appointments due now', $this->cancelledDueNow()) }}</span>
+        </flux:text>
     @endif
 
     <flux:error name="hold" />
@@ -800,6 +840,7 @@ new #[Title('Call Queue')] class extends Component {
                 <div class="rounded-xl border border-zinc-200 bg-card p-4">
                     <flux:text>{{ __('Due now') }}</flux:text>
                     <div class="text-2xl font-semibold tabular-nums text-ink" data-test="summary-due">{{ $summary['dueNow'] }}</div>
+                    <flux:text class="text-sm" data-test="summary-cancelled-due">{{ trans_choice(':count cancelled appointment|:count cancelled appointments', $summary['cancelledDueNow']) }}</flux:text>
                 </div>
                 <div class="rounded-xl border border-zinc-200 bg-card p-4">
                     <flux:text>{{ __('Longest wait') }}</flux:text>

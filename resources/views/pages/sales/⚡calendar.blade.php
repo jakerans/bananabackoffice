@@ -1,9 +1,12 @@
 <?php
 
+use App\Actions\Appointments\ReleaseCancelledLead;
 use App\Enums\AppointmentState;
 use App\Enums\LeadStatus;
 use App\Enums\Permission;
 use App\Models\Appointment;
+use App\Models\ContactCenterSettings;
+use App\Models\Lead;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -98,9 +101,49 @@ new #[Title('Calendar')] class extends Component {
                         ->orWhere(fn (Builder $own) => $own->where('assigned_user_id', $user->id)->whereIn('location_id', $viewable));
                 });
             })
-            ->with(['account', 'property', 'location'])
+            ->with(['account', 'property', 'location', 'lead'])
             ->orderBy('state_changed_at')
             ->orderBy('id')
+            ->limit(self::LIMIT)
+            ->get();
+    }
+
+    /**
+     * How many days a cancelled Lead stays with its salesperson before it is
+     * released to the Contact Center (decisions 116 and 119).
+     */
+    #[Computed]
+    public function releaseDays(): int
+    {
+        return ContactCenterSettings::current()->cancelled_release_days;
+    }
+
+    /**
+     * Leads the timer released to the Contact Center that can still be taken
+     * back by the salesperson they were released from (rulebook, rule 12),
+     * most recently released first. A salesperson sees their own; a manager
+     * sees every one at the Locations they manage.
+     *
+     * @return Collection<int, Lead>
+     */
+    #[Computed]
+    public function released(): Collection
+    {
+        $user = Auth::user();
+        $managed = $user->locationsWhere(Permission::ManageAppointments)->modelKeys();
+        $viewable = $user->locationsWhere(Permission::ViewLeads)->modelKeys();
+
+        return Lead::query()
+            ->where('status', LeadStatus::Qualified)
+            ->whereNotNull('released_from_user_id')
+            ->where(function (Builder $visible) use ($user, $managed, $viewable): void {
+                $visible
+                    ->whereIn('location_id', $managed)
+                    ->orWhere(fn (Builder $own) => $own->where('released_from_user_id', $user->id)->whereIn('location_id', $viewable));
+            })
+            ->with(['account', 'property', 'location', 'releasedFrom'])
+            ->orderByDesc('released_from_sales_at')
+            ->orderByDesc('id')
             ->limit(self::LIMIT)
             ->get();
     }
@@ -191,12 +234,52 @@ new #[Title('Calendar')] class extends Component {
                                     &middot; {{ $cancelled->cancellation_reason_name }}
                                 @endif
                             </div>
+                            @php($daysLeft = ReleaseCancelledLead::daysLeft($cancelled->lead, $this->releaseDays, now()))
+                            <div @class(['text-sm', 'font-semibold text-ink' => $daysLeft <= ContactCenterSettings::RELEASE_WARNING_DAYS, 'text-zinc-700' => $daysLeft > ContactCenterSettings::RELEASE_WARNING_DAYS]) data-test="calendar-rebook-days-left">
+                                {{ $daysLeft === 0
+                                    ? __('Goes back to the Contact Center today.')
+                                    : trans_choice('{1} Goes back to the Contact Center in 1 day unless it is booked again.|[2,*] Goes back to the Contact Center in :count days unless it is booked again.', $daysLeft, ['count' => $daysLeft]) }}
+                            </div>
                         </div>
 
                         <div class="text-right text-sm text-zinc-700">
                             <div>{{ $cancelled->location->name }}</div>
                             @if ($this->seesOthers)
                                 <div data-test="calendar-rebook-salesperson">{{ $cancelled->salesperson_name }}</div>
+                            @endif
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    @if ($this->released->isNotEmpty())
+        <div class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-5" data-test="calendar-released">
+            <div>
+                <flux:heading size="lg" level="2">{{ $this->seesOthers ? __('Released to the Contact Center') : __('Released from you') }}</flux:heading>
+                <flux:subheading>{{ __('Cancelled leads that were not booked again in time. The call center is trying to rebook them. The salesperson a lead was released from can take it back from the lead if the customer comes back to them.') }}</flux:subheading>
+            </div>
+
+            <ul class="divide-y divide-zinc-200">
+                @foreach ($this->released as $lead)
+                    <li wire:key="calendar-released-{{ $lead->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="calendar-released-lead">
+                        <div class="min-w-0">
+                            <a href="{{ route('leads.show', $lead) }}" wire:navigate class="font-semibold text-wall-teal underline">
+                                {{ $lead->account?->display_name ?? $lead->displayName() ?? __('No name given') }}
+                            </a>
+                            @if ($lead->property !== null)
+                                <div class="text-sm text-zinc-700">{{ $lead->property->summary() }}</div>
+                            @endif
+                            <div class="text-sm text-zinc-700">
+                                {{ __('Released') }}@if ($lead->released_from_sales_at !== null) <x-local-time :at="$lead->released_from_sales_at" />@endif
+                            </div>
+                        </div>
+
+                        <div class="text-right text-sm text-zinc-700">
+                            <div>{{ $lead->location?->name }}</div>
+                            @if ($this->seesOthers)
+                                <div data-test="calendar-released-from">{{ $lead->releasedFrom?->name }}</div>
                             @endif
                         </div>
                     </li>
