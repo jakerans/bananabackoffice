@@ -72,6 +72,12 @@ class ReturnLeadToCentral
             ]);
         }
 
+        if ($lead->hasUpcomingAppointment()) {
+            throw ValidationException::withMessages([
+                'reason' => __('This lead has an upcoming appointment. Cancel or undo its appointment first.'),
+            ]);
+        }
+
         if (trim($reason) === '') {
             throw ValidationException::withMessages([
                 'reason' => __('Say why this lead is being returned to central.'),

@@ -51,6 +51,7 @@ class EndLeadCadence
         $holdReason ??= match ($reason) {
             CadenceEndReason::Disqualified => QueueHoldEndReason::Disqualified,
             CadenceEndReason::DeferredFollowUp => QueueHoldEndReason::DeferredFollowUp,
+            CadenceEndReason::AppointmentBooked => QueueHoldEndReason::AppointmentBooked,
             CadenceEndReason::Connected => QueueHoldEndReason::AttemptLoggedByOther,
         };
 

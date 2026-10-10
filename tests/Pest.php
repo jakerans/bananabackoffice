@@ -1,11 +1,14 @@
 <?php
 
+use App\Actions\Appointments\BookAppointment;
 use App\Actions\Leads\RecordManualContactAttempt;
 use App\Actions\Queue\ClaimNextLead;
 use App\Actions\Queue\EnterLeadCadence;
 use App\Enums\ContactAttemptChannel;
 use App\Enums\ContactAttemptDirection;
 use App\Enums\ContactAttemptDisposition;
+use App\Models\Account;
+use App\Models\Appointment;
 use App\Models\ContactAttempt;
 use App\Models\ContactCenterSettings;
 use App\Models\Lead;
@@ -13,8 +16,11 @@ use App\Models\LeadCadence;
 use App\Models\LeadQueueEvent;
 use App\Models\Location;
 use App\Models\ProjectSize;
+use App\Models\Property;
 use App\Models\Service;
 use App\Models\User;
+use App\Support\Appointments\BookingResult;
+use App\Support\Queue\CallingHours;
 use App\Support\Queue\QueueClaim;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -133,11 +139,18 @@ function impersonate(User $owner, User $staff): void
 /**
  * The state of the Livewire page in a response, as the browser holds it.
  *
+ * The page is the first component inside the layout's main area. The header
+ * above it holds a component of its own, the notification bell, which is not
+ * the page.
+ *
  * @return array<string, mixed>
  */
 function livewireSnapshot(TestResponse $response): array
 {
-    return Utils::extractAttributeDataFromHtml((string) $response->getContent(), 'wire:snapshot');
+    $html = (string) $response->getContent();
+    $main = strpos($html, '<main');
+
+    return Utils::extractAttributeDataFromHtml($main === false ? $html : substr($html, $main), 'wire:snapshot');
 }
 
 /**
@@ -266,4 +279,31 @@ function dueLead(?Location $location = null, array $cadence = [], array $attribu
     enterQueue($lead, $cadence);
 
     return $lead;
+}
+
+/**
+ * A Lead an appointment can be booked for (rulebook, rule 1): Qualified, at a
+ * Location, and linked to a customer with a property.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function bookableLead(Location $location, ?User $assignee = null, array $attributes = []): Lead
+{
+    $account = Account::factory()->withPrimaryContact()->create();
+    $property = Property::factory()->of($account)->create();
+
+    $factory = Lead::factory()->at($location)->from($account, $account->primaryContact(), $property)->qualified();
+
+    return ($assignee === null ? $factory : $factory->assignedTo($assignee))->create($attributes);
+}
+
+/**
+ * Book an appointment through the action, tomorrow at 3:00 pm in the Lead's
+ * Location's time for 90 minutes unless told otherwise.
+ */
+function bookAppointment(Lead $lead, User $salesperson, User $by, ?string $date = null, string $time = '15:00', int $minutes = Appointment::DEFAULT_MINUTES): BookingResult
+{
+    $timezone = CallingHours::timezoneFor($lead->location);
+
+    return app(BookAppointment::class)->handle($lead, $salesperson, $date ?? now()->timezone($timezone)->addDay()->toDateString(), $time, $minutes, $by);
 }

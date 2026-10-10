@@ -261,7 +261,7 @@ class Navigation
                 new NavigationItem('sales.workspace', 'Workspace', $permissions, primary: 'shared.leads', children: [
                     $this->leads(),
                 ]),
-                new NavigationItem('sales.calendar', 'Calendar', $permissions),
+                new NavigationItem('sales.calendar', 'Calendar', $permissions, NavigationState::Live, route: 'sales.calendar'),
                 new NavigationItem('sales.commissions', 'Commissions', $permissions),
                 new NavigationItem('sales.leaderboard', 'Leaderboard', $permissions),
                 $this->customers(),

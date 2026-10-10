@@ -19,6 +19,9 @@ enum LeadStatus: string
     /** The qualification milestone only; not booked, issued, demoed, sold or Project-created. */
     case Qualified = 'qualified';
 
+    /** An appointment is saved with a salesperson: the Lead is issued to Sales. */
+    case AppointmentBooked = 'appointment_booked';
+
     /** A deliberate manual callback. The stored value is retained for compatibility. */
     case Nurture = 'nurture';
 
@@ -31,6 +34,7 @@ enum LeadStatus: string
             self::New => 'New',
             self::Working => 'Working',
             self::Qualified => 'Qualified',
+            self::AppointmentBooked => 'Appointment booked',
             self::Nurture => 'Deferred Follow-up',
             self::Disqualified => 'Disqualified',
         };

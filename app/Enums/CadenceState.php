@@ -21,6 +21,9 @@ enum CadenceState: string
     /** A manual Deferred Follow-up was scheduled; that workflow has taken over. */
     case DeferredFollowUp = 'deferred_follow_up';
 
+    /** An appointment was booked; the Lead was issued to Sales. */
+    case AppointmentBooked = 'appointment_booked';
+
     /** Every attempt in the cadence was made without a connection. */
     case FinishedNoContact = 'finished_no_contact';
 
@@ -31,6 +34,7 @@ enum CadenceState: string
             self::Connected => 'Connected',
             self::Disqualified => 'Disqualified',
             self::DeferredFollowUp => 'Deferred Follow-up',
+            self::AppointmentBooked => 'Appointment booked',
             self::FinishedNoContact => 'Cadence finished, no contact',
         };
     }

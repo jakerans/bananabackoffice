@@ -44,6 +44,8 @@ enum AuditAction: string
     case LeadAssigned = 'lead.assigned';
     case LeadReassigned = 'lead.reassigned';
     case LeadUnassigned = 'lead.unassigned';
+    case LeadAppointmentBooked = 'lead.appointment_booked';
+    case LeadAppointmentBookedInError = 'lead.appointment_booked_in_error';
     case LeadReceivedTimeCorrected = 'lead.received_time_corrected';
     case LeadQualified = 'lead.qualified';
     case LeadReturnedToWorking = 'lead.returned_to_working';

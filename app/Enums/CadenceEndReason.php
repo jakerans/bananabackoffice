@@ -14,6 +14,9 @@ enum CadenceEndReason: string
     case Disqualified = 'disqualified';
     case DeferredFollowUp = 'deferred_follow_up';
 
+    /** An appointment was booked: the Lead is with Sales now. */
+    case AppointmentBooked = 'appointment_booked';
+
     /**
      * The state the cadence is left in.
      */
@@ -23,6 +26,7 @@ enum CadenceEndReason: string
             self::Connected => CadenceState::Connected,
             self::Disqualified => CadenceState::Disqualified,
             self::DeferredFollowUp => CadenceState::DeferredFollowUp,
+            self::AppointmentBooked => CadenceState::AppointmentBooked,
         };
     }
 }

@@ -29,6 +29,8 @@
 
                     <x-shell.location-switcher :shell="$shell" />
 
+                    <livewire:pages::notifications.bell />
+
                     <x-desktop-user-menu />
                 </div>
             </div>

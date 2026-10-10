@@ -22,6 +22,9 @@ enum AssignmentEndReason: string
     /** The Lead was disqualified, which ends anyone's responsibility for it. */
     case LeadDisqualified = 'lead_disqualified';
 
+    /** The appointment that gave the salesperson the Lead was booked in error. */
+    case AppointmentUndone = 'appointment_undone';
+
     public function label(): string
     {
         return match ($this) {
@@ -30,6 +33,7 @@ enum AssignmentEndReason: string
             self::LocationChanged => 'The lead changed location',
             self::AccessRemoved => 'Access was removed',
             self::LeadDisqualified => 'The lead was disqualified',
+            self::AppointmentUndone => 'The appointment was booked in error',
         };
     }
 }

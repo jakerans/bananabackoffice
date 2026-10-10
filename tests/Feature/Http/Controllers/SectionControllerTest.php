@@ -140,9 +140,9 @@ test('unbuilt sections are shown without a link', function () {
     $this->actingAs($owner)
         ->get(route('sales.performance'))
         ->assertOk()
-        ->assertSee('Calendar')
+        ->assertSee('Commissions')
         ->assertSee('aria-disabled="true"', escape: false)
-        ->assertDontSee('/sales/calendar')
+        ->assertDontSee('/sales/commissions')
         ->assertDontSee('/sales/workspace');
 });
 

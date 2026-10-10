@@ -10,6 +10,7 @@ enum QueueHoldEndReason: string
 {
     case Disqualified = 'disqualified';
     case DeferredFollowUp = 'deferred_follow_up';
+    case AppointmentBooked = 'appointment_booked';
 
     /** Routed, transferred or returned to central. */
     case Moved = 'moved';
@@ -36,6 +37,7 @@ enum QueueHoldEndReason: string
         return match ($this) {
             self::Disqualified => 'The lead was disqualified',
             self::DeferredFollowUp => 'A follow-up was scheduled',
+            self::AppointmentBooked => 'An appointment was booked',
             self::Moved => 'The lead was moved to another location',
             self::AccessLost => 'The setter may no longer work this lead',
             self::AttemptLogged => 'The setter logged a call',
@@ -54,6 +56,7 @@ enum QueueHoldEndReason: string
         return match ($this) {
             self::Disqualified => 'This lead was disqualified, so it is no longer yours to call.',
             self::DeferredFollowUp => 'A follow-up was scheduled for this lead, so it left the queue.',
+            self::AppointmentBooked => 'An appointment was booked for this lead, so it left the queue.',
             self::Moved => 'This lead was moved to another location.',
             self::AccessLost => 'Your access to this lead changed.',
             self::AttemptLogged => 'Your call was logged.',

@@ -9,6 +9,7 @@
         LeadStatus::New => 'amber',
         LeadStatus::Working => 'sky',
         LeadStatus::Qualified => 'green',
+        LeadStatus::AppointmentBooked => 'indigo',
         LeadStatus::Nurture => 'purple',
         LeadStatus::Disqualified => 'zinc',
     };
