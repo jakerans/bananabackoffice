@@ -126,9 +126,11 @@ class DueQueue
     }
 
     /**
-     * Where the person may assign Leads and so may see the manager part of the
-     * page: the Locations where they hold the assign permission and may see
-     * Leads, and unrouted Leads under the existing company-wide rule.
+     * Where the person may see the manager part of the page: the Locations
+     * where they hold the assign permission and may see Leads, and unrouted
+     * Leads under the existing company-wide rule. Where the assign permission
+     * comes from Call Center Agent access, the person's manager-view switch
+     * must also be on (decision 85).
      *
      * @return array{locations: list<int>, unrouted: bool, anywhere: bool}
      */
@@ -138,10 +140,12 @@ class DueQueue
 
         $locations = array_values(array_map(
             intval(...),
-            $user->locationsWhere(Permission::AssignLeads)->filter(fn (Location $location): bool => in_array($location->id, $viewable, true))->modelKeys(),
+            $user->authorizedLocations()
+                ->filter(fn (Location $location): bool => $user->managesQueueAt($location) && in_array($location->id, $viewable, true))
+                ->modelKeys(),
         ));
 
-        $unrouted = $user->hasPermissionAcrossAllLocations(Permission::AssignLeads)
+        $unrouted = $user->managesQueueAcrossAllLocations()
             && $user->hasPermissionAcrossAllLocations(Permission::ViewUnroutedLeads);
 
         return ['locations' => $locations, 'unrouted' => $unrouted, 'anywhere' => $locations !== [] || $unrouted];

@@ -17,26 +17,38 @@
  */
 
 use App\Actions\ContactCenter\ChangeContactCenterSettings;
+use App\Actions\Leads\DisqualifyLead;
+use App\Actions\Leads\MoveLeadToNurture;
+use App\Actions\Leads\RecordManualContactAttempt;
+use App\Actions\Leads\ReturnLeadToCentral;
 use App\Actions\Leads\RouteLead;
 use App\Actions\Locations\ChangeLocationTimezone;
+use App\Actions\Locations\DeactivateLocation;
 use App\Actions\Queue\ClaimNextLead;
 use App\Actions\Queue\EnterLeadCadence;
+use App\Actions\Queue\RunQueueTick;
 use App\Actions\Staff\DeactivateStaffMember;
 use App\Actions\Staff\RevokeAccess;
+use App\Enums\ContactAttemptChannel;
+use App\Enums\ContactAttemptDirection;
+use App\Enums\ContactAttemptDisposition;
 use App\Enums\Role;
 use App\Models\AccessGrant;
 use App\Models\ContactCenterSettings;
 use App\Models\Lead;
+use App\Models\LeadDisqualificationReason;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Database\DetectsConcurrencyErrors;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 require __DIR__.'/../../vendor/autoload.php';
 
@@ -128,6 +140,24 @@ $waitForStart = function () use ($arguments): ?float {
     return round($early * 1000, 2);
 };
 
+/*
+ * "fail_on_insert": the first insert into the named table is answered with
+ * the error MySQL gives the loser of a deadlock, after the row was written.
+ * The transaction it belongs to is really rolled back, so what follows shows
+ * whether the action can be run again from the start and save once.
+ */
+$deadlocksMet = 0;
+
+if (isset($arguments['fail_on_insert'])) {
+    DB::listen(function (QueryExecuted $query) use (&$deadlocksMet, $arguments): void {
+        if ($deadlocksMet === 0 && str_starts_with($query->sql, 'insert into') && str_contains($query->sql, $arguments['fail_on_insert'])) {
+            $deadlocksMet++;
+
+            throw new PDOException('SQLSTATE[40001]: Serialization failure: 1213 Deadlock found when trying to get lock; try restarting transaction');
+        }
+    });
+}
+
 $operations = [
     // Build the temporary SQLite database. MySQL is migrated by the test suite itself.
     'migrate' => function (): array {
@@ -159,7 +189,14 @@ $operations = [
 
         foreach ($arguments['leads'] ?? [] as $key => $where) {
             $location = $where === null ? null : Location::query()->findOrFail($made['locations'][$where]);
-            $lead = ($location === null ? Lead::factory() : Lead::factory()->at($location))->create(['received_at' => now()->subMinutes(10)]);
+            $lead = $location === null ? Lead::factory() : Lead::factory()->at($location);
+
+            // "assigned": the Leads are being worked by the Owner, as a Lead that is moved or followed up usually is.
+            if ($arguments['assigned'] ?? false) {
+                $lead = $lead->assignedTo(User::query()->findOrFail($made['owner']))->working();
+            }
+
+            $lead = $lead->create(['received_at' => now()->subMinutes(10)]);
             $cadence = app(EnterLeadCadence::class)->handle($lead);
 
             $cadence->forceFill(['due_at' => now()->subMinute()])->save();
@@ -179,6 +216,85 @@ $operations = [
         }
 
         return ['status' => $claim->status, 'lead' => $claim->lead?->id, 'already_held' => $claim->alreadyHeld, 'ended_hold' => $claim->endedHold?->value];
+    },
+
+    // Several people press "Next lead" one after another, and their holds may then be made to have run out.
+    'prepare-holds' => function () use ($arguments): array {
+        $held = [];
+
+        foreach ($arguments['users'] as $user) {
+            $held[$user] = app(ClaimNextLead::class)->handle(User::query()->findOrFail($user))->lead?->id;
+        }
+
+        if ($arguments['expired'] ?? false) {
+            DB::table('lead_cadences')->whereIn('held_by_user_id', $arguments['users'])->update(['held_until' => now()->subMinute()]);
+        }
+
+        return ['held' => $held];
+    },
+
+    'tick' => fn (): array => ['done' => app(RunQueueTick::class)->handle()],
+
+    'return-to-central' => function () use ($arguments): array {
+        app(ReturnLeadToCentral::class)->handle(
+            Lead::query()->with('location')->findOrFail($arguments['lead']),
+            'Returned by the concurrency test.',
+            User::query()->findOrFail($arguments['actor']),
+        );
+
+        return ['done' => true];
+    },
+
+    'deactivate-location' => function () use ($arguments): array {
+        Auth::setUser(User::query()->findOrFail($arguments['actor']));
+        app(DeactivateLocation::class)->handle(Location::query()->findOrFail($arguments['location']));
+
+        return ['done' => true];
+    },
+
+    'disqualify' => function () use ($arguments): array {
+        $actor = User::query()->findOrFail($arguments['actor']);
+
+        Auth::setUser($actor);
+        app(DisqualifyLead::class)->handle(
+            Lead::query()->findOrFail($arguments['lead']),
+            LeadDisqualificationReason::factory()->create(),
+            'Disqualified by the concurrency test.',
+            $actor,
+        );
+
+        return ['done' => true];
+    },
+
+    'nurture' => function () use ($arguments): array {
+        $actor = User::query()->findOrFail($arguments['actor']);
+
+        Auth::setUser($actor);
+        app(MoveLeadToNurture::class)->handle(Lead::query()->findOrFail($arguments['lead']), now()->addWeek()->toDateString(), 'Call back after their trip.', $actor);
+
+        return ['done' => true];
+    },
+
+    'attempt' => function () use ($arguments): array {
+        $caller = User::query()->findOrFail($arguments['user']);
+        $lead = Lead::query()->findOrFail($arguments['lead']);
+
+        Auth::setUser($caller);
+        $attempt = app(RecordManualContactAttempt::class)->handle(
+            $lead,
+            $caller,
+            (string) Str::uuid(),
+            ContactAttemptChannel::Phone,
+            ContactAttemptDirection::Outbound,
+            now()->subMinute(),
+            $lead->inquiry_phone,
+            20,
+            false,
+            false,
+            ContactAttemptDisposition::NoAnswer,
+        );
+
+        return ['done' => true, 'attempt' => $attempt->id];
     },
 
     'route' => function () use ($arguments): array {
@@ -250,6 +366,30 @@ $operations = [
         ];
     },
 
+    // What the other records look like after everything has finished.
+    'records' => function () use ($arguments): array {
+        $above = $arguments['above'] ?? [];
+        $since = fn (string $table) => DB::table($table)->where('id', '>', (int) ($above[$table] ?? 0));
+        $counted = fn (string $table, string $column): array => $since($table)
+            ->selectRaw("{$column} as counted, count(*) as total")
+            ->groupBy($column)
+            ->pluck('total', 'counted')
+            ->map(fn (mixed $value): int => (int) $value)
+            ->all();
+
+        return [
+            'leads' => $since('leads')->orderBy('id')->get(['id', 'location_id', 'status', 'assigned_user_id', 'lifecycle_version'])->keyBy('id')->map(fn (object $row): array => (array) $row)->all(),
+            'users' => $since('users')->pluck('is_active', 'id')->map(fn (mixed $active): bool => (bool) $active)->all(),
+            'grants' => $since('access_grants')->pluck('id')->map(fn (mixed $value): int => (int) $value)->all(),
+            'locations' => $since('locations')->pluck('is_active', 'id')->map(fn (mixed $active): bool => (bool) $active)->all(),
+            'audit' => $counted('audit_events', 'action'),
+            'attempts' => $counted('contact_attempts', 'lead_id'),
+            'status_changes' => $counted('lead_status_changes', 'lead_id'),
+            'open_assignments' => $since('lead_assignments')->whereNull('ended_at')->pluck('lead_id')->map(fn (mixed $value): int => (int) $value)->all(),
+            'cadences' => $since('lead_cadences')->orderBy('id')->get(['lead_id', 'state', 'attempts_made', 'held_by_user_id'])->keyBy('lead_id')->map(fn (object $row): array => (array) $row)->all(),
+        ];
+    },
+
     // Remove every row committed since the baseline, and say what is left.
     'cleanup' => function () use ($arguments, $highestIds): array {
         $baseline = $arguments['highest'] ?? [];
@@ -280,6 +420,7 @@ $result = ['operation' => $operation, 'runner' => $arguments['runner'] ?? null];
 try {
     $result['early_ms'] = $waitForStart();
     $result += $operations[$operation]();
+    $result['deadlocks_met'] = $deadlocksMet;
 } catch (Throwable $exception) {
     // Reported, never hidden: a test fails on any error it did not expect.
     $result['error'] = $exception::class;

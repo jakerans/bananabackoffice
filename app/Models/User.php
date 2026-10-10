@@ -32,6 +32,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property bool $is_active
+ * @property bool $queue_manager_view Whether a Call Center Agent may see the manager part of the call queue.
  * @property Carbon|null $invited_at
  * @property Carbon|null $invitation_accepted_at
  * @property string|null $two_factor_secret
@@ -56,6 +57,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      */
     protected $attributes = [
         'is_active' => true,
+        'queue_manager_view' => false,
     ];
 
     /**
@@ -69,6 +71,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'queue_manager_view' => 'boolean',
             'invited_at' => 'datetime',
             'invitation_accepted_at' => 'datetime',
         ];
@@ -265,6 +268,40 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             && $this->accessGrants->contains(
                 fn (AccessGrant $grant): bool => $grant->role === $role && $grant->covers($location),
             );
+    }
+
+    /**
+     * Determine whether the staff member may see and use the manager part of
+     * the call queue for Leads at a location (decisions 71 and 85).
+     *
+     * It belongs to people who may assign Leads there. Where that comes from
+     * Call Center Agent access, it also needs the switch Leadership sets for
+     * that one person. Any other role that may assign is not affected by it.
+     */
+    public function managesQueueAt(Location $location): bool
+    {
+        return $this->isActive()
+            && $location->is_active
+            && $this->accessGrants->contains(
+                fn (AccessGrant $grant): bool => $grant->covers($location) && $this->managesQueueThrough($grant),
+            );
+    }
+
+    /**
+     * The same, through an all-locations grant: the rule for unrouted Leads.
+     */
+    public function managesQueueAcrossAllLocations(): bool
+    {
+        return $this->isActive()
+            && $this->accessGrants->contains(
+                fn (AccessGrant $grant): bool => $grant->isCompanyWide() && $this->managesQueueThrough($grant),
+            );
+    }
+
+    private function managesQueueThrough(AccessGrant $grant): bool
+    {
+        return $grant->allows(Permission::AssignLeads)
+            && ($grant->role !== Role::CallCenterAgent || $this->queue_manager_view);
     }
 
     /**

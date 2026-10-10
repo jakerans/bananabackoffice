@@ -161,12 +161,20 @@ another location has dealt with. Staff are told so without being shown who.
   person may no longer see. The poll only reads.
 - **The summary, the held list, the cadence-finished list and the queue history
   are shown only where the person may assign Leads,** and cover only those
-  Locations.
+  Locations. Since decision 85 (built 2026-10-09) a Call Center Agent also
+  needs their manager-view switch, which only Owner and Leadership can change.
+  It is checked on the server every time: by the two policies, by the
+  summary's scope and again inside Put back in queue, so switching it off
+  takes effect on the agent's next request, including a save from a dialog
+  that was already open. The settings page finds the person again from the ID
+  it is sent and refuses anyone who is not a Call Center Agent.
 - **The device timezone is display only:** formatted in the browser from a
   server-rendered ISO timestamp, never sent to or read by the server.
 - A busy database on the page's own saves is answered with "try again"; the
-  MySQL lock-order follow-up from 4b is still open. Jacob approved fixing it as
-  its own job on 2026-10-09 (decision 87); it is not built yet.
+  MySQL lock-order follow-up from 4b was fixed on 2026-10-09 (decision 87): the
+  actions that also end a hold or a cadence now run again from the start on a
+  deadlock, with their records read again first, so a retry cannot act on what
+  a rolled-back try left in memory.
 - Every dialog is the shared Flux confirmation pattern; no native dialog.
 
 ### Call queue engine (added 2026-10-09, slice 4 step 4b)

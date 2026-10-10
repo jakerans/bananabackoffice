@@ -80,7 +80,7 @@ afterEach(function () {
 function expectCleanRun(array $results): void
 {
     foreach ($results as $result) {
-        expect($result)->not->toHaveKey('error', json_encode($result));
+        expect(array_key_exists('error', $result))->toBeFalse(json_encode($result));
         expect($result['status'] ?? 'done')->not->toBe('try_again', json_encode($result));
     }
 }
@@ -387,4 +387,235 @@ test('a change of hours or timezone while a lead is being claimed never hands it
 })->with([
     'the calling hours are narrowed to exclude this moment',
     'the location\'s timezone is changed to one that is closed',
+]);
+
+/*
+|--------------------------------------------------------------------------
+| Deadlocks (decision 87)
+|--------------------------------------------------------------------------
+|
+| The existing actions that also end a hold or a cadence take the Lead row
+| before the cadence row, and run again from the start when the database
+| reports a deadlock or says it is busy.
+|
+*/
+
+test('an action that meets a deadlock once runs again from the start and saves everything exactly once', function () {
+    $cases = ['route', 'return', 'revoke', 'deactivate', 'disqualify', 'nurture', 'attempt'];
+    $locations = ['destination' => OPEN_ZONE, 'empty' => OPEN_ZONE];
+    $setters = [];
+    $leads = [];
+
+    // Each case has a Location, a setter and a Lead of its own.
+    foreach ($cases as $case) {
+        $locations[$case] = OPEN_ZONE;
+        $setters[$case] = $case;
+        $leads[$case] = $case;
+    }
+
+    $made = $this->processes->run('setup', ['locations' => $locations, 'setters' => $setters, 'leads' => $leads, 'assigned' => true]);
+
+    expect(array_key_exists('error', $made))->toBeFalse(json_encode($made));
+
+    $owner = $made['owner'];
+    $lead = fn (string $case): int => $made['leads'][$case];
+    $setter = fn (string $case): int => $made['setters'][$case];
+
+    // These Leads are held by their own setter when the action runs.
+    $holding = ['route', 'return', 'revoke', 'deactivate', 'attempt'];
+    $held = $this->processes->run('prepare-holds', ['users' => array_map($setter, $holding)]);
+
+    expect(array_key_exists('error', $held))->toBeFalse(json_encode($held));
+
+    foreach ($holding as $case) {
+        expect($held['held'][$setter($case)])->toBe($lead($case), $case);
+    }
+
+    // The first history entry each action writes is answered with a deadlock, after everything before it was written.
+    $deadlock = ['fail_on_insert' => 'lead_queue_events'];
+
+    $results = [
+        'route' => $this->processes->run('route', ['lead' => $lead('route'), 'location' => $made['locations']['destination'], 'actor' => $owner] + $deadlock),
+        'return' => $this->processes->run('return-to-central', ['lead' => $lead('return'), 'actor' => $owner] + $deadlock),
+        'revoke' => $this->processes->run('revoke', ['grant' => $made['grants']['revoke'], 'actor' => $owner] + $deadlock),
+        'deactivate' => $this->processes->run('deactivate', ['user' => $setter('deactivate'), 'actor' => $owner] + $deadlock),
+        'disqualify' => $this->processes->run('disqualify', ['lead' => $lead('disqualify'), 'actor' => $owner] + $deadlock),
+        'nurture' => $this->processes->run('nurture', ['lead' => $lead('nurture'), 'actor' => $owner] + $deadlock),
+        'attempt' => $this->processes->run('attempt', ['lead' => $lead('attempt'), 'user' => $setter('attempt')] + $deadlock),
+        // No Lead is here, so there is no history entry: the audit entry is the one that meets the deadlock.
+        'deactivate-location' => $this->processes->run('deactivate-location', ['location' => $made['locations']['empty'], 'actor' => $owner, 'fail_on_insert' => 'audit_events']),
+    ];
+
+    foreach ($results as $case => $result) {
+        expect(array_key_exists('error', $result))->toBeFalse("{$case}: ".json_encode($result));
+
+        // The deadlock really happened, once, and the action carried on by itself.
+        expect($result['deadlocks_met'])->toBe(1, $case);
+    }
+
+    $state = $this->processes->run('inspect', ['above' => $this->processes->baseline()]);
+    $records = $this->processes->run('records', ['above' => $this->processes->baseline()]);
+
+    expect(array_key_exists('error', $records))->toBeFalse(json_encode($records));
+
+    $history = fn (string $case): array => historyAfterEntering($state, $lead($case));
+    $row = fn (string $case): array => $records['leads'][$lead($case)];
+    $cadence = fn (string $case): array => $records['cadences'][$lead($case)];
+    // A move does not touch the lifecycle revision, so this is the one every Lead started with.
+    $startingRevision = (int) $row('route')['lifecycle_version'];
+
+    // Moved once: at the destination, nobody assigned, the hold ended by the move.
+    expect((int) $row('route')['location_id'])->toBe($made['locations']['destination']);
+    expect($row('route')['assigned_user_id'])->toBeNull();
+    expect($history('route'))->toBe(['claimed', "hold_ended:moved@{$setter('route')}"]);
+
+    expect($row('return')['location_id'])->toBeNull();
+    expect($row('return')['assigned_user_id'])->toBeNull();
+    expect($history('return'))->toBe(['claimed', "hold_ended:moved@{$setter('return')}"]);
+
+    expect($records['grants'])->not->toContain($made['grants']['revoke']);
+    expect($history('revoke'))->toBe(['claimed', "hold_ended:access_lost@{$setter('revoke')}"]);
+
+    expect($records['users'][$setter('deactivate')])->toBeFalse();
+    expect($history('deactivate'))->toBe(['claimed', "hold_ended:access_lost@{$setter('deactivate')}"]);
+
+    expect($row('disqualify')['status'])->toBe('disqualified');
+    expect($row('disqualify')['assigned_user_id'])->toBeNull();
+    expect((int) $row('disqualify')['lifecycle_version'])->toBe($startingRevision + 1);
+    expect($cadence('disqualify')['state'])->toBe('disqualified');
+    expect($history('disqualify'))->toBe(['ended:disqualified']);
+
+    expect($row('nurture')['status'])->toBe('nurture');
+    expect((int) $row('nurture')['assigned_user_id'])->toBe($owner);
+    expect((int) $row('nurture')['lifecycle_version'])->toBe($startingRevision + 1);
+    expect($cadence('nurture')['state'])->toBe('deferred_follow_up');
+    expect($history('nurture'))->toBe(['ended:deferred_follow_up']);
+
+    expect($records['attempts'])->toBe([$lead('attempt') => 1]);
+    expect((int) $cadence('attempt')['attempts_made'])->toBe(1);
+    expect($cadence('attempt')['held_by_user_id'])->toBeNull();
+    expect($history('attempt'))->toHaveCount(3);
+    expect($history('attempt')[0])->toBe('claimed');
+    expect(collect($history('attempt'))->filter(fn (string $entry): bool => str_starts_with($entry, 'hold_ended:attempt_logged'))->count())->toBe(1);
+    expect(collect($history('attempt'))->filter(fn (string $entry): bool => str_starts_with($entry, 'attempt_counted'))->count())->toBe(1);
+
+    expect($records['locations'][$made['locations']['empty']])->toBeFalse();
+
+    // Nothing was written twice: one audit entry for each thing that happened.
+    $audit = $records['audit'];
+    ksort($audit);
+
+    expect($audit)->toBe([
+        'lead.disqualified' => 1,
+        'lead.moved_to_nurture' => 1,
+        'lead.returned_to_central' => 1,
+        'lead.transferred' => 1,
+        // The move, the return and the disqualification each ended the Owner's assignment.
+        'lead.unassigned' => 3,
+        'location.deactivated' => 1,
+        'staff.access_revoked' => 1,
+        'staff.deactivated' => 1,
+    ]);
+
+    $statusChanges = $records['status_changes'];
+    ksort($statusChanges);
+
+    expect($statusChanges)->toBe(collect([$lead('disqualify') => 1, $lead('nurture') => 1])->sortKeys()->all());
+
+    // The Leads nothing unassigned are still with the Owner, each with one open assignment.
+    $stillAssigned = $records['open_assignments'];
+    sort($stillAssigned);
+
+    expect($stillAssigned)->toBe(collect(['revoke', 'deactivate', 'nurture', 'attempt'])->map($lead)->sort()->values()->all());
+});
+
+test('two changes to the same hold at the same moment both finish and the hold is ended once', function (string $pair) {
+    $locations = ['destination' => OPEN_ZONE];
+    $setters = [];
+    $leads = [];
+
+    // Each round has a Location of its own, so its setters can only be given its one Lead.
+    foreach (array_keys(STAGGER) as $round) {
+        $locations["open{$round}"] = OPEN_ZONE;
+        $setters["a{$round}"] = "open{$round}";
+        $setters["b{$round}"] = "open{$round}";
+        $leads["lead{$round}"] = "open{$round}";
+    }
+
+    $made = $this->processes->run('setup', ['locations' => $locations, 'setters' => $setters, 'leads' => $leads]);
+
+    expect(array_key_exists('error', $made))->toBeFalse(json_encode($made));
+
+    $owner = $made['owner'];
+    $holdRanOut = $pair !== 'the holder is deactivated while a manager moves the lead';
+    $results = [];
+
+    foreach (STAGGER as $round => [$firstDelay, $secondDelay]) {
+        $holder = $made['setters']["a{$round}"];
+        $other = $made['setters']["b{$round}"];
+        $lead = $made['leads']["lead{$round}"];
+
+        // The first setter holds the Lead before the race starts.
+        $held = $this->processes->run('prepare-holds', ['users' => [$holder], 'expired' => $holdRanOut]);
+
+        expect($held['held'][$holder] ?? null)->toBe($lead, "round {$round}: ".json_encode($held));
+
+        $deactivate = ['deactivate', ['user' => $holder, 'actor' => $owner, 'delay_ms' => $firstDelay]];
+        $claim = ['claim', ['user' => $other, 'delay_ms' => $secondDelay]];
+
+        $results[$round] = $this->processes->together(match ($pair) {
+            'the holder is deactivated while a manager moves the lead' => [$deactivate, ['route', ['lead' => $lead, 'location' => $made['locations']['destination'], 'actor' => $owner, 'delay_ms' => $secondDelay]]],
+            'the holder is deactivated while someone else takes over their hold that ran out' => [$deactivate, $claim],
+            'the timer releases a hold that ran out while someone else claims the lead' => [['tick', ['delay_ms' => $firstDelay]], $claim],
+        });
+
+        expectCleanRun($results[$round]);
+    }
+
+    $state = $this->processes->run('inspect', ['above' => $this->processes->baseline()]);
+    $records = $this->processes->run('records', ['above' => $this->processes->baseline()]);
+
+    foreach (array_keys($results) as $round) {
+        $holder = $made['setters']["a{$round}"];
+        $other = $made['setters']["b{$round}"];
+        $lead = $made['leads']["lead{$round}"];
+        $history = historyAfterEntering($state, $lead);
+        $context = "round {$round}: ".json_encode(['history' => $history, 'holder' => holderOf($state, $lead), 'results' => $results[$round]]);
+
+        if (! $holdRanOut) {
+            // Both changes were saved, and whichever reached the hold first ended it. It was ended once.
+            expect($records['users'][$holder])->toBeFalse($context);
+            expect((int) $records['leads'][$lead]['location_id'])->toBe($made['locations']['destination'], $context);
+            expect(holderOf($state, $lead))->toBeNull($context);
+            expect($history)->toHaveCount(2, $context);
+            expect($history[0])->toBe('claimed', $context);
+            expect(in_array($history[1], ["hold_ended:access_lost@{$holder}", "hold_ended:moved@{$holder}"], true))->toBeTrue($context);
+
+            continue;
+        }
+
+        // The hold that ran out was tidied up once, by whichever got there first, and the other setter has the Lead.
+        sort($history);
+
+        expect($history)->toBe(['claimed', 'claimed', "hold_expired@{$holder}"], $context);
+        expect(holderOf($state, $lead))->toBe($other, $context);
+        expect($results[$round][1]['status'])->toBe('given', $context);
+        expect($results[$round][1]['lead'])->toBe($lead, $context);
+
+        if ($pair === 'the holder is deactivated while someone else takes over their hold that ran out') {
+            expect($records['users'][$holder])->toBeFalse($context);
+
+            continue;
+        }
+
+        // The timer swallows and logs a failure, so its own count is what shows one. On SQLite a write that
+        // meets another write is refused at once and the timer leaves that hold for its next run.
+        if ($this->processes->engine() === 'mysql') {
+            expect($results[$round][0]['done']['failed'])->toBe(0, $context);
+        }
+    }
+})->with([
+    'the holder is deactivated while a manager moves the lead',
+    'the holder is deactivated while someone else takes over their hold that ran out',
+    'the timer releases a hold that ran out while someone else claims the lead',
 ]);

@@ -442,10 +442,19 @@ eligibility rule (`app/Support/Queue/QueueEligibility.php`), and
 every action on that page checks it again. The page's manager part (summary,
 cadence-finished list, queue history, Put back in queue) belongs to people who
 may assign Leads where the Lead is (`LeadPolicy::manageQueue`, `returnToQueue`).
-That includes Call Center Agents today. Decision 85 (2026-10-09) puts the
-manager part behind a switch for agents that Leadership controls; it is not
-planned or built, so nothing here has changed yet.
-No permission or role grant was added.** Each permission is added to the code in the step named below. The full
+**Since decision 85 (built 2026-10-09) a Call Center Agent has that manager
+part only when their own switch is on.** The switch is a yes or no kept on the
+person (`users.queue_manager_view`), off for everyone at first, and changed
+only by the people who manage the Contact Center settings (Owner and
+Leadership, all-locations grant) on that settings page, with an audit event
+each time. The rule, in one place (`User::managesQueueAt` and
+`managesQueueAcrossAllLocations`): the person may assign Leads there, and if
+that comes from a Call Center Agent grant the switch must be on. A person who
+may assign through any other role (Owner, Leadership, Location Manager) is not
+affected, whatever their switch says, and the switch gives nothing to a person
+who may not assign. It is not a permission and no role grant changed: an agent
+with the switch off still assigns Leads and works the queue exactly as before.
+**No permission or role grant was added.** Each permission is added to the code in the step named below. The full
 plan is [slice-4-plan.md](slice-4-plan.md). No existing permission, role grant or
 rule above is changed.
 

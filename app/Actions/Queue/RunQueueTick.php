@@ -75,13 +75,20 @@ class RunQueueTick
     private function releaseExpiredHold(int $cadenceId): bool
     {
         return DB::transaction(function () use ($cadenceId): bool {
+            // The Lead row is locked before its cadence row, as the claim
+            // does it. Writing the history entry needs the Lead row; taking
+            // it only then, with the cadence row already locked, can deadlock
+            // with a claim that holds the Lead and waits for the cadence.
+            $leadId = LeadCadence::query()->whereKey($cadenceId)->value('lead_id');
+            $lead = $leadId === null ? null : Lead::query()->with('location')->whereKey($leadId)->lockForUpdate()->first();
+
             $cadence = LeadCadence::query()->lockForUpdate()->find($cadenceId);
 
-            if ($cadence === null || ! $cadence->hasHoldRecorded() || $cadence->isHeldAt(now())) {
+            if ($lead === null || $cadence === null || ! $cadence->hasHoldRecorded() || $cadence->isHeldAt(now())) {
                 return false;
             }
 
-            return $this->endQueueHold->handle($cadence, QueueHoldEndReason::AccessLost, byTimer: true);
+            return $this->endQueueHold->handle($cadence, QueueHoldEndReason::AccessLost, $lead, byTimer: true);
         });
     }
 

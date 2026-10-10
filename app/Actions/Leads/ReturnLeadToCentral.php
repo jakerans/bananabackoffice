@@ -9,6 +9,7 @@ use App\Enums\AuditAction;
 use App\Enums\QueueHoldEndReason;
 use App\Models\Lead;
 use App\Models\User;
+use App\Support\Queue\QueueTransaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -18,6 +19,7 @@ class ReturnLeadToCentral
         private RecordAuditEvent $recordAuditEvent,
         private UnassignLead $unassignLead,
         private EndQueueHold $endQueueHold,
+        private QueueTransaction $queueTransaction,
     ) {}
 
     /**
@@ -31,12 +33,30 @@ class ReturnLeadToCentral
      * same transaction. Its place in the cadence and its due time stay as
      * they are.
      *
+     * If the database reports a deadlock or says it is busy, the Lead is read
+     * again and the whole return is tried again, checks included (decision 87).
+     *
      * The caller is responsible for checking that the actor may return Leads from
      * this location.
      *
      * @throws ValidationException
      */
     public function handle(Lead $lead, string $reason, ?User $actor = null): void
+    {
+        $this->queueTransaction->attempt(
+            function () use ($lead, $reason, $actor): void {
+                $this->returnToCentral($lead, $reason, $actor);
+            },
+            function () use ($lead): void {
+                $lead->refresh();
+            },
+        );
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function returnToCentral(Lead $lead, string $reason, ?User $actor): void
     {
         $origin = $lead->location;
 

@@ -6,6 +6,7 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Queue\EndQueueHold;
 use App\Enums\AuditAction;
 use App\Models\Location;
+use App\Support\Queue\QueueTransaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -14,6 +15,7 @@ class DeactivateLocation
     public function __construct(
         private RecordAuditEvent $recordAuditEvent,
         private EndQueueHold $endQueueHold,
+        private QueueTransaction $queueTransaction,
     ) {}
 
     /**
@@ -29,9 +31,28 @@ class DeactivateLocation
      * means there is normally none; this is for a Lead that reaches the
      * location while it is being deactivated and for state a crash left behind.
      *
+     * If the database reports a deadlock or says it is busy, the location is
+     * read again and the whole deactivation is tried again, checks included
+     * (decision 87).
+     *
      * @throws ValidationException
      */
     public function handle(Location $location): void
+    {
+        $this->queueTransaction->attempt(
+            function () use ($location): void {
+                $this->deactivate($location);
+            },
+            function () use ($location): void {
+                $location->refresh();
+            },
+        );
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function deactivate(Location $location): void
     {
         DB::transaction(function () use ($location): void {
             // The Location row is locked before anything else, with a write

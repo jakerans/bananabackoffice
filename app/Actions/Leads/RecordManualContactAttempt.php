@@ -13,6 +13,7 @@ use App\Models\Lead;
 use App\Models\User;
 use App\Support\Access\Impersonation;
 use App\Support\Contact\PhoneNumber;
+use App\Support\Queue\QueueTransaction;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -24,6 +25,7 @@ class RecordManualContactAttempt
     public function __construct(
         private Impersonation $impersonation,
         private AdvanceLeadCadence $advanceLeadCadence,
+        private QueueTransaction $queueTransaction,
     ) {}
 
     /**
@@ -41,6 +43,10 @@ class RecordManualContactAttempt
      * decided; the attempt is inserted once, already carrying its cadence
      * position when it counts; only then is the cadence advanced and any hold
      * ended. The attempt row is never updated.
+     *
+     * Everything is read inside the transaction, so when the database reports
+     * a deadlock or says it is busy the transaction is simply run again
+     * (decision 87).
      *
      * @throws ValidationException
      */
@@ -62,7 +68,7 @@ class RecordManualContactAttempt
 
         $this->validateFacts($submissionId, $channel, $occurredAt, $number, $durationSeconds, $wasAnswered, $wasConnected, $disposition);
 
-        return DB::transaction(function () use ($lead, $responsibleUser, $submissionId, $channel, $direction, $occurredAt, $number, $durationSeconds, $wasAnswered, $wasConnected, $disposition): ContactAttempt {
+        return $this->queueTransaction->attempt(fn (): ContactAttempt => DB::transaction(function () use ($lead, $responsibleUser, $submissionId, $channel, $direction, $occurredAt, $number, $durationSeconds, $wasAnswered, $wasConnected, $disposition): ContactAttempt {
             $currentLead = Lead::query()->lockForUpdate()->findOrFail($lead->id);
 
             Gate::forUser($responsibleUser)->authorize('update', $currentLead);
@@ -134,7 +140,7 @@ class RecordManualContactAttempt
             $this->advanceLeadCadence->apply($effect, $attempt, $currentLead, $responsibleUser);
 
             return $attempt;
-        });
+        }));
     }
 
     /** @throws ValidationException */

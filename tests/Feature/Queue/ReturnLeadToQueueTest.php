@@ -182,7 +182,11 @@ test('who may put a lead back: the people who may assign leads where it is', fun
 })->with([
     'an owner' => [fn ($test) => User::factory()->withRoleEverywhere(Role::Owner)->create(), true],
     'leadership' => [fn ($test) => User::factory()->withRoleEverywhere(Role::Leadership)->create(), true],
-    'a call center agent' => [fn ($test) => User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create(), true],
+    // A Call Center Agent may assign Leads, and still needs their manager-view switch (decision 85).
+    'a call center agent' => [fn ($test) => User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create(), false],
+    'a call center agent whose manager view is switched on' => [fn ($test) => User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create(['queue_manager_view' => true]), true],
+    'a call center agent switched on at another location' => [fn ($test) => User::factory()->withRoleAt(Role::CallCenterAgent, $test->riverside)->create(['queue_manager_view' => true]), false],
+    'a call center agent who is also the location manager there' => [fn ($test) => User::factory()->withRoleEverywhere(Role::CallCenterAgent)->withRoleAt(Role::LocationManager, $test->lakeview)->create(), true],
     'a location manager where they may assign' => [fn ($test) => $test->manager, true],
     'a location manager of another location' => [fn ($test) => User::factory()->withRoleAt(Role::LocationManager, $test->riverside)->create(), false],
     'the sales consultant it is assigned to' => [fn ($test) => $test->consultant, false],
@@ -192,12 +196,14 @@ test('who may put a lead back: the people who may assign leads where it is', fun
 ]);
 
 test('an unrouted lead is put back only by company-wide lead staff', function () {
-    $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
+    $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create(['queue_manager_view' => true]);
     $unrouted = Lead::factory()->create();
     $this->cadence = enterQueue($unrouted);
     connect($unrouted, $agent);
 
     expect($this->manager->can('returnToQueue', $unrouted))->toBeFalse();
+    // A company-wide agent whose manager view is off does not have it for unrouted Leads either.
+    expect(User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create()->can('returnToQueue', $unrouted))->toBeFalse();
     expect(User::factory()->withRoleEverywhere(Role::LocationManager)->create()->can('returnToQueue', $unrouted))->toBeFalse();
     expect(fn () => app(ReturnLeadToQueue::class)->handle($unrouted, 'Back in the queue.', $this->manager))->toThrow(AuthorizationException::class);
 

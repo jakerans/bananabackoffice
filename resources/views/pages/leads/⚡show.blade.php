@@ -943,14 +943,21 @@ new #[Title('Lead')] class extends AddressCapturePage {
         $this->lead->refresh();
         $this->authorize('returnToQueue', $this->lead);
 
+        $this->resetValidation('putBackNote');
+
         try {
             $returnLeadToQueue->handle($this->lead, $this->putBackNote, Auth::user());
+        } catch (ValidationException $exception) {
+            // The action speaks of its "note". Here that is the note field.
+            throw array_key_exists('note', $exception->errors())
+                ? ValidationException::withMessages(['putBackNote' => $exception->errors()['note']])
+                : $exception;
         } catch (\Throwable $exception) {
             if (! app(QueueTransaction::class)->isBusy($exception)) {
                 throw $exception;
             }
 
-            $this->addError('note', __('The system was busy, so nothing was saved. Please try again.'));
+            $this->addError('putBackNote', __('The system was busy, so nothing was saved. Please try again.'));
 
             return;
         }
@@ -1532,9 +1539,11 @@ new #[Title('Lead')] class extends AddressCapturePage {
                                             <span class="whitespace-pre-line">&ldquo;{{ $event->note }}&rdquo;</span>
                                         @endif
                                         @if ($event->actor_name !== null)
-                                            &middot; {{ $event->actor_name }}@if ($event->impersonator_name !== null) ({{ __('by :owner, viewing as them', ['owner' => $event->impersonator_name]) }})@endif
+                                            @if ($event->reason !== null || $event->note !== null) &middot; @endif
+                                            {{ $event->actor_name }}@if ($event->impersonator_name !== null) ({{ __('by :owner, viewing as them', ['owner' => $event->impersonator_name]) }})@endif
                                         @endif
-                                        &middot; {{ __('attempt :step', ['step' => $event->step]) }}
+                                        @if ($event->reason !== null || $event->note !== null || $event->actor_name !== null) &middot; @endif
+                                        {{ __('attempt :step', ['step' => $event->step]) }}
                                     </div>
                                 </li>
                             @endforeach
@@ -2269,7 +2278,6 @@ new #[Title('Lead')] class extends AddressCapturePage {
             action="putBack"
             :confirm-label="__('Put back in queue')"
             confirm-variant="primary"
-            error="note"
         >
             <flux:textarea wire:model="putBackNote" rows="3" :label="__('Why it is going back (required)')" data-test="put-back-note" />
         </x-confirmation-modal>

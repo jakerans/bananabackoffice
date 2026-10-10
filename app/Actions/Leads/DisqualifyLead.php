@@ -130,7 +130,7 @@ class DisqualifyLead
             );
 
             return true;
-        });
+        }, retryWhenBusy: true);
     }
 
     /**
