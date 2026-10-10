@@ -165,7 +165,8 @@ another location has dealt with. Staff are told so without being shown who.
 - **The device timezone is display only:** formatted in the browser from a
   server-rendered ISO timestamp, never sent to or read by the server.
 - A busy database on the page's own saves is answered with "try again"; the
-  MySQL lock-order follow-up from 4b is still open.
+  MySQL lock-order follow-up from 4b is still open. Jacob approved fixing it as
+  its own job on 2026-10-09 (decision 87); it is not built yet.
 - Every dialog is the shared Flux confirmation pattern; no native dialog.
 
 ### Call queue engine (added 2026-10-09, slice 4 step 4b)

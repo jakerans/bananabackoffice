@@ -21,7 +21,7 @@ something this rulebook does not say, it asks Jacob; it does not guess.
 | **Booking** | Saving an appointment for a Lead with a salesperson, a date and time, and a length. |
 | **Issued** | The handoff from Contact Center to Sales. It happens the moment the appointment is saved (rule 3). This is the architecture's "Lead Issued" ([product-architecture.md](product-architecture.md), 5.1). |
 | **Salesperson** | A staff member with Sales Consultant access at the Lead's Location. |
-| **A manager** | Owner, Leadership or Location Manager, with access at the Lead's Location. **Not** a Call Center Agent. This is how the documents already use the word (decision 52; "a manager there" in [checkpoint-b.md](checkpoint-b.md)). It is a reading for Jacob to confirm; see "Readings to confirm". |
+| **A manager** | Owner, Leadership or Location Manager, with access at the Lead's Location. **Not** a Call Center Agent. This is how the documents already use the word (decision 52; "a manager there" in [checkpoint-b.md](checkpoint-b.md)). Confirmed by Jacob on 2026-10-09 (decision 88). |
 | **Contact Center** | The call center's side of the work, including the slice 4 call queue. |
 | **Re-issue** | A new booking, made by the call center, of a Lead that was released back to it after having been issued before. |
 
@@ -148,7 +148,7 @@ make the move** (rule 7).
 
 This is a narrow exception to decision 44 ("Sales Consultants do not claim
 Leads"). It covers only a Lead that this same salesperson was issued before.
-A Sales Consultant still cannot take an unassigned Lead or a colleague's Lead.
+A Sales Consultant otherwise cannot take an unassigned Lead or a colleague's Lead.
 
 ### 13. A Project is created when the sale is Won
 
@@ -216,16 +216,17 @@ Recorded as open. Nothing here may be assumed.
 5. **The Pending ownership period** is provisional (rule 14) until Sales
    Leadership confirms it.
 
-## Readings to confirm
+## Readings confirmed
 
-Two places where Jacob's wording was read against the existing documents. Each is
-for Jacob to confirm or change.
+Two places where Jacob's wording was read against the existing documents. **Jacob
+confirmed both on 2026-10-09 (decisions 88 and 89).** They are rules now.
 
 - **"A manager"** in rules 6, 7, 9, 10 and 12 means Owner, Leadership or
   Location Manager at the Lead's Location, and not a Call Center Agent. Rule 2
   names the Call Center Agent separately for booking, and the documents already
   use "manager" this way. (Slice 4's "manager summary" is a different case:
-  decision 71 gave it to "people who may assign Leads", which includes agents.)
+  decision 71 gave it to "people who may assign Leads", which includes agents;
+  decision 85 now puts that behind a switch for agents.)
   One consequence: a Call Center Agent can book, and can rebook a Lead in
   Cancelled Appointments, but cannot change the time of a salesperson's existing
   appointment.

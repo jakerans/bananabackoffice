@@ -4,23 +4,27 @@
 
 **Checkpoint A — Secure branded foundation — is approved and merged into `main`
 (2026-10-04).**
-**Current: slice 3 is verified and merged into `main`. Slice 4 is approved for
-implementation (2026-10-08) in three steps. Step 4a (location timezones and the
-Contact Center settings) and step 4b (the scheduling engine and the atomic due
-queue) are merged into `main`. Step 4c (the Call Queue screen and manager tools)
-is built on its own branch (job #12) and awaiting review: with it, slice 4 is
-fully built.** Its plan is
+**Current: slices 1 to 4 are built and merged into `main`, and slice 5's rulebook
+is written and merged (2026-10-09). Slice 4 was built in three steps: 4a (location
+timezones and the Contact Center settings), 4b (the scheduling engine and the
+atomic due queue) and 4c (the Call Queue screen and manager tools). Both GitHub
+jobs passed on the `main` commit that holds all of it, and staging deployed that
+commit. The staging scheduler is on. Still owed for 4c: Jacob's browser review
+and the two-person test (see "Slice 4 boundary" below).** Its plan is
 [slice-4-plan.md](slice-4-plan.md). The B1–B7 record and older unbuilt plan are in
-[checkpoint-b.md](checkpoint-b.md). Jacob approved the five-slice order; slices 1
-to 3 are merged. Each step of slice 4, and every later slice, still stops for
-owner review.
+[checkpoint-b.md](checkpoint-b.md). Jacob approved the five-slice order. **One
+job is approved and not yet built: the MySQL deadlock fix (decision 87). One
+change is decided and not yet planned: the switch that lets Call Center Agents
+see the Call Queue's manager part (decision 85).** Nothing else after slice 5's
+rulebook is planned or authorized, and every later slice still stops for owner
+review.
 
 **Steps B1 to B7 are approved and merged into `main` (2026-10-07).** B1 to B6
 were deployed to staging on 2026-10-06; the automatic staging deployment caused
 by the B7 merge was explicitly allowed and is verified separately. See
 "Integration checkpoint" below. **B8 to B12 are not built.**
 
-Slices 1 to 3 are completed and merged after B7. Slice 4 is authorized as
+Slices 1 to 4 are completed and merged after B7. Slice 4 was authorized as
 described in decisions 65 to 74 and nothing beyond it. **Slice 5's rulebook is
 written** ([slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md),
 decisions 75 to 84, job #13): it is design only and authorizes no build. B8,
@@ -57,8 +61,8 @@ received that approval.
 | 1 | Five-Center shell alignment | **LOCKED:** Marketing, Sales, Production, Finance and Company; Settings under Company; Color Studio external. | **Approved, built, verified and merged into `main` (2026-10-07).** The current-ID/current-route/access compatibility map is in [navigation-map.md](navigation-map.md). Shell/navigation only; no new workspace behavior or permission expansion. |
 | 2 | Shared Customer Activity and unified Notes | **LOCKED:** shared records, context/provenance/history-preserving Notes, and Activity made from major business events rather than every audit event. | **Approved, built, verified and merged into `main` (2026-10-07).** Reuses existing customer, Lead note and curated audit evidence; every related Lead, note and event location remains permission-scoped, and no raw audit payload or sensitive finance field is rendered. |
 | 3 | Contact-attempt evidence foundation | **LOCKED:** each attempt is durable evidence with actor, channel, time and outcome; suspicious patterns go to manager review, with no automated punishment. **PENDING:** provider choice. | **Approved, built, verified and merged into `main` (2026-10-08).** Manual records are explicitly not provider-verified, preserve current actor/location/contact/lifecycle evidence, and cannot change lifecycle state. No provider selection, cadence enforcement or personnel policy is introduced. |
-| 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow; scope, exits, order, holds and failure rules (decisions 65, 67, 70, 71). **CONFIGURABLE:** cadence, calling hours and days, hold length (decisions 66, 69, 70). The scheduler, timezone, retry and failure contracts are **decided** (decisions 68, 71 and 73) and specified in [slice-4-plan.md](slice-4-plan.md). | **Approved for implementation (2026-10-08, decision 65). 4a merged; 4b built and awaiting review; 4c not built.** Three reviewed steps: 4a settings and timezones, 4b engine, 4c queue screen. No dialer, provider, outbound message, popup, snooze tray, Aged Leads, AI or penalties. B7 follow-ups are not reinterpreted as automated nurture. |
-| 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales, under the fourteen rules in [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75 to 82), including: a Project is created when the sale is Won (decision 82). **CONFIGURABLE:** appointment length (default 90 minutes), the 30-day release after a cancellation, the Pending ownership period. **PENDING:** the Pending ownership period is provisional at 30 days until Sales Leadership confirms (decision 83); offer validity; the cancellation reasons; which salesperson an issued Lead counts for after a reassignment or re-issue; no-shows and appointment outcomes (decision 84). | **Rulebook written (job #13, 2026-10-09), design only. Nothing is built and no implementation is proposed or approved.** No code, table, permission, screen or Project. Later appointment work must follow the rulebook and needs its own reviewed plan and Jacob's explicit approval. |
+| 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow; scope, exits, order, holds and failure rules (decisions 65, 67, 70, 71). **CONFIGURABLE:** cadence, calling hours and days, hold length (decisions 66, 69, 70). The scheduler, timezone, retry and failure contracts are **decided** (decisions 68, 71 and 73) and specified in [slice-4-plan.md](slice-4-plan.md). | **Approved for implementation (2026-10-08, decision 65), built and merged into `main` (2026-10-09): 4a, 4b and 4c. Jacob's browser review of 4c is still owed.** Three reviewed steps: 4a settings and timezones, 4b engine, 4c queue screen. No dialer, provider, outbound message, popup, snooze tray, Aged Leads, AI or penalties. B7 follow-ups are not reinterpreted as automated nurture. |
+| 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales, under the fourteen rules in [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75 to 83), including: a Project is created when the sale is Won (decision 82). **CONFIGURABLE:** appointment length (default 90 minutes), the 30-day release after a cancellation, the Pending ownership period. **Confirmed (2026-10-09):** what "a manager" means and that a Sales Consultant books only for themselves (decisions 88 and 89). **PENDING:** the Pending ownership period is provisional at 30 days until Sales Leadership confirms (decision 83); offer validity; the cancellation reasons; which salesperson an issued Lead counts for after a reassignment or re-issue; no-shows and appointment outcomes (decision 84). | **Rulebook written and merged into `main` (job #13, 2026-10-09), design only. Nothing is built and no implementation is proposed or approved.** No code, table, permission, screen or Project. Later appointment work must follow the rulebook and needs its own reviewed plan and Jacob's explicit approval. |
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
@@ -95,7 +99,7 @@ assignment or follow-up side effect. Provider integrations, outbound communicati
 dialers, queues, AI, cadence/nurture rules, management penalties and slice 4 are
 outside this implementation.
 
-### Approved slice 4 boundary (4a and 4b merged; 4c built and awaiting review)
+### Slice 4 boundary (4a, 4b and 4c merged; browser review of 4c owed)
 
 Jacob's decisions are 65 to 72 and 74 in [decisions.md](decisions.md); the design is
 decision 73 and [slice-4-plan.md](slice-4-plan.md). His approval of the planning
@@ -106,19 +110,27 @@ beyond it.
 | --- | --- | --- |
 | 4a | A timezone on each Location; the Contact Center settings page under Company > Settings (cadence, calling hours and days, hold length) with its permission and audit events | **Merged into `main`** (job #10): `locations.timezone`, `contact_center_settings` version 1, the two permissions (`leads.work_queue` added here by decision 74), the page at `/settings/contact-center`, the four audit events. |
 | 4b | The engine: every new Lead enters the cadence; a logged attempt advances it; the atomic claim, holds, skips, Put back in queue; the every-minute background timer. No screen. | **Merged into `main`** (job #11): `lead_cadences`, `lead_queue_events`, `scheduler_heartbeats` and the two cadence columns on `contact_attempts`; the calculators and the one eligibility rule in `app/Support/Queue/`; the actions in `app/Actions/Queue/`; the hooks in capture, contact attempts, disqualify, Deferred Follow-up, routing, access and Location deactivation; `backoffice:queue-tick` scheduled every minute; `lead.returned_to_queue` and `LeadPolicy::returnToQueue`. From deployment, newly captured Leads enter the cadence and logged attempts move it. Nothing was visible to staff until 4c. |
-| 4c | The Call Queue in Marketing > Contact Center: due-now count, Next lead, the card, the manager summary and the "Cadence finished, no contact" list | **Built** (job #12, awaiting review): the page at `/marketing/contact-center/queue` (`marketing.call_center.queue`, `leads.work_queue`), the setter's card with the shared attempt form, skip and disqualify, the 10-second poll, the manager summary with the timer warning, the "Cadence finished, no contact" list, and the cadence panel, queue history and Put back in queue on the Lead page. No new table, permission or audit event. |
+| 4c | The Call Queue in Marketing > Contact Center: due-now count, Next lead, the card, the manager summary and the "Cadence finished, no contact" list | **Merged into `main`** (job #12, 2026-10-09; Jacob's browser review is still owed): the page at `/marketing/contact-center/queue` (`marketing.call_center.queue`, `leads.work_queue`), the setter's card with the shared attempt form, skip and disqualify, the 10-second poll, the manager summary with the timer warning, the "Cadence finished, no contact" list, and the cadence panel, queue history and Put back in queue on the Lead page. No new table, permission or audit event. |
 
 One recorded change to slice 3: logging a contact attempt now advances the
 cadence (decision 67). It still never changes lifecycle status or assignee.
 
 **Staging needs the server's scheduler enabled in Forge** for the background
 timer: one entry running `php artisan schedule:run` every minute for the staging
-site. **Whether it is already on is still not known:** step 4b's builder could
-not see the staging server or Forge, so the timer is not known to be running on
-staging. The step for Jacob is in the 4b handoff
-([review/current.md](review/current.md)) and in "The server's scheduler on
-staging" in the plan. Without it the queue still works; only the heartbeat and
-the tidy-up pass are missing.
+site. **It is on (2026-10-09).** Forge showed it off after 4c was merged; with
+Jacob's approval the staging site's Laravel scheduler switch was turned on, and
+the `queue_tick` heartbeat in the staging database confirmed it running a
+minute later. The record is in "The server's scheduler on staging" in the plan.
+
+Decided by Jacob on 2026-10-09, after the 4c handoff:
+
+- **Call Center Agents are to see the Call Queue's manager part only when
+  Leadership switches it on** (decision 85). Decided, not planned and not
+  built: until it is, agents see the manager part as 4c built it. Its open
+  questions are in [review/current.md](review/current.md).
+- **Skip after calling hours close stays as built** (decision 86).
+- **The MySQL deadlock fix is approved as its own job** (decision 87). Not
+  built yet.
 
 Known follow-ups recorded with this slice, none of them authorized:
 

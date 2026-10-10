@@ -2,7 +2,8 @@
 
 Status: **Planned and approved for implementation (2026-10-08). Step 4a is
 merged into `main` (job #10). Step 4b is merged into `main` (job #11). Step 4c is
-built (job #12, awaiting review).** Jacob's decisions are 65 to 72 and 74 in
+merged into `main` (job #12, 2026-10-09); Jacob's browser review of it is still
+owed.** Jacob's decisions are 65 to 72 and 74 in
 [decisions.md](decisions.md); decision 73 records the design below. Where this plan
 and those decisions disagree, the decisions win and the build stops to ask.
 
@@ -768,9 +769,10 @@ Tests:
 
 ## Step 4c — The queue screen
 
-**Status: built (job #12), awaiting review.** The staging scheduler still could not
-be checked from where the step was built; the manager summary's timer warning is
-now how Jacob can tell (see "The server's scheduler on staging").
+**Status: merged into `main` (job #12, 2026-10-09). Jacob's browser review and the
+two-person test are still owed.** The staging scheduler could not be checked from
+where the step was built. It was checked in Forge afterwards and is off (see "The
+server's scheduler on staging").
 
 Builds: the Call Queue page and its navigation item; the card; the shared
 contact-attempt form; the skip dialog; Disqualify on the card; the manager
@@ -823,7 +825,9 @@ handoff so Jacob can change it.
   company-wide rule lets them. "Due now" there means in the queue, due, not
   held, and inside its Location's calling hours at this moment; "longest wait"
   is how long the most overdue of those has been due; "held" lists the Lead and
-  the holder's name.
+  the holder's name. **Changed by decision 85 (2026-10-09), not built yet:** a
+  Call Center Agent is to see this part only when Leadership switches it on.
+  Until that is built, agents see it as described here.
 - **A hold that is gone** is explained from the queue history for that hold
   (`hold_token`). `hold_expired` means "time ran out" and nothing else; a logged
   attempt always arrives as `hold_ended`. The notice gives the reason only: it
@@ -841,7 +845,10 @@ handoff so Jacob can change it.
   not end a hold because calling hours closed (the card's poll and the next
   Next lead do); a skip is accepted outside calling hours while the setter
   still holds the Lead and may work it; Next lead by someone with no queue
-  access anywhere is refused as not authorized.
+  access anywhere is refused as not authorized. **Corrected by decision 86
+  (2026-10-09):** since fix round 1 the card is hidden when calling hours
+  close, so the screen offers no skip after hours and the hold simply ends.
+  Jacob decided to keep it that way. The engine still accepts such a skip.
 - **A busy database during any queue-page save** is answered with a plain "try
   again" message, not an error page. The engine's lock-order fix and retry for
   the hooked actions (4b handoff, follow-up 1) is **not** part of 4c: Jacob's
@@ -877,10 +884,23 @@ Tests:
 
 ## The server's scheduler on staging
 
-Slice 4 needs Laravel's scheduler to run every minute on the staging server. It
-is not known to be enabled: the application had no scheduled task before step
-4b. **Step 4b could not check it** (its builder has no view of the staging
-server or of Forge), so it remains unknown; 4c repeats the check.
+Slice 4 needs Laravel's scheduler to run every minute on the staging server. The
+application had no scheduled task before step 4b, and neither 4b's nor 4c's
+builder could see the staging server or Forge.
+
+**Checked in Forge on 2026-10-09, after 4c was merged: it was off.** Forge
+reported the staging site's Laravel scheduler as not enabled, and neither the
+site nor the server had a scheduled job that ran `schedule:run` (the server's
+only two jobs were Forge's own maintenance jobs).
+
+**Switched on the same day, with Jacob's approval.** The staging site's Laravel
+scheduler switch was turned on through Forge. Forge added one scheduled job for
+the site: user `forge`, every minute,
+`php8.5 /home/forge/bananabackoffice-xg8eqczb.on-forge.com/current/artisan schedule:run`.
+Evidence that it runs: about a minute later the staging database's `queue_tick`
+heartbeat showed a run seven seconds before it was read. Nothing else on the
+server was changed. The rest of this section is kept as the record of what was
+asked for.
 
 **Exactly what is needed:** one scheduler entry for the staging site, running as
 user `forge`, every minute:
@@ -931,5 +951,5 @@ staging only. Production does not exist and nothing here authorizes it.
   can end in a deadlock error for one of them; nothing is half-saved and the
   person presses again. The fix (the Lead-before-cadence lock order in
   `EndQueueHold::atLocation` and `RunQueueTick::releaseExpiredHold`, and a retry
-  around the hooked actions) is a recorded follow-up, not yet approved as a
-  job. It is not part of step 4c.
+  around the hooked actions) was not part of step 4c. **Jacob approved it as
+  its own job on 2026-10-09 (decision 87). It is not built yet.**
