@@ -1,8 +1,11 @@
 # Slice 6 — Appointment Booking: Proposed Plan
 
 Status: **the three steps are approved in order (2026-10-10, decisions 90 to
-96). Step 6a is built (2026-10-10); see "Step 6a as built" below.** Steps 6b
-and 6c are not planned in detail and still need decisions 8 to 11 below. It follows the rulebook in
+96). Step 6a is built and merged into `main` (2026-10-10); see "Step 6a as
+built" below. Step 6b is planned in detail below and is NOT approved: it waits
+for Jacob's answers to questions 13 and 15 to 22.** Step 6c is an outline.
+Jacob answered questions 8, 9, 11, 12 and 14 and three of the 6b plan's
+readings on 2026-10-10 (decisions 97 to 104). It follows the rulebook in
 [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75
 to 84, 88 and 89). Where the rulebook is silent this plan asks; an answer
 becomes a decision in [decisions.md](decisions.md) before anything is built.
@@ -162,23 +165,170 @@ Readings made while building, none of them a new rule:
 - **Opening a notice list marks its notices seen,** except while an Owner is
   viewing Backoffice as that person.
 
-## Step 6b — Change, cancel, send back (outline)
+## Step 6b — Change, cancel, send back (proposed, not approved)
 
-Reschedule keeps the salesperson and the issue, and keeps the old time in the
-appointment's history. Moving to another salesperson is manager-only and tells
-the new salesperson. A customer cancellation keeps the appointment as a
-cancelled record with who cancelled and a reason from a new sixth managed list
-on Lead & Sales Lists; the Lead stays with the salesperson. A manager can send
-any issued Lead back to Contact Center with a note. This step is planned in
-detail after 6a is reviewed, because several of its rules depend on decisions
-8 to 10 below.
+Planned on 2026-10-10 after step 6a was reviewed and merged. **Nothing here is
+approved to build.** It follows rules 6, 7, 8 (its first two points), 9 and 11
+and decisions 97 and 99 to 104, and it depends on questions 13 and 15 to 22 under "Decisions
+needed". Where a line below rests on one of those questions it says so.
+
+### What a person sees
+
+**On the Lead page's Appointment card,** while an appointment is upcoming:
+
+- **Reschedule.** For the salesperson whose appointment it is, or a manager
+  (rule 6). It asks for the day, the time and the length, with the same rules
+  as booking (decision 93) and the same refusal of an overlap. The salesperson
+  does not change. The card shows the new time, and the earlier times under
+  "Earlier times" with who changed each and when.
+- **Move to another salesperson.** For a manager only (rule 7). It offers the
+  other people with Sales Consultant access at the Lead's Location and refuses
+  one who already has an appointment then. The Lead is assigned to the new
+  salesperson; the card and the history show both people. This is also how a
+  manager fixes an appointment that "needs a salesperson" because its
+  salesperson lost access (decision 95).
+- **Cancel appointment.** It asks **who cancelled**, a **reason** from the new
+  Cancellation Reasons list, and an optional note. The appointment stays on
+  the card as a cancelled record with all three, who recorded it and when. The
+  Lead stays with the salesperson and still counts as issued (rule 8). Who may
+  record a cancellation is question 16.
+- **After a cancellation:** the Lead shows a new status, **Appointment
+  cancelled** (question 15), and the card offers **Book appointment** again.
+  Booking it again with the same salesperson adds no issued count (decision
+  99). Booking it with a different salesperson is for a manager only (question
+  18).
+- **Send back to Contact Center.** For a manager only, with a note (rule 9), on
+  any Lead that is with Sales: Appointment booked or Appointment cancelled. It
+  asks **why**, because the reason decides whether the Lead still counts as
+  issued (decision 100, question 19). What happens to an appointment that is
+  still upcoming is question 20. The Lead shows Qualified again (decision 97),
+  is assigned to nobody (decision 103), and re-enters the call queue where
+  question 13 says.
+- **A Lead whose appointment was cancelled** can also be moved to another
+  Location, returned to central or disqualified with the buttons the Lead page
+  already has (decision 101). What it looks like afterwards is question 21.
+- **After the appointment time has passed** the appointment can no longer be
+  rescheduled, moved or cancelled (decision 102). The card offers **Book
+  another appointment** instead, which is the path for a missed appointment
+  (question 22).
+- **Booked in error** stays as it is, for a standing appointment only.
+
+**In Sales > Calendar:** a cancelled appointment leaves the upcoming list. A
+second list, **To rebook**, shows the cancelled Leads still waiting for a new
+appointment, with the day each was cancelled. A salesperson sees their own; a
+manager sees every salesperson's at their Locations.
+
+**On Lead & Sales Lists:** a new list, **Cancellation Reasons**, managed like
+the others (rule 11, decision 30). What it starts with is question 17.
+
+**Who is told,** by the bell built in 6a. An email goes only where a
+salesperson gains an appointment or its time changes, and carries a link and no
+customer details (rule 4):
+
+| What happened | Who is told | Bell | Email |
+| --- | --- | --- | --- |
+| Rescheduled by someone else | The salesperson | Yes | Yes |
+| Rescheduled by the salesperson themselves | Nobody | | |
+| Moved to another salesperson | The new salesperson | Yes | Yes |
+| Moved to another salesperson | The earlier salesperson | Yes | No |
+| Cancelled, recorded by someone else | The salesperson | Yes | No |
+| Sent back to Contact Center | The salesperson it was with | Yes | No |
+
+### What it stores
+
+| Table | Change |
+| --- | --- |
+| `appointments` | A new state, **cancelled**, with who cancelled (customer, salesperson or company; decision 104), the reason, the note, and who recorded it and when. A rebooking is a new row that points at the cancelled one it follows. Still never deleted. |
+| `appointment_changes` (new) | One row for each reschedule or move: the time and salesperson before and after, who did it, when, and the note. Never changed or deleted. This is the "history" rules 6 and 7 ask for. |
+| `appointment_cancellation_reasons` (new) | The managed list, built like the existing six. |
+| `leads` | The new status `appointment_cancelled`, if question 15 is agreed. |
+| `lead_issues` | A reschedule, a move, a cancellation and a rebooking with the same salesperson write no row and void none. **A Lead that leaves Sales because it should never have been booked has its issue voided** (decision 100), the same mark "booked in error" makes, with who and when. Which salesperson an issue counts for after a move is still open with Sales Leadership; the history kept here lets either answer be counted later. |
+
+Every action goes through the same door as booking: the Lead must not have
+changed since the dialog opened, the salesperson's row is locked so two changes
+at the same moment are decided one after the other, and each change is saved
+with its history, its audit event and its notices together or not at all.
+
+### Who may do what
+
+No new permission. All checked at the Lead's Location.
+
+| Action | Who |
+| --- | --- |
+| Reschedule | The salesperson whose appointment it is; a manager (`appointments.manage`) |
+| Move to another salesperson | A manager |
+| Record a cancellation | Question 16. *Recommended:* anyone who may book that Lead: a manager, a Call Center Agent, and the salesperson whose appointment it is |
+| Rebook after a cancellation, same salesperson | Anyone who may book that Lead |
+| Rebook after a cancellation, different salesperson | A manager (question 18) |
+| Send back to Contact Center | A manager |
+| Say a Lead leaving Sales "should never have been booked", so it does not count as issued | A manager (question 19) |
+| Move a cancelled Lead to another Location, return it to central, or disqualify it | Whoever may do each today; nothing changes (decision 101) |
+| Book another appointment after one has passed | As for a rebooking after a cancellation (question 22) |
+
+Decision 88 already says a Call Center Agent cannot reschedule, move, send back
+or mark "booked in error". It does not mention recording a cancellation, which
+is why question 16 asks.
+
+### Audit and Activity
+
+New audit events, each saved with its change: `lead.appointment_rescheduled`,
+`lead.appointment_moved`, `lead.appointment_cancelled`,
+`lead.appointment_rebooked`, `lead.sent_back_to_contact_center`. Each also
+appears in the customer's Activity in plain words.
+
+### Readings this plan makes
+
+The first version of this plan listed four readings. **Jacob answered them on
+2026-10-10:**
+
+| Reading as first written | Jacob's answer |
+| --- | --- |
+| A Lead that is sent back still counts as issued. | **Changed (decision 100).** It depends on the reason: a Lead that should never have been booked does not count. Question 19. |
+| Sending back cancels an upcoming appointment in the same step. | **Not decided.** He is thinking about it: if the appointment simply does not work for the salesperson, a manager may move it to someone else instead. Question 20. |
+| A Lead that is Appointment cancelled cannot be moved, returned to central or disqualified until it is sent back. | **Reversed (decision 101).** It can be, for example when it was cancelled for the wrong service area. Question 21. |
+| An appointment whose time has passed can no longer be rescheduled, moved or cancelled. | **Agreed, with a condition (decision 102):** a missed appointment needs a clear way to be booked again. Question 22. |
+
+One reading is left. Built this way unless Jacob says otherwise:
+
+- **A reschedule or a move to a time already past is refused,** as a booking
+  is.
+
+### Tests
+
+Feature tests for: reschedule by the salesperson and by a manager, refused for
+anyone else, overlap refused, the old time kept, the issue unchanged; a move
+needs a manager, the new salesperson must have access there and be free, both
+people are in the history, each is told as the table says; a cancellation
+keeps the record with who, reason and note, leaves the Lead with the
+salesperson and the issue counted, and frees the time for another booking; who
+may record one, as a matrix of roles and Locations; rebooking with the same
+salesperson writes no issue and with a different one needs a manager; send
+back needs a manager, a reason and a note, returns the Lead as decisions 97 and
+103 and question 13 say, and voids the issue only for "should never have been
+booked" (decision 100); a cancelled Lead can be moved, returned to central and
+disqualified, and a Lead with an upcoming appointment still cannot (decisions
+95 and 101); a passed appointment cannot be changed and another can be booked
+after it with no new count (decision 102); the Cancellation Reasons list under
+the existing managed-list rules; the Calendar's two lists show only what the
+person may see; no notice or email carries a customer's details; two changes
+to the same salesperson's time at the same instant (real processes); and the
+migrations on MySQL 8.4.
+
+### Not in 6b
+
+The 30-day release, the Cancelled Appointments group and its button (decision
+98), a re-issue by the call center of a released Lead, and a salesperson
+picking a released Lead back up. All are 6c.
 
 ## Step 6c — Release and return (outline)
 
 A daily timer releases a cancelled Lead that was not rebooked within 30 days
-(an adjustable setting) to a Cancelled Appointments group the call queue can
-be pointed at. The call center re-issues from it. A salesperson can take back a
-Lead they were issued before. Planned in detail after 6b.
+(an adjustable setting) to the Cancelled Appointments group. **That group gets
+its own button on the Call Queue and is worked as hot Leads, beside new Leads
+(decision 98).** The call center re-issues from it. A salesperson can take back
+a Lead they were issued before. Planned in detail after 6b; its plan settles
+how "beside new Leads" appears on the screen and where a released Lead starts
+in the cadence.
 
 ## Decisions needed
 
@@ -215,24 +365,114 @@ decisions 90 to 96, in this order:**
    (or nobody), and back in the call queue at the attempt it had reached if it
    was in the queue.
 
-Needed before 6b and 6c, not before 6a:
+Asked before 6b and 6c. **Jacob answered 8, 9 and 11 on 2026-10-10 (decisions
+97 to 99), and 12 and 14 the same day (decisions 103 and 104).** What is left
+of them is question 13.
 
 8. **After a Lead goes back to Contact Center** (sent back, or released after
    30 days): which status does it show, and is it assigned to anyone?
-   *Recommended:* Qualified and unassigned, with the Appointment card showing
-   why it came back.
+   **Answered (decisions 97 and 103):** it shows Qualified and is assigned to
+   nobody.
 9. **Where does a returned Lead restart in the call cadence,** and does the
    Cancelled Appointments group share the one call queue or get its own
-   button?
-10. **A cancellation that does not come from the customer** (the salesperson or
-   the company cancels): the same record and rules as rule 8, or different?
+   button? **Answered in part (decision 98):** its own button, worked as hot
+   Leads beside new Leads. Where a Lead restarts is question 13.
+10. **A cancellation that does not come from the customer.** **Answered
+    (decision 104):** the same record and rules; see question 14.
 11. **Does a rebooking by the same salesperson after a cancellation** change
-    the issued count? Rule 8 says only that the Lead still counts as issued.
-    *Recommended:* no new count.
+    the issued count? **Answered (decision 99):** no. It can be rebooked with
+    the same salesperson and adds no count.
 
-Still open with Sales Leadership and not needed for 6a: which salesperson an
-issued Lead counts for after a move or re-issue; the cancellation reasons
-themselves; offer validity; the Pending ownership period.
+**Needed before step 6b is approved.** Each has a recommendation, so "agreed to
+all" is an answer. **12 and 14 are answered (decisions 103 and 104); 13 and 15
+to 22 are open.**
+
+12. **Who has a Lead after it comes back to Contact Center?** Jacob's answer to
+    question 8 read "assigned to somebody"; the recommendation had been
+    "nobody". **Answered (decision 103): nobody.** The call queue hands it to
+    the next available person, as it does every Lead, and the Appointment card
+    says why it came back.
+13. **Where does a Lead a manager sends back restart in the call cadence?**
+    Rule 9 says it re-enters the call queue. *Recommended:* it starts the
+    cadence over at attempt 1, due at the next opening of calling hours, in
+    the ordinary queue, in line with follow-up calls by how long each has
+    waited. *Alternative:* treat it as hot, in line with new Leads.
+14. **A cancellation that does not come from the customer** (the salesperson
+    or the company cancels). **Answered (decision 104):** the same record and the same rules
+    as rule 8. "Who cancelled" offers three choices: the customer, the
+    salesperson, the company. The Lead stays with the salesperson, still
+    counts as issued, and the 30 days run the same way.
+15. **What does a Lead show after its appointment is cancelled,** while it is
+    still with the salesperson? "Appointment booked" would no longer be true.
+    *Recommended:* a new status, **Appointment cancelled**, so the salesperson
+    and their manager can see at a glance which Leads need rebooking.
+    Rebooking returns it to Appointment booked. *Alternative:* it stays
+    Appointment booked and only the card says cancelled.
+16. **Who may record a cancellation?** *Recommended:* anyone who may book that
+    Lead: a manager, a Call Center Agent (customers often call the call center
+    to cancel), and the salesperson whose appointment it is. *Alternative:*
+    the salesperson and managers only.
+17. **What does the Cancellation Reasons list start with?** The reasons
+    themselves are still open with Sales Leadership (rule 11), and a
+    cancellation needs one. *Recommended:* one entry, "Other (see note)", so
+    the feature works on its first day; Owner and Leadership add the real ones
+    on Lead & Sales Lists when they have them. *Alternative:* Jacob gives the
+    starting list now.
+18. **Rebooking with a different salesperson while the Lead is still with the
+    first one** (inside the 30 days). *Recommended:* a manager only, recorded
+    as a move (rule 7). A Call Center Agent and the salesperson can rebook
+    with the same salesperson only. After the 30-day release, in 6c, the call
+    center may choose anyone (rule 8).
+
+Raised by Jacob's answers to the plan's readings (decisions 100 to 102):
+
+19. **How does a person say whether a Lead leaving Sales still counts as
+    issued?** Decision 100 makes it depend on the reason. *Recommended:* the
+    Send back dialog asks one required question with two answers, and a note:
+    **"It should never have been booked"** (the issue no longer counts, as
+    "booked in error" does today) or **"Another reason"** (it still counts).
+    The same question is asked when a Lead that is with Sales is disqualified.
+    Only a manager may give the first answer, because rule 10 keeps taking an
+    issue away manager-only; when anyone else disqualifies such a Lead it
+    stays counted, and a manager can correct it afterwards. *Alternative:* a
+    longer list of send-back reasons that Jacob names, each marked as counting
+    or not.
+20. **Sending back a Lead whose appointment is still upcoming.** Jacob is
+    thinking about this: the salesperson may be sending it back only because
+    the time does not work for them, and then a manager would give the
+    appointment to someone else. *Recommended:* keep the two actions apart.
+    **Move to another salesperson** keeps the appointment and is the answer
+    when the appointment should still happen. **Send back to Contact Center**
+    is for a Lead the call center must work again, so it always cancels an
+    upcoming appointment, and its dialog says "If someone else should take
+    this appointment, use Move to another salesperson instead." A salesperson
+    cannot send a Lead back themselves; they ask a manager, who chooses.
+    *Alternative:* a way for the salesperson to ask, inside Backoffice, for a
+    manager to move or take back an appointment. That is a new feature and
+    would be its own step.
+21. **What happens to a cancelled Lead that is moved to another Location or
+    returned to central?** Decision 101 allows it. A move already takes a Lead
+    from whoever has it (decision 44). *Recommended:* it leaves the
+    salesperson and from then on is treated exactly as a Lead sent back:
+    Qualified and unassigned (decisions 97 and 103), back in the call
+    queue as question 13 says, and the person moving it is asked the same
+    counting question as in 19. The cancelled appointment stays on its record.
+    A cancelled Lead that is disqualified is simply Disqualified, with the
+    same counting question.
+22. **The path after a missed appointment** (decision 102). *Recommended:* once
+    an appointment's time has passed, the card offers **Book another
+    appointment**. It follows the rules for rebooking after a cancellation:
+    with the same salesperson by anyone who may book the Lead, with a
+    different salesperson by a manager, and no new issued count. The passed
+    appointment stays on the card as it was; Backoffice does not yet record
+    whether it was held or missed, because that belongs to the after-action
+    report (decision 84). *Alternative:* also let the passed appointment be
+    marked "Missed" now. That starts recording outcomes ahead of the
+    after-action report.
+
+Still open with Sales Leadership and not needed for 6b: which salesperson an
+issued Lead counts for after a move or re-issue; the real cancellation reasons;
+offer validity; the Pending ownership period.
 
 ## Known limits of this plan
 

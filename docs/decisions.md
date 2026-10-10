@@ -2030,6 +2030,110 @@ to then (or nobody), and, if it was in the call queue, back in it at the
 attempt it had reached. The issue does not count (rule 10). It needs a manager
 and a note and is recorded.
 
+## Slice 6 decisions before step 6b (97 to 99)
+
+Given by Jacob on 2026-10-10 in answer to questions 8, 9 and 11 of the slice 6
+plan. Question 10 (a cancellation that does not come from the customer) was not
+answered and is asked again with the step 6b plan. Nothing here approves a
+build: step 6b still needs its plan approved.
+
+## 97. A Lead that comes back to Contact Center is Qualified (2026-10-10)
+
+**Decided by Jacob.** A Lead that goes back from Sales to Contact Center (a
+manager sends it back, or it is released after a cancellation) shows the status
+Qualified again.
+
+**Not settled: who it is assigned to.** The plan recommended "nobody". Jacob's
+answer read "it should come back as qualified and assigned to somebody". The
+step 6b plan asks which is meant, and who "somebody" would be. Nothing is built
+on either reading until he says. **Settled the same day by decision 103:
+nobody.**
+
+## 98. Cancelled Appointments gets its own button, worked as hot Leads (2026-10-10)
+
+**Decided by Jacob.** The Cancelled Appointments group (rulebook, rule 8) is not
+mixed into the one shared call queue. It gets its own button on the Call Queue.
+These Leads "need to be prioritized next to new leads because those are very
+hot leads".
+
+Jacob's message said "canceled deployments"; it is read as cancelled
+appointments, the group question 9 asked about. The group and its button are
+built in step 6c. How "next to new Leads" appears on the screen is settled in
+the 6c plan.
+
+## 99. Rebooking after a cancellation adds no issued count (2026-10-10)
+
+**Decided by Jacob.** After a cancellation the Lead can be booked again with
+the same salesperson, and that rebooking does **not** add to Leads Issued: it
+is one Lead that was issued and brought back.
+
+The reason, in Jacob's words: salespeople are "heavily tracked on NSLI" (Net
+Sales per Lead Issued), a second count "would actually negatively impact their
+NSLI, and we want to encourage them to get canceled bookings back on the
+calendar".
+
+## Slice 6 decisions on the step 6b plan's readings (100 to 102)
+
+Given by Jacob on 2026-10-10 in answer to the four readings the step 6b plan
+said it would build "unless Jacob says otherwise". Three are decided here. The
+fourth (whether sending a Lead back always cancels its upcoming appointment) he
+is still thinking about; it is question 20 in the plan. Nothing here approves a
+build.
+
+## 100. Whether a Lead that leaves Sales still counts as issued depends on the reason (2026-10-10)
+
+**Decided by Jacob.** This replaces the plan's reading "a Lead that is sent
+back still counts as issued". In his words: it "should only still count as
+issued if it was done for the correct reason. If it was disqualified because
+it should never have been booked in the first place, then it should not count
+as issued."
+
+So a Lead that should never have been booked does not count as issued, however
+it leaves the salesperson: sent back, or disqualified. Any other reason leaves
+it counted. How the person says which it is, and who may say it, is question
+19 in the plan. Rule 10 ("booked in error", manager-only and recorded) already
+takes an issue away for a standing appointment; this extends the same idea to a
+Lead leaving Sales later.
+
+## 101. A Lead with a cancelled appointment can still be moved, returned or disqualified (2026-10-10)
+
+**Decided by Jacob.** This reverses the plan's reading that such a Lead must be
+sent back first. A Lead whose appointment was cancelled can be moved to another
+Location, returned to central or disqualified. His example: it was cancelled
+because of the wrong service area and should have been at the other Location.
+
+Decision 95 is unchanged for a Lead whose appointment is still upcoming: cancel
+or undo it first. What a cancelled Lead looks like after a move or a return is
+question 21 in the plan.
+
+## 102. A passed appointment is not changed, provided a missed one has a clear way to be booked again (2026-10-10)
+
+**Decided by Jacob, with a condition.** An appointment whose time has passed
+cannot be rescheduled, moved or cancelled. He agreed to that on the condition
+that there is "a clear path" for the case he described: the appointment was
+missed and the customer messages in afterwards to set a new time. The path is
+question 22 in the plan. What happened at the passed appointment is still for
+the after-action report (decision 84).
+
+## Slice 6 decisions on the step 6b plan's questions 12 and 14 (103 and 104)
+
+Given by Jacob on 2026-10-10. The plan's questions 13 and 15 to 22 are not
+answered yet, and step 6b is still not approved.
+
+## 103. A Lead that comes back to Contact Center is assigned to nobody (2026-10-10)
+
+**Decided by Jacob** ("correct no one"), completing decision 97. A Lead that
+goes back from Sales to Contact Center is Qualified and unassigned. The call
+queue hands it to the next available person, as it does every Lead, and the
+Appointment card says why it came back.
+
+## 104. A cancellation by the salesperson or the company is recorded the same way (2026-10-10)
+
+**Decided by Jacob.** A cancellation that does not come from the customer uses
+the same record and the same rules as rule 8. "Who cancelled" offers three
+choices: the customer, the salesperson, the company. The Lead stays with the
+salesperson, still counts as issued, and the 30 days run the same way.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
