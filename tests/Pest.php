@@ -1,14 +1,17 @@
 <?php
 
 use App\Actions\Appointments\BookAppointment;
+use App\Actions\Appointments\CancelAppointment;
 use App\Actions\Leads\RecordManualContactAttempt;
 use App\Actions\Queue\ClaimNextLead;
 use App\Actions\Queue\EnterLeadCadence;
+use App\Enums\CancellationParty;
 use App\Enums\ContactAttemptChannel;
 use App\Enums\ContactAttemptDirection;
 use App\Enums\ContactAttemptDisposition;
 use App\Models\Account;
 use App\Models\Appointment;
+use App\Models\AppointmentCancellationReason;
 use App\Models\ContactAttempt;
 use App\Models\ContactCenterSettings;
 use App\Models\Lead;
@@ -27,7 +30,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use Livewire\Component;
 use Livewire\Drawer\Utils;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\SentMessage;
@@ -306,4 +311,36 @@ function bookAppointment(Lead $lead, User $salesperson, User $by, ?string $date 
     $timezone = CallingHours::timezoneFor($lead->location);
 
     return app(BookAppointment::class)->handle($lead, $salesperson, $date ?? now()->timezone($timezone)->addDay()->toDateString(), $time, $minutes, $by);
+}
+
+/**
+ * The Appointment card of a Lead, as a staff member sees it on the Lead page.
+ *
+ * @return Testable<Component>
+ */
+function appointmentCard(User $user, Lead $lead): Testable
+{
+    return Livewire::actingAs($user)->test('pages::leads.appointment', ['lead' => $lead]);
+}
+
+/**
+ * Record a cancellation of the Lead's appointment through the action, by the
+ * customer for "No longer needed" unless told otherwise.
+ *
+ * @param  array<string, mixed>  $with  Any of: party, reason, note, disqualifies, disqualifyFor, neverShouldHaveBeenBooked.
+ */
+function cancelAppointment(Lead $lead, User $by, array $with = []): void
+{
+    app(CancelAppointment::class)->handle(
+        $lead,
+        $lead->standingAppointment() ?? Appointment::query()->where('lead_id', $lead->id)->orderByDesc('id')->firstOrFail(),
+        array_key_exists('party', $with) ? $with['party'] : CancellationParty::Customer->value,
+        array_key_exists('reason', $with) ? $with['reason'] : AppointmentCancellationReason::query()->where('name', 'No longer needed')->sole(),
+        $with['note'] ?? null,
+        $by,
+        null,
+        $with['disqualifies'] ?? null,
+        $with['disqualifyFor'] ?? null,
+        $with['neverShouldHaveBeenBooked'] ?? false,
+    );
 }

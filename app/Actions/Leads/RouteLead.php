@@ -2,6 +2,7 @@
 
 namespace App\Actions\Leads;
 
+use App\Actions\Appointments\ReturnLeadFromSales;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Queue\EndQueueHold;
 use App\Enums\AssignmentEndReason;
@@ -24,6 +25,7 @@ class RouteLead
         private EndQueueHold $endQueueHold,
         private ServiceAreaResolver $serviceAreas,
         private QueueTransaction $queueTransaction,
+        private ReturnLeadFromSales $returnLeadFromSales,
     ) {}
 
     /**
@@ -33,7 +35,13 @@ class RouteLead
      * Routing decides which location owns the Lead. It is separate from who is
      * responsible for working it: any change of location is a handoff, so the
      * current assignee is always cleared, even if they also work at the
-     * destination. The Lead's status does not change.
+     * destination. The Lead's status does not change, with one exception: a
+     * Lead that is with Sales (its appointment has passed or was cancelled)
+     * leaves the salesperson and goes back to Contact Center at the
+     * destination, exactly as one a manager sends back (decisions 101 and
+     * 112). It still counts as issued unless a manager says it should never
+     * have been booked (decision 110). One with an upcoming appointment is
+     * refused (decision 95).
      *
      * Anyone holding the Lead from the call queue has that hold ended in the
      * same transaction. Its place in the cadence and its due time stay as
@@ -49,15 +57,17 @@ class RouteLead
      * The caller is responsible for checking that the actor may route this Lead
      * to this destination.
      *
+     * @param  bool  $neverShouldHaveBeenBooked  For a Lead that is with Sales: it should never have been booked, so it stops counting as issued.
+     *
      * @throws ValidationException
      */
-    public function handle(Lead $lead, Location $destination, ?string $reason = null, ?User $actor = null): void
+    public function handle(Lead $lead, Location $destination, ?string $reason = null, ?User $actor = null, bool $neverShouldHaveBeenBooked = false): void
     {
         $reason = trim((string) $reason) === '' ? null : trim((string) $reason);
 
         $this->queueTransaction->attempt(
-            function () use ($lead, $destination, $reason, $actor): void {
-                $this->route($lead, $destination, $reason, $actor);
+            function () use ($lead, $destination, $reason, $actor, $neverShouldHaveBeenBooked): void {
+                $this->route($lead, $destination, $reason, $actor, $neverShouldHaveBeenBooked);
             },
             function () use ($lead, $destination): void {
                 $lead->refresh();
@@ -69,7 +79,7 @@ class RouteLead
     /**
      * @throws ValidationException
      */
-    private function route(Lead $lead, Location $destination, ?string $reason, ?User $actor): void
+    private function route(Lead $lead, Location $destination, ?string $reason, ?User $actor, bool $neverShouldHaveBeenBooked): void
     {
         $origin = $lead->location;
 
@@ -106,14 +116,22 @@ class RouteLead
         $address = StructuredAddress::ofLead($lead);
         $suggested = $address === null ? null : $this->serviceAreas->locationFor($address);
 
-        DB::transaction(function () use ($lead, $destination, $origin, $reason, $actor, $suggested): void {
+        DB::transaction(function () use ($lead, $destination, $origin, $reason, $actor, $suggested, $neverShouldHaveBeenBooked): void {
             // The Lead row is locked before anything else, with a write that
             // changes nothing: the order a queue claim relies on.
             DB::table('leads')->where('id', $lead->id)->update(['id' => DB::raw('id')]);
 
-            $this->unassignLead->handle($lead, AssignmentEndReason::LocationChanged, $actor);
+            // A Lead that is with Sales goes back to Contact Center when it
+            // moves. Whether it still counts as issued is settled where it is
+            // now, before it leaves.
+            $leavesSales = $lead->isWithSales();
+            $salesperson = $leavesSales ? $lead->assignee : null;
+            $stoppedCounting = $this->returnLeadFromSales->settleIssue($lead, $actor, $neverShouldHaveBeenBooked);
+
+            $this->unassignLead->handle($lead, $leavesSales ? AssignmentEndReason::ReturnedFromSales : AssignmentEndReason::LocationChanged, $actor);
 
             $lead->forceFill([
+                'lifecycle_version' => $lead->lifecycle_version + ($leavesSales ? 1 : 0),
                 'location_id' => $destination->id,
                 'routed_at' => now(),
                 // Kept from the first time, so received → routed stays measurable after a transfer.
@@ -132,6 +150,10 @@ class RouteLead
             );
 
             $this->endQueueHold->forLead($lead, QueueHoldEndReason::Moved, $actor);
+
+            if ($leavesSales) {
+                $this->returnLeadFromSales->handle($lead, $actor, ReturnLeadFromSales::MOVED, $reason, ! $stoppedCounting, $origin, $salesperson);
+            }
         });
     }
 }

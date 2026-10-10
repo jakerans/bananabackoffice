@@ -2,10 +2,10 @@
 
 Status: **the three steps are approved in order (2026-10-10, decisions 90 to
 96). Step 6a is built and merged into `main` (2026-10-10); see "Step 6a as
-built" below. Step 6b is planned in detail below and is NOT approved: it waits
-for Jacob's answers to questions 13 and 15 to 22.** Step 6c is an outline.
-Jacob answered questions 8, 9, 11, 12 and 14 and three of the 6b plan's
-readings on 2026-10-10 (decisions 97 to 104). It follows the rulebook in
+built" below. Step 6b is built (2026-10-10) and waits for Jacob's review and
+his word to merge; see "Step 6b as built" below.** Step 6c is an outline.
+Jacob answered every question the 6b plan asked on 2026-10-10 (decisions 97 to
+114). It follows the rulebook in
 [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75
 to 84, 88 and 89). Where the rulebook is silent this plan asks; an answer
 becomes a decision in [decisions.md](decisions.md) before anything is built.
@@ -165,12 +165,13 @@ Readings made while building, none of them a new rule:
 - **Opening a notice list marks its notices seen,** except while an Owner is
   viewing Backoffice as that person.
 
-## Step 6b — Change, cancel, send back (proposed, not approved)
+## Step 6b — Change, cancel, send back (built 2026-10-10)
 
-Planned on 2026-10-10 after step 6a was reviewed and merged. **Nothing here is
-approved to build.** It follows rules 6, 7, 8 (its first two points), 9 and 11
-and decisions 97 and 99 to 104, and it depends on questions 13 and 15 to 22 under "Decisions
-needed". Where a line below rests on one of those questions it says so.
+Planned on 2026-10-10 after step 6a was reviewed and merged, and built the same
+day once Jacob had answered every question (decisions 97 to 114). It follows
+rules 6, 7, 8 (its first two points), 9 and 11. The lines below still name the
+questions they rested on; each question's answer is under "Decisions needed",
+and what was built is under "Step 6b as built".
 
 ### What a person sees
 
@@ -320,6 +321,79 @@ The 30-day release, the Cancelled Appointments group and its button (decision
 98), a re-issue by the call center of a released Lead, and a salesperson
 picking a released Lead back up. All are 6c.
 
+### Step 6b as built (2026-10-10)
+
+Built as planned above, with the answers in decisions 97 to 114. What a reader
+of the code should know:
+
+- **The actions** are in `app/Actions/Appointments/`: `RescheduleAppointment`,
+  `MoveAppointment`, `CancelAppointment` and `SendLeadBackToContactCenter`,
+  beside 6a's two. Each goes through `ChangeLeadLifecycle`, so a Lead that
+  changed since the dialog opened is refused, and each runs again from the
+  start on a deadlock (decision 87).
+- **Time rules live in one place,** `app/Support/Appointments/AppointmentSlot.php`:
+  what may be typed (decision 93) and "no double booking" (rule 5). Booking,
+  rescheduling and moving all use it. The salesperson's row is locked first and
+  the appointment's own row written after, the order a booking takes them in.
+- **Booking again.** `BookAppointment` now accepts a Lead that is with Sales
+  (its appointment was cancelled, or its time has passed). Such a booking
+  writes no issue, leaves the Lead's issue times alone, and points at the
+  appointment it follows (`appointments.follows_appointment_id`). With a
+  different salesperson it takes a manager (decision 109). A Lead with an
+  upcoming appointment is refused: "Reschedule that one instead."
+- **A Lead leaving Sales** is one piece of code,
+  `app/Actions/Appointments/ReturnLeadFromSales.php`, used by Send back and by
+  the existing Move to another Location and Return to central when the Lead is
+  with Sales (decision 112). It cancels an upcoming appointment, unassigns the
+  Lead, sets it Qualified, marks when it came back
+  (`leads.returned_from_sales_at`), restarts the cadence and tells the
+  salesperson. `StopCountingLeadAsIssued` voids the issue when a manager says
+  it should never have been booked (decision 110); it is asked before the Lead
+  moves, at the Location it is leaving.
+- **The cadence restarts as a new cycle,** never cycle 1 with no attempts, so a
+  returned Lead is handed out among follow-up calls and not as a Lead nobody
+  has called (decision 105). A Lead that never had a cadence is given one the
+  same way. The timer's repair pass treats Appointment cancelled like
+  Appointment booked.
+- **Disqualifying inside a cancellation** (decision 108) calls
+  `DisqualifyLead::apply`, the disqualification without its own claim on the
+  Lead, inside the cancellation's transaction. A duplicate cannot be recorded
+  that way, because it needs its original named.
+- **Tables:** `appointment_changes`, `appointment_cancellation_reasons`, four
+  columns on `appointments` and one on `leads`. A fifth migration widens the
+  three columns that keep a copy of a Lead's status
+  (`lead_status_changes.from_status` and `to_status`,
+  `contact_attempts.lead_status`) from twenty characters to forty: the new
+  status is twenty-one, which MySQL refused and SQLite did not notice.
+- **The screens:** the Appointment card (`pages/leads/⚡appointment.blade.php`)
+  holds the new dialogs. The Lead page re-reads the card whenever it changes
+  the Lead itself. Two small shared pieces: `components/lead/sales-return`
+  (the "came back from Sales" notice, on the card and on the Call Queue card)
+  and `components/lead/issued-count` (the counting question in the Lead
+  page's Move, Return and Disqualify dialogs).
+
+Readings made while building, none of them a new rule:
+
+- **The counting question defaults to "still counts"** in the Move, Return and
+  Disqualify dialogs, and must be answered in the Send back dialog. Someone
+  who is not a manager is not asked, and is refused if they send the answer
+  anyway.
+- **One audit event, `lead.returned_from_sales`,** for a Lead that goes back
+  by any of the three ways, saying which. The plan named
+  `lead.sent_back_to_contact_center`; one name serves the customer's Activity
+  better. A move or a return also writes its usual event.
+- **Booking a Lead with Sales with a different salesperson** tells the new
+  salesperson, as any booking does. The earlier one is not told.
+- **"Booked in error" on a rebooking** puts the Lead back as it was before
+  that booking (Appointment cancelled, with its salesperson) and leaves its
+  issue counted.
+- **A Lead that came back and is booked again is a new issue.** It left Sales
+  and was issued again: a re-issue, recorded with full history (rule 8). If
+  its first issue still counts, the Lead has two. Which salesperson each counts
+  for is still open with Sales Leadership.
+- **The order of the Cancellation Reasons list:** Jacob listed "Other" first.
+  It is stored last, as the other lists keep theirs, and can be reordered.
+
 ## Step 6c — Release and return (outline)
 
 A daily timer releases a cancelled Lead that was not rebooked within 30 days
@@ -383,9 +457,13 @@ of them is question 13.
     the issued count? **Answered (decision 99):** no. It can be rebooked with
     the same salesperson and adds no count.
 
-**Needed before step 6b is approved.** Each has a recommendation, so "agreed to
-all" is an answer. **12 and 14 are answered (decisions 103 and 104); 13 and 15
-to 22 are open.**
+**Asked before step 6b was approved. All are answered (2026-10-10):** 12 and
+14 by decisions 103 and 104; 13 by decision 105 (the ordinary call queue, from
+attempt 1); 15 by 106; 16 by 107; 17 by 108 (Jacob's own list, and "Other"
+disqualifies the Lead when answered yes); 18 by 109; 19 by 110; 20 by 111; 21
+by 112; 22 by 113. Jacob agreed to the recommendation on each of 15, 16 and 18
+to 22. Decision 114 (the call center is told a Lead came back from Sales) was
+added while building.
 
 12. **Who has a Lead after it comes back to Contact Center?** Jacob's answer to
     question 8 read "assigned to somebody"; the recommendation had been

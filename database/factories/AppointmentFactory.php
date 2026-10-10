@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\AppointmentState;
+use App\Enums\CancellationParty;
 use App\Enums\LeadStatus;
 use App\Models\Appointment;
 use App\Models\Lead;
@@ -85,6 +86,19 @@ class AppointmentFactory extends Factory
             'state' => AppointmentState::BookedInError,
             'state_changed_at' => now(),
             'state_note' => 'Booked for the wrong customer.',
+        ]);
+    }
+
+    /**
+     * Indicate that the customer cancelled the appointment.
+     */
+    public function cancelled(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'state' => AppointmentState::Cancelled,
+            'state_changed_at' => now(),
+            'cancelled_by_party' => CancellationParty::Customer,
+            'cancellation_reason_name' => 'No longer needed',
         ]);
     }
 }

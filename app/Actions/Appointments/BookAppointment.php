@@ -21,9 +21,9 @@ use App\Models\LeadCadence;
 use App\Models\LeadIssue;
 use App\Models\User;
 use App\Notifications\AppointmentBooked;
+use App\Support\Appointments\AppointmentSlot;
 use App\Support\Appointments\BookingResult;
 use App\Support\Queue\CallingHours;
-use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -63,6 +63,13 @@ class BookAppointment
      * A salesperson cannot be given a time that overlaps another standing
      * appointment of theirs (rule 5): their row is locked while that is
      * checked, so two bookings made at the same moment cannot both be saved.
+     *
+     * A Lead that is still with Sales can be booked again: after a
+     * cancellation, or after an appointment whose time has passed (decisions
+     * 99 and 113). That is not a new issue. The Lead keeps the one it has,
+     * nothing is added to Leads Issued, and the new appointment points at the
+     * one it follows. With the same salesperson anyone who may book the Lead
+     * can do it; with a different one it takes a manager (decision 109).
      *
      * Who may book is checked here again, on the Lead as it is now. If the
      * database reports a deadlock or says it is busy, the whole booking is
@@ -111,6 +118,15 @@ class BookAppointment
 
         Gate::forUser($actor)->authorize('bookAppointment', $lead);
 
+        // Still with Sales: this booking follows an earlier appointment and is not a new issue.
+        $follows = $lead->isWithSales() ? $lead->appointments()->first() : null;
+
+        if ($lead->isWithSales() && $lead->hasUpcomingAppointment()) {
+            throw ValidationException::withMessages([
+                'booking' => __('This lead already has an upcoming appointment. Reschedule that one instead.'),
+            ]);
+        }
+
         // The salesperson's row is locked from here to the end, so their other
         // appointments cannot change while the times are compared.
         $salesperson = User::query()->lockForUpdate()->findOrFail($salesperson->id);
@@ -122,6 +138,14 @@ class BookAppointment
             ]);
         }
 
+        if ($lead->isWithSales() && $lead->assigned_user_id !== $salesperson->id && ! Gate::forUser($actor)->allows('manageAppointment', $lead)) {
+            throw ValidationException::withMessages([
+                'salespersonId' => $lead->assignee === null
+                    ? __('This lead is with Sales and has no salesperson now. A manager chooses the new one.')
+                    : __('This lead is with :name. Book it with them, or ask a manager to give it to someone else.', ['name' => $lead->assignee->name]),
+            ]);
+        }
+
         if (! $salesperson->holdsRoleAt(Role::SalesConsultant, $location) || ! $salesperson->canBeAssigned($lead)) {
             throw ValidationException::withMessages([
                 'salespersonId' => __(':name does not have Sales Consultant access at :location.', ['name' => $salesperson->name, 'location' => $location->name]),
@@ -129,21 +153,8 @@ class BookAppointment
         }
 
         $timezone = CallingHours::timezoneFor($location);
-        [$startsAt, $endsAt] = $this->span($date, $time, $minutes, $timezone);
-
-        // A locking read: on MySQL a plain read here could come from before
-        // another booking that was saved while this one waited for the lock.
-        $clash = Appointment::query()->overlapping($salesperson->id, $startsAt, $endsAt)->orderBy('starts_at')->sharedLock()->first();
-
-        if ($clash !== null) {
-            throw ValidationException::withMessages([
-                'appointmentTime' => __(':name already has an appointment from :from to :to then. Choose another time.', [
-                    'name' => $salesperson->name,
-                    'from' => $clash->starts_at->copy()->timezone($timezone)->format('g:i A'),
-                    'to' => $clash->ends_at->copy()->timezone($timezone)->format('g:i A T'),
-                ]),
-            ]);
-        }
+        $slot = AppointmentSlot::fromInput($date, $time, $minutes, $timezone);
+        $slot->ensureFreeFor($salesperson);
 
         $cadence = LeadCadence::query()->where('lead_id', $lead->id)->lockForUpdate()->first();
         $previousAssignee = $lead->assignee;
@@ -157,8 +168,8 @@ class BookAppointment
             'property_id' => $lead->property_id,
             'salesperson_id' => $salesperson->id,
             'salesperson_name' => $salesperson->name,
-            'starts_at' => $startsAt,
-            'ends_at' => $endsAt,
+            'starts_at' => $slot->startsAt,
+            'ends_at' => $slot->endsAt,
             'duration_minutes' => $minutes,
             'timezone' => $timezone,
             'state' => AppointmentState::Booked,
@@ -167,6 +178,7 @@ class BookAppointment
             'previous_status' => $lead->status,
             'previous_assignee_id' => $lead->assigned_user_id,
             'previous_in_queue' => $cadence !== null && $cadence->isInQueue(),
+            'follows_appointment_id' => $follows?->id,
         ])->save();
 
         // Rule 3, in order: assigned to the salesperson, Appointment Booked, out of the queue, issued.
@@ -174,43 +186,46 @@ class BookAppointment
 
         $from = $lead->status;
         $moment = now();
+        $issues = $follows === null;
 
         $lead->forceFill([
             'status' => LeadStatus::AppointmentBooked,
             'status_changed_at' => $moment,
-            'first_issued_at' => $lead->first_issued_at ?? $moment,
-            'last_issued_at' => $moment,
+            'returned_from_sales_at' => null,
+            ...($issues ? ['first_issued_at' => $lead->first_issued_at ?? $moment, 'last_issued_at' => $moment] : []),
         ])->save();
 
-        $this->recordLeadStatusChange->handle($lead, LeadStatusEvent::AppointmentBooked, $from, $actor, $salesperson->id);
+        $this->recordLeadStatusChange->handle($lead, $issues ? LeadStatusEvent::AppointmentBooked : LeadStatusEvent::AppointmentRebooked, $from, $actor, $salesperson->id);
 
         if ($cadence !== null) {
             $this->endLeadCadence->handle($cadence, CadenceEndReason::AppointmentBooked, $lead, $actor);
         }
 
-        $issue = new LeadIssue;
+        if ($issues) {
+            $issue = new LeadIssue;
 
-        $issue->forceFill([
-            'lead_id' => $lead->id,
-            'appointment_id' => $appointment->id,
-            'location_id' => $location->id,
-            'salesperson_id' => $salesperson->id,
-            'salesperson_name' => $salesperson->name,
-            'issued_by' => $actor->id,
-            'issued_by_name' => $actor->name,
-            'issued_at' => $moment,
-            'created_at' => $moment,
-        ])->save();
+            $issue->forceFill([
+                'lead_id' => $lead->id,
+                'appointment_id' => $appointment->id,
+                'location_id' => $location->id,
+                'salesperson_id' => $salesperson->id,
+                'salesperson_name' => $salesperson->name,
+                'issued_by' => $actor->id,
+                'issued_by_name' => $actor->name,
+                'issued_at' => $moment,
+                'created_at' => $moment,
+            ])->save();
+        }
 
         $this->recordAuditEvent->handle(
-            AuditAction::LeadAppointmentBooked,
+            $issues ? AuditAction::LeadAppointmentBooked : AuditAction::LeadAppointmentRebooked,
             $lead,
             actor: $actor,
-            before: ['status' => $from->value, 'assignee' => $previousAssignee?->name],
+            before: ['status' => $from->value, $issues ? 'assignee' : 'salesperson' => $previousAssignee?->name],
             after: [
                 'status' => LeadStatus::AppointmentBooked->value,
                 'salesperson' => $salesperson->name,
-                'starts_at' => $startsAt->toIso8601String(),
+                'starts_at' => $slot->startsAt->toIso8601String(),
                 'duration_minutes' => $minutes,
                 'timezone' => $timezone,
             ],
@@ -220,56 +235,6 @@ class BookAppointment
         $salesperson->notify(new AppointmentBooked($appointment, AppointmentBooked::IN_APP));
 
         return ['appointment' => $appointment, 'salesperson' => $salesperson];
-    }
-
-    /**
-     * The start and end of the appointment, from what was typed (decision 93):
-     * a real day and time in the Location's own time, on a quarter hour, in
-     * the future, for a whole number of quarter hours between the limits. Both
-     * are returned in UTC.
-     *
-     * @return array{0: CarbonImmutable, 1: CarbonImmutable}
-     *
-     * @throws ValidationException
-     */
-    private function span(string $date, string $time, int $minutes, string $timezone): array
-    {
-        $day = CarbonImmutable::createFromFormat('!Y-m-d', trim($date), $timezone) ?: null;
-
-        if ($day === null || $day->format('Y-m-d') !== trim($date)) {
-            throw ValidationException::withMessages([
-                'appointmentDate' => __('Choose the day of the appointment.'),
-            ]);
-        }
-
-        $startsAt = CarbonImmutable::createFromFormat('!Y-m-d H:i', trim($date).' '.trim($time), $timezone) ?: null;
-
-        if ($startsAt === null || $startsAt->format('H:i') !== trim($time)) {
-            throw ValidationException::withMessages([
-                'appointmentTime' => __('Choose the time of the appointment.'),
-            ]);
-        }
-
-        if ($startsAt->minute % Appointment::STEP_MINUTES !== 0) {
-            throw ValidationException::withMessages([
-                'appointmentTime' => __('Choose a time on the quarter hour.'),
-            ]);
-        }
-
-        if ($minutes < Appointment::MINIMUM_MINUTES || $minutes > Appointment::MAXIMUM_MINUTES || $minutes % Appointment::STEP_MINUTES !== 0) {
-            throw ValidationException::withMessages([
-                'appointmentMinutes' => __('Choose a length between 30 minutes and 4 hours, in steps of 15 minutes.'),
-            ]);
-        }
-
-        if ($startsAt->lessThanOrEqualTo(now())) {
-            throw ValidationException::withMessages([
-                'appointmentTime' => __('The appointment must be in the future.'),
-            ]);
-        }
-
-        // Stored and compared as instants in UTC, like every other time here.
-        return [$startsAt->utc(), $startsAt->addMinutes($minutes)->utc()];
     }
 
     /**

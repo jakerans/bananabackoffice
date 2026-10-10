@@ -173,6 +173,36 @@ another location has dealt with. Staff are told so without being shown who.
   stays Appointment Booked until the after-action report exists. The email is
   sent while the person waits, like invitation emails.
 
+### Changing and cancelling appointments (added 2026-10-10, slice 6 step 6b)
+
+- **No new permission.** Reschedule and cancel are policy rules on top of the
+  two permissions 6a added; move, send back and taking an issue away stay with
+  `appointments.manage`. Every dialog's opener and its save check again, and
+  each action checks once more on the Lead as it is at that moment.
+- **Taking an issue away is manager-only and recorded.** "It should never have
+  been booked" voids the Lead's issue with who and when, is written into the
+  audit event (`counts_as_issued`), and is refused for anyone else whatever
+  the browser sends. It is checked at the Location the Lead is leaving.
+- **The page decides who can be chosen.** Move offers only Sales Consultants
+  at the Lead's Location; booking a Lead with Sales again offers a
+  non-manager only its own salesperson. The actions check again.
+- **History is kept for good.** A cancelled appointment keeps its row; a
+  reschedule or a move writes a row to `appointment_changes` that can be
+  neither edited nor deleted.
+- **Nothing new leaves the Lead.** The new notices and the two new emails say
+  what happened and when, with a link, and nothing about the customer. The
+  "came back from Sales" notice is shown only where the Lead is already shown.
+- **Nothing is half-saved.** Each change, its history, its audit event and its
+  notice are one transaction; a cancellation that also disqualifies the Lead
+  is one transaction too.
+- **A reminder from this step:** SQLite does not enforce a text column's
+  length and MySQL does. A new status, reason or event name must fit every
+  column that stores a copy of it; only the MySQL job shows when it does not.
+- **Open:** a salesperson who cannot make an appointment has no way inside
+  Backoffice to ask a manager to move it (decision 111). A Lead that came back
+  and is booked again can carry two counted issues until Sales Leadership
+  decides which salesperson each counts for.
+
 ### Call queue screen (added 2026-10-09, slice 4 step 4c)
 
 - **The held Lead is never named by the browser.** The page keeps the cadence ID

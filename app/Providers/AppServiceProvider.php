@@ -6,6 +6,7 @@ use App\Actions\Staff\StopImpersonation;
 use App\Enums\ImpersonationEndReason;
 use App\Enums\Permission;
 use App\Models\Account;
+use App\Models\AppointmentCancellationReason;
 use App\Models\Contact;
 use App\Models\ContactCenterSettings;
 use App\Models\Lead;
@@ -103,6 +104,7 @@ class AppServiceProvider extends ServiceProvider
             'lead_channel' => LeadChannel::class,
             'lead_disqualification_reason' => LeadDisqualificationReason::class,
             'sales_loss_reason' => SalesLossReason::class,
+            'appointment_cancellation_reason' => AppointmentCancellationReason::class,
             'lead' => Lead::class,
             'service' => Service::class,
             'project_size' => ProjectSize::class,

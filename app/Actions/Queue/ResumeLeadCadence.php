@@ -58,4 +58,59 @@ class ResumeLeadCadence
 
         return true;
     }
+
+    /**
+     * Put a Lead that came back from Sales into the call queue (rulebook,
+     * rule 9; decision 105): the cadence starts over at attempt 1, due at the
+     * next opening of calling hours where the Lead is now.
+     *
+     * It is a new cycle, never the first one, so the Lead takes its place
+     * among follow-up calls and is not handed out as a Lead nobody has called.
+     * A Lead that never had a cadence is given one the same way.
+     *
+     * The caller must be inside a transaction, having written or locked the
+     * Lead row first.
+     *
+     * @return bool Whether the Lead went into the queue. False when it was already there.
+     */
+    public function afterReturnFromSales(Lead $lead, ?User $actor, ?string $note): bool
+    {
+        $cadence = LeadCadence::query()->where('lead_id', $lead->id)->lockForUpdate()->first();
+
+        if ($cadence !== null && $cadence->isInQueue()) {
+            return false;
+        }
+
+        $moment = now();
+        $schedule = CadenceSchedule::fromSettings(ContactCenterSettings::current());
+
+        $changes = [
+            'state' => CadenceState::InQueue,
+            'cycle' => ($cadence === null ? 1 : $cadence->cycle) + 1,
+            'attempts_made' => 0,
+            'due_at' => $schedule->hours->nextOpeningAtOrAfter($moment, CallingHours::timezoneFor($lead->location)),
+            'entered_at' => $moment,
+            'ended_at' => null,
+        ];
+
+        if ($cadence === null) {
+            $cadence = new LeadCadence;
+            $cadence->forceFill(['lead_id' => $lead->id, ...$changes])->save();
+        } else {
+            $restarted = DB::table('lead_cadences')
+                ->where('id', $cadence->id)
+                ->where('state', '<>', CadenceState::InQueue->value)
+                ->update([...$changes, 'state' => CadenceState::InQueue->value, 'updated_at' => $moment]);
+
+            if ($restarted !== 1) {
+                return false;
+            }
+
+            $cadence->forceFill($changes)->syncOriginal();
+        }
+
+        $this->history->record($cadence, QueueEventType::ReturnedToQueue, $lead, $actor, note: $note);
+
+        return true;
+    }
 }

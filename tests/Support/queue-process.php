@@ -17,6 +17,7 @@
  */
 
 use App\Actions\Appointments\BookAppointment;
+use App\Actions\Appointments\RescheduleAppointment;
 use App\Actions\ContactCenter\ChangeContactCenterSettings;
 use App\Actions\Leads\DisqualifyLead;
 use App\Actions\Leads\MoveLeadToNurture;
@@ -264,6 +265,30 @@ $operations = [
         }
 
         return ['status' => 'booked', 'appointment' => $result->appointment->id];
+    },
+
+    // One person gives a Lead's standing appointment a new time. A refusal the person would be shown is an answer.
+    'reschedule' => function () use ($arguments): array {
+        $actor = User::query()->findOrFail($arguments['actor']);
+
+        Auth::setUser($actor);
+
+        $lead = Lead::query()->findOrFail($arguments['lead']);
+
+        try {
+            $result = app(RescheduleAppointment::class)->handle(
+                $lead,
+                $lead->standingAppointment() ?? throw new RuntimeException('The lead has no standing appointment.'),
+                $arguments['date'],
+                $arguments['time'],
+                (int) $arguments['minutes'],
+                $actor,
+            );
+        } catch (ValidationException $exception) {
+            return ['status' => 'refused', 'refusal' => collect($exception->errors())->flatten()->first(), 'fields' => array_keys($exception->errors())];
+        }
+
+        return ['status' => 'rescheduled', 'appointment' => $result->appointment->id];
     },
 
     'appointments' => function () use ($arguments): array {

@@ -185,7 +185,7 @@ test('a lead that already has an appointment cannot be booked again', function (
     bookAppointment($lead, $this->sam, $this->manager);
 
     expect(fn () => bookAppointment($lead->fresh(), $this->sam, $this->manager, time: '18:00'))
-        ->toThrow(ValidationException::class, 'It still needs: to be qualified.');
+        ->toThrow(ValidationException::class, 'This lead already has an upcoming appointment. Reschedule that one instead.');
 
     expect(Appointment::query()->count())->toBe(1);
     expect(LeadIssue::query()->count())->toBe(1);

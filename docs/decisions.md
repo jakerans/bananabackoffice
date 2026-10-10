@@ -2134,6 +2134,102 @@ the same record and the same rules as rule 8. "Who cancelled" offers three
 choices: the customer, the salesperson, the company. The Lead stays with the
 salesperson, still counts as issued, and the 30 days run the same way.
 
+## Slice 6 decisions that complete the step 6b plan (105 to 114)
+
+Given by Jacob on 2026-10-10 in answer to the plan's questions 13 and 15 to 22,
+with two follow-up answers the same day. With them every question the step 6b
+plan asked is answered, and **step 6b is built under decision 90**, which
+approved the three steps in order.
+
+## 105. A Lead a manager sends back re-enters the ordinary call queue (2026-10-10)
+
+**Decided by Jacob.** His first answer was "no nurturing automations, just
+manual reach outs"; asked which of three readings he meant, he chose "Call
+Queue, ordinary place". A Lead sent back to Contact Center starts the call
+cadence over at attempt 1, due at the next opening of calling hours, in line
+with follow-up calls. It is not treated as a new Lead. Nothing is sent to the
+customer automatically; Backoffice sends nothing to customers at all.
+
+## 106. A Lead whose appointment is cancelled shows "Appointment cancelled" (2026-10-10)
+
+**Decided by Jacob.** A new Lead status, Appointment cancelled, for a Lead
+whose appointment was cancelled and that is still with the salesperson.
+Booking it again returns it to Appointment booked.
+
+## 107. Who may record a cancellation (2026-10-10)
+
+**Decided by Jacob.** Anyone who may book that Lead: a manager, a Call Center
+Agent, and the salesperson whose appointment it is.
+
+## 108. The Cancellation Reasons list, and what "Other" asks (2026-10-10)
+
+**Decided by Jacob.** The list starts with: Holding off project; Went with
+someone else; No longer needed; Other. Owner and Leadership manage it on Lead &
+Sales Lists like the other lists.
+
+"Other" needs a typed note and asks whether the Lead is disqualified. Asked
+what "disqualified" should do, he chose "Disqualify the Lead": the cancellation
+also disqualifies the Lead in the same step, so it leaves the salesperson and
+shows Disqualified. Whether it still counts as issued is asked as decision 110
+says.
+
+Jacob listed "Other" first; it is stored last, where the other lists keep
+theirs, and Leadership can reorder it.
+
+## 109. Rebooking with a different salesperson is for a manager (2026-10-10)
+
+**Decided by Jacob.** While a cancelled Lead is still with its salesperson, a
+Call Center Agent or the salesperson can book it again with the same
+salesperson only. Booking it with a different salesperson needs a manager and
+is recorded as a move (rule 7). After the 30-day release, in step 6c, the call
+center may choose anyone (rule 8).
+
+## 110. How a person says whether a Lead leaving Sales still counts as issued (2026-10-10)
+
+**Decided by Jacob,** carrying out decision 100. When a Lead that is with Sales
+is sent back, moved to another Location, returned to central or disqualified,
+one question is asked with two answers: "It should never have been booked" (the
+issue no longer counts, as "booked in error" does) or "Another reason" (it
+still counts). Only a manager may give the first answer. When anyone else moves
+or disqualifies such a Lead it stays counted.
+
+## 111. Sending back and moving stay two separate actions (2026-10-10)
+
+**Decided by Jacob.** "Move to another salesperson" keeps the appointment and is
+for when the appointment should still happen. "Send back to Contact Center" is
+for a Lead the call center must work again: it always cancels an upcoming
+appointment, and its dialog points to Move. A salesperson cannot send a Lead
+back themselves.
+
+## 112. A cancelled Lead that is moved or returned is treated as sent back (2026-10-10)
+
+**Decided by Jacob,** carrying out decision 101. A Lead that is with Sales and
+is moved to another Location or returned to central leaves the salesperson and
+is then exactly as a Lead sent back: Qualified, assigned to nobody, back in the
+call queue as decision 105 says, with the counting question of decision 110.
+Its appointments stay on its record. One that is disqualified is Disqualified,
+with the same counting question.
+
+## 113. After an appointment's time has passed, another can be booked (2026-10-10)
+
+**Decided by Jacob,** meeting the condition in decision 102. Once an
+appointment's time has passed the Appointment card offers "Book another
+appointment", under the rules for rebooking after a cancellation: with the same
+salesperson by anyone who may book the Lead, with a different one by a manager,
+and no new issued count. Backoffice does not record whether the passed
+appointment was held or missed; that is for the after-action report (decision
+84).
+
+## 114. The call center is told when a Lead came back from Sales (2026-10-10)
+
+**Decided by Jacob,** while step 6b was being built: "if a cancelled appmt is
+going back to the queue then the agent needs to know they are calling a
+cancelled appmt, because that has a different script". A Lead that came back
+from Sales says so wherever the call center works it: on the Call Queue card
+when it is handed out, and on the Lead page. It says whether its appointment
+was cancelled, by whom and for which reason, or that a manager sent it back
+and why. The marker stays until the Lead is booked again or disqualified.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

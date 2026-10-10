@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Appointments\StopCountingLeadAsIssued;
 use App\Actions\Leads\AssignLead;
 use App\Actions\Leads\CorrectLeadDisqualification;
 use App\Actions\Leads\CorrectLeadReceivedTime;
@@ -101,6 +102,9 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
     public string $returnReason = '';
 
+    /** For a Lead that is with Sales: whether it still counts as issued once it is moved, returned or disqualified (decision 110). */
+    public string $issuedCount = '';
+
     public ?int $assigneeId = null;
 
     public string $correctedReceivedAt = '';
@@ -153,6 +157,10 @@ new #[Title('Lead')] class extends AddressCapturePage {
     #[Locked]
     public bool $correctingDisqualification = false;
 
+    /** The Lead as the Appointment card last saw it: revision, status, Location and assignee. */
+    #[Locked]
+    public string $appointmentCardSaw = '';
+
     public string $reopenReason = '';
 
     public string $putBackNote = '';
@@ -173,6 +181,24 @@ new #[Title('Lead')] class extends AddressCapturePage {
     public function dehydrate(): void
     {
         $this->pageLifecycleVersion = (int) $this->lead->lifecycle_version;
+    }
+
+    /**
+     * The Appointment card is a component of its own and does not see what
+     * this page does to the Lead. Whenever the Lead's status, revision,
+     * Location or assignee is no longer what the card last saw, the card is
+     * told to read the Lead again.
+     */
+    public function rendering(): void
+    {
+        $lead = $this->lead;
+        $seen = implode('-', [(int) $lead->lifecycle_version, $lead->status->value, $lead->location_id ?? 0, $lead->assigned_user_id ?? 0]);
+
+        if ($this->appointmentCardSaw !== '' && $this->appointmentCardSaw !== $seen) {
+            $this->dispatch('lead-changed')->to('pages::leads.appointment');
+        }
+
+        $this->appointmentCardSaw = $seen;
     }
 
     /**
@@ -313,7 +339,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
             return;
         }
 
-        $this->reset('disqualificationReasonId', 'disqualificationNote', 'duplicateOfId');
+        $this->reset('disqualificationReasonId', 'disqualificationNote', 'duplicateOfId', 'issuedCount');
 
         $this->correctingDisqualification = false;
 
@@ -380,7 +406,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
         if ($this->correctingDisqualification) {
             $correctLeadDisqualification->handle($this->lead, $reason, $this->disqualificationNote, Auth::user(), $original, $this->knownLifecycleVersion);
         } else {
-            $disqualifyLead->handle($this->lead, $reason, $this->disqualificationNote, Auth::user(), $original, $this->knownLifecycleVersion);
+            $disqualifyLead->handle($this->lead, $reason, $this->disqualificationNote, Auth::user(), $original, $this->knownLifecycleVersion, $this->shouldNeverHaveBeenBooked());
         }
 
         unset($this->possibleOriginals, $this->eligibleAssignees, $this->openLeadCounts);
@@ -534,6 +560,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
             default => null,
         };
         $this->routingReason = '';
+        $this->issuedCount = '';
 
         $this->resetValidation();
 
@@ -576,13 +603,23 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
         $wasUnrouted = $this->lead->isUnrouted();
 
-        $routeLead->handle($this->lead, $destination, $this->routingReason, Auth::user());
+        $routeLead->handle($this->lead, $destination, $this->routingReason, Auth::user(), $this->shouldNeverHaveBeenBooked());
 
         Flux::modal('route-lead')->close();
 
         $this->afterTheLeadMoved($wasUnrouted
             ? __('Routed to :location.', ['location' => $destination->name])
             : __('Moved to :location.', ['location' => $destination->name]));
+    }
+
+    /**
+     * Whether the person answered that a Lead that is with Sales should never
+     * have been booked, so it stops counting as issued (decision 110). The
+     * action checks again that they are a manager.
+     */
+    private function shouldNeverHaveBeenBooked(): bool
+    {
+        return $this->lead->isWithSales() && $this->issuedCount === StopCountingLeadAsIssued::NEVER_SHOULD_HAVE_BEEN_BOOKED;
     }
 
     /**
@@ -615,6 +652,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
         $this->rememberWhereTheLeadIs();
 
         $this->returnReason = '';
+        $this->issuedCount = '';
 
         $this->resetValidation();
 
@@ -638,7 +676,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
             ['returnReason' => 'reason'],
         );
 
-        $returnLeadToCentral->handle($this->lead, $this->returnReason, Auth::user());
+        $returnLeadToCentral->handle($this->lead, $this->returnReason, Auth::user(), $this->shouldNeverHaveBeenBooked());
 
         Flux::modal('return-lead')->close();
 
@@ -1995,6 +2033,8 @@ new #[Title('Lead')] class extends AddressCapturePage {
                     :label="$lead->isUnrouted() ? __('Reason (optional)') : __('Reason')"
                     :description="$lead->isUnrouted() ? null : __('Required when a lead moves from one location to another.')"
                 />
+
+                <x-lead.issued-count :lead="$lead" goes-back />
             @endif
 
             <div class="flex justify-end gap-2">
@@ -2024,6 +2064,8 @@ new #[Title('Lead')] class extends AddressCapturePage {
             </div>
 
             <flux:textarea wire:model="returnReason" rows="2" :label="__('Reason')" />
+
+            <x-lead.issued-count :lead="$lead" goes-back />
 
             <div class="flex justify-end gap-2">
                 <flux:modal.close>
@@ -2280,6 +2322,10 @@ new #[Title('Lead')] class extends AddressCapturePage {
                         default => __('Note (optional)'),
                     }"
                 />
+
+                @if (! $correctingDisqualification)
+                    <x-lead.issued-count :lead="$lead" />
+                @endif
 
                 <div class="flex justify-end gap-2">
                     <flux:modal.close>

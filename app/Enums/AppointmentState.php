@@ -14,11 +14,15 @@ enum AppointmentState: string
     /** A manager undid the booking; the Lead was handed back as it was. */
     case BookedInError = 'booked_in_error';
 
+    /** Called off, with who cancelled and why. The record is kept (rulebook, rule 8). */
+    case Cancelled = 'cancelled';
+
     public function label(): string
     {
         return match ($this) {
             self::Booked => 'Booked',
             self::BookedInError => 'Booked in error',
+            self::Cancelled => 'Cancelled',
         };
     }
 
