@@ -92,6 +92,9 @@ use Illuminate\Support\Carbon;
  * @property-read Account|null $account
  * @property-read Contact|null $contact
  * @property-read Property|null $property
+ * @property Carbon|null $first_issued_at When the Lead was first issued to Sales, among issues that still count.
+ * @property Carbon|null $last_issued_at
+ * @property-read Collection<int, Appointment> $appointments
  */
 class Lead extends Model
 {
@@ -115,6 +118,8 @@ class Lead extends Model
             'work_started_at' => 'datetime',
             'status_changed_at' => 'datetime',
             'first_qualified_at' => 'datetime',
+            'first_issued_at' => 'datetime',
+            'last_issued_at' => 'datetime',
             'follow_up_on' => 'date',
             'last_disqualified_at' => 'datetime',
             'disqualification_category' => DisqualificationCategory::class,
@@ -380,6 +385,52 @@ class Lead extends Model
     public function contactAttempts(): HasMany
     {
         return $this->hasMany(ContactAttempt::class);
+    }
+
+    /**
+     * Every appointment ever booked for the Lead, newest first, including the
+     * ones a manager marked "booked in error".
+     *
+     * @return HasMany<Appointment, $this>
+     */
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class)->orderByDesc('id');
+    }
+
+    /**
+     * The appointment that stands for the Lead now, if there is one.
+     */
+    public function standingAppointment(): ?Appointment
+    {
+        return $this->appointments()->standing()->first();
+    }
+
+    /**
+     * Whether the Lead has an appointment that stands and has not finished.
+     * While it does, the Lead cannot be moved to another Location, returned
+     * to central or disqualified (decision 95).
+     */
+    public function hasUpcomingAppointment(): bool
+    {
+        return $this->appointments()->upcomingAt(now())->exists();
+    }
+
+    /**
+     * What is still missing before an appointment can be booked for the Lead
+     * (rulebook, rule 1): it must be Qualified, at a Location, and linked to a
+     * customer with a property. An empty list means it may be booked.
+     *
+     * @return list<string> Any of: qualified, location, customer, property.
+     */
+    public function bookingGaps(): array
+    {
+        return array_values(array_filter([
+            $this->status !== LeadStatus::Qualified ? 'qualified' : null,
+            $this->location_id === null ? 'location' : null,
+            $this->account_id === null || $this->account?->isArchived() ? 'customer' : null,
+            $this->property_id === null || $this->property?->isArchived() ? 'property' : null,
+        ]));
     }
 
     /**

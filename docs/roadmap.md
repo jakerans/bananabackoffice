@@ -65,6 +65,15 @@ received that approval.
 | 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow; scope, exits, order, holds and failure rules (decisions 65, 67, 70, 71). **CONFIGURABLE:** cadence, calling hours and days, hold length (decisions 66, 69, 70). The scheduler, timezone, retry and failure contracts are **decided** (decisions 68, 71 and 73) and specified in [slice-4-plan.md](slice-4-plan.md). | **Approved for implementation (2026-10-08, decision 65), built and merged into `main` (2026-10-09): 4a, 4b and 4c. Jacob's browser review of 4c is still owed.** Three reviewed steps: 4a settings and timezones, 4b engine, 4c queue screen. No dialer, provider, outbound message, popup, snooze tray, Aged Leads, AI or penalties. B7 follow-ups are not reinterpreted as automated nurture. |
 | 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales, under the fourteen rules in [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75 to 83), including: a Project is created when the sale is Won (decision 82). **CONFIGURABLE:** appointment length (default 90 minutes), the 30-day release after a cancellation, the Pending ownership period. **Confirmed (2026-10-09):** what "a manager" means and that a Sales Consultant books only for themselves (decisions 88 and 89). **PENDING:** the Pending ownership period is provisional at 30 days until Sales Leadership confirms (decision 83); offer validity; the cancellation reasons; which salesperson an issued Lead counts for after a reassignment or re-issue; no-shows and appointment outcomes (decision 84). | **Rulebook written and merged into `main` (job #13, 2026-10-09), design only. Nothing is built and no implementation is proposed or approved.** No code, table, permission, screen or Project. Later appointment work must follow the rulebook and needs its own reviewed plan and Jacob's explicit approval. |
 
+**Slice 6, appointment booking, is approved in three steps (2026-10-10,
+decision 90),** built from the slice 5 rulebook. Its plan is
+[slice-6-appointments-plan.md](slice-6-appointments-plan.md). **Step 6a is
+built (2026-10-10):** booking an appointment issues the Lead to Sales; a
+manager can mark it "booked in error"; the salesperson is told by a bell in
+the header and by email; Sales > Calendar lists upcoming appointments. Steps 6b
+and 6c are approved in order only: each is planned after the step before it is
+reviewed and still needs decisions of its own.
+
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
 Production Workspace instead of separate stage/project modules. Customers and

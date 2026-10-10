@@ -32,6 +32,8 @@ enum Permission: string
     case ManageAccounts = 'accounts.manage';
     case ArchiveAccounts = 'accounts.archive';
     case WorkLeadQueue = 'leads.work_queue';
+    case BookAppointments = 'appointments.book';
+    case ManageAppointments = 'appointments.manage';
 
     /**
      * Company-level permissions only count when held through an all-locations grant.

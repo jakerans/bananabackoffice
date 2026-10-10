@@ -36,6 +36,8 @@ class CustomerActivity
             AuditAction::LeadResumedFromNurture,
             AuditAction::LeadDisqualified,
             AuditAction::LeadReopened,
+            AuditAction::LeadAppointmentBooked,
+            AuditAction::LeadAppointmentBookedInError,
             AuditAction::LeadCustomerLinked,
             AuditAction::LeadCustomerLinkChanged,
         ];
@@ -63,6 +65,8 @@ class CustomerActivity
             AuditAction::LeadResumedFromNurture => __('Lead resumed from nurture'),
             AuditAction::LeadDisqualified => __('Lead disqualified'),
             AuditAction::LeadReopened => __('Lead reopened'),
+            AuditAction::LeadAppointmentBooked => __('Appointment booked'),
+            AuditAction::LeadAppointmentBookedInError => __('Appointment booked in error'),
             AuditAction::LeadCustomerLinked => __('Lead linked to customer'),
             AuditAction::LeadCustomerLinkChanged => __('Lead customer link changed'),
             default => throw new \LogicException('This audit action is not customer activity.'),

@@ -20,4 +20,6 @@ enum LeadStatusEvent: string
     case Disqualified = 'disqualified';
     case DisqualificationCorrected = 'disqualification_corrected';
     case Reopened = 'reopened';
+    case AppointmentBooked = 'appointment_booked';
+    case AppointmentBookedInError = 'appointment_booked_in_error';
 }

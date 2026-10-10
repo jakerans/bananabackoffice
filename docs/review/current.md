@@ -3,141 +3,175 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-10 · **Branch:** `checkpoint-docs-switch-review-and-local-https` (documents only)
+**Updated:** 2026-10-10 · **Branch:** `checkpoint-slice-6a-appointment-booking`
 
-**State:** Jacob approved and the implementation agent merged three steps into
-`main` on 2026-10-10: the MySQL deadlock fix (decision 87), the three display
-faults from the Call Queue browser review, and the manager-view switch for Call
-Center Agents (decision 85). The fix that keeps a refusal on the Call Queue
-page was merged the same day. The earlier handoffs are previous versions of
-this file in the Git history.
+**State:** slice 6, step 6a is built and waits for Jacob's review and his word
+to merge. It is on top of the plan branch (`checkpoint-slice-6-appointments-plan`,
+also not merged), so merging this branch brings the plan, decisions 90 to 96 and
+the build together. `main` and staging have none of it.
 
-**Nothing is waiting to be built, and nothing further is approved.** This
-branch only records what was checked after those merges; it is documents only
-and waits for Jacob's word to merge.
+Jacob approved the plan and all seven of its recommendations on 2026-10-10
+("Agreed to all"); they are decisions 90 to 96. Steps 6b and 6c are not started.
 
-## The merge of the three steps
+## Step
+
+Slice 6, step 6a: book an appointment and issue the Lead. Plan:
+[../slice-6-appointments-plan.md](../slice-6-appointments-plan.md), "Step 6a" and
+"Step 6a as built". Rules: [../slice-5-appointment-rulebook.md](../slice-5-appointment-rulebook.md),
+rules 1 to 5 and 10. Decisions 90 to 96 in [../decisions.md](../decisions.md).
+
+Objective: staff can book an appointment for a Qualified Lead with a
+salesperson, which hands the Lead to Sales, and a manager can undo a booking
+that was made in error.
+
+## What changed
+
+- **Booking.** From a new "Appointment" card on the Lead page. It needs a
+  Qualified Lead at a Location, linked to a customer with a property. The
+  dialog asks for the salesperson, the day, the time and the length (90
+  minutes unless changed), in the Location's own time.
+- **Saving issues the Lead,** all in one step or not at all: assigned to the
+  salesperson (taking it from whoever had it), status "Appointment booked", out
+  of the call queue, the issue recorded for good, an entry in the customer's
+  Activity, and a notice to the salesperson.
+- **No double booking.** A salesperson cannot be given a time that overlaps
+  another of their Backoffice appointments. Back-to-back is allowed.
+- **Booked in error.** A manager, with a note. The appointment is kept and
+  marked; the Lead goes back exactly as it was (status, the person it was with,
+  and its place in the call queue); the issue no longer counts.
+- **While an appointment is upcoming** the Lead cannot be moved to another
+  Location, returned to central or disqualified.
+- **Telling the salesperson.** A bell in the header of every page, with a count
+  and a list. And an email with the time and a link, and nothing about the
+  customer.
+- **Sales > Calendar** is now a real page: a plain list of upcoming
+  appointments by day.
+- **New in the database:** `appointments`, `lead_issues`, `notifications`, and
+  two columns on `leads`. Four migrations.
+- **New permissions:** `appointments.book` (Owner, Leadership, Location
+  Manager, Call Center Agent) and `appointments.manage` (Owner, Leadership,
+  Location Manager). A Sales Consultant holds neither and may book only a Lead
+  already assigned to them, for themselves.
+- **New audit events:** `lead.appointment_booked` and
+  `lead.appointment_booked_in_error`.
+- **Documents:** the plan, decisions 90 to 96, the permission model, the
+  navigation map, the roadmap, the security notes, the README and the slice 5
+  rulebook's note about the call queue.
+- **No** new package, no paid service, nothing sent to a customer.
+
+## Tests and checks, with their real results
 
 | Check | Result |
 | --- | --- |
-| Both GitHub jobs on the last commit of the branch (`a4a369c`) | **Passed** (run 38017246958), SQLite and MySQL 8.4. |
-| Both GitHub jobs on `main` after the merge (`5c8cc07`) | **Passed** (run 38050755098), SQLite and MySQL 8.4. |
-| Staging deployment of `5c8cc07` | **Finished** in Forge, 2026-10-10 12:06 UTC. |
-| Staging database, read after the deployment | The new column `users.queue_manager_view` is present, no migration is pending, nobody is switched on, and the queue timer had run 40 seconds earlier. |
-| Staging pages opened in a browser | **Not done** by anyone. |
+| `composer test` on the Windows development machine (style, static analysis, every test) | **Passed:** 2,123 tests (2,122 passed, 1 skipped, 10,685 assertions) in 297 seconds. The skipped test is the device-time formatter, which cannot find Node on Windows. The first full run had five failures, all in existing tests that pin lists this step was approved to change; they are described below. |
+| GitHub "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)" | Reported with the branch; not recorded here. The MySQL job is the one that shows the four migrations apply there and that two bookings at the same moment are decided correctly on MySQL. |
+| Browser | **Done on 2026-10-10 by the implementation agent, at Jacob's request: every step passed** and the browser reported no page errors. Results are under "Browser review" below. |
+| Merge, staging | **Not done.** |
 
-**Every Call Center Agent's manager-view switch is off on staging**, as decision
-85 asks. Switch people on at Company > Settings > Contact Center, in the last
-section, "Manager view for Call Center Agents".
+New tests, 94 of them, in `tests/Feature/Appointments/`:
 
-## Step: keep a refusal on the Call Queue page until it has been read
-
-Jacob approved this on 2026-10-10 ("fix the disappearing message") and its
-merge the same day ("Merge it"). It is `main` commit `4e188c3`: both GitHub
-jobs passed on it (run 38053748850), Forge finished deploying it to staging at
-12:55 UTC, and the queue timer on staging had run 42 seconds before it was read.
-
-Objective: on the Call Queue page, a refusal such as "This lead was just changed
-by someone else, so nothing was saved." must stay on screen until the person's
-next action. It used to vanish within ten seconds.
-
-### What changed
-
-- **Why it vanished.** The framework carries an error from one request to the
-  next only when it is named after a field of the page. This page asks the
-  server again every ten seconds, and a refusal that belongs to no field was
-  dropped at that next request.
-- **The fix.** The Call Queue page now keeps such refusals itself and shows
-  them again on every request, until the messages are cleared. Every dialog
-  already clears them when it opens and every successful save clears them;
-  pressing Next lead now clears them too. The browser cannot set what is kept:
-  only the server does.
-- **One file of application code:**
-  `resources/views/pages/marketing/⚡call-queue.blade.php`. No table,
-  permission, audit event, route or package. No other page refreshes itself,
-  so no other page had the fault.
-- **Documents:** the slice 4 plan's known limits and this file.
-
-### Tests and checks, with their real results
-
-| Check | Result |
+| File | What it shows |
 | --- | --- |
-| `composer test` on the Windows development machine | **Passed:** style, static analysis, and 2,018 tests (2,017 passed, 1 skipped, 10,115 assertions) in 293 seconds. |
-| Both GitHub jobs on its branch (`6d92187`) | **Passed** (run 38051184352). |
-| Browser | **Not looked at in a browser.** The fault itself was seen in a browser on 2026-10-09; the fix is proved by the tests below, which fail without it. |
+| `BookAppointmentTest.php` (48) | Everything rule 3 lists happens together; the Lead is taken from whoever had it; it leaves the queue and a hold on it ends; each thing a Lead can be missing; who may book, as a matrix of eleven people; a Sales Consultant only for themselves; the salesperson must have access there; the Location's own time; eleven cases of what may and may not be booked; six cases of overlap, including back-to-back; the notice and the email carry no customer details; a failed email does not undo the booking; a changed Lead is refused; a failure part-way saves nothing. |
+| `BookedInErrorTest.php` (23) | The Lead goes back exactly as it was, including into the queue at the attempt it had reached; the issue is voided; who may do it, as a matrix; the note is required; it cannot be done twice; the Lead can be booked again; a Lead with an upcoming appointment cannot be moved, returned or disqualified; a deactivated salesperson leaves the appointment on record. |
+| `AppointmentScreensTest.php` (22) | The card in each state and for each role; refusals shown at their fields; only people the page offered can be booked; the Calendar's visibility rules and its timezones; the bell's count, list, "New" marker, that it is per person, and that an Owner viewing as someone does not use up their notices. |
+| `BookingConcurrencyTest.php` (1) | Real separate processes: two people book the same salesperson into overlapping times at the same moment, eight times. Each time exactly one is saved and the other is refused with the words a person would see. |
 
-New tests in `tests/Feature/Queue/QueueScreenTest.php`:
+Existing tests that changed, none weakened or removed:
 
-- "a refusal that belongs to no field stays through the page refresh until the
-  next action": the refusal is still there, once, after two refreshes, and is
-  gone once the person opens the dialog again.
-- "pressing next lead clears an earlier refusal".
-- "the browser cannot plant a refusal of its own".
+- `tests/Unit/Enums/RoleTest.php` pins each role's exact permissions. The two
+  new permissions are added to the four roles decision 90 names, and a new
+  test pins exactly which roles hold each.
+- `tests/Feature/Queue/LeaveCadenceTest.php` pins the list of Lead statuses, to
+  show the call cadence adds none. The list now includes "appointment_booked",
+  with a comment that it is slice 6's.
+- The navigation test that used Calendar as its example of an unbuilt item now
+  uses Commissions.
+- A shared test helper that finds "the page" in a response now looks inside the
+  page area, because the header holds a component of its own (the bell).
 
-No existing test changed.
+## Found while building
 
-### Known limitations
+- **A time comparison bug, caught by the overlap tests before anything was
+  committed.** Times typed in the Location's time were being compared with
+  stored UTC times without being converted, so no overlap was ever found.
+  Fixed; every comparison now converts first.
+- **On MySQL a plain read inside the booking could have missed an appointment
+  saved a moment earlier.** The overlap check is a locking read for that
+  reason. The real-process test is what proves it on MySQL.
 
-- The refusal stays until the person does something. If they do nothing, it
-  stays; there is no close button on it.
-- This is specific to the Call Queue page. If another page is ever given a
-  timer of its own, it will need the same care.
+## Architectural decisions made while building
 
-## Browser look at the manager-view switch (done 2026-10-10)
+Listed in the plan under "Step 6a as built". The ones Jacob may want to change:
 
-Done on the local site by the implementation agent at Jacob's request, signed in
-as the seeded fictitious Owner. **It works as designed.**
+- **The salesperson is told even when they booked their own Lead.**
+- **Sales > Calendar shows all of a person's Locations at once,** not the one
+  chosen in the header.
+- **A Lead whose appointment time has passed stays "Appointment booked"** and
+  the Lead page offers it no lifecycle button. What happened at the
+  appointment belongs to the after-action report, which is not built.
+- **The Appointment card is a component of its own** inside the Lead page, so
+  the Lead page, already very large, did not grow.
 
-| Step | Result |
-| --- | --- |
-| 1. The settings section | Pass. "Manager view for Call Center Agents" is the last section of Company > Settings > Contact Center. It listed the one fictitious agent, Casey Callcenter, with "All locations" and a switch that was off. No other role was listed. |
-| 2. The agent's view with the switch off | Pass. The Call Queue showed the due count and Next lead, and none of the summary numbers, the timer warning, the cadence-finished list or Put back in queue. A Lead whose cadence had finished opened with no "Call queue" panel. |
-| 3. Switching on | Pass. One click on the settings page; the switch showed on at once and was saved. As the agent, the summary, the timer warning and the cadence-finished list were back, with Put back in queue. |
-| 4. The Lead page | Pass with the switch on: the "Call queue" panel, its history and Put back in queue showed. |
-| 5. Switching off again, and the Location Manager | Checked from the command line, not in the browser: switching the agent off through the application's own action took the manager part away from the agent, and the Location Manager had it throughout. The automated tests cover both. |
+## Deviations from the approved plan
 
-Not seen: the confirmation message after a switch is changed. The page was read
-as text a moment later and the message was not in it; whether it showed and
-went, or the reading missed it, is not known. The switch itself was saved.
+- The plan said "a notice inside the app" without saying when it is marked
+  seen. As built: opening the list marks them seen.
+- `tests/Support/queue-process.php` gained operations for the booking race.
+  Test support only.
 
-The local agent's switch was put back to off afterwards.
+## Known limitations
 
-## The local site is now served over HTTPS
-
-On 2026-10-10 Jacob turned on Herd's "Secure" option for the local site, to see
-whether it would stop the Claude desktop app asking for approval on every
-browser action. It did not. The site stays at `https://backoffice.test`: the
-local `.env` address was changed to match (that file is not in version control),
-and passkeys can now be tried locally. Nothing in the application changed.
-
-## A timing-dependent test to watch
-
-The step 4b test "a change that takes a lead away while it is being claimed…"
-(the access revoked case) failed once locally on 2026-10-09 with "The claim
-never got in first". It needs both orders of a real race to happen at least
-once within its rounds, and in that run one order never did. It passed when run
-again, in every full local run and in every GitHub run. Not changed; mentioned
-so a red run is recognised.
+- **A booked Lead has few ways out in 6a.** Before its appointment: only a
+  manager's "booked in error". After it: it can be disqualified through the
+  action, but the Lead page shows no button for it. Rescheduling and
+  cancelling come in 6b.
+- **If the salesperson loses access or is deactivated,** the appointment stays,
+  the Lead becomes unassigned and the card says it needs a salesperson. The
+  only fix in 6a is "booked in error" and booking again.
+- **The Calendar is a list.** It shows no free time, and stops at 200
+  appointments with a line saying so.
+- **The email is sent while the person waits,** as invitation emails are.
+- **Nothing checks the salesperson's own calendar** (rule 5).
+- **The bell does not refresh by itself.** Its count is right when a page
+  loads.
+- Local database only: the fictitious staff, Locations and Leads left from the
+  earlier browser reviews.
 
 ## Decisions needed from Jacob
 
-1. **Merge this documents change?** It redeploys staging and changes nothing
-   there.
-2. **What to plan next:** building appointments from the rulebook, Projects and
-   the sales outcome, or production readiness. Each needs its own plan and
-   approval. Nothing is being built until you choose.
+1. **Review 6a** (steps below) and say whether to merge it.
+2. **Any of the four choices under "Architectural decisions" to change?**
+   Recommendation: keep all four for now.
+3. **Before 6b can be planned,** the plan's decisions 8 to 11: what a Lead
+   shows after it goes back to Contact Center; where it restarts in the call
+   cadence; a cancellation that does not come from the customer; and whether
+   rebooking after a cancellation changes the issued count.
 
-## Known limitations carried forward
+## Browser review (done 2026-10-10)
 
-- Open follow-ups from the step 4c handoff, none authorized: the held and
-  cadence-finished lists stop at 25 with no notice; the card shows the Lead's
-  inquiry phone while the attempt form pre-fills the linked contact's phone;
-  losing access while the Skip dialog is open shows a "forbidden" page.
-- Deliberately not retried on a deadlock: the timer's own work, Skip and Put
-  back in queue, and capturing a new Lead (see the slice 4 plan).
-- The device-time formatter test skips itself on the Windows development
-  machine, because it looks for Node with a command Windows does not have.
-- Staging runs PHP 8.5 while local development and both GitHub jobs use PHP 8.4.
-- Local database only: seven seeded fictitious staff, three Locations (one set
-  to Pacific) and 14 fictitious Leads named "Queue Review … (Sample)", left
-  from the browser review.
+Done by the implementation agent at Jacob's request, on the local site
+(`https://backoffice.test`) with fictitious staff and Leads, in a real browser
+driven from the command line. **Every step passed and the browser reported no
+page errors.**
+
+| Step | Result |
+| --- | --- |
+| 1. A Lead that is not ready | Pass. The card says no appointment can be booked yet and lists what is missing: qualify it, link a customer, link a property. No Book appointment button. |
+| 2. A ready Lead | Pass. The card shows Book appointment. |
+| 3. Booking | Pass. The dialog opens with the cursor on Cancel and closes on Escape. It offered the one Sales Consultant at that Location, already chosen, named the timezone ("In Northside time: PDT (America/Los_Angeles)") and started at 1 hour 30 minutes. After saving: "Appointment booked with Sam Sales."; the card showed "Sun, Oct 11, 2026, 3:00 PM to 4:30 PM PDT", the salesperson and who booked it; the Lead's status read "Appointment booked" and it was assigned to the salesperson, without reloading the page. |
+| 4. Double booking | Pass. The same salesperson at 3:30 PM on another Lead was refused at the time field: "Sam Sales already has an appointment from 3:00 PM to 4:30 PM PDT then. Choose another time." 4:30 PM, as the first ends, was saved. |
+| 5. The bell | Pass. Viewed as the salesperson, the bell showed 2. The list showed both notices marked "New", each with its time and a link to its Lead, and the count stayed at 2 while the Owner was viewing as them. Signed in as the salesperson themselves, opening the list marked both seen and the count was gone after a reload. |
+| 6. Calendar | Pass. The salesperson saw their two appointments by day, in the Location's time. The Owner saw the same two with the salesperson's name on each. |
+| 7. Blocked while booked | Pass. Change location and Return to central each showed "This lead has an upcoming appointment. Cancel or undo its appointment first." and opened no dialog. |
+| 8. Booked in error | Pass. The salesperson does not see the button. For the Owner, an empty note was refused with "Say why this appointment was booked in error."; with a note the card showed the appointment as booked in error with who and why, the Lead was Qualified again with nobody assigned (as before the booking), and Book appointment was offered again. |
+| 9. A Sales Consultant's own Lead | Pass. On a ready Lead assigned to them the dialog offered only themselves. On a ready Lead that was not theirs the card said a manager or the call center books it, with no button. |
+| 10. The email | Partly. No "email could not be sent" warning appeared, so the local mail catcher accepted both emails. Their text was not read in the mail catcher; the automated test checks it holds a time and a link and no customer details. |
+
+Not covered in the browser: a Location with several Sales Consultants (the
+local data has one there), so "a Sales Consultant sees only themselves" was
+shown but not told apart from "there is only one". The automated tests cover
+it with a colleague present.
+
+Left on the local database only: four fictitious "Booking Review" Leads, one
+standing appointment and one booked in error.

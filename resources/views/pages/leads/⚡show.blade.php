@@ -57,6 +57,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 
 new #[Title('Lead')] class extends AddressCapturePage {
@@ -172,6 +173,19 @@ new #[Title('Lead')] class extends AddressCapturePage {
     public function dehydrate(): void
     {
         $this->pageLifecycleVersion = (int) $this->lead->lifecycle_version;
+    }
+
+    /**
+     * The Appointment card booked or undid an appointment, which changes the
+     * Lead's status, who has it and its place in the call queue. Read it all
+     * again.
+     */
+    #[On('lead-appointment-changed')]
+    public function appointmentChanged(): void
+    {
+        $this->lead->refresh();
+
+        unset($this->cadence, $this->queueHistory, $this->eligibleAssignees, $this->openLeadCounts, $this->qualificationGaps);
     }
 
     /**
@@ -294,6 +308,10 @@ new #[Title('Lead')] class extends AddressCapturePage {
     public function openDisqualify(): void
     {
         $this->authorize('changeStatus', $this->lead);
+
+        if ($this->refusedByAnUpcomingAppointment()) {
+            return;
+        }
 
         $this->reset('disqualificationReasonId', 'disqualificationNote', 'duplicateOfId');
 
@@ -502,6 +520,10 @@ new #[Title('Lead')] class extends AddressCapturePage {
     {
         $this->authorize('routeAnywhere', $this->lead);
 
+        if ($this->refusedByAnUpcomingAppointment()) {
+            return;
+        }
+
         $this->rememberWhereTheLeadIs();
 
         $suggested = $this->suggestedLocation;
@@ -564,11 +586,31 @@ new #[Title('Lead')] class extends AddressCapturePage {
     }
 
     /**
+     * A Lead with an upcoming appointment cannot be moved, returned to central
+     * or disqualified (decision 95). The person is told why instead of being
+     * shown a dialog whose save would be refused; the actions refuse it too.
+     */
+    private function refusedByAnUpcomingAppointment(): bool
+    {
+        if (! $this->lead->hasUpcomingAppointment()) {
+            return false;
+        }
+
+        Flux::toast(variant: 'danger', text: __('This lead has an upcoming appointment. Cancel or undo its appointment first.'));
+
+        return true;
+    }
+
+    /**
      * Open the dialog for sending the Lead back to the central queue.
      */
     public function openReturn(): void
     {
         $this->authorize('returnToCentral', $this->lead);
+
+        if ($this->refusedByAnUpcomingAppointment()) {
+            return;
+        }
 
         $this->rememberWhereTheLeadIs();
 
@@ -1814,6 +1856,8 @@ new #[Title('Lead')] class extends AddressCapturePage {
                 </div>
             </dl>
         </div>
+
+        <livewire:pages::leads.appointment :lead="$lead" :key="'appointment-'.$lead->id" />
 
         <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5">
             <flux:heading size="lg" level="2">{{ __('Where it came from') }}</flux:heading>

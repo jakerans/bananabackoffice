@@ -65,7 +65,7 @@ booking.
 
 **For the slice 4 call queue:** once appointments are built, Appointment Booked
 is one of the things that removes a Lead from the call queue, alongside the
-exits in decision 67. Nothing in the slice 4 code changes now.
+exits in decision 67. (Built in slice 6, step 6a, on 2026-10-10.)
 
 ### 4. Notification
 

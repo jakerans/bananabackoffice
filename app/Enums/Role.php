@@ -57,6 +57,8 @@ enum Role: string
                 Permission::AssignLeads,
                 Permission::WaiveContactWait,
                 Permission::WorkLeadQueue,
+                Permission::BookAppointments,
+                Permission::ManageAppointments,
                 Permission::WriteNotes,
                 Permission::RemoveNotes,
                 Permission::ViewAccounts,
@@ -83,6 +85,9 @@ enum Role: string
                 // Managers, not the Call Center, may let a lead be closed as "unable to contact" early.
                 Permission::WaiveContactWait,
                 Permission::WorkLeadQueue,
+                // A manager books appointments, and is the one who may undo one that was booked in error.
+                Permission::BookAppointments,
+                Permission::ManageAppointments,
                 Permission::WriteNotes,
                 // A manager may remove anyone's note from view. Everyone else only their own.
                 Permission::RemoveNotes,
@@ -98,6 +103,8 @@ enum Role: string
                 Permission::ReturnLeads,
                 Permission::AssignLeads,
                 Permission::WorkLeadQueue,
+                // Booking hands the Lead to Sales. An agent cannot undo or change a booking.
+                Permission::BookAppointments,
                 Permission::WriteNotes,
                 Permission::ViewAccounts,
                 Permission::ManageAccounts,

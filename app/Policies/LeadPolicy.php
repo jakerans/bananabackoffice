@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\CadenceState;
 use App\Enums\LeadStatus;
 use App\Enums\Permission;
+use App\Enums\Role;
 use App\Models\Lead;
 use App\Models\LeadCadence;
 use App\Models\Location;
@@ -193,8 +194,32 @@ class LeadPolicy
     }
 
     /**
-     * Whether the user hands out Leads where this Lead is, whatever its status.
+     * Determine whether the user can book an appointment for the Lead
+     * (rulebook, rule 2): the roles that hold the booking permission where
+     * the Lead is, and a Sales Consultant there only for a Lead already
+     * assigned to them. A Lead with no Location cannot be booked by anyone.
      */
+    public function bookAppointment(User $user, Lead $lead): bool
+    {
+        if ($lead->location === null || ! $this->view($user, $lead)) {
+            return false;
+        }
+
+        return $user->hasPermissionAt(Permission::BookAppointments, $lead->location)
+            || ($lead->isAssignedTo($user) && $user->holdsRoleAt(Role::SalesConsultant, $lead->location));
+    }
+
+    /**
+     * Determine whether the user can undo the Lead's appointment as "booked
+     * in error": a manager where the Lead is (rule 10, decision 88).
+     */
+    public function manageAppointment(User $user, Lead $lead): bool
+    {
+        return $lead->location !== null
+            && $this->view($user, $lead)
+            && $user->hasPermissionAt(Permission::ManageAppointments, $lead->location);
+    }
+
     /**
      * Whether the person has the manager part of the call queue where this
      * Lead is: they hand out Leads there, and a Call Center Agent also needs
@@ -210,6 +235,9 @@ class LeadPolicy
         return $lead->location !== null && $user->managesQueueAt($lead->location);
     }
 
+    /**
+     * Whether the user hands out Leads where this Lead is, whatever its status.
+     */
     private function distributes(User $user, Lead $lead): bool
     {
         if ($lead->isUnrouted()) {

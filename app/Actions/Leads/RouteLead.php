@@ -79,6 +79,12 @@ class RouteLead
             ]);
         }
 
+        if ($lead->hasUpcomingAppointment()) {
+            throw ValidationException::withMessages([
+                'destinationId' => __('This lead has an upcoming appointment. Cancel or undo its appointment first.'),
+            ]);
+        }
+
         if (! $destination->is_active) {
             throw ValidationException::withMessages([
                 'destinationId' => __('Choose an active location.'),

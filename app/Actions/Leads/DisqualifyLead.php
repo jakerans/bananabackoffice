@@ -60,6 +60,12 @@ class DisqualifyLead
                 ]);
             }
 
+            if ($lead->hasUpcomingAppointment()) {
+                throw ValidationException::withMessages([
+                    'status' => __('This lead has an upcoming appointment. Cancel or undo its appointment first.'),
+                ]);
+            }
+
             if (! $reason->is_active) {
                 throw ValidationException::withMessages([
                     'disqualificationReasonId' => __(':reason is no longer offered. Choose another.', ['reason' => $reason->name]),
