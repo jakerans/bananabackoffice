@@ -3,8 +3,9 @@
 Status: **the three steps are approved in order (2026-10-10, decisions 90 to
 96). Step 6a is built and merged into `main` (2026-10-10); see "Step 6a as
 built" below. Step 6b is planned in detail below and is NOT approved: it waits
-for Jacob's answers to questions 12 to 22.** Step 6c is an outline. Jacob
-answered questions 8, 9 and 11 and three of the 6b plan's readings on 2026-10-10 (decisions 97 to 102). It follows the rulebook in
+for Jacob's answers to questions 13 and 15 to 22.** Step 6c is an outline.
+Jacob answered questions 8, 9, 11, 12 and 14 and three of the 6b plan's
+readings on 2026-10-10 (decisions 97 to 104). It follows the rulebook in
 [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75
 to 84, 88 and 89). Where the rulebook is silent this plan asks; an answer
 becomes a decision in [decisions.md](decisions.md) before anything is built.
@@ -168,7 +169,7 @@ Readings made while building, none of them a new rule:
 
 Planned on 2026-10-10 after step 6a was reviewed and merged. **Nothing here is
 approved to build.** It follows rules 6, 7, 8 (its first two points), 9 and 11
-and decisions 97 and 99 to 102, and it depends on questions 12 to 22 under "Decisions
+and decisions 97 and 99 to 104, and it depends on questions 13 and 15 to 22 under "Decisions
 needed". Where a line below rests on one of those questions it says so.
 
 ### What a person sees
@@ -201,7 +202,7 @@ needed". Where a line below rests on one of those questions it says so.
   asks **why**, because the reason decides whether the Lead still counts as
   issued (decision 100, question 19). What happens to an appointment that is
   still upcoming is question 20. The Lead shows Qualified again (decision 97),
-  goes to whoever question 12 says, and re-enters the call queue where
+  is assigned to nobody (decision 103), and re-enters the call queue where
   question 13 says.
 - **A Lead whose appointment was cancelled** can also be moved to another
   Location, returned to central or disqualified with the buttons the Lead page
@@ -237,7 +238,7 @@ customer details (rule 4):
 
 | Table | Change |
 | --- | --- |
-| `appointments` | A new state, **cancelled**, with who cancelled (customer, salesperson or company; question 14), the reason, the note, and who recorded it and when. A rebooking is a new row that points at the cancelled one it follows. Still never deleted. |
+| `appointments` | A new state, **cancelled**, with who cancelled (customer, salesperson or company; decision 104), the reason, the note, and who recorded it and when. A rebooking is a new row that points at the cancelled one it follows. Still never deleted. |
 | `appointment_changes` (new) | One row for each reschedule or move: the time and salesperson before and after, who did it, when, and the note. Never changed or deleted. This is the "history" rules 6 and 7 ask for. |
 | `appointment_cancellation_reasons` (new) | The managed list, built like the existing six. |
 | `leads` | The new status `appointment_cancelled`, if question 15 is agreed. |
@@ -302,8 +303,8 @@ keeps the record with who, reason and note, leaves the Lead with the
 salesperson and the issue counted, and frees the time for another booking; who
 may record one, as a matrix of roles and Locations; rebooking with the same
 salesperson writes no issue and with a different one needs a manager; send
-back needs a manager, a reason and a note, returns the Lead as decision 97 and
-questions 12 and 13 say, and voids the issue only for "should never have been
+back needs a manager, a reason and a note, returns the Lead as decisions 97 and
+103 and question 13 say, and voids the issue only for "should never have been
 booked" (decision 100); a cancelled Lead can be moved, returned to central and
 disqualified, and a Lead with an upcoming appointment still cannot (decisions
 95 and 101); a passed appointment cannot be changed and another can be booked
@@ -365,39 +366,39 @@ decisions 90 to 96, in this order:**
    was in the queue.
 
 Asked before 6b and 6c. **Jacob answered 8, 9 and 11 on 2026-10-10 (decisions
-97 to 99).** What is left of them is carried into questions 12 to 14.
+97 to 99), and 12 and 14 the same day (decisions 103 and 104).** What is left
+of them is question 13.
 
 8. **After a Lead goes back to Contact Center** (sent back, or released after
    30 days): which status does it show, and is it assigned to anyone?
-   **Answered in part (decision 97):** it shows Qualified. Who it is assigned
-   to is question 12.
+   **Answered (decisions 97 and 103):** it shows Qualified and is assigned to
+   nobody.
 9. **Where does a returned Lead restart in the call cadence,** and does the
    Cancelled Appointments group share the one call queue or get its own
    button? **Answered in part (decision 98):** its own button, worked as hot
    Leads beside new Leads. Where a Lead restarts is question 13.
-10. **A cancellation that does not come from the customer.** Not answered; it
-    is question 14.
+10. **A cancellation that does not come from the customer.** **Answered
+    (decision 104):** the same record and rules; see question 14.
 11. **Does a rebooking by the same salesperson after a cancellation** change
     the issued count? **Answered (decision 99):** no. It can be rebooked with
     the same salesperson and adds no count.
 
 **Needed before step 6b is approved.** Each has a recommendation, so "agreed to
-all" is an answer.
+all" is an answer. **12 and 14 are answered (decisions 103 and 104); 13 and 15
+to 22 are open.**
 
 12. **Who has a Lead after it comes back to Contact Center?** Jacob's answer to
     question 8 read "assigned to somebody"; the recommendation had been
-    "nobody". *Recommended:* nobody. The call queue hands it to the next
-    available person, as it does every Lead, and the Appointment card says why
-    it came back. *Alternative:* a named person, and then which one: the
-    person who booked the appointment, or one the manager picks while sending
-    it back.
+    "nobody". **Answered (decision 103): nobody.** The call queue hands it to
+    the next available person, as it does every Lead, and the Appointment card
+    says why it came back.
 13. **Where does a Lead a manager sends back restart in the call cadence?**
     Rule 9 says it re-enters the call queue. *Recommended:* it starts the
     cadence over at attempt 1, due at the next opening of calling hours, in
     the ordinary queue, in line with follow-up calls by how long each has
     waited. *Alternative:* treat it as hot, in line with new Leads.
 14. **A cancellation that does not come from the customer** (the salesperson
-    or the company cancels). *Recommended:* the same record and the same rules
+    or the company cancels). **Answered (decision 104):** the same record and the same rules
     as rule 8. "Who cancelled" offers three choices: the customer, the
     salesperson, the company. The Lead stays with the salesperson, still
     counts as issued, and the 30 days run the same way.
@@ -453,7 +454,7 @@ Raised by Jacob's answers to the plan's readings (decisions 100 to 102):
     returned to central?** Decision 101 allows it. A move already takes a Lead
     from whoever has it (decision 44). *Recommended:* it leaves the
     salesperson and from then on is treated exactly as a Lead sent back:
-    Qualified (decision 97), assigned as question 12 says, back in the call
+    Qualified and unassigned (decisions 97 and 103), back in the call
     queue as question 13 says, and the person moving it is asked the same
     counting question as in 19. The cancelled appointment stays on its record.
     A cancelled Lead that is disqualified is simply Disqualified, with the

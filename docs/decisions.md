@@ -2046,7 +2046,8 @@ Qualified again.
 **Not settled: who it is assigned to.** The plan recommended "nobody". Jacob's
 answer read "it should come back as qualified and assigned to somebody". The
 step 6b plan asks which is meant, and who "somebody" would be. Nothing is built
-on either reading until he says.
+on either reading until he says. **Settled the same day by decision 103:
+nobody.**
 
 ## 98. Cancelled Appointments gets its own button, worked as hot Leads (2026-10-10)
 
@@ -2113,6 +2114,25 @@ that there is "a clear path" for the case he described: the appointment was
 missed and the customer messages in afterwards to set a new time. The path is
 question 22 in the plan. What happened at the passed appointment is still for
 the after-action report (decision 84).
+
+## Slice 6 decisions on the step 6b plan's questions 12 and 14 (103 and 104)
+
+Given by Jacob on 2026-10-10. The plan's questions 13 and 15 to 22 are not
+answered yet, and step 6b is still not approved.
+
+## 103. A Lead that comes back to Contact Center is assigned to nobody (2026-10-10)
+
+**Decided by Jacob** ("correct no one"), completing decision 97. A Lead that
+goes back from Sales to Contact Center is Qualified and unassigned. The call
+queue hands it to the next available person, as it does every Lead, and the
+Appointment card says why it came back.
+
+## 104. A cancellation by the salesperson or the company is recorded the same way (2026-10-10)
+
+**Decided by Jacob.** A cancellation that does not come from the customer uses
+the same record and the same rules as rule 8. "Who cancelled" offers three
+choices: the customer, the salesperson, the company. The Lead stays with the
+salesperson, still counts as issued, and the 30 days run the same way.
 
 ## Future decisions already constrained by the brief
 

@@ -6,9 +6,9 @@ No secrets or customer information belong here.
 **Updated:** 2026-10-10 · **Branch:** `checkpoint-slice-6b-plan`
 
 **State:** a plan waiting for decisions. Slice 6, step 6b is planned in detail
-and **nothing of it is built or approved.** It needs Jacob's answers to eleven
-questions, below: seven from the first version of the plan, which he has not
-answered yet, and four raised by his answers to its readings. This branch holds documents only.
+and **nothing of it is built or approved.** It needs Jacob's answers to nine
+questions, below: five left from the first version of the plan, and four
+raised by his answers to its readings. This branch holds documents only.
 
 Step 6a is built, reviewed in the browser and **merged into `main` on
 2026-10-10** (`48adc42`) at Jacob's word. After that merge both GitHub jobs
@@ -34,12 +34,13 @@ Written into [../decisions.md](../decisions.md) on this branch:
 
 | Decision | What |
 | --- | --- |
-| 97 | A Lead that comes back to Contact Center shows Qualified. Who it is assigned to is not settled (question 12). |
+| 97, 103 | A Lead that comes back to Contact Center shows Qualified and is assigned to nobody; the call queue hands it out. |
 | 98 | Cancelled Appointments gets its own button on the Call Queue and is worked as hot Leads, beside new Leads. Built in step 6c. His message said "canceled deployments"; it is read as cancelled appointments. |
 | 99 | After a cancellation the Lead can be rebooked with the same salesperson, and that adds nothing to Leads Issued, so a salesperson's NSLI is not hurt by getting a cancelled booking back on the calendar. |
 | 100 | Whether a Lead that leaves Sales still counts as issued depends on the reason. One that should never have been booked does not count. |
 | 101 | A Lead whose appointment was cancelled can still be moved to another Location, returned to central or disqualified (his example: the wrong service area). |
 | 102 | A passed appointment is not changed, on the condition that a missed appointment has a clear way to be booked again. |
+| 104 | A cancellation by the salesperson or the company is recorded the same way as the customer's, under the same rules. "Who cancelled" offers all three. |
 
 Still with Jacob, in his words "I want to think about that": whether sending a
 Lead back should always cancel an upcoming appointment (question 20).
@@ -70,14 +71,12 @@ Lead back should always cancel an upcoming appointment (question 20).
 ## Decisions needed from Jacob
 
 Each has a recommendation, so "agreed to all" is an answer. They are questions
-12 to 22 in the plan, which gives the alternatives. 12 to 18 were asked before
-and are not answered yet; 19 to 22 are new.
+13 and 15 to 22 in the plan, which gives the alternatives. Questions 12 and 14
+are answered (decisions 103 and 104).
 
 | # | Question | Recommended |
 | --- | --- | --- |
-| 12 | Who has a Lead after it comes back to Contact Center? His answer read "assigned to somebody"; the recommendation had been "nobody". | Nobody: the call queue hands it to the next available person. If it should be a named person, say which: the one who booked it, or one the manager picks. |
 | 13 | Where does a Lead a manager sends back restart in the call cadence? | It starts over at attempt 1, due at the next opening of calling hours, in the ordinary queue with the follow-up calls. The alternative is to treat it as hot, with new Leads. |
-| 14 | A cancellation that does not come from the customer (the salesperson or the company cancels). | The same record and rules. "Who cancelled" offers customer, salesperson or company. |
 | 15 | What does a Lead show after its appointment is cancelled, while still with the salesperson? | A new status, "Appointment cancelled", so it is plain which Leads need rebooking. |
 | 16 | Who may record a cancellation? | Anyone who may book that Lead: a manager, a Call Center Agent, and the salesperson whose appointment it is. |
 | 17 | What does the Cancellation Reasons list start with? The real reasons are still open with Sales Leadership. | One entry, "Other (see note)", so it works on its first day; Owner and Leadership add the real ones. Or Jacob gives a starting list. |
@@ -89,9 +88,6 @@ and are not answered yet; 19 to 22 are new.
 
 Tradeoffs worth knowing:
 
-- **12.** "Nobody" keeps one rule for the whole call center: the queue decides
-  who calls next. A named person means the Lead waits for that one person, who
-  may be off shift.
 - **13.** Starting over means up to a full cadence of calls to someone who
   already had an appointment. Treating it as hot gets a faster first call but
   puts it ahead of follow-ups that have waited longer.

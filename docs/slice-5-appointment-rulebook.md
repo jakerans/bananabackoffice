@@ -248,10 +248,11 @@ Cancelled Appointments gets its own button; a rebooking with the same
 salesperson adds no count), and decisions 100 to 102 (a Lead that should never
 have been booked does not count as issued however it leaves Sales; a Lead with
 a cancelled appointment can still be moved, returned or disqualified; a passed
-appointment is not changed). Still open, in
-[slice-6-appointments-plan.md](slice-6-appointments-plan.md), questions 12 to
-22: among them who a returned Lead is assigned to, where it restarts in the cadence, and a
-cancellation that does not come from the customer.
+appointment is not changed), and decisions 103 and 104 (a returned Lead is
+assigned to nobody; a cancellation by the salesperson or the company is
+recorded the same way as the customer's). Still open, in
+[slice-6-appointments-plan.md](slice-6-appointments-plan.md), questions 13 and
+15 to 22: among them where a returned Lead restarts in the cadence.
 
 - **Which status a Lead shows, and who (if anyone) it is assigned to, after it
   goes back to Contact Center** under rules 8, 9, 10 and 14.
