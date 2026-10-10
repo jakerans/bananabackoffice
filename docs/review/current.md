@@ -76,7 +76,7 @@ All on the Lead page's Appointment card unless it says otherwise.
 
 | Check | Result |
 | --- | --- |
-| `composer test` on the Windows development machine (style, static analysis, every test) | **Passed:** 2,237 tests (2,236 passed, 1 skipped, 11,395 assertions) in 455 seconds. The skipped test is the device-time formatter, which cannot find Node on Windows. An earlier full run ended without printing any test results while the local web server was down; it was run again from the start and that is the result given here. |
+| `composer test` on the Windows development machine (style, static analysis, every test) | **Passed on the final code:** 2,238 tests (2,237 passed, 1 skipped, 11,398 assertions) in 446 seconds. The skipped test is the device-time formatter, which cannot find Node on Windows. An earlier full run ended without printing any test results while the local web server was down; it was run again from the start and that is the result given here. |
 | GitHub "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)" | Reported with the branch; not recorded here. The MySQL job is the one that shows the five migrations apply there and that the races below are decided correctly on MySQL. **Its first run on this branch failed** on the column length described under "Found while building"; the fix was pushed after it. |
 | Browser | **Done on 2026-10-10 by the implementation agent: every step passed**, after two faults it found were fixed. Results are under "Browser review" below. |
 | Merge, staging | **Not done.** |
