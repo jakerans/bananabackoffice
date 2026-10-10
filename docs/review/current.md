@@ -65,7 +65,7 @@ that was made in error.
 | --- | --- |
 | `composer test` on the Windows development machine (style, static analysis, every test) | **Passed:** 2,123 tests (2,122 passed, 1 skipped, 10,685 assertions) in 297 seconds. The skipped test is the device-time formatter, which cannot find Node on Windows. The first full run had five failures, all in existing tests that pin lists this step was approved to change; they are described below. |
 | GitHub "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)" | Reported with the branch; not recorded here. The MySQL job is the one that shows the four migrations apply there and that two bookings at the same moment are decided correctly on MySQL. |
-| Browser | **Not looked at in a browser.** Steps for Jacob are below. Each browser action by the implementation agent needs an approval click from him, so it was left. |
+| Browser | **Done on 2026-10-10 by the implementation agent, at Jacob's request: every step passed** and the browser reported no page errors. Results are under "Browser review" below. |
 | Merge, staging | **Not done.** |
 
 New tests, 94 of them, in `tests/Feature/Appointments/`:
@@ -148,44 +148,30 @@ Listed in the plan under "Step 6a as built". The ones Jacob may want to change:
    cadence; a cancellation that does not come from the customer; and whether
    rebooking after a cancellation changes the issued count.
 
-## Browser review for Jacob
+## Browser review (done 2026-10-10)
 
-On the local site (`https://backoffice.test`, already on this branch and
-migrated), signed in as the fictitious Owner. Use fictitious Leads only.
+Done by the implementation agent at Jacob's request, on the local site
+(`https://backoffice.test`) with fictitious staff and Leads, in a real browser
+driven from the command line. **Every step passed and the browser reported no
+page errors.**
 
-1. **A Lead that is not ready.** Open any Lead that is not Qualified. The
-   "Appointment" card, under "Who has it", says no appointment can be booked
-   yet and lists what is missing. There is no Book appointment button.
-2. **Get a Lead ready.** Take a Lead at Northside through Start working, link
-   a customer with a property, assign it, and Qualify it. The card now shows
-   **Book appointment**.
-3. **Book.** Press it. The salesperson list holds only people with Sales
-   Consultant access at that Location. The dialog names the Location's
-   timezone. Pick tomorrow at 3:00 PM and save. The card shows the day, "3:00
-   PM to 4:30 PM" with the timezone, the salesperson and who booked it. The
-   Lead's status reads **Appointment booked** and it is assigned to the
-   salesperson.
-4. **Double booking.** Get a second Lead ready and book the same salesperson
-   tomorrow at 3:30 PM. It is refused at the time field with "… already has an
-   appointment from 3:00 PM to 4:30 PM … then", and nothing is saved. 4:30 PM
-   works.
-5. **The bell.** View Backoffice as that salesperson. The bell in the header
-   shows a count. (Opening it while viewing as them lists the notices and does
-   not mark them seen; signed in as themselves it would.)
-6. **Calendar.** Still as the salesperson, open Sales > Calendar: their
-   appointments, by day. As the Owner or a Location Manager it lists everyone's
-   at their Locations, with the salesperson's name on each.
-7. **Blocked while booked.** On the booked Lead, as the Owner, try Change
-   location and Return to central: each shows "This lead has an upcoming
-   appointment. Cancel or undo its appointment first." and opens nothing.
-8. **Booked in error.** As a manager, press **Booked in error** on the card.
-   It needs a note. After saving, the card shows it was booked in error, with
-   who and why, the Lead is Qualified again with whoever had it before, and
-   Book appointment is offered again. A Call Center Agent and the salesperson
-   do not see this button.
-9. **A Sales Consultant's own Lead.** View as a Sales Consultant: on a ready
-   Lead assigned to them, Book appointment offers only themselves. On a ready
-   Lead that is not theirs there is no button.
-10. **The email.** With mail set to the log locally, the newest entry in
-    `storage/logs/laravel.log` is the salesperson's email: a time, a link, and
-    no customer name, phone or address.
+| Step | Result |
+| --- | --- |
+| 1. A Lead that is not ready | Pass. The card says no appointment can be booked yet and lists what is missing: qualify it, link a customer, link a property. No Book appointment button. |
+| 2. A ready Lead | Pass. The card shows Book appointment. |
+| 3. Booking | Pass. The dialog opens with the cursor on Cancel and closes on Escape. It offered the one Sales Consultant at that Location, already chosen, named the timezone ("In Northside time: PDT (America/Los_Angeles)") and started at 1 hour 30 minutes. After saving: "Appointment booked with Sam Sales."; the card showed "Sun, Oct 11, 2026, 3:00 PM to 4:30 PM PDT", the salesperson and who booked it; the Lead's status read "Appointment booked" and it was assigned to the salesperson, without reloading the page. |
+| 4. Double booking | Pass. The same salesperson at 3:30 PM on another Lead was refused at the time field: "Sam Sales already has an appointment from 3:00 PM to 4:30 PM PDT then. Choose another time." 4:30 PM, as the first ends, was saved. |
+| 5. The bell | Pass. Viewed as the salesperson, the bell showed 2. The list showed both notices marked "New", each with its time and a link to its Lead, and the count stayed at 2 while the Owner was viewing as them. Signed in as the salesperson themselves, opening the list marked both seen and the count was gone after a reload. |
+| 6. Calendar | Pass. The salesperson saw their two appointments by day, in the Location's time. The Owner saw the same two with the salesperson's name on each. |
+| 7. Blocked while booked | Pass. Change location and Return to central each showed "This lead has an upcoming appointment. Cancel or undo its appointment first." and opened no dialog. |
+| 8. Booked in error | Pass. The salesperson does not see the button. For the Owner, an empty note was refused with "Say why this appointment was booked in error."; with a note the card showed the appointment as booked in error with who and why, the Lead was Qualified again with nobody assigned (as before the booking), and Book appointment was offered again. |
+| 9. A Sales Consultant's own Lead | Pass. On a ready Lead assigned to them the dialog offered only themselves. On a ready Lead that was not theirs the card said a manager or the call center books it, with no button. |
+| 10. The email | Partly. No "email could not be sent" warning appeared, so the local mail catcher accepted both emails. Their text was not read in the mail catcher; the automated test checks it holds a time and a link and no customer details. |
+
+Not covered in the browser: a Location with several Sales Consultants (the
+local data has one there), so "a Sales Consultant sees only themselves" was
+shown but not told apart from "there is only one". The automated tests cover
+it with a colleague present.
+
+Left on the local database only: four fictitious "Booking Review" Leads, one
+standing appointment and one booked in error.
