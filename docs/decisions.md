@@ -1981,6 +1981,9 @@ step before it is reviewed, and 6b and 6c still need the plan's decisions 8 to
 commissions, Google Calendar, a calendar grid, no-shows and appointment
 outcomes, and any message to a customer.
 
+**Step 6a was built on 2026-10-10.** What was built, and the readings made
+while building it, are in the plan under "Step 6a as built".
+
 ## 91. The salesperson is told inside the app by a bell in the header (2026-10-10)
 
 **Decided by Jacob.** Backoffice gets a small bell in the header with a count

@@ -358,6 +358,8 @@ they are not implemented grants and do not authorize that sequence.
 | `settings.lists.manage` | Company | Manage the Lead & Sales Lists page in Settings, and nothing else there |
 | `settings.contact_center.manage` | Company | Manage the Contact Center settings page in Settings, and nothing else there (built in 4a) |
 | `leads.work_queue` | Location | Work the Call Queue (added to the code in 4a, decision 74; first used in 4b) |
+| `appointments.book` | Location | Book an appointment for a Lead, which issues it to Sales (slice 6, step 6a, decision 90) |
+| `appointments.manage` | Location | Mark an appointment "booked in error" (step 6a); move it or send its Lead back (step 6b, not built) |
 
 Company-scope permissions count only when held through an all-locations grant.
 
@@ -404,6 +406,8 @@ The owner approved this matrix at the final review on 2026-10-05.
 | Manage Lead & Sales Lists (all-locations grant only) | Yes | Yes | No | No | No | No | No |
 | Manage the Contact Center settings (all-locations grant only; built in 4a) | Yes | Yes | No | No | No | No | No |
 | Work the Call Queue (permission held since 4a; guards nothing until 4b) | Yes | Yes | Yes | Yes | No | No | No |
+| Book an appointment for a Lead (built in 6a) | Yes | Yes | Yes | Yes | Own Leads, for themselves | No | No |
+| Mark an appointment "booked in error" (built in 6a) | Yes | Yes | Yes | No | No | No | No |
 
 Notes:
 
@@ -429,6 +433,39 @@ Notes:
 - Finance sees Accounts and Projects and changes nothing in Checkpoint B.
 - The Checkpoint A center permissions are unchanged. Which center's menu shows a
   shared page is a navigation question; see navigation-map.md.
+
+## Slice 6: appointments
+
+Status: **step 6a is built (2026-10-10, decisions 90 to 96).** The plan is
+[slice-6-appointments-plan.md](slice-6-appointments-plan.md).
+
+Two permissions, both checked at the Lead's own Location:
+
+| Permission | Lets a person | Held by |
+| --- | --- | --- |
+| `appointments.book` | Book an appointment for a Lead they may see there | Owner, Leadership, Location Manager, Call Center Agent |
+| `appointments.manage` | Mark an appointment "booked in error" | Owner, Leadership, Location Manager |
+
+Rules:
+
+1. **A Sales Consultant holds neither.** `LeadPolicy::bookAppointment` lets them
+   book only a Lead already assigned to them, and the action lets them choose
+   only themselves as the salesperson (decision 89). Being assigned grants
+   nothing else: they must still be able to see the Lead where it is.
+2. **A Lead with no Location cannot be booked by anyone,** whatever they hold.
+3. **The salesperson must hold Sales Consultant access at the Lead's Location**
+   and be someone the Lead could be assigned to. Their access is read again,
+   under a lock, when the booking is saved.
+4. **The roles that may book are checked again inside the booking,** on the
+   Lead as it is at that moment.
+5. **Who sees an appointment.** On the Lead: anyone who may see the Lead. In
+   Sales > Calendar: a person's own appointments at Locations where they may
+   still see Leads, and every appointment at Locations where they hold
+   `appointments.manage`. Sales > Calendar itself opens with `sales.access`, so
+   a Call Center Agent, who may book, has no Calendar.
+6. **A notice belongs to one person.** The bell reads only the signed-in
+   person's notices. A notice holds a time and a link, never customer details;
+   the link opens only for someone who may see the Lead.
 
 ## Slice 4: the call queue and its settings
 

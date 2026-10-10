@@ -1,8 +1,8 @@
 # Slice 6 — Appointment Booking: Proposed Plan
 
-Status: **the three steps are approved in order, and step 6a is approved to
-build (2026-10-10, decisions 90 to 96).** Steps 6b and 6c are not planned in
-detail and still need decisions 8 to 11 below. It follows the rulebook in
+Status: **the three steps are approved in order (2026-10-10, decisions 90 to
+96). Step 6a is built (2026-10-10); see "Step 6a as built" below.** Steps 6b
+and 6c are not planned in detail and still need decisions 8 to 11 below. It follows the rulebook in
 [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75
 to 84, 88 and 89). Where the rulebook is silent this plan asks; an answer
 becomes a decision in [decisions.md](decisions.md) before anything is built.
@@ -114,6 +114,53 @@ the customer; "booked in error" needs a manager and a note, restores the Lead's
 earlier status and assignee, voids the issue and puts the Lead back in the
 queue where it stopped; the Calendar list shows only what the person may see;
 and the migrations on MySQL 8.4.
+
+### Step 6a as built (2026-10-10)
+
+Built as planned above. What a reader of the code should know:
+
+- **Booking** is `app/Actions/Appointments/BookAppointment.php`; "booked in
+  error" is `MarkAppointmentBookedInError.php` beside it. Both go through
+  `ChangeLeadLifecycle`, so a Lead that changed since the dialog opened is
+  refused, and both run again from the start on a deadlock (decision 87).
+- **No double booking.** The salesperson's row is locked for the length of the
+  booking and their other standing appointments are read with a locking read,
+  so two bookings made at the same moment are decided one after the other.
+  Appointments that only touch, one ending as the next starts, are allowed.
+- **Tables:** `appointments`, `lead_issues`, `notifications` (Laravel's own),
+  and `leads.first_issued_at` and `leads.last_issued_at`. An appointment and an
+  issue are never deleted. "Booked in error" marks the issue voided and works
+  the Lead's two issue times out again from the issues that still count.
+- **The Lead leaves the call queue** with a new cadence state, "appointment
+  booked". The timer's repair pass treats a booked Lead still in the queue the
+  way it treats a disqualified one. "Booked in error" puts back only a Lead
+  the booking itself took out, at the attempt it had reached, due at the next
+  opening of calling hours.
+- **The screens:** the Appointment card is its own component,
+  `resources/views/pages/leads/⚡appointment.blade.php`, shown on the Lead page
+  and telling it when to read the Lead again. Sales > Calendar is
+  `pages/sales/⚡calendar.blade.php`. The bell is
+  `pages/notifications/⚡bell.blade.php`, in the header of every page.
+- **Telling the salesperson:** the notice inside the app is saved with the
+  booking, in the same transaction. The email is sent once the booking is
+  saved; if it cannot be sent the booking stays, the failure is reported, and
+  the person booking is told the email did not go.
+
+Readings made while building, none of them a new rule:
+
+- **The salesperson is always told,** also when they booked their own Lead.
+  Rule 3 says the salesperson is notified and makes no exception.
+- **Sales > Calendar shows every Location the person may see at once.** It does
+  not follow the Location chosen in the header; each row names its Location
+  and shows that Location's time.
+- **A Lead whose appointment time has passed** stays Appointment Booked. Its
+  appointment no longer blocks a move or a disqualification, but the Lead page
+  offers no lifecycle button for that status yet: what happened at the
+  appointment belongs to the after-action report.
+- **"Booked in error" is offered only while the Lead is still Appointment
+  Booked.**
+- **Opening a notice list marks its notices seen,** except while an Owner is
+  viewing Backoffice as that person.
 
 ## Step 6b — Change, cancel, send back (outline)
 

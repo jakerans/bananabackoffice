@@ -148,6 +148,31 @@ another location has dealt with. Staff are told so without being shown who.
   audit event names the Owner as well. The Owner's own permissions are not added:
   viewing as a Sales Consultant cannot reopen a Lead.
 
+### Appointments (added 2026-10-10, slice 6 step 6a)
+
+- **Location is still the boundary.** Booking, "booked in error" and every
+  appointment shown are decided at the Lead's own Location. A Sales
+  Consultant's right to book comes from a policy, for their own Lead and for
+  themselves, not from a permission.
+- **The server decides who can be booked.** The page offers only people with
+  Sales Consultant access at the Lead's Location and accepts only someone it
+  offered; the action checks again with that person's row and access read
+  under a lock.
+- **No customer details leave the Lead.** The salesperson's email and the
+  notice in the app carry the appointment's time and a link. A refused
+  double booking names the time that is taken, never the other customer.
+- **Notices are per person.** The bell reads only the signed-in person's own
+  notices, and an Owner viewing Backoffice as someone does not mark that
+  person's notices seen.
+- **Nothing is half-saved.** The appointment, the assignment, the status, the
+  issue, the queue exit, the audit event and the notice are one transaction.
+  The email is sent after it and cannot undo it.
+- **Kept for good.** Appointments and issues cannot be deleted. An issue can
+  only be marked voided.
+- **Open:** an appointment whose time has passed has no outcome and its Lead
+  stays Appointment Booked until the after-action report exists. The email is
+  sent while the person waits, like invitation emails.
+
 ### Call queue screen (added 2026-10-09, slice 4 step 4c)
 
 - **The held Lead is never named by the browser.** The page keeps the cadence ID

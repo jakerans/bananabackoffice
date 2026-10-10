@@ -38,7 +38,7 @@ explicitly maps it to an existing working route.
 | Marketing → Reports | Keep `marketing.reporting`, relabel it Reports; no route. | Coming soon; `marketing.access`. |
 | Sales → Performance | Keep `sales.performance` and `/sales/performance-board`. | Existing state and `sales.access`. |
 | Sales → Workspace | Add `sales.workspace`, with `shared.leads` at `/leads` as its live interim child/landing destination. | Existing Sales and Lead permissions; no selling workflow is added. |
-| Sales → Calendar | Add `sales.calendar`; no route. | Coming soon; `sales.access`. |
+| Sales → Calendar | `sales.calendar`; route name `sales.calendar`; `/sales/calendar`. | **Built (slice 6, step 6a, 2026-10-10).** Live; `sales.access`. A plain list of upcoming appointments: a person's own, or every one at the Locations where they hold `appointments.manage`. |
 | Sales → Commissions | Keep `sales.commissions`; no route. | Coming soon; `sales.access`. |
 | Sales → Leaderboard | Add `sales.leaderboard`; no route. | Coming soon; `sales.access`. |
 | Sales → Customers | Keep `shared.customers` and `/customers`. | Live; existing `accounts.view`. |

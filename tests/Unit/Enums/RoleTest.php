@@ -18,6 +18,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ManageLeadSalesLists,
         Permission::ManageContactCenterSettings,
         Permission::WorkLeadQueue,
+        Permission::BookAppointments,
+        Permission::ManageAppointments,
         Permission::ViewLeads,
         Permission::ManageLeads,
         Permission::ViewUnroutedLeads,
@@ -41,6 +43,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ManageLeadSalesLists,
         Permission::ManageContactCenterSettings,
         Permission::WorkLeadQueue,
+        Permission::BookAppointments,
+        Permission::ManageAppointments,
         Permission::ViewLeads,
         Permission::ManageLeads,
         Permission::ViewUnroutedLeads,
@@ -70,6 +74,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ReturnLeads,
         Permission::AssignLeads,
         Permission::WorkLeadQueue,
+        Permission::BookAppointments,
+        Permission::ManageAppointments,
         Permission::WriteNotes,
         Permission::RemoveNotes,
         Permission::WaiveContactWait,
@@ -85,6 +91,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ReturnLeads,
         Permission::AssignLeads,
         Permission::WorkLeadQueue,
+        Permission::BookAppointments,
         Permission::WriteNotes,
         Permission::ViewAccounts,
         Permission::ManageAccounts,
@@ -133,6 +140,8 @@ test('company overview and settings are company-level permissions', function (Pe
     'archive accounts' => [Permission::ArchiveAccounts, true],
     'manage contact center settings' => [Permission::ManageContactCenterSettings, true],
     'work the lead queue' => [Permission::WorkLeadQueue, false],
+    'book appointments' => [Permission::BookAppointments, false],
+    'manage appointments' => [Permission::ManageAppointments, false],
     'view leads' => [Permission::ViewLeads, false],
     'manage leads' => [Permission::ManageLeads, false],
     'marketing' => [Permission::MarketingAccess, false],
@@ -155,7 +164,25 @@ test('the queue permission is held by exactly the four roles that work the queue
     ], true));
 })->with(Role::cases());
 
+test('the appointment permissions are held by exactly the approved roles', function (Role $role) {
+    expect($role->allows(Permission::BookAppointments))->toBe(in_array($role, [
+        Role::Owner,
+        Role::Leadership,
+        Role::LocationManager,
+        Role::CallCenterAgent,
+    ], true));
+
+    // A Call Center Agent books, and cannot undo or change a booking.
+    expect($role->allows(Permission::ManageAppointments))->toBe(in_array($role, [
+        Role::Owner,
+        Role::Leadership,
+        Role::LocationManager,
+    ], true));
+})->with(Role::cases());
+
 test('the permission values are the approved identifiers', function () {
     expect(Permission::ManageContactCenterSettings->value)->toBe('settings.contact_center.manage');
     expect(Permission::WorkLeadQueue->value)->toBe('leads.work_queue');
+    expect(Permission::BookAppointments->value)->toBe('appointments.book');
+    expect(Permission::ManageAppointments->value)->toBe('appointments.manage');
 });

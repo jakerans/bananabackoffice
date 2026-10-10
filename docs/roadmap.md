@@ -67,9 +67,12 @@ received that approval.
 
 **Slice 6, appointment booking, is approved in three steps (2026-10-10,
 decision 90),** built from the slice 5 rulebook. Its plan is
-[slice-6-appointments-plan.md](slice-6-appointments-plan.md). Step 6a is
-approved to build. Steps 6b and 6c are approved in order only: each is planned
-after the step before it is reviewed and still needs decisions of its own.
+[slice-6-appointments-plan.md](slice-6-appointments-plan.md). **Step 6a is
+built (2026-10-10):** booking an appointment issues the Lead to Sales; a
+manager can mark it "booked in error"; the salesperson is told by a bell in
+the header and by email; Sales > Calendar lists upcoming appointments. Steps 6b
+and 6c are approved in order only: each is planned after the step before it is
+reviewed and still needs decisions of its own.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

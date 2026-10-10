@@ -13,7 +13,7 @@ before starting work, and update them in the same change that alters what they d
 | [checkpoint-b.md](checkpoint-b.md) | The B1–B7 as-built record and the older unbuilt B8–B12 plan retained as historical context. |
 | [slice-4-plan.md](slice-4-plan.md) | The approved plan for slice 4: the call cadence, the due queue and its three build steps. All three steps (4a, 4b and 4c) are merged; the owner's browser review of 4c (the Call Queue screen) is still owed. |
 | [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) | The slice 5 rulebook for appointment issuance and ownership handoff (decisions 75 to 84). Design only: nothing in it is built or approved to build. Later appointment work must follow it. |
-| [slice-6-appointments-plan.md](slice-6-appointments-plan.md) | The proposed plan for appointment booking, built from the slice 5 rulebook in three steps. Proposed only: not approved and nothing in it is built. |
+| [slice-6-appointments-plan.md](slice-6-appointments-plan.md) | The plan for appointment booking, built from the slice 5 rulebook in three steps. Step 6a is built; 6b and 6c are approved in order and not planned in detail. |
 | [navigation-map.md](navigation-map.md) | Every center and menu item, its stable ID, and whether it is built yet. |
 | [permission-model.md](permission-model.md) | Who can do what, and where. Roles, permissions, location rules. |
 | [design-system.md](design-system.md) | How the Backoffice design system is applied in code. |
@@ -88,6 +88,7 @@ each server's environment settings. See [decisions.md](decisions.md), decision 2
 | The every-minute queue timer | `app/Console/Commands/QueueTick.php`, `routes/console.php` |
 | Real-concurrency test support (separate PHP processes; tests only) | `tests/Support/QueueProcesses.php`, `tests/Support/queue-process.php` |
 | The call queue: engine, screen and settings | `app/Actions/Queue/`, `app/Support/Queue/`, `resources/views/pages/marketing/⚡call-queue.blade.php`, `resources/views/pages/settings/⚡contact-center.blade.php`, `app/Actions/ContactCenter/` |
+| Appointments: booking, the Appointment card, Sales > Calendar and the bell | `app/Actions/Appointments/`, `app/Models/Appointment.php`, `app/Models/LeadIssue.php`, `app/Notifications/AppointmentBooked.php`, `resources/views/pages/leads/⚡appointment.blade.php`, `resources/views/pages/sales/⚡calendar.blade.php`, `resources/views/pages/notifications/⚡bell.blade.php` |
 | Recording an audit event | `app/Actions/Audit/RecordAuditEvent.php`, `app/Enums/AuditAction.php`, `app/Models/AuditEvent.php` |
 | The short names records are stored under | `app/Providers/AppServiceProvider.php` (`configureRecordNames`) |
 | Application shell | `resources/views/layouts/app.blade.php`, `resources/views/components/shell/` |
