@@ -1953,6 +1953,80 @@ or mark one "booked in error".
 colleague. Handing a Lead to someone else stays with management and the call
 center (decision 44).
 
+## Slice 6 decisions (90 to 96)
+
+Decided by Jacob on 2026-10-10 ("Agreed to all"), in answer to the seven
+questions the slice 6 plan asked before step 6a. The plan is
+[slice-6-appointments-plan.md](slice-6-appointments-plan.md); the rules it
+follows are in [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md).
+
+## 90. Slice 6 is appointment booking, in three steps; step 6a is approved to build (2026-10-10)
+
+**Approved by Jacob.** Slice 6 builds appointment booking from the slice 5
+rulebook in three reviewed steps: 6a books an appointment, issues the Lead,
+lets a manager mark it "booked in error", tells the salesperson and lists
+appointments in Sales > Calendar; 6b reschedules, moves to another salesperson,
+records a customer's cancellation and sends an issued Lead back; 6c releases
+and returns Leads.
+
+**Step 6a is approved for implementation,** with the two permissions the plan
+names: `appointments.book` (Owner, Leadership, Location Manager, Call Center
+Agent) and `appointments.manage` (Owner, Leadership, Location Manager). A Sales
+Consultant holds neither and may book only a Lead already assigned to them, for
+themselves (decision 89).
+
+Steps 6b and 6c are approved in order only. Each is planned in detail after the
+step before it is reviewed, and 6b and 6c still need the plan's decisions 8 to
+11. Left out of slice 6: Pending and Rehash, Projects and the sales outcome,
+commissions, Google Calendar, a calendar grid, no-shows and appointment
+outcomes, and any message to a customer.
+
+## 91. The salesperson is told inside the app by a bell in the header (2026-10-10)
+
+**Decided by Jacob.** Backoffice gets a small bell in the header with a count
+of unread notices, opening a list of notices that each link somewhere. It is
+built once in step 6a for "you have a new appointment" and is reused by later
+work. It uses Laravel's own notifications table; no package is added.
+
+## 92. An appointment's time is the Lead's Location's time (2026-10-10)
+
+**Decided by Jacob.** An appointment is entered and shown in the Lead's
+Location's own timezone (decision 68), always labelled. It is stored in UTC
+with the timezone it was entered in kept beside it.
+
+## 93. What may be booked (2026-10-10)
+
+**Decided by Jacob.** Any future time on any day, in 15-minute steps. The
+length is from 30 minutes to 4 hours in 15-minute steps and starts at 90
+minutes (rule 1). There is no working-hours limit: the salesperson's real
+availability is not in Backoffice until Google Calendar is (rule 5).
+
+## 94. Booking takes the Lead from whoever has it (2026-10-10)
+
+**Confirmed by Jacob.** When a Lead that is assigned to someone else is booked
+with a salesperson, the earlier assignment ends and stays in the assignment
+history, as any handoff does today.
+
+## 95. While an appointment stands (2026-10-10)
+
+**Decided by Jacob.** A Lead with an upcoming appointment cannot be moved to
+another Location, returned to central or disqualified: the person is told to
+cancel or undo its appointment first. Until step 6b brings cancelling, the way
+to free such a Lead is a manager's "booked in error".
+
+If the salesperson loses access to the Lead or is deactivated, the appointment
+stays on record, the Lead becomes unassigned as it does today
+(permission-model.md, rule 9), and the Lead says its appointment needs a
+salesperson, for a manager to fix.
+
+## 96. "Booked in error" puts the Lead back exactly as it was (2026-10-10)
+
+**Decided by Jacob.** Rule 10's "the handoff is undone" means the Lead is as it
+was a moment before the booking: Qualified, assigned to whoever it was assigned
+to then (or nobody), and, if it was in the call queue, back in it at the
+attempt it had reached. The issue does not count (rule 10). It needs a manager
+and a note and is recorded.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

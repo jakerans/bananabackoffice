@@ -1,12 +1,11 @@
 # Slice 6 — Appointment Booking: Proposed Plan
 
-Status: **proposed on 2026-10-10. Not approved. Nothing in it is built.** It
-follows the rulebook in
+Status: **the three steps are approved in order, and step 6a is approved to
+build (2026-10-10, decisions 90 to 96).** Steps 6b and 6c are not planned in
+detail and still need decisions 8 to 11 below. It follows the rulebook in
 [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75
-to 84, 88 and 89). Where the rulebook is silent this plan asks; the questions
-are in "Decisions needed" and in [review/current.md](review/current.md). An
-answer becomes a decision in [decisions.md](decisions.md) before anything is
-built.
+to 84, 88 and 89). Where the rulebook is silent this plan asks; an answer
+becomes a decision in [decisions.md](decisions.md) before anything is built.
 
 ## What slice 6 is, and is not
 
@@ -136,7 +135,8 @@ Lead they were issued before. Planned in detail after 6b.
 
 ## Decisions needed
 
-Needed before 6a can be built:
+Asked before 6a. **Jacob agreed to every recommendation on 2026-10-10; they are
+decisions 90 to 96, in this order:**
 
 1. **Approve the three steps and what is left out,** above.
 2. **How is the salesperson told inside the app?** Backoffice has no notices
