@@ -2,6 +2,7 @@
 
 namespace App\Enums;
 
+use App\Models\AppointmentCancellationReason;
 use App\Models\LeadChannel;
 use App\Models\LeadDisqualificationReason;
 use App\Models\LeadSource;
@@ -24,6 +25,7 @@ enum ManagedList: string
     case Services = 'services';
     case DisqualificationReasons = 'disqualification_reasons';
     case SalesLossReasons = 'sales_loss_reasons';
+    case CancellationReasons = 'cancellation_reasons';
 
     public function label(): string
     {
@@ -34,6 +36,7 @@ enum ManagedList: string
             self::Services => 'Services',
             self::DisqualificationReasons => 'Disqualification Reasons',
             self::SalesLossReasons => 'Sales Loss Reasons',
+            self::CancellationReasons => 'Cancellation Reasons',
         };
     }
 
@@ -49,6 +52,7 @@ enum ManagedList: string
             self::Services => 'service',
             self::DisqualificationReasons => 'disqualification reason',
             self::SalesLossReasons => 'sales loss reason',
+            self::CancellationReasons => 'cancellation reason',
         };
     }
 
@@ -64,6 +68,7 @@ enum ManagedList: string
             self::Services => 'The kinds of work a lead may be asking about.',
             self::DisqualificationReasons => 'Why a lead did not become a legitimate sales opportunity. Not for sales that were lost.',
             self::SalesLossReasons => 'Why a qualified opportunity was lost. Not for leads that were disqualified.',
+            self::CancellationReasons => 'Why an appointment was cancelled. Not for leads that were disqualified or sales that were lost.',
         };
     }
 
@@ -79,6 +84,7 @@ enum ManagedList: string
             self::Services => Service::class,
             self::DisqualificationReasons => LeadDisqualificationReason::class,
             self::SalesLossReasons => SalesLossReason::class,
+            self::CancellationReasons => AppointmentCancellationReason::class,
         };
     }
 

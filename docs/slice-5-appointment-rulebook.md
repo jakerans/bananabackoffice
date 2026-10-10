@@ -112,7 +112,8 @@ written, the new salesperson is notified, and the history shows **both people**.
 ### 9. A manager sends an issued Lead back to Contact Center
 
 A manager can send **any issued Lead** back to Contact Center **by hand, with a
-note.** It **re-enters the call queue.**
+note.** It **re-enters the call queue.** (Built in slice 6, step 6b: it starts
+the cadence over at attempt 1, decision 105.)
 
 ### 10. Booked in error
 
@@ -250,9 +251,14 @@ have been booked does not count as issued however it leaves Sales; a Lead with
 a cancelled appointment can still be moved, returned or disqualified; a passed
 appointment is not changed), and decisions 103 and 104 (a returned Lead is
 assigned to nobody; a cancellation by the salesperson or the company is
-recorded the same way as the customer's). Still open, in
-[slice-6-appointments-plan.md](slice-6-appointments-plan.md), questions 13 and
-15 to 22: among them where a returned Lead restarts in the cadence.
+recorded the same way as the customer's), and decisions 105 to 114, which
+answer the rest of what step 6b needed: a Lead sent back starts the cadence
+over in the ordinary queue; the Appointment cancelled status; who records a
+cancellation; the starting reasons; rebooking with a different salesperson; the
+counting question; send back and move as separate actions; a cancelled Lead
+that is moved; booking another appointment after one has passed; and telling
+the call center a Lead came back from Sales. Step 6c has questions of its own
+still to ask.
 
 - **Which status a Lead shows, and who (if anyone) it is assigned to, after it
   goes back to Contact Center** under rules 8, 9, 10 and 14.

@@ -436,15 +436,16 @@ Notes:
 
 ## Slice 6: appointments
 
-Status: **step 6a is built (2026-10-10, decisions 90 to 96).** The plan is
-[slice-6-appointments-plan.md](slice-6-appointments-plan.md).
+Status: **steps 6a and 6b are built (2026-10-10, decisions 90 to 114).** The
+plan is [slice-6-appointments-plan.md](slice-6-appointments-plan.md). Step 6b
+added no permission and changed no role.
 
 Two permissions, both checked at the Lead's own Location:
 
 | Permission | Lets a person | Held by |
 | --- | --- | --- |
 | `appointments.book` | Book an appointment for a Lead they may see there | Owner, Leadership, Location Manager, Call Center Agent |
-| `appointments.manage` | Mark an appointment "booked in error" | Owner, Leadership, Location Manager |
+| `appointments.manage` | Mark an appointment "booked in error"; move it to another salesperson; send the Lead back to Contact Center; say a Lead leaving Sales should never have been booked; book a Lead that is with Sales with a different salesperson | Owner, Leadership, Location Manager |
 
 Rules:
 
@@ -466,6 +467,27 @@ Rules:
 6. **A notice belongs to one person.** The bell reads only the signed-in
    person's notices. A notice holds a time and a link, never customer details;
    the link opens only for someone who may see the Lead.
+7. **Reschedule** (`LeadPolicy::rescheduleAppointment`): a manager where the
+   Lead is, or the salesperson whose appointment it is while the Lead is still
+   assigned to them. A Call Center Agent cannot (decision 88).
+8. **Record a cancellation** (`LeadPolicy::cancelAppointment`): anyone who may
+   book that Lead (decision 107), so a manager, a Call Center Agent, and the
+   Sales Consultant it is assigned to.
+9. **Move, send back, and "it should never have been booked"** are for a
+   manager only (`appointments.manage`). The last is checked at the Location
+   the Lead is leaving, before it moves. Someone else who moves, returns or
+   disqualifies a Lead that is with Sales may still do so under the existing
+   rules for those actions; the Lead then stays counted as issued.
+10. **Booking a Lead that is with Sales again:** with the salesperson it is
+    with, anyone who may book it; with a different one, a manager (decision
+    109). A Sales Consultant still books only for themselves.
+11. **Disqualifying a Lead while recording its cancellation** needs the same
+    right as disqualifying it by hand (`LeadPolicy::changeStatus`), checked
+    inside the cancellation.
+12. **Who is told a Lead came back from Sales:** anyone who may open the Lead,
+    on the Lead page and on the Call Queue card. It names the salesperson and
+    the manager's note, both of which those people could already read on the
+    Lead.
 
 ## Slice 4: the call queue and its settings
 

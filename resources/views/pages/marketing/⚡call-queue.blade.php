@@ -695,6 +695,8 @@ new #[Title('Call Queue')] class extends Component {
                 </div>
             </div>
 
+            <x-lead.sales-return :lead="$lead" data-test="card-sales-return" />
+
             <dl class="grid gap-x-5 gap-y-2 text-sm sm:grid-cols-2">
                 <div>
                     <dt class="text-zinc-500">{{ __('Location') }}</dt>

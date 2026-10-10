@@ -2,6 +2,7 @@
 
 namespace App\Actions\Leads;
 
+use App\Actions\Appointments\ReturnLeadFromSales;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Queue\EndQueueHold;
 use App\Enums\AssignmentEndReason;
@@ -20,13 +21,18 @@ class ReturnLeadToCentral
         private UnassignLead $unassignLead,
         private EndQueueHold $endQueueHold,
         private QueueTransaction $queueTransaction,
+        private ReturnLeadFromSales $returnLeadFromSales,
     ) {}
 
     /**
      * Send a routed Lead back to the central queue, unrouted, with the reason.
      *
      * Its assignee is cleared: the assignment belonged to the location it is
-     * leaving. Its status does not change. After this, only people who may see
+     * leaving. Its status does not change, with one exception: a Lead that is
+     * with Sales (its appointment has passed or was cancelled) goes back to
+     * Contact Center, exactly as one a manager sends back (decisions 101 and
+     * 112), and still counts as issued unless a manager says it should never
+     * have been booked (decision 110). After this, only people who may see
      * unrouted Leads can see it.
      *
      * Anyone holding the Lead from the call queue has that hold ended in the
@@ -39,13 +45,15 @@ class ReturnLeadToCentral
      * The caller is responsible for checking that the actor may return Leads from
      * this location.
      *
+     * @param  bool  $neverShouldHaveBeenBooked  For a Lead that is with Sales: it should never have been booked, so it stops counting as issued.
+     *
      * @throws ValidationException
      */
-    public function handle(Lead $lead, string $reason, ?User $actor = null): void
+    public function handle(Lead $lead, string $reason, ?User $actor = null, bool $neverShouldHaveBeenBooked = false): void
     {
         $this->queueTransaction->attempt(
-            function () use ($lead, $reason, $actor): void {
-                $this->returnToCentral($lead, $reason, $actor);
+            function () use ($lead, $reason, $actor, $neverShouldHaveBeenBooked): void {
+                $this->returnToCentral($lead, $reason, $actor, $neverShouldHaveBeenBooked);
             },
             function () use ($lead): void {
                 $lead->refresh();
@@ -56,7 +64,7 @@ class ReturnLeadToCentral
     /**
      * @throws ValidationException
      */
-    private function returnToCentral(Lead $lead, string $reason, ?User $actor): void
+    private function returnToCentral(Lead $lead, string $reason, ?User $actor, bool $neverShouldHaveBeenBooked): void
     {
         $origin = $lead->location;
 
@@ -84,13 +92,21 @@ class ReturnLeadToCentral
             ]);
         }
 
-        DB::transaction(function () use ($lead, $origin, $reason, $actor): void {
+        DB::transaction(function () use ($lead, $origin, $reason, $actor, $neverShouldHaveBeenBooked): void {
             // The Lead row is locked before anything else, with a write that
             // changes nothing: the order a queue claim relies on.
             DB::table('leads')->where('id', $lead->id)->update(['id' => DB::raw('id')]);
 
-            $this->unassignLead->handle($lead, AssignmentEndReason::LocationChanged, $actor);
+            // A Lead that is with Sales goes back to Contact Center when it
+            // leaves its Location. Whether it still counts as issued is
+            // settled where it is now, before it leaves.
+            $leavesSales = $lead->isWithSales();
+            $salesperson = $leavesSales ? $lead->assignee : null;
+            $stoppedCounting = $this->returnLeadFromSales->settleIssue($lead, $actor, $neverShouldHaveBeenBooked);
 
+            $this->unassignLead->handle($lead, $leavesSales ? AssignmentEndReason::ReturnedFromSales : AssignmentEndReason::LocationChanged, $actor);
+
+            $lead->lifecycle_version += $leavesSales ? 1 : 0;
             $lead->location_id = null;
             $lead->routed_at = null;
             $lead->save();
@@ -108,6 +124,10 @@ class ReturnLeadToCentral
             );
 
             $this->endQueueHold->forLead($lead, QueueHoldEndReason::Moved, $actor);
+
+            if ($leavesSales) {
+                $this->returnLeadFromSales->handle($lead, $actor, ReturnLeadFromSales::RETURNED_TO_CENTRAL, trim($reason), ! $stoppedCounting, $origin, $salesperson);
+            }
         });
     }
 }

@@ -6,6 +6,7 @@ use App\Enums\CadenceState;
 use App\Enums\LeadStatus;
 use App\Enums\Permission;
 use App\Enums\Role;
+use App\Models\Appointment;
 use App\Models\Lead;
 use App\Models\LeadCadence;
 use App\Models\Location;
@@ -210,14 +211,42 @@ class LeadPolicy
     }
 
     /**
-     * Determine whether the user can undo the Lead's appointment as "booked
-     * in error": a manager where the Lead is (rule 10, decision 88).
+     * Determine whether the user can do what the appointment rules keep for a
+     * manager where the Lead is (decision 88): undo an appointment as "booked
+     * in error", move it to another salesperson, send the Lead back to
+     * Contact Center, and say it should never have been booked.
      */
     public function manageAppointment(User $user, Lead $lead): bool
     {
         return $lead->location !== null
             && $this->view($user, $lead)
             && $user->hasPermissionAt(Permission::ManageAppointments, $lead->location);
+    }
+
+    /**
+     * Determine whether the user can give the Lead's appointment a new time
+     * (rulebook, rule 6): a manager where the Lead is, or the salesperson
+     * whose appointment it is, while the Lead is still theirs.
+     */
+    public function rescheduleAppointment(User $user, Lead $lead, Appointment $appointment): bool
+    {
+        if ($lead->location === null || $appointment->lead_id !== $lead->id || ! $this->view($user, $lead)) {
+            return false;
+        }
+
+        return $user->hasPermissionAt(Permission::ManageAppointments, $lead->location)
+            || ($appointment->salesperson_id === $user->id
+                && $lead->isAssignedTo($user)
+                && $user->holdsRoleAt(Role::SalesConsultant, $lead->location));
+    }
+
+    /**
+     * Determine whether the user can record that the Lead's appointment was
+     * cancelled: anyone who may book that Lead (decision 107).
+     */
+    public function cancelAppointment(User $user, Lead $lead): bool
+    {
+        return $this->bookAppointment($user, $lead);
     }
 
     /**

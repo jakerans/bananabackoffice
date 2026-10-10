@@ -2,6 +2,7 @@
 
 namespace App\Actions\Leads;
 
+use App\Actions\Appointments\StopCountingLeadAsIssued;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Queue\EndLeadCadence;
 use App\Enums\AssignmentEndReason;
@@ -24,6 +25,7 @@ class DisqualifyLead
         private RecordLeadStatusChange $recordLeadStatusChange,
         private UnassignLead $unassignLead,
         private EndLeadCadence $endLeadCadence,
+        private StopCountingLeadAsIssued $stopCountingLeadAsIssued,
     ) {}
 
     /**
@@ -42,101 +44,125 @@ class DisqualifyLead
      * it stands now, so recategorizing the reason later changes nothing that
      * already happened.
      *
+     * A Lead that is with Sales when it is disqualified (its appointment has
+     * passed or was cancelled) still counts as issued, unless a manager says
+     * it should never have been booked: then its issue is voided (decisions
+     * 100 and 110). One with an upcoming appointment is refused (decision 95).
+     *
      * The caller is responsible for checking that the person may do this, that
      * they may see the original Lead they name.
      *
      * @param  Lead|null  $duplicateOf  The Lead this one repeats, for the "duplicate" reason.
+     * @param  bool  $neverShouldHaveBeenBooked  For a Lead that is with Sales: it should never have been booked, so it stops counting as issued.
      *
      * @throws ValidationException
      */
-    public function handle(Lead $lead, LeadDisqualificationReason $reason, ?string $note, User $actor, ?Lead $duplicateOf = null, ?int $expectedVersion = null): void
+    public function handle(Lead $lead, LeadDisqualificationReason $reason, ?string $note, User $actor, ?Lead $duplicateOf = null, ?int $expectedVersion = null, bool $neverShouldHaveBeenBooked = false): void
     {
-        $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $reason, $note, $actor, $duplicateOf): bool {
-            $reason->refresh();
-
-            if (! $lead->isActive()) {
-                throw ValidationException::withMessages([
-                    'status' => __('This lead is already disqualified.'),
-                ]);
-            }
-
-            if ($lead->hasUpcomingAppointment()) {
-                throw ValidationException::withMessages([
-                    'status' => __('This lead has an upcoming appointment. Cancel or undo its appointment first.'),
-                ]);
-            }
-
-            if (! $reason->is_active) {
-                throw ValidationException::withMessages([
-                    'disqualificationReasonId' => __(':reason is no longer offered. Choose another.', ['reason' => $reason->name]),
-                ]);
-            }
-
-            $note = self::clean($note);
-            $duplicateOf = $reason->isDuplicate() ? $duplicateOf : null;
-
-            self::ensureExplained($reason, $note, $duplicateOf);
-            self::ensureOriginalIsUsable($lead, $duplicateOf);
-
-            if ($reason->isUnableToContact()) {
-                throw ValidationException::withMessages([
-                    'disqualificationReasonId' => __('Unable to Contact is historical only. Nonresponse is not a reason to disqualify a lead. Schedule a follow-up instead.'),
-                ]);
-            }
-
-            $from = $lead->status;
-            $assigneeId = $lead->assigned_user_id;
-            $assignee = $lead->assignee;
-            $before = array_filter(['status' => $from->value, 'follow_up_on' => $lead->follow_up_on?->toDateString(), 'assignee' => $assignee?->name]);
-
-            $this->unassignLead->handle($lead, AssignmentEndReason::LeadDisqualified, $actor);
-
-            $lead->forceFill([
-                'status' => LeadStatus::Disqualified,
-                'status_changed_at' => now(),
-                'last_disqualified_at' => now(),
-                'disqualified_by' => $actor->id,
-                'disqualification_reason_id' => $reason->id,
-                'disqualification_category' => $reason->category,
-                'disqualification_note' => $note,
-                'duplicate_of_lead_id' => $duplicateOf?->id,
-                'follow_up_on' => null,
-                'follow_up_note' => null,
-            ])->save();
-
-            $lead->setRelation('disqualificationReason', $reason);
-            $lead->setRelation('duplicateOf', $duplicateOf);
-
-            $this->endLeadCadence->forLead($lead, CadenceEndReason::Disqualified, $actor);
-
-            $this->recordLeadStatusChange->handle(
-                $lead,
-                LeadStatusEvent::Disqualified,
-                $from,
-                $actor,
-                $assigneeId,
-                reason: $reason,
-                duplicateOf: $duplicateOf,
-                note: $note,
-            );
-
-            $this->recordAuditEvent->handle(
-                AuditAction::LeadDisqualified,
-                $lead,
-                actor: $actor,
-                before: $before,
-                after: [
-                    'status' => LeadStatus::Disqualified->value,
-                    'reason' => $reason->name,
-                    'category' => $reason->category->value,
-                    'duplicate_of_lead_id' => $duplicateOf?->id,
-                ],
-                location: $lead->location,
-                reason: $note,
-            );
+        $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $reason, $note, $actor, $duplicateOf, $neverShouldHaveBeenBooked): bool {
+            $this->apply($lead, $reason, $note, $actor, $duplicateOf, $neverShouldHaveBeenBooked);
 
             return true;
         }, retryWhenBusy: true);
+    }
+
+    /**
+     * The disqualification itself, for a caller that has already claimed the
+     * Lead's lifecycle revision and is inside that transaction: handle() above,
+     * and a cancellation that also disqualifies the Lead (decision 108).
+     *
+     * @throws ValidationException
+     */
+    public function apply(Lead $lead, LeadDisqualificationReason $reason, ?string $note, User $actor, ?Lead $duplicateOf = null, bool $neverShouldHaveBeenBooked = false): void
+    {
+        $reason->refresh();
+
+        if (! $lead->isActive()) {
+            throw ValidationException::withMessages([
+                'status' => __('This lead is already disqualified.'),
+            ]);
+        }
+
+        if ($lead->hasUpcomingAppointment()) {
+            throw ValidationException::withMessages([
+                'status' => __('This lead has an upcoming appointment. Cancel or undo its appointment first.'),
+            ]);
+        }
+
+        if (! $reason->is_active) {
+            throw ValidationException::withMessages([
+                'disqualificationReasonId' => __(':reason is no longer offered. Choose another.', ['reason' => $reason->name]),
+            ]);
+        }
+
+        $note = self::clean($note);
+        $duplicateOf = $reason->isDuplicate() ? $duplicateOf : null;
+
+        self::ensureExplained($reason, $note, $duplicateOf);
+        self::ensureOriginalIsUsable($lead, $duplicateOf);
+
+        if ($reason->isUnableToContact()) {
+            throw ValidationException::withMessages([
+                'disqualificationReasonId' => __('Unable to Contact is historical only. Nonresponse is not a reason to disqualify a lead. Schedule a follow-up instead.'),
+            ]);
+        }
+
+        $from = $lead->status;
+        $assigneeId = $lead->assigned_user_id;
+        $assignee = $lead->assignee;
+        $wasWithSales = $lead->isWithSales();
+
+        // Settled before the Lead changes, on the Lead as the person found it.
+        $stoppedCounting = $wasWithSales && $neverShouldHaveBeenBooked && $this->stopCountingLeadAsIssued->handle($lead, $actor);
+        $before = array_filter(['status' => $from->value, 'follow_up_on' => $lead->follow_up_on?->toDateString(), 'assignee' => $assignee?->name]);
+
+        $this->unassignLead->handle($lead, AssignmentEndReason::LeadDisqualified, $actor);
+
+        $lead->forceFill([
+            'status' => LeadStatus::Disqualified,
+            'status_changed_at' => now(),
+            'last_disqualified_at' => now(),
+            'disqualified_by' => $actor->id,
+            'disqualification_reason_id' => $reason->id,
+            'disqualification_category' => $reason->category,
+            'disqualification_note' => $note,
+            'duplicate_of_lead_id' => $duplicateOf?->id,
+            'follow_up_on' => null,
+            'follow_up_note' => null,
+            'returned_from_sales_at' => null,
+        ])->save();
+
+        $lead->setRelation('disqualificationReason', $reason);
+        $lead->setRelation('duplicateOf', $duplicateOf);
+
+        $this->endLeadCadence->forLead($lead, CadenceEndReason::Disqualified, $actor);
+
+        $this->recordLeadStatusChange->handle(
+            $lead,
+            LeadStatusEvent::Disqualified,
+            $from,
+            $actor,
+            $assigneeId,
+            reason: $reason,
+            duplicateOf: $duplicateOf,
+            note: $note,
+        );
+
+        $this->recordAuditEvent->handle(
+            AuditAction::LeadDisqualified,
+            $lead,
+            actor: $actor,
+            before: $before,
+            after: [
+                'status' => LeadStatus::Disqualified->value,
+                'reason' => $reason->name,
+                'category' => $reason->category->value,
+                'duplicate_of_lead_id' => $duplicateOf?->id,
+                ...($wasWithSales ? ['counts_as_issued' => ! $stoppedCounting] : []),
+            ],
+            location: $lead->location,
+            reason: $note,
+        );
     }
 
     /**

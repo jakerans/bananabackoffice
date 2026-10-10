@@ -3,15 +3,18 @@
 namespace App\Models;
 
 use App\Enums\AppointmentState;
+use App\Enums\CancellationParty;
 use App\Enums\LeadStatus;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Database\Factories\AppointmentFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use LogicException;
@@ -45,6 +48,10 @@ use LogicException;
  * @property int|null $state_changed_by
  * @property string|null $state_changed_by_name
  * @property string|null $state_note
+ * @property CancellationParty|null $cancelled_by_party Who called it off, for a cancelled appointment.
+ * @property int|null $cancellation_reason_id
+ * @property string|null $cancellation_reason_name
+ * @property int|null $follows_appointment_id The appointment this one follows, when it was booked while the Lead was still with Sales.
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Lead $lead
@@ -53,6 +60,7 @@ use LogicException;
  * @property-read Property $property
  * @property-read User|null $salesperson
  * @property-read LeadIssue|null $issue
+ * @property-read Collection<int, AppointmentChange> $changes
  */
 class Appointment extends Model
 {
@@ -94,6 +102,7 @@ class Appointment extends Model
             'previous_status' => LeadStatus::class,
             'previous_in_queue' => 'boolean',
             'state_changed_at' => 'datetime',
+            'cancelled_by_party' => CancellationParty::class,
         ];
     }
 
@@ -145,6 +154,32 @@ class Appointment extends Model
     public function issue(): HasOne
     {
         return $this->hasOne(LeadIssue::class);
+    }
+
+    /**
+     * Every time it was rescheduled or moved to another salesperson, oldest
+     * first (rulebook, rules 6 and 7).
+     *
+     * @return HasMany<AppointmentChange, $this>
+     */
+    public function changes(): HasMany
+    {
+        return $this->hasMany(AppointmentChange::class)->orderBy('id');
+    }
+
+    /**
+     * Whether it was booked while the Lead was still with Sales: a rebooking
+     * after a cancellation, or another appointment after one had passed. Such
+     * a booking is not a new issue (decisions 99 and 113).
+     */
+    public function followsAnother(): bool
+    {
+        return $this->follows_appointment_id !== null;
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->state === AppointmentState::Cancelled;
     }
 
     /**

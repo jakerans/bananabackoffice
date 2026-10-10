@@ -94,6 +94,7 @@ use Illuminate\Support\Carbon;
  * @property-read Property|null $property
  * @property Carbon|null $first_issued_at When the Lead was first issued to Sales, among issues that still count.
  * @property Carbon|null $last_issued_at
+ * @property Carbon|null $returned_from_sales_at When it last came back from Sales to Contact Center; empty once booked again.
  * @property-read Collection<int, Appointment> $appointments
  */
 class Lead extends Model
@@ -120,6 +121,7 @@ class Lead extends Model
             'first_qualified_at' => 'datetime',
             'first_issued_at' => 'datetime',
             'last_issued_at' => 'datetime',
+            'returned_from_sales_at' => 'datetime',
             'follow_up_on' => 'date',
             'last_disqualified_at' => 'datetime',
             'disqualification_category' => DisqualificationCategory::class,
@@ -407,6 +409,24 @@ class Lead extends Model
     }
 
     /**
+     * Whether the Lead has been issued and is with Sales now: its appointment
+     * stands, has passed, or was cancelled and waits to be booked again.
+     */
+    public function isWithSales(): bool
+    {
+        return $this->status->isWithSales();
+    }
+
+    /**
+     * Whether the Lead came back from Sales to Contact Center and has not
+     * been booked again since (decision 114).
+     */
+    public function cameBackFromSales(): bool
+    {
+        return $this->returned_from_sales_at !== null;
+    }
+
+    /**
      * Whether the Lead has an appointment that stands and has not finished.
      * While it does, the Lead cannot be moved to another Location, returned
      * to central or disqualified (decision 95).
@@ -421,12 +441,15 @@ class Lead extends Model
      * (rulebook, rule 1): it must be Qualified, at a Location, and linked to a
      * customer with a property. An empty list means it may be booked.
      *
+     * A Lead that is already with Sales was Qualified when it was issued, so
+     * it may be booked again after a cancellation or a passed appointment.
+     *
      * @return list<string> Any of: qualified, location, customer, property.
      */
     public function bookingGaps(): array
     {
         return array_values(array_filter([
-            $this->status !== LeadStatus::Qualified ? 'qualified' : null,
+            $this->status !== LeadStatus::Qualified && ! $this->status->isWithSales() ? 'qualified' : null,
             $this->location_id === null ? 'location' : null,
             $this->account_id === null || $this->account?->isArchived() ? 'customer' : null,
             $this->property_id === null || $this->property?->isArchived() ? 'property' : null,

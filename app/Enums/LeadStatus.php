@@ -22,6 +22,9 @@ enum LeadStatus: string
     /** An appointment is saved with a salesperson: the Lead is issued to Sales. */
     case AppointmentBooked = 'appointment_booked';
 
+    /** Its appointment was cancelled; it is still with the salesperson, to be booked again. */
+    case AppointmentCancelled = 'appointment_cancelled';
+
     /** A deliberate manual callback. The stored value is retained for compatibility. */
     case Nurture = 'nurture';
 
@@ -35,6 +38,7 @@ enum LeadStatus: string
             self::Working => 'Working',
             self::Qualified => 'Qualified',
             self::AppointmentBooked => 'Appointment booked',
+            self::AppointmentCancelled => 'Appointment cancelled',
             self::Nurture => 'Deferred Follow-up',
             self::Disqualified => 'Disqualified',
         };
@@ -49,6 +53,16 @@ enum LeadStatus: string
     public function isActive(): bool
     {
         return $this !== self::Disqualified;
+    }
+
+    /**
+     * Whether a Lead in this status has been issued and is with Sales: its
+     * appointment stands, has passed, or was cancelled and waits to be booked
+     * again. Leaving this is "going back to Contact Center".
+     */
+    public function isWithSales(): bool
+    {
+        return $this === self::AppointmentBooked || $this === self::AppointmentCancelled;
     }
 
     /**

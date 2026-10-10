@@ -19,6 +19,9 @@ use Tests\Support\QueueProcesses;
 /** How far apart, in milliseconds, the two bookings of each round are started. */
 const BOOKING_STAGGER = [[0, 0], [0, 2], [2, 0], [0, 5], [5, 0], [0, 15], [15, 0], [0, 0]];
 
+/** The same, for a booking raced against a reschedule into the same time. */
+const RESCHEDULE_STAGGER = [[0, 0], [0, 3], [3, 0], [0, 0]];
+
 beforeEach(function () {
     $this->processes = QueueProcesses::start();
 });
@@ -89,6 +92,64 @@ test('two people booking the same salesperson into the same time at the same mom
 
     // No two standing appointments of the salesperson share any time.
     $spans = collect($state['appointments'])->sortBy('starts_at')->values();
+
+    foreach ($spans as $index => $span) {
+        if ($index > 0) {
+            expect($span['starts_at'] >= $spans[$index - 1]['ends_at'])->toBeTrue(json_encode([$spans[$index - 1], $span]));
+        }
+    }
+});
+
+test('a booking and a reschedule racing for the same time: one is saved and one is refused', function () {
+    $leads = [];
+
+    foreach (array_keys(RESCHEDULE_STAGGER) as $round) {
+        $leads[] = "held{$round}";
+        $leads[] = "new{$round}";
+    }
+
+    $made = $this->processes->run('setup-bookings', ['timezone' => 'America/New_York', 'salespeople' => ['sam'], 'leads' => $leads]);
+
+    expect(array_key_exists('error', $made))->toBeFalse(json_encode($made));
+
+    $common = ['salesperson' => $made['salespeople']['sam'], 'actor' => $made['owner'], 'minutes' => 90];
+
+    foreach (RESCHEDULE_STAGGER as $round => [$bookDelay, $rescheduleDelay]) {
+        // Each round has a day of its own. The appointment to be rescheduled starts out at 9:00 am, clear of the race.
+        $day = sprintf('2026-10-%02d', 12 + $round);
+
+        $held = $this->processes->run('book', $common + ['lead' => $made['leads']["held{$round}"], 'date' => $day, 'time' => '09:00']);
+
+        expect($held['status'] ?? null)->toBe('booked', "round {$round}: ".json_encode($held));
+
+        // One person books a new Lead at 3:00 pm while another moves the 9:00 am appointment to 3:30 pm.
+        $results = $this->processes->together([
+            ['book', $common + ['lead' => $made['leads']["new{$round}"], 'date' => $day, 'time' => '15:00', 'delay_ms' => $bookDelay]],
+            ['reschedule', $common + ['lead' => $made['leads']["held{$round}"], 'date' => $day, 'time' => '15:30', 'delay_ms' => $rescheduleDelay]],
+        ]);
+
+        foreach ($results as $result) {
+            expect(array_key_exists('error', $result))->toBeFalse("round {$round}: ".json_encode($result));
+        }
+
+        $statuses = array_column($results, 'status');
+        sort($statuses);
+
+        // Either the booking was saved and the reschedule refused, or the other way round. Never both.
+        expect(in_array($statuses, [['booked', 'refused'], ['refused', 'rescheduled']], true))->toBeTrue("round {$round}: ".json_encode($results));
+
+        $refused = collect($results)->firstWhere('status', 'refused');
+
+        expect($refused['fields'])->toBe(['appointmentTime'], json_encode($refused));
+        expect($refused['refusal'])->toContain('already has an appointment from');
+    }
+
+    $state = $this->processes->run('appointments', ['above' => $this->processes->baseline()]);
+
+    expect(array_key_exists('error', $state))->toBeFalse(json_encode($state));
+
+    // No two standing appointments of the salesperson share any time, whichever side won each round.
+    $spans = collect($state['appointments'])->where('state', 'booked')->sortBy('starts_at')->values();
 
     foreach ($spans as $index => $span) {
         if ($index > 0) {

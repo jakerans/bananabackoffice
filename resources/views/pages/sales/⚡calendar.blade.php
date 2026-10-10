@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\AppointmentState;
+use App\Enums\LeadStatus;
 use App\Enums\Permission;
 use App\Models\Appointment;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,9 +12,10 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 /**
- * Sales > Calendar (docs/slice-6-appointments-plan.md, step 6a): a plain list
- * of the appointments still to come. It is not a calendar and shows no free
- * time.
+ * Sales > Calendar (docs/slice-6-appointments-plan.md, steps 6a and 6b): a
+ * plain list of the appointments still to come, and under it the Leads whose
+ * appointment was cancelled and that still wait to be booked again. It is not
+ * a calendar and shows no free time.
  *
  * A manager sees every appointment at the Locations where they manage
  * appointments. Anyone else sees only their own, and only at a Location where
@@ -67,6 +70,39 @@ new #[Title('Calendar')] class extends Component {
             ->limit(self::LIMIT)
             ->get()
             ->groupBy(fn (Appointment $appointment): string => $appointment->starts_at->copy()->timezone($appointment->timezone)->format('l, F j, Y'));
+    }
+
+    /**
+     * The cancelled appointments of Leads that are still with their
+     * salesperson and not yet booked again (rulebook, rule 8), longest-waiting
+     * first. A manager sees every one at the Locations they manage; anyone
+     * else sees the Leads that are theirs.
+     *
+     * @return Collection<int, Appointment>
+     */
+    #[Computed]
+    public function toRebook(): Collection
+    {
+        $user = Auth::user();
+        $managed = $user->locationsWhere(Permission::ManageAppointments)->modelKeys();
+        $viewable = $user->locationsWhere(Permission::ViewLeads)->modelKeys();
+
+        return Appointment::query()
+            ->where('state', AppointmentState::Cancelled)
+            // Only the Lead's latest appointment: an earlier cancellation that was already booked again is history.
+            ->whereIn('id', Appointment::query()->selectRaw('max(id)')->groupBy('lead_id'))
+            ->whereHas('lead', function (Builder $lead) use ($user, $managed, $viewable): void {
+                $lead->where('status', LeadStatus::AppointmentCancelled)->where(function (Builder $visible) use ($user, $managed, $viewable): void {
+                    $visible
+                        ->whereIn('location_id', $managed)
+                        ->orWhere(fn (Builder $own) => $own->where('assigned_user_id', $user->id)->whereIn('location_id', $viewable));
+                });
+            })
+            ->with(['account', 'property', 'location'])
+            ->orderBy('state_changed_at')
+            ->orderBy('id')
+            ->limit(self::LIMIT)
+            ->get();
     }
 
     /**
@@ -132,5 +168,40 @@ new #[Title('Calendar')] class extends Component {
                 </ul>
             </div>
         @endforeach
+    @endif
+
+    @if ($this->toRebook->isNotEmpty())
+        <div class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-5" data-test="calendar-to-rebook">
+            <div>
+                <flux:heading size="lg" level="2">{{ __('To rebook') }}</flux:heading>
+                <flux:subheading>{{ __('Leads whose appointment was cancelled and that are waiting for a new one, longest-waiting first.') }}</flux:subheading>
+            </div>
+
+            <ul class="divide-y divide-zinc-200">
+                @foreach ($this->toRebook as $cancelled)
+                    <li wire:key="calendar-rebook-{{ $cancelled->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="calendar-rebook">
+                        <div class="min-w-0">
+                            <a href="{{ route('leads.show', $cancelled->lead_id) }}" wire:navigate class="font-semibold text-wall-teal underline">
+                                {{ $cancelled->account->display_name }}
+                            </a>
+                            <div class="text-sm text-zinc-700">{{ $cancelled->property->summary() }}</div>
+                            <div class="text-sm text-zinc-700" data-test="calendar-rebook-cancelled">
+                                {{ __('Cancelled') }}@if ($cancelled->state_changed_at !== null) <x-local-time :at="$cancelled->state_changed_at" />@endif
+                                @if ($cancelled->cancellation_reason_name !== null)
+                                    &middot; {{ $cancelled->cancellation_reason_name }}
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="text-right text-sm text-zinc-700">
+                            <div>{{ $cancelled->location->name }}</div>
+                            @if ($this->seesOthers)
+                                <div data-test="calendar-rebook-salesperson">{{ $cancelled->salesperson_name }}</div>
+                            @endif
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
     @endif
 </section>

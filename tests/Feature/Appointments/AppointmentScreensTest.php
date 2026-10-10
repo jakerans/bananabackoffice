@@ -32,11 +32,6 @@ beforeEach(function () {
     $this->sam = User::factory()->withRoleAt(Role::SalesConsultant, $this->lakeview)->create(['name' => 'Sam Sales']);
 });
 
-function appointmentCard(User $user, Lead $lead)
-{
-    return Livewire::actingAs($user)->test('pages::leads.appointment', ['lead' => $lead]);
-}
-
 /*
 |--------------------------------------------------------------------------
 | The Appointment card
