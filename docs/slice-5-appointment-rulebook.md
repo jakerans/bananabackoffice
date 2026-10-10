@@ -201,6 +201,7 @@ the policy itself is still `PENDING` in the architecture (5.5).
 | Customer cancels (rule 8) | Still counts as issued. |
 | Rebooked with the same salesperson after a cancellation | No new issued count (decision 99, 2026-10-10). |
 | Booked in error (rule 10) | Does not count as issued. |
+| Leaves Sales later (sent back, or disqualified) because it should never have been booked | Does not count as issued (decision 100, 2026-10-10). For any other reason it still counts. |
 | Salesperson picks a released Lead back up (rule 12) | No new issued count. |
 | Moved to a different salesperson (rule 7), or re-issued by the call center (rule 8) | Recorded with full history. **Which salesperson it counts for is open** (Sales Leadership). |
 
@@ -244,9 +245,12 @@ The slice 6 plan has since asked them. Answered so far: decisions 90 to 96
 (time zone, the in-app notice, the names, what the existing actions do while an
 appointment stands) and decisions 97 to 99 (a returned Lead is Qualified;
 Cancelled Appointments gets its own button; a rebooking with the same
-salesperson adds no count). Still open, in
+salesperson adds no count), and decisions 100 to 102 (a Lead that should never
+have been booked does not count as issued however it leaves Sales; a Lead with
+a cancelled appointment can still be moved, returned or disqualified; a passed
+appointment is not changed). Still open, in
 [slice-6-appointments-plan.md](slice-6-appointments-plan.md), questions 12 to
-18: who a returned Lead is assigned to, where it restarts in the cadence, and a
+22: among them who a returned Lead is assigned to, where it restarts in the cadence, and a
 cancellation that does not come from the customer.
 
 - **Which status a Lead shows, and who (if anyone) it is assigned to, after it

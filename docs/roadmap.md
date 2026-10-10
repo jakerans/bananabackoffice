@@ -74,7 +74,7 @@ the header and by email; Sales > Calendar lists upcoming appointments. Steps 6b
 and 6c are approved in order only: each is planned after the step before it is
 reviewed and still needs decisions of its own. **Step 6b (reschedule, move,
 cancel, send back) is planned in detail (2026-10-10) and is not approved:** it
-waits for Jacob's answers to the plan's questions 12 to 18. Decisions 97 to 99
+waits for Jacob's answers to the plan's questions 12 to 22. Decisions 97 to 102
 record his answers so far.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,

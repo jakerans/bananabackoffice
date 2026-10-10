@@ -2071,6 +2071,49 @@ Sales per Lead Issued), a second count "would actually negatively impact their
 NSLI, and we want to encourage them to get canceled bookings back on the
 calendar".
 
+## Slice 6 decisions on the step 6b plan's readings (100 to 102)
+
+Given by Jacob on 2026-10-10 in answer to the four readings the step 6b plan
+said it would build "unless Jacob says otherwise". Three are decided here. The
+fourth (whether sending a Lead back always cancels its upcoming appointment) he
+is still thinking about; it is question 20 in the plan. Nothing here approves a
+build.
+
+## 100. Whether a Lead that leaves Sales still counts as issued depends on the reason (2026-10-10)
+
+**Decided by Jacob.** This replaces the plan's reading "a Lead that is sent
+back still counts as issued". In his words: it "should only still count as
+issued if it was done for the correct reason. If it was disqualified because
+it should never have been booked in the first place, then it should not count
+as issued."
+
+So a Lead that should never have been booked does not count as issued, however
+it leaves the salesperson: sent back, or disqualified. Any other reason leaves
+it counted. How the person says which it is, and who may say it, is question
+19 in the plan. Rule 10 ("booked in error", manager-only and recorded) already
+takes an issue away for a standing appointment; this extends the same idea to a
+Lead leaving Sales later.
+
+## 101. A Lead with a cancelled appointment can still be moved, returned or disqualified (2026-10-10)
+
+**Decided by Jacob.** This reverses the plan's reading that such a Lead must be
+sent back first. A Lead whose appointment was cancelled can be moved to another
+Location, returned to central or disqualified. His example: it was cancelled
+because of the wrong service area and should have been at the other Location.
+
+Decision 95 is unchanged for a Lead whose appointment is still upcoming: cancel
+or undo it first. What a cancelled Lead looks like after a move or a return is
+question 21 in the plan.
+
+## 102. A passed appointment is not changed, provided a missed one has a clear way to be booked again (2026-10-10)
+
+**Decided by Jacob, with a condition.** An appointment whose time has passed
+cannot be rescheduled, moved or cancelled. He agreed to that on the condition
+that there is "a clear path" for the case he described: the appointment was
+missed and the customer messages in afterwards to set a new time. The path is
+question 22 in the plan. What happened at the passed appointment is still for
+the after-action report (decision 84).
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

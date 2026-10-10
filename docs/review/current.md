@@ -6,8 +6,9 @@ No secrets or customer information belong here.
 **Updated:** 2026-10-10 · **Branch:** `checkpoint-slice-6b-plan`
 
 **State:** a plan waiting for decisions. Slice 6, step 6b is planned in detail
-and **nothing of it is built or approved.** It needs Jacob's answers to seven
-questions, below. This branch holds documents only.
+and **nothing of it is built or approved.** It needs Jacob's answers to eleven
+questions, below: seven from the first version of the plan, which he has not
+answered yet, and four raised by his answers to its readings. This branch holds documents only.
 
 Step 6a is built, reviewed in the browser and **merged into `main` on
 2026-10-10** (`48adc42`) at Jacob's word. After that merge both GitHub jobs
@@ -36,6 +37,12 @@ Written into [../decisions.md](../decisions.md) on this branch:
 | 97 | A Lead that comes back to Contact Center shows Qualified. Who it is assigned to is not settled (question 12). |
 | 98 | Cancelled Appointments gets its own button on the Call Queue and is worked as hot Leads, beside new Leads. Built in step 6c. His message said "canceled deployments"; it is read as cancelled appointments. |
 | 99 | After a cancellation the Lead can be rebooked with the same salesperson, and that adds nothing to Leads Issued, so a salesperson's NSLI is not hurt by getting a cancelled booking back on the calendar. |
+| 100 | Whether a Lead that leaves Sales still counts as issued depends on the reason. One that should never have been booked does not count. |
+| 101 | A Lead whose appointment was cancelled can still be moved to another Location, returned to central or disqualified (his example: the wrong service area). |
+| 102 | A passed appointment is not changed, on the condition that a missed appointment has a clear way to be booked again. |
+
+Still with Jacob, in his words "I want to think about that": whether sending a
+Lead back should always cancel an upcoming appointment (question 20).
 
 ## The proposal, in short
 
@@ -46,8 +53,13 @@ Written into [../decisions.md](../decisions.md) on this branch:
 - **Cancel:** records who cancelled, a reason from a new Cancellation Reasons
   list on Lead & Sales Lists, and an optional note. The Lead stays with the
   salesperson and still counts as issued. It can be booked again.
-- **Send back to Contact Center:** a manager only, with a note. The Lead shows
+- **Send back to Contact Center:** a manager only, with a reason and a note.
+  The reason decides whether the Lead still counts as issued. The Lead shows
   Qualified and re-enters the call queue.
+- **A cancelled Lead** can also be moved to another Location, returned to
+  central or disqualified.
+- **After an appointment's time has passed** it cannot be changed; the card
+  offers "Book another appointment".
 - **Sales > Calendar** gains a second list, "To rebook".
 - **No new permission, no new package, nothing sent to a customer.** Two new
   tables (the history of changes, and the reasons list), one new appointment
@@ -58,7 +70,8 @@ Written into [../decisions.md](../decisions.md) on this branch:
 ## Decisions needed from Jacob
 
 Each has a recommendation, so "agreed to all" is an answer. They are questions
-12 to 18 in the plan, which gives the alternatives.
+12 to 22 in the plan, which gives the alternatives. 12 to 18 were asked before
+and are not answered yet; 19 to 22 are new.
 
 | # | Question | Recommended |
 | --- | --- | --- |
@@ -69,6 +82,10 @@ Each has a recommendation, so "agreed to all" is an answer. They are questions
 | 16 | Who may record a cancellation? | Anyone who may book that Lead: a manager, a Call Center Agent, and the salesperson whose appointment it is. |
 | 17 | What does the Cancellation Reasons list start with? The real reasons are still open with Sales Leadership. | One entry, "Other (see note)", so it works on its first day; Owner and Leadership add the real ones. Or Jacob gives a starting list. |
 | 18 | Rebooking with a different salesperson while the Lead is still with the first one. | A manager only, recorded as a move. An agent or the salesperson can rebook with the same salesperson only. |
+| 19 | How does a person say whether a Lead leaving Sales still counts as issued? | Send back (and disqualifying a Lead that is with Sales) asks one required question: "It should never have been booked" (no longer counts) or "Another reason" (still counts). Only a manager may give the first answer. |
+| 20 | Sending back a Lead whose appointment is still upcoming. | Keep two separate actions. "Move to another salesperson" keeps the appointment, for when it should still happen. "Send back" is for a Lead the call center must work again, so it cancels the appointment, and its dialog points to Move. |
+| 21 | What happens to a cancelled Lead that is moved to another Location or returned to central? | It leaves the salesperson and is treated exactly as a Lead sent back, with the same counting question. |
+| 22 | The path after a missed appointment. | Once the time has passed the card offers "Book another appointment": same salesperson by anyone who may book, a different one by a manager, no new issued count. Whether it was held or missed is not recorded until the after-action report. |
 
 Tradeoffs worth knowing:
 
@@ -83,19 +100,22 @@ Tradeoffs worth knowing:
 - **16.** Letting agents record a cancellation matches who answers the phone,
   and it lets an agent take a Lead off a salesperson's calendar. Every
   cancellation is recorded with who did it.
+- **19.** Two answers are quick and cannot be read two ways. They do not say
+  why a Lead came back beyond the manager's note; a named list of reasons
+  would, and can be added later without losing anything.
+- **20.** Keeping the actions apart means a salesperson who cannot make an
+  appointment has to tell a manager outside Backoffice. A request button would
+  close that gap and is a feature of its own.
+- **22.** "Book another appointment" gives the path without Backoffice claiming
+  to know whether the first one was held. A "Missed" mark would be more
+  informative and starts appointment outcomes early.
 
 ## Readings the plan makes
 
-Built this way unless Jacob says otherwise; listed in the plan under "Readings
-this plan makes":
-
-- A Lead that is sent back still counts as issued. Only "booked in error" takes
-  an issue away.
-- Sending back cancels an upcoming appointment in the same step.
-- A Lead that is Appointment cancelled cannot be moved to another Location,
-  returned to central or disqualified until it is sent back.
-- An appointment whose time has passed can no longer be rescheduled, moved or
-  cancelled.
+The first version listed four. Jacob answered them: three are decisions 100 to
+102 and one is question 20. One small reading is left, built this way unless
+Jacob says otherwise: a reschedule or a move to a time already past is refused,
+as a booking is.
 
 ## Tests and checks
 
