@@ -165,8 +165,10 @@ another location has dealt with. Staff are told so without being shown who.
 - **The device timezone is display only:** formatted in the browser from a
   server-rendered ISO timestamp, never sent to or read by the server.
 - A busy database on the page's own saves is answered with "try again"; the
-  MySQL lock-order follow-up from 4b is still open. Jacob approved fixing it as
-  its own job on 2026-10-09 (decision 87); it is not built yet.
+  MySQL lock-order follow-up from 4b was fixed on 2026-10-09 (decision 87): the
+  actions that also end a hold or a cadence now run again from the start on a
+  deadlock, with their records read again first, so a retry cannot act on what
+  a rolled-back try left in memory.
 - Every dialog is the shared Flux confirmation pattern; no native dialog.
 
 ### Call queue engine (added 2026-10-09, slice 4 step 4b)

@@ -11,6 +11,7 @@ use App\Models\Lead;
 use App\Models\Location;
 use App\Models\User;
 use App\Support\Addresses\StructuredAddress;
+use App\Support\Queue\QueueTransaction;
 use App\Support\ServiceAreas\ServiceAreaResolver;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -22,6 +23,7 @@ class RouteLead
         private UnassignLead $unassignLead,
         private EndQueueHold $endQueueHold,
         private ServiceAreaResolver $serviceAreas,
+        private QueueTransaction $queueTransaction,
     ) {}
 
     /**
@@ -40,6 +42,10 @@ class RouteLead
      * A transfer needs a reason. The location the Lead's address suggested, from
      * its service area, is recorded beside the one chosen.
      *
+     * If the database reports a deadlock or says it is busy, the Lead and the
+     * destination are read again and the whole move is tried again, checks
+     * included (decision 87).
+     *
      * The caller is responsible for checking that the actor may route this Lead
      * to this destination.
      *
@@ -48,6 +54,23 @@ class RouteLead
     public function handle(Lead $lead, Location $destination, ?string $reason = null, ?User $actor = null): void
     {
         $reason = trim((string) $reason) === '' ? null : trim((string) $reason);
+
+        $this->queueTransaction->attempt(
+            function () use ($lead, $destination, $reason, $actor): void {
+                $this->route($lead, $destination, $reason, $actor);
+            },
+            function () use ($lead, $destination): void {
+                $lead->refresh();
+                $destination->refresh();
+            },
+        );
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function route(Lead $lead, Location $destination, ?string $reason, ?User $actor): void
+    {
         $origin = $lead->location;
 
         if (! $lead->isActive()) {

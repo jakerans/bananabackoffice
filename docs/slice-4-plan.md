@@ -317,8 +317,24 @@ it is still saved (failure contract).
 
 Because every path takes its locks in the same order, these waits do not form a
 cycle. If the database reports a deadlock anyway, the claim's transaction is
-retried. (Wording corrected for job #12: today only the claim retries. The
-hooked actions do not yet; see "Known limits and recorded follow-ups".)
+retried. **Since decision 87 (built 2026-10-09) so are the actions in the table
+above:** `RouteLead`, `ReturnLeadToCentral`, `DisqualifyLead`,
+`MoveLeadToNurture`, `RecordManualContactAttempt`, `RevokeAccess`,
+`DeactivateStaffMember` and `DeactivateLocation` read their records again and
+run from the start, checks included, up to three more times
+(`QueueTransaction::attempt`). Two notes on that:
+
+- One pair cannot share an order. `DeactivateLocation` takes the Location row
+  and then a Lead row; a claim takes the Lead row and then its Location row.
+  That pair relies on the retry.
+- An action that is called inside someone else's transaction is not run again.
+  A deadlock has undone that outer transaction as well, so its owner decides.
+
+Every hook that ends a hold now takes the Lead row before the cadence row, as
+the claim does: `EndQueueHold::forStaffMember` (step 4b), and since decision 87
+`EndQueueHold::atLocation` and the timer's release of a hold that ran out
+(`RunQueueTick::releaseExpiredHold`). Writing the history entry needs the Lead
+row, so taking it only after the cadence row could deadlock with a claim.
 
 Why the update itself is safe on both engines: an `UPDATE` always reads the
 latest committed row and holds the row lock (MySQL InnoDB) or the single write
@@ -374,6 +390,7 @@ is offered it at once.
 | A tick fails partway | Each part and each Lead is handled on its own and is safe to repeat. The failure is logged without customer details and the next tick tries again. The overlap lock frees itself after five minutes. |
 | The timer stops altogether | The queue keeps working. The manager summary warns once the heartbeat is more than 10 minutes old, or has never been written. |
 | Deadlock or "database is locked" during a claim | The transaction is retried, up to three times, then reported as "try again". |
+| Deadlock or "database is locked" during an action that also ends a hold or a cadence: a move, a return to central, a disqualification, a Deferred Follow-up, a logged attempt, access removed, a person or a Location deactivated (decision 87) | The records are read again and the whole action is run again from the start, up to three times. Everything is saved once or not at all. After that the error is passed on. |
 
 ## Data model
 
@@ -947,9 +964,13 @@ staging only. Production does not exist and nothing here authorizes it.
   conversation is logged as a connected attempt.
 - Queue events and the cadence state are append-only or guarded in the
   application, not by the database, like audit events (security-notes.md).
-- On MySQL, two staff actions on the same hold within the same few milliseconds
-  can end in a deadlock error for one of them; nothing is half-saved and the
-  person presses again. The fix (the Lead-before-cadence lock order in
-  `EndQueueHold::atLocation` and `RunQueueTick::releaseExpiredHold`, and a retry
-  around the hooked actions) was not part of step 4c. **Jacob approved it as
-  its own job on 2026-10-09 (decision 87). It is not built yet.**
+- **Closed by decision 87 (built 2026-10-09):** on MySQL, two staff actions on
+  the same hold within the same few milliseconds could end in a deadlock error
+  for one of them. The Lead-before-cadence lock order is now used in
+  `EndQueueHold::atLocation` and `RunQueueTick::releaseExpiredHold`, and the
+  hooked actions run again from the start (contract 5, "Locks").
+- Still not retried, on purpose: the timer's own work (it logs the failure and
+  its next run tries again), Skip and Put back in queue (the page answers "try
+  again"), and capturing a new Lead. The other lifecycle changes (qualify,
+  reopen, start working, return to working, correct a disqualification) do not
+  touch the queue and are not retried either.

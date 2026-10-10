@@ -9,12 +9,12 @@ is written and merged (2026-10-09). Slice 4 was built in three steps: 4a (locati
 timezones and the Contact Center settings), 4b (the scheduling engine and the
 atomic due queue) and 4c (the Call Queue screen and manager tools). Both GitHub
 jobs passed on the `main` commit that holds all of it, and staging deployed that
-commit. The staging scheduler is on. Still owed for 4c: Jacob's browser review
-and the two-person test (see "Slice 4 boundary" below).** Its plan is
+commit. The staging scheduler is on. The browser review of 4c was done on
+2026-10-09 (see "Slice 4 boundary" below).** Its plan is
 [slice-4-plan.md](slice-4-plan.md). The B1–B7 record and older unbuilt plan are in
-[checkpoint-b.md](checkpoint-b.md). Jacob approved the five-slice order. **One
-job is approved and not yet built: the MySQL deadlock fix (decision 87). One
-change is decided and not yet planned: the switch that lets Call Center Agents
+[checkpoint-b.md](checkpoint-b.md). Jacob approved the five-slice order. **The
+MySQL deadlock fix is built (decision 87, 2026-10-09). One change is approved
+and not yet built: the switch, one for each Call Center Agent, that lets them
 see the Call Queue's manager part (decision 85).** Nothing else after slice 5's
 rulebook is planned or authorized, and every later slice still stops for owner
 review.
@@ -125,12 +125,20 @@ minute later. The record is in "The server's scheduler on staging" in the plan.
 Decided by Jacob on 2026-10-09, after the 4c handoff:
 
 - **Call Center Agents are to see the Call Queue's manager part only when
-  Leadership switches it on** (decision 85). Decided, not planned and not
-  built: until it is, agents see the manager part as 4c built it. Its open
-  questions are in [review/current.md](review/current.md).
+  Leadership switches it on** (decision 85): one switch for each agent,
+  starting off, changed by Owner and Leadership on the Contact Center settings
+  page, covering the manager part of both the Call Queue page and the Lead
+  page. Approved, not built: until it is, agents see the manager part as 4c
+  built it.
 - **Skip after calling hours close stays as built** (decision 86).
-- **The MySQL deadlock fix is approved as its own job** (decision 87). Not
-  built yet.
+- **The MySQL deadlock fix is built** (decision 87, 2026-10-09): the Lead row
+  is locked before the cadence row wherever a hold is ended, and the actions
+  that also end a hold or a cadence run again from the start when the database
+  reports a deadlock.
+- **Jacob's browser review of 4c was done on 2026-10-09** on the local site, by
+  the implementation agent at his request. The queue works as designed; three
+  display faults were found and are listed in
+  [review/current.md](review/current.md).
 
 Known follow-ups recorded with this slice, none of them authorized:
 

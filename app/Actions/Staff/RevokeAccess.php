@@ -9,6 +9,7 @@ use App\Enums\AuditAction;
 use App\Enums\Role;
 use App\Models\AccessGrant;
 use App\Models\User;
+use App\Support\Queue\QueueTransaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -18,6 +19,7 @@ class RevokeAccess
         private RecordAuditEvent $recordAuditEvent,
         private ReleaseUnworkableAssignments $releaseUnworkableAssignments,
         private EndQueueHold $endQueueHold,
+        private QueueTransaction $queueTransaction,
     ) {}
 
     /**
@@ -28,9 +30,30 @@ class RevokeAccess
      * and a Lead they hold from the call queue and can no longer work is taken
      * back at once.
      *
+     * If the database reports a deadlock or says it is busy, the person and
+     * the grant are read again and the whole removal is tried again, checks
+     * included (decision 87).
+     *
      * @throws ValidationException
      */
     public function handle(AccessGrant $grant): void
+    {
+        $this->queueTransaction->attempt(
+            function () use ($grant): void {
+                $this->revoke($grant);
+            },
+            function () use ($grant): void {
+                // The failed try deleted the grant in memory only.
+                $grant->exists = AccessGrant::query()->whereKey($grant->getKey())->exists();
+                $grant->user->refresh();
+            },
+        );
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function revoke(AccessGrant $grant): void
     {
         $staff = $grant->user;
 

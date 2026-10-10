@@ -7,6 +7,7 @@ use App\Actions\Leads\ReleaseUnworkableAssignments;
 use App\Actions\Queue\EndQueueHold;
 use App\Enums\AuditAction;
 use App\Models\User;
+use App\Support\Queue\QueueTransaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -18,6 +19,7 @@ class DeactivateStaffMember
         private RecordAuditEvent $recordAuditEvent,
         private ReleaseUnworkableAssignments $releaseUnworkableAssignments,
         private EndQueueHold $endQueueHold,
+        private QueueTransaction $queueTransaction,
     ) {}
 
     /**
@@ -30,9 +32,28 @@ class DeactivateStaffMember
      * give those back. A Lead they hold from the call queue is taken back at
      * once.
      *
+     * If the database reports a deadlock or says it is busy, the person is
+     * read again and the whole deactivation is tried again, checks included
+     * (decision 87).
+     *
      * @throws ValidationException
      */
     public function handle(User $staff): void
+    {
+        $this->queueTransaction->attempt(
+            function () use ($staff): void {
+                $this->deactivate($staff);
+            },
+            function () use ($staff): void {
+                $staff->refresh();
+            },
+        );
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function deactivate(User $staff): void
     {
         if ($staff->isUsableOwner() && User::query()->usableOwners()->count() <= 1) {
             throw ValidationException::withMessages([

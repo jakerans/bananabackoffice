@@ -1869,17 +1869,24 @@ there", which includes agents, and step 4c was built that way. **Until the
 switch is built, the screen stays as built: agents see the manager part at
 their own Locations.** Owner, Leadership and Location Manager are unaffected.
 
-Not decided, and not to be assumed. The build plan brings these to Jacob:
+Jacob answered the open questions later the same day (2026-10-09):
 
-- whether it is one switch for every agent, one for each Location, or one for
-  each agent;
-- whether it starts off or on;
-- who may change it: "Leadership" is read as the people who already manage the
-  Contact Center settings (Owner and Leadership), to be confirmed;
-- exactly what it covers: the summary, the timer warning, the cadence-finished
-  list and Put back in queue on the Call Queue page, and whether also the
-  cadence panel, queue history and Put back in queue on the Lead page;
-- whether changing it is recorded as an audit event.
+- **One switch for each agent.** Leadership allows the manager part person by
+  person, not for all agents at once and not by Location.
+- **It starts off.** An agent sees the manager part only after someone switches
+  it on for them. When the switch is built, agents who see it today stop seeing
+  it until then.
+- **Owner and Leadership may change it:** the people who already manage the
+  Contact Center settings, on that settings page. Each change is recorded in
+  the audit history.
+- **It covers both places:** on the Call Queue page the summary, the timer
+  warning, the cadence-finished list and Put back in queue; and on the Lead
+  page the "Call queue" panel, the queue history and Put back in queue. Jacob
+  left the exact coverage to the builder, who chose both so that an agent does
+  not keep a manager tool through the Lead page.
+
+With these answers the switch is approved to build ("you build everything",
+2026-10-09). It is not built yet.
 
 ## 86. Skip after calling hours close stays as built (2026-10-09)
 
@@ -1901,6 +1908,19 @@ the hooked actions when the database reports a deadlock, as the claim already
 does. No rule, screen, table, permission or audit event changes. It follows the
 usual workflow: built on its own branch, proved on MySQL 8.4, reported, and
 stopped for review.
+
+**Built on 2026-10-09.** What was built, and what it deliberately leaves alone,
+is in [slice-4-plan.md](slice-4-plan.md), contract 5 ("Locks") and "Known limits
+and recorded follow-ups". Two things were learned while building it:
+
+- Putting the Lead before the cadence removes the Lead-and-cadence deadlock,
+  but one pair cannot share an order: deactivating a Location takes the
+  Location row and then a Lead row, and a claim takes them the other way round.
+  That pair relies on the retry.
+- The existing test check "no process may end in an error" in the
+  real-process queue tests never failed on an error, because of how the test
+  library's key check was called. It is corrected, so those tests now enforce
+  what they say.
 
 ## 88. "A manager" in the appointment rulebook (2026-10-09)
 

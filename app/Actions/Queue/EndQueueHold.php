@@ -136,11 +136,21 @@ class EndQueueHold
      */
     public function atLocation(Location $location, ?User $actor = null): int
     {
-        $held = LeadCadence::query()
+        $heldThere = fn () => LeadCadence::query()
             ->whereNotNull('held_by_user_id')
-            ->whereIn('lead_id', Lead::query()->select('id')->where('location_id', $location->id))
-            ->lockForUpdate()
-            ->get();
+            ->whereIn('lead_id', Lead::query()->select('id')->where('location_id', $location->id));
+
+        // The Lead rows are locked before their cadence rows, as the claim
+        // does it, for the reason given in forStaffMember(). This first read
+        // is only a hint about which Leads: the locking read below finds the
+        // holds.
+        $heldLeadIds = $heldThere()->orderBy('lead_id')->pluck('lead_id');
+
+        if ($heldLeadIds->isNotEmpty()) {
+            Lead::query()->whereKey($heldLeadIds)->orderBy('id')->lockForUpdate()->get();
+        }
+
+        $held = $heldThere()->lockForUpdate()->get();
 
         $ended = 0;
 

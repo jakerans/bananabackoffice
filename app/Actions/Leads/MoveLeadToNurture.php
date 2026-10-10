@@ -107,7 +107,7 @@ class MoveLeadToNurture
             );
 
             return true;
-        });
+        }, retryWhenBusy: true);
     }
 
     /**
