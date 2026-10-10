@@ -3,12 +3,20 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-10 · **Branch:** `checkpoint-slice-6a-appointment-booking`
+**Updated:** 2026-10-10 · **Branch:** `main`
 
-**State:** slice 6, step 6a is built and waits for Jacob's review and his word
-to merge. It is on top of the plan branch (`checkpoint-slice-6-appointments-plan`,
-also not merged), so merging this branch brings the plan, decisions 90 to 96 and
-the build together. `main` and staging have none of it.
+**State:** slice 6, step 6a is built, reviewed in the browser and **merged into
+`main` on 2026-10-10** at Jacob's word ("Do the browser review yourself, and
+then merge it"). The merge (`48adc42`) brought the plan, decisions 90 to 96 and
+the build together. Nothing waits for review. **Step 6b is not started: it
+needs Jacob's answers to decisions 8 to 11 in the plan before it can be
+planned.**
+
+After the merge: both GitHub jobs passed on `48adc42` (SQLite, and MySQL 8.4);
+staging deployed it; on staging the `appointments`, `lead_issues` and
+`notifications` tables and the two new Lead columns exist, no migration is
+pending, the new tables are empty, and the call-queue timer was still ticking.
+Nobody has opened the staging pages in a browser.
 
 Jacob approved the plan and all seven of its recommendations on 2026-10-10
 ("Agreed to all"); they are decisions 90 to 96. Steps 6b and 6c are not started.

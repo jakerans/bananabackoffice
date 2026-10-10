@@ -1,7 +1,7 @@
 # Slice 6 — Appointment Booking: Proposed Plan
 
 Status: **the three steps are approved in order (2026-10-10, decisions 90 to
-96). Step 6a is built (2026-10-10); see "Step 6a as built" below.** Steps 6b
+96). Step 6a is built and merged into `main` (2026-10-10); see "Step 6a as built" below.** Steps 6b
 and 6c are not planned in detail and still need decisions 8 to 11 below. It follows the rulebook in
 [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75
 to 84, 88 and 89). Where the rulebook is silent this plan asks; an answer
