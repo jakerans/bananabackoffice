@@ -377,3 +377,17 @@ test('"booked in error" on a rebooking puts the lead back as cancelled and leave
     expect(LeadIssue::query()->counted()->count())->toBe(1);
     expect($lead->first_issued_at)->not->toBeNull();
 });
+
+test('the cancelled status fits everywhere a lead status is kept', function () {
+    cancelAppointment($this->lead, $this->agent);
+
+    // A contact attempt keeps a copy of the status. The column was once too short for this one on MySQL.
+    $attempt = logAttempt($this->lead->fresh(), $this->sam);
+
+    expect($attempt->fresh()->lead_status)->toBe(LeadStatus::AppointmentCancelled);
+    expect(LeadStatusChange::query()->where('to_status', LeadStatus::AppointmentCancelled)->count())->toBe(1);
+
+    bookAppointment($this->lead->fresh(), $this->sam, $this->agent, '2026-10-12', '10:00');
+
+    expect(LeadStatusChange::query()->where('from_status', LeadStatus::AppointmentCancelled)->count())->toBe(1);
+});

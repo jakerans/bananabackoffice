@@ -360,7 +360,11 @@ of the code should know:
   Lead, inside the cancellation's transaction. A duplicate cannot be recorded
   that way, because it needs its original named.
 - **Tables:** `appointment_changes`, `appointment_cancellation_reasons`, four
-  columns on `appointments` and one on `leads`. Four migrations.
+  columns on `appointments` and one on `leads`. A fifth migration widens the
+  three columns that keep a copy of a Lead's status
+  (`lead_status_changes.from_status` and `to_status`,
+  `contact_attempts.lead_status`) from twenty characters to forty: the new
+  status is twenty-one, which MySQL refused and SQLite did not notice.
 - **The screens:** the Appointment card (`pages/leads/⚡appointment.blade.php`)
   holds the new dialogs. The Lead page re-reads the card whenever it changes
   the Lead itself. Two small shared pieces: `components/lead/sales-return`

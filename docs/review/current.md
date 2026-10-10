@@ -64,7 +64,8 @@ All on the Lead page's Appointment card unless it says otherwise.
   a new time or a newly given appointment. Nothing carries customer details.
 - **New in the database:** `appointment_changes`,
   `appointment_cancellation_reasons`, four columns on `appointments` and one
-  on `leads`. Four migrations.
+  on `leads`. Three existing columns that keep a copy of a Lead's status are
+  made wider. Five migrations.
 - **No new permission, no role change, no new package, nothing sent to a
   customer.**
 - **New audit events:** `lead.appointment_rescheduled`,
@@ -76,7 +77,7 @@ All on the Lead page's Appointment card unless it says otherwise.
 | Check | Result |
 | --- | --- |
 | `composer test` on the Windows development machine (style, static analysis, every test) | **Passed:** 2,237 tests (2,236 passed, 1 skipped, 11,395 assertions) in 455 seconds. The skipped test is the device-time formatter, which cannot find Node on Windows. An earlier full run ended without printing any test results while the local web server was down; it was run again from the start and that is the result given here. |
-| GitHub "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)" | Reported with the branch; not recorded here. The MySQL job is the one that shows the four migrations apply there and that the races below are decided correctly on MySQL. |
+| GitHub "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)" | Reported with the branch; not recorded here. The MySQL job is the one that shows the five migrations apply there and that the races below are decided correctly on MySQL. **Its first run on this branch failed** on the column length described under "Found while building"; the fix was pushed after it. |
 | Browser | **Done on 2026-10-10 by the implementation agent: every step passed**, after two faults it found were fixed. Results are under "Browser review" below. |
 | Merge, staging | **Not done.** |
 
@@ -85,7 +86,7 @@ New tests, in `tests/Feature/Appointments/`:
 | File | What it shows |
 | --- | --- |
 | `RescheduleAndMoveTest.php` (27) | A reschedule keeps the salesperson, the issue and the old time; who may reschedule, as a matrix of seven people; it is checked like a booking; it may overlap its own old time and nothing else; the salesperson is told only when someone else did it, with no customer details. A move hands over the appointment and the Lead and keeps both people; only a manager; the new person must have access, be someone else and be free; a manager gives an appointment a salesperson again after its own lost access; a failure part-way saves nothing. |
-| `CancelAndRebookTest.php` (32) | The starting reasons; the cancelled record with who, why and the note; the Lead stays and still counts; all three "who cancelled"; the time is freed; who may record one, as a matrix of seven people; seven things a cancellation refuses; "Other" answered no and yes; only a manager can take the issue away while disqualifying. Booking again with the same salesperson writes no issue; a different salesperson needs a manager; a Lead with no salesperson waits for a manager; another appointment after one has passed; "booked in error" on a rebooking. |
+| `CancelAndRebookTest.php` (33) | The starting reasons; the cancelled record with who, why and the note; the Lead stays and still counts; all three "who cancelled"; the time is freed; who may record one, as a matrix of seven people; seven things a cancellation refuses; "Other" answered no and yes; only a manager can take the issue away while disqualifying. Booking again with the same salesperson writes no issue; a different salesperson needs a manager; a Lead with no salesperson waits for a manager; another appointment after one has passed; "booked in error" on a rebooking. |
 | `ReturnFromSalesTest.php` (27) | Send back: Qualified, nobody, in the queue from attempt 1 as a new cycle, appointment cancelled, issue kept or voided by the answer; only a manager; what it refuses; a Lead with no cadence. The call queue hands a returned Lead out after Leads nobody has called. What the call center is told in each of three cases. Moving, returning and disqualifying a Lead that is with Sales, with and without "never booked", and refused for someone who is not a manager with nothing moved. |
 | `AppointmentChangeScreensTest.php` (24) | Which buttons each of three people is offered; each opener refuses people who may not use it; every dialog's refusals at their fields; only people the page offered can be chosen; an agent's sent "never booked" is not believed; the notice on the Call Queue card; the counting question on the Lead page; the Calendar's "To rebook" list and who sees it; the new list on Lead & Sales Lists. |
 | `BookingConcurrencyTest.php` (+1) | Real separate processes: one person books a time while another reschedules a different appointment of the same salesperson into it, four times. Each time exactly one is saved. |
@@ -111,6 +112,12 @@ Existing tests that changed, none weakened or removed:
 - **An answered question still showed its earlier refusal** in the Cancel
   dialog. Found by the browser review. A field's refusal is now cleared when
   the field is changed.
+- **The new status did not fit three columns on MySQL.** Found by the GitHub
+  MySQL job on the first push, which failed; SQLite does not check a column's
+  length, so every local test had passed. `lead_status_changes.from_status`
+  and `to_status` and `contact_attempts.lead_status` held twenty characters
+  and "appointment_cancelled" is twenty-one. A fifth migration widens them to
+  forty, and a test now stores the status in each.
 - **The local web server (Herd) had stopped** part-way through the work. It
   was started again for the browser review. Nothing in the application caused
   it as far as could be seen.

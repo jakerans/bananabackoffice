@@ -195,6 +195,9 @@ another location has dealt with. Staff are told so without being shown who.
 - **Nothing is half-saved.** Each change, its history, its audit event and its
   notice are one transaction; a cancellation that also disqualifies the Lead
   is one transaction too.
+- **A reminder from this step:** SQLite does not enforce a text column's
+  length and MySQL does. A new status, reason or event name must fit every
+  column that stores a copy of it; only the MySQL job shows when it does not.
 - **Open:** a salesperson who cannot make an appointment has no way inside
   Backoffice to ask a manager to move it (decision 111). A Lead that came back
   and is booked again can carry two counted issues until Sales Leadership
