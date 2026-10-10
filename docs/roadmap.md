@@ -9,12 +9,15 @@ is written and merged (2026-10-09). Slice 4 was built in three steps: 4a (locati
 timezones and the Contact Center settings), 4b (the scheduling engine and the
 atomic due queue) and 4c (the Call Queue screen and manager tools). Both GitHub
 jobs passed on the `main` commit that holds all of it, and staging deployed that
-commit. Still owed for 4c: Jacob's browser review, the two-person test and
-turning on the staging scheduler (see "Slice 4 boundary" below).** Its plan is
+commit. The staging scheduler is on. Still owed for 4c: Jacob's browser review
+and the two-person test (see "Slice 4 boundary" below).** Its plan is
 [slice-4-plan.md](slice-4-plan.md). The B1–B7 record and older unbuilt plan are in
-[checkpoint-b.md](checkpoint-b.md). Jacob approved the five-slice order. Nothing
-after slice 5's rulebook is planned or authorized, and every later slice still
-stops for owner review.
+[checkpoint-b.md](checkpoint-b.md). Jacob approved the five-slice order. **One
+job is approved and not yet built: the MySQL deadlock fix (decision 87). One
+change is decided and not yet planned: the switch that lets Call Center Agents
+see the Call Queue's manager part (decision 85).** Nothing else after slice 5's
+rulebook is planned or authorized, and every later slice still stops for owner
+review.
 
 **Steps B1 to B7 are approved and merged into `main` (2026-10-07).** B1 to B6
 were deployed to staging on 2026-10-06; the automatic staging deployment caused
@@ -59,7 +62,7 @@ received that approval.
 | 2 | Shared Customer Activity and unified Notes | **LOCKED:** shared records, context/provenance/history-preserving Notes, and Activity made from major business events rather than every audit event. | **Approved, built, verified and merged into `main` (2026-10-07).** Reuses existing customer, Lead note and curated audit evidence; every related Lead, note and event location remains permission-scoped, and no raw audit payload or sensitive finance field is rendered. |
 | 3 | Contact-attempt evidence foundation | **LOCKED:** each attempt is durable evidence with actor, channel, time and outcome; suspicious patterns go to manager review, with no automated punishment. **PENDING:** provider choice. | **Approved, built, verified and merged into `main` (2026-10-08).** Manual records are explicitly not provider-verified, preserve current actor/location/contact/lifecycle evidence, and cannot change lifecycle state. No provider selection, cadence enforcement or personnel policy is introduced. |
 | 4 | Scheduled work and atomic due queue | **LOCKED:** due work is atomically claimed and manual Deferred Follow-up remains a distinct existing callback workflow; scope, exits, order, holds and failure rules (decisions 65, 67, 70, 71). **CONFIGURABLE:** cadence, calling hours and days, hold length (decisions 66, 69, 70). The scheduler, timezone, retry and failure contracts are **decided** (decisions 68, 71 and 73) and specified in [slice-4-plan.md](slice-4-plan.md). | **Approved for implementation (2026-10-08, decision 65), built and merged into `main` (2026-10-09): 4a, 4b and 4c. Jacob's browser review of 4c is still owed.** Three reviewed steps: 4a settings and timezones, 4b engine, 4c queue screen. No dialer, provider, outbound message, popup, snooze tray, Aged Leads, AI or penalties. B7 follow-ups are not reinterpreted as automated nurture. |
-| 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales, under the fourteen rules in [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75 to 83), including: a Project is created when the sale is Won (decision 82). **CONFIGURABLE:** appointment length (default 90 minutes), the 30-day release after a cancellation, the Pending ownership period. **PENDING:** the Pending ownership period is provisional at 30 days until Sales Leadership confirms (decision 83); offer validity; the cancellation reasons; which salesperson an issued Lead counts for after a reassignment or re-issue; no-shows and appointment outcomes (decision 84). | **Rulebook written and merged into `main` (job #13, 2026-10-09), design only. Nothing is built and no implementation is proposed or approved.** No code, table, permission, screen or Project. Later appointment work must follow the rulebook and needs its own reviewed plan and Jacob's explicit approval. |
+| 5 | Appointment issuance and ownership handoff contract | **LOCKED:** appointment booking hands operational responsibility from Contact Center to Sales, under the fourteen rules in [slice-5-appointment-rulebook.md](slice-5-appointment-rulebook.md) (decisions 75 to 83), including: a Project is created when the sale is Won (decision 82). **CONFIGURABLE:** appointment length (default 90 minutes), the 30-day release after a cancellation, the Pending ownership period. **Confirmed (2026-10-09):** what "a manager" means and that a Sales Consultant books only for themselves (decisions 88 and 89). **PENDING:** the Pending ownership period is provisional at 30 days until Sales Leadership confirms (decision 83); offer validity; the cancellation reasons; which salesperson an issued Lead counts for after a reassignment or re-issue; no-shows and appointment outcomes (decision 84). | **Rulebook written and merged into `main` (job #13, 2026-10-09), design only. Nothing is built and no implementation is proposed or approved.** No code, table, permission, screen or Project. Later appointment work must follow the rulebook and needs its own reviewed plan and Jacob's explicit approval. |
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
@@ -114,13 +117,20 @@ cadence (decision 67). It still never changes lifecycle status or assignee.
 
 **Staging needs the server's scheduler enabled in Forge** for the background
 timer: one entry running `php artisan schedule:run` every minute for the staging
-site. **It is off (checked in Forge on 2026-10-09):** Forge reports the staging
-site's Laravel scheduler as not enabled, and neither the site nor the server has
-a scheduled job that runs `schedule:run`. Turning it on changes staging, so it
-waits for Jacob's word; the step is in [review/current.md](review/current.md)
-and in "The server's scheduler on staging" in the plan. Without it the queue
-still works; only the heartbeat and the tidy-up pass are missing, and managers
-see the Call Queue's timer warning.
+site. **It is on (2026-10-09).** Forge showed it off after 4c was merged; with
+Jacob's approval the staging site's Laravel scheduler switch was turned on, and
+the `queue_tick` heartbeat in the staging database confirmed it running a
+minute later. The record is in "The server's scheduler on staging" in the plan.
+
+Decided by Jacob on 2026-10-09, after the 4c handoff:
+
+- **Call Center Agents are to see the Call Queue's manager part only when
+  Leadership switches it on** (decision 85). Decided, not planned and not
+  built: until it is, agents see the manager part as 4c built it. Its open
+  questions are in [review/current.md](review/current.md).
+- **Skip after calling hours close stays as built** (decision 86).
+- **The MySQL deadlock fix is approved as its own job** (decision 87). Not
+  built yet.
 
 Known follow-ups recorded with this slice, none of them authorized:
 

@@ -1615,6 +1615,10 @@ a hold is not a way to take one.
   currently held and the cadence-finished count, with a warning if the background
   timer has not run in the last 10 minutes. No email or text alerts.
 
+(Changed for Call Center Agents by decision 85: they are to see the manager
+summary and Put back in queue only when Leadership switches that on. Not built
+yet.)
+
 ## 72. Future requirement: a confirmation text outside calling hours (2026-10-08)
 
 **Recorded by Jacob as a future requirement. Not built and not authorized.**
@@ -1841,8 +1845,77 @@ Two readings made while writing the rulebook, for Jacob to confirm or change:
 - **A Sales Consultant booking their own Lead books it for themselves,** because
   decision 44 keeps handing out Leads with management and the call center.
 
+Both readings were confirmed by Jacob on 2026-10-09: decisions 88 and 89.
+
 Gaps the decisions do not cover are listed in the rulebook under "Not decided
 here". The appointment build plan brings them to Jacob.
+
+## Decisions after the slice 4 and 5 reviews (85 to 89)
+
+Decided by Jacob in conversation on 2026-10-09, in answer to the decisions the
+job #12 and job #13 handoffs asked for.
+
+## 85. Call Center Agents see the Call Queue's manager part only when Leadership switches it on (2026-10-09)
+
+**Decided by Jacob. Product direction: LOCKED. Implementation: proposed, not
+planned and not approved to build.**
+
+Call Center Agents get a switch that Leadership can turn on to let them see the
+management part of the Call Queue. Without it they do not see it.
+
+This changes decisions 70 and 71 for Call Center Agents only. Those gave the
+manager summary and Put back in queue to "people who may already assign Leads
+there", which includes agents, and step 4c was built that way. **Until the
+switch is built, the screen stays as built: agents see the manager part at
+their own Locations.** Owner, Leadership and Location Manager are unaffected.
+
+Not decided, and not to be assumed. The build plan brings these to Jacob:
+
+- whether it is one switch for every agent, one for each Location, or one for
+  each agent;
+- whether it starts off or on;
+- who may change it: "Leadership" is read as the people who already manage the
+  Contact Center settings (Owner and Leadership), to be confirmed;
+- exactly what it covers: the summary, the timer warning, the cadence-finished
+  list and Put back in queue on the Call Queue page, and whether also the
+  cadence panel, queue history and Put back in queue on the Lead page;
+- whether changing it is recorded as an audit event.
+
+## 86. Skip after calling hours close stays as built (2026-10-09)
+
+**Decided by Jacob.** When a Location's calling hours close while a setter holds
+a Lead, the card is replaced by "Calling hours have closed for this lead." The
+setter cannot record a skip reason for that Lead, and the hold simply ends. Skip
+is not added to that notice.
+
+This corrects one reading in the slice 4 plan, which said a skip is accepted
+outside calling hours while the setter still holds the Lead. The engine still
+accepts such a skip; the screen no longer offers it.
+
+## 87. The MySQL deadlock fix is approved as its own job (2026-10-09)
+
+**Approved by Jacob for implementation.** Scope is the follow-up recorded in the
+4b and 4c handoffs and nothing more: take the Lead lock before the cadence lock
+in `EndQueueHold::atLocation` and `RunQueueTick::releaseExpiredHold`, and retry
+the hooked actions when the database reports a deadlock, as the claim already
+does. No rule, screen, table, permission or audit event changes. It follows the
+usual workflow: built on its own branch, proved on MySQL 8.4, reported, and
+stopped for review.
+
+## 88. "A manager" in the appointment rulebook (2026-10-09)
+
+**Confirmed by Jacob.** In rules 6, 7, 9, 10 and 12 of the slice 5 rulebook, "a
+manager" means Owner, Leadership or Location Manager with access at the Lead's
+Location. It does not mean a Call Center Agent. An agent can book, and can
+rebook a Lead in Cancelled Appointments, but cannot reschedule a salesperson's
+existing appointment, move it to another salesperson, send an issued Lead back
+or mark one "booked in error".
+
+## 89. A Sales Consultant booking their own Lead books it for themselves only (2026-10-09)
+
+**Confirmed by Jacob.** A Sales Consultant cannot book their own Lead for a
+colleague. Handing a Lead to someone else stays with management and the call
+center (decision 44).
 
 ## Future decisions already constrained by the brief
 

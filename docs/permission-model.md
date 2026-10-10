@@ -442,6 +442,9 @@ eligibility rule (`app/Support/Queue/QueueEligibility.php`), and
 every action on that page checks it again. The page's manager part (summary,
 cadence-finished list, queue history, Put back in queue) belongs to people who
 may assign Leads where the Lead is (`LeadPolicy::manageQueue`, `returnToQueue`).
+That includes Call Center Agents today. Decision 85 (2026-10-09) puts the
+manager part behind a switch for agents that Leadership controls; it is not
+planned or built, so nothing here has changed yet.
 No permission or role grant was added.** Each permission is added to the code in the step named below. The full
 plan is [slice-4-plan.md](slice-4-plan.md). No existing permission, role grant or
 rule above is changed.
