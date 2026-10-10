@@ -223,6 +223,7 @@ new class extends Component {
     public function markBookedInError(MarkAppointmentBookedInError $markAppointmentBookedInError): void
     {
         $this->authorize('manageAppointment', $this->lead);
+        $this->resetValidation();
 
         $appointment = $this->lead->standingAppointment();
 

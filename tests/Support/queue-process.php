@@ -16,6 +16,7 @@
  * Usage: php tests/Support/queue-process.php <operation> <base64 JSON arguments>
  */
 
+use App\Actions\Appointments\BookAppointment;
 use App\Actions\ContactCenter\ChangeContactCenterSettings;
 use App\Actions\Leads\DisqualifyLead;
 use App\Actions\Leads\MoveLeadToNurture;
@@ -34,10 +35,12 @@ use App\Enums\ContactAttemptDirection;
 use App\Enums\ContactAttemptDisposition;
 use App\Enums\Role;
 use App\Models\AccessGrant;
+use App\Models\Account;
 use App\Models\ContactCenterSettings;
 use App\Models\Lead;
 use App\Models\LeadDisqualificationReason;
 use App\Models\Location;
+use App\Models\Property;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Console\Kernel;
@@ -49,6 +52,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 require __DIR__.'/../../vendor/autoload.php';
 
@@ -94,7 +98,8 @@ $highestIds = function (): array {
     $highest = [];
 
     foreach (Schema::getTableListing(schemaQualified: false) as $table) {
-        if (in_array($table, ['migrations', 'jobs', 'job_batches', 'failed_jobs'], true) || ! Schema::hasColumn($table, 'id')) {
+        // Notices have a text ID, so they cannot be told apart by "higher than": cleanup removes them by their person.
+        if (in_array($table, ['migrations', 'jobs', 'job_batches', 'failed_jobs', 'notifications'], true) || ! Schema::hasColumn($table, 'id')) {
             continue;
         }
 
@@ -216,6 +221,71 @@ $operations = [
         }
 
         return ['status' => $claim->status, 'lead' => $claim->lead?->id, 'already_held' => $claim->alreadyHeld, 'ended_hold' => $claim->endedHold?->value];
+    },
+
+    // Fictitious salespeople and Leads an appointment can be booked for, committed so every process sees them.
+    'setup-bookings' => function () use ($arguments): array {
+        $location = Location::factory()->create(['timezone' => $arguments['timezone']]);
+        $made = ['location' => $location->id, 'salespeople' => [], 'leads' => []];
+
+        $made['owner'] = User::factory()->withRoleEverywhere(Role::Owner)->create()->id;
+
+        foreach ($arguments['salespeople'] as $key) {
+            $made['salespeople'][$key] = User::factory()->withRoleAt(Role::SalesConsultant, $location)->create()->id;
+        }
+
+        foreach ($arguments['leads'] as $key) {
+            $account = Account::factory()->withPrimaryContact()->create();
+            $property = Property::factory()->of($account)->create();
+
+            $made['leads'][$key] = Lead::factory()->at($location)->from($account, $account->primaryContact(), $property)->qualified()->create()->id;
+        }
+
+        return $made;
+    },
+
+    // One person books one appointment. A refusal the person would be shown is an answer, not an error.
+    'book' => function () use ($arguments): array {
+        $actor = User::query()->findOrFail($arguments['actor']);
+
+        Auth::setUser($actor);
+
+        try {
+            $result = app(BookAppointment::class)->handle(
+                Lead::query()->findOrFail($arguments['lead']),
+                User::query()->findOrFail($arguments['salesperson']),
+                $arguments['date'],
+                $arguments['time'],
+                (int) $arguments['minutes'],
+                $actor,
+            );
+        } catch (ValidationException $exception) {
+            return ['status' => 'refused', 'refusal' => collect($exception->errors())->flatten()->first(), 'fields' => array_keys($exception->errors())];
+        }
+
+        return ['status' => 'booked', 'appointment' => $result->appointment->id];
+    },
+
+    'appointments' => function () use ($arguments): array {
+        $above = $arguments['above'] ?? [];
+
+        return [
+            'appointments' => DB::table('appointments')
+                ->where('id', '>', (int) ($above['appointments'] ?? 0))
+                ->orderBy('id')
+                ->get(['id', 'lead_id', 'salesperson_id', 'starts_at', 'ends_at', 'state'])
+                ->map(fn (object $row): array => (array) $row)
+                ->all(),
+            'issues' => DB::table('lead_issues')->where('id', '>', (int) ($above['lead_issues'] ?? 0))->count(),
+            'leads' => DB::table('leads')
+                ->where('id', '>', (int) ($above['leads'] ?? 0))
+                ->orderBy('id')
+                ->get(['id', 'status', 'assigned_user_id'])
+                ->keyBy('id')
+                ->map(fn (object $row): array => (array) $row)
+                ->all(),
+            'notices' => DB::table('notifications')->count(),
+        ];
     },
 
     // Several people press "Next lead" one after another, and their holds may then be made to have run out.
@@ -396,7 +466,12 @@ $operations = [
 
         Schema::disableForeignKeyConstraints();
 
+        // Notices belong to the people the processes made, and go with them.
+        $notices = fn () => DB::table('notifications')->where('notifiable_type', 'user')->where('notifiable_id', '>', (int) ($baseline['users'] ?? 0));
+
         try {
+            $notices()->delete();
+
             foreach ($highestIds() as $table => $highest) {
                 if ($highest > (int) ($baseline[$table] ?? 0)) {
                     DB::table($table)->where('id', '>', (int) ($baseline[$table] ?? 0))->delete();
@@ -406,7 +481,9 @@ $operations = [
             Schema::enableForeignKeyConstraints();
         }
 
-        return ['left' => array_diff_assoc($highestIds(), array_map(intval(...), $baseline))];
+        $left = array_diff_assoc($highestIds(), array_map(intval(...), $baseline));
+
+        return ['left' => $notices()->count() > 0 ? $left + ['notifications' => $notices()->count()] : $left];
     },
 ];
 

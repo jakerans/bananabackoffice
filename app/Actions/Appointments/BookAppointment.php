@@ -14,6 +14,7 @@ use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
 use App\Enums\Permission;
 use App\Enums\Role;
+use App\Models\AccessGrant;
 use App\Models\Appointment;
 use App\Models\Lead;
 use App\Models\LeadCadence;
@@ -113,6 +114,7 @@ class BookAppointment
         // The salesperson's row is locked from here to the end, so their other
         // appointments cannot change while the times are compared.
         $salesperson = User::query()->lockForUpdate()->findOrFail($salesperson->id);
+        $salesperson->setRelation('accessGrants', AccessGrant::query()->where('user_id', $salesperson->id)->sharedLock()->get());
 
         if (! $actor->hasPermissionAt(Permission::BookAppointments, $location) && ! $salesperson->is($actor)) {
             throw ValidationException::withMessages([
@@ -129,7 +131,9 @@ class BookAppointment
         $timezone = CallingHours::timezoneFor($location);
         [$startsAt, $endsAt] = $this->span($date, $time, $minutes, $timezone);
 
-        $clash = Appointment::query()->overlapping($salesperson->id, $startsAt, $endsAt)->orderBy('starts_at')->first();
+        // A locking read: on MySQL a plain read here could come from before
+        // another booking that was saved while this one waited for the lock.
+        $clash = Appointment::query()->overlapping($salesperson->id, $startsAt, $endsAt)->orderBy('starts_at')->sharedLock()->first();
 
         if ($clash !== null) {
             throw ValidationException::withMessages([
