@@ -93,6 +93,17 @@ class Account extends Model
     }
 
     /**
+     * Every appointment booked for this customer, at every location. Always
+     * narrow this to the Leads a person may see before showing any.
+     *
+     * @return HasMany<Appointment, $this>
+     */
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function archivedBy(): BelongsTo

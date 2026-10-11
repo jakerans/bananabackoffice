@@ -3,13 +3,63 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-11 · **Branch:** `checkpoint-slice-6-merge-record`
+**Updated:** 2026-10-11 · **Branch:** `checkpoint-customer-appointments`
 
-**State:** nothing is built and waiting. **Slice 6, appointment booking, is
-complete and merged into `main`** (steps 6a, 6b and 6c, decisions 90 to 120).
-This file is the first check of the work against the plan, which Jacob asked
-for on 2026-10-11 and which now follows every slice (decision 122). It ends
-with the decisions he is asked for. This branch holds documents only.
+**State:** one small job is built and waits for Jacob's word to merge: the
+Appointments section on the customer page, the one item the plan check found
+simply missed. It sits on top of the documents branch
+(`checkpoint-slice-6-merge-record`), so merging this branch brings the plan
+check, decisions 121 to 123, the passages added to the plan, and this job
+together. `main` and staging have none of it.
+
+**Slice 6, appointment booking, is complete and merged into `main`** (steps 6a,
+6b and 6c, decisions 90 to 120). The plan check Jacob asked for on 2026-10-11,
+which now follows every slice (decision 122), is below.
+
+## The job on this branch: appointments on the customer page
+
+Plan: [../product-architecture.md](../product-architecture.md), 11, which lists
+Appointments among the sections of a customer. Jacob said to make the
+adjustments recommended in the plan check on 2026-10-11.
+
+**What changed.** The customer page has a new section under Leads,
+"Appointments": every appointment booked for the customer's Leads, latest
+first, each with its day and time in its own location's time, the property,
+the location, the salesperson, and where it stands: Upcoming, Time has passed,
+Cancelled with its reason, or Booked in error. Each row opens its Lead.
+
+**Who sees it.** The same rule as the Leads section above it: an appointment is
+listed only when the person may see its Lead. One for a Lead at a location they
+cannot work in is not listed and not hinted at, and someone who sees customers
+but no Leads is shown no Appointments section at all. No permission was added.
+
+**No database change, no new package.** One relation on the customer, one
+query and one section on the page.
+
+**Tests and checks.**
+
+| Check | Result |
+| --- | --- |
+| `composer test` on the Windows development machine | **Passed:** 2,288 tests (2,287 passed, 1 skipped, 11,696 assertions) in 344 seconds. The skipped test is the device-time formatter, which cannot find Node on Windows. |
+| GitHub SQLite and MySQL 8.4 jobs | Reported with the branch; not recorded here. |
+| Browser | Done on 2026-10-11 by the implementation agent, on the local site. A fictitious customer with two appointments showed both, latest first: "Wed, Oct 14, 2026 · 3:00 PM to 4:30 PM PDT", its property, Northside, Sam Sales, "Upcoming", and under it the earlier one marked "Cancelled: No longer needed". Clicking a row opened its Lead. The salesperson saw the same two rows. No page errors. |
+| Merge, staging | **Not done.** |
+
+New tests, `tests/Feature/Customers/CustomerAppointmentsTest.php` (7): the empty
+section; four appointments in four states, latest first, each opening its
+Lead; each in its own location's time; an appointment for a Lead the person
+cannot see is not listed; an appointment stops being listed when its Lead
+moves somewhere the person cannot see; someone who sees customers but not
+Leads gets no section; another customer's appointments are not shown.
+
+**Reading made while building.** "Time has passed" is what a standing
+appointment shows once its time is over. Backoffice does not yet know whether
+it was run or was a no-show (decisions 121 and 123); that comes with the
+after-action report.
+
+**Known limitation.** The section is on the customer page. The Activity and
+Notes workspace beside it already listed each booking and change as events and
+is unchanged.
 
 ## Step 6c after its merge
 
@@ -68,7 +118,7 @@ put in one list. None is scheduled.
 | 5 | **Aged Leads (4.2).** After about 12 attempts phone work moves to an Aged Leads queue that management switches on. | After the last attempt a Lead goes on the manager's "Cadence finished, no contact" list, with a "Put back in queue" button. There is no Aged Leads queue. | Slice 4's boundary in the roadmap: no Aged Leads. |
 | 6 | **Short-call report and Connection Rate (4.2).** A daily manager report of suspiciously short calls, and Connected Leads over Leads Received. | Every attempt stores its length and whether it connected. Nothing reports on them. | Slice 3 stored the evidence only. |
 | 7 | **Call recordings and transcripts (4.2).** | No phone provider is connected. Attempts are typed in by hand. | Provider choice is open (roadmap, slice 3). |
-| 8 | **Appointments on the customer page (11).** | The customer's Activity lists each booking, cancellation and change. There is no Appointments section. | Not written down anywhere. **This one was simply missed.** |
+| 8 | **Appointments on the customer page (11).** | **Fixed on this branch (2026-10-11):** the customer page now has an Appointments section. Before, only the customer's Activity listed bookings and changes. | Not written down anywhere. **This one was simply missed.** |
 | 9 | **A no-show (decision 121; plan 5.6).** | A cancellation and a reschedule are recorded on the appointment. A no-show, and whether the visit took place, are not. | Decision 84: left for the after-action report. |
 | 10 | **Rehash (5.4, 5.5, 12).** | Nothing. | Rule 14 and slice 6 plan: needs Pending, which needs the after-action report. |
 
@@ -114,21 +164,19 @@ written down, and Pending (5.5), Projects at Won (rulebook rule 13), commission
 
 ## Decisions needed from Jacob
 
-1. **Merge this branch** (documents only), or say what to change.
-2. **What to do about the ten items in the table.** Recommendation: fix item 8
-   (appointments on the customer page) as a small job now, since it was missed
-   and not chosen; leave the other nine where they are and take them up when
-   their part of the plan comes round; and say so if any of them should come
-   sooner. Item 1, the booking engine, is the largest gap between the plan and
-   what the call center has today.
-3. **Update the plan** with what slice 6 decided, as recommended above?
-4. **The next slice.** Recommendation: the after-action report, starting with
-   a build plan that follows 5.6 and decision 121 and begins with a simple
-   proposal record.
-5. **For that plan, to complete decision 121:** can an appointment's outcome
-   also be simply that it took place? Is "took place, but nothing was
-   presented" its own outcome? And are a proposal's outcomes Won, Pending and
-   Lost?
+1. **Merge this branch,** or say what to change. It brings the documents and
+   the customer-page job together.
+2. **The other nine items in the table.** Recommendation: leave them where
+   they are and take each up when its part of the plan comes round; say so if
+   any should come sooner. Item 1, the booking engine, is the largest gap
+   between the plan and what the call center has today.
+3. **The next slice.** Recommendation: the after-action report (plan 5.6,
+   decisions 121 and 123), starting with a build plan. It has to begin with a
+   simple proposal record, because none exists.
+
+Answered on 2026-10-11 and no longer open: the plan is updated with what slice
+6 decided; an appointment that ran needs a result and "it took place" is not
+one; whether a proposal was presented is its own fact (decision 123).
 
 ## Choices from slice 6 that stand unless Jacob changes them
 
@@ -160,10 +208,5 @@ written down, and Pending (5.5), Projects at Won (rulebook rule 13), commission
 
 ## Tests and checks
 
-This branch changes documents only. No application code, test or migration
-changed. `composer test` was not run for it. The GitHub jobs are reported with
-the branch, not recorded here.
-
-## Browser review
-
-None. Nothing on this branch changes a screen.
+For the job on this branch, see its own section at the top. The plan check and
+the decisions are documents only.

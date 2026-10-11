@@ -2342,7 +2342,7 @@ What this changes in the record:
 lists did not name them: that an appointment can also simply have taken place,
 and whether "took place but nothing was presented" is its own outcome (the
 architecture's Demo Rate needs it); and that a proposal's outcomes are Won,
-Pending and Lost.
+Pending and Lost. **Answered the same day by decision 123.**
 
 ## 122. Work is checked against the product architecture after every slice (2026-10-11)
 
