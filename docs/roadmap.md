@@ -76,8 +76,9 @@ reviewed and still needs decisions of its own. **Step 6b (reschedule, move,
 cancel, book again, send back) is built and merged into `main` (2026-10-10)**
 under decisions 97 to 114. **Step 6c (the release after 14 days, the Cancelled
 Appointments queue with its own button, and a salesperson taking a released
-Lead back) is built (2026-10-10)** under decisions 115 to 120 and waits for
-Jacob's review and his word to merge. With it slice 6 is complete as planned.
+Lead back) is built and merged into `main` (2026-10-10)** under decisions 115
+to 120. **Slice 6 is complete as planned.** What comes next is not chosen: it
+needs its own plan and Jacob's approval.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

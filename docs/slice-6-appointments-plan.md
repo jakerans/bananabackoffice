@@ -3,8 +3,8 @@
 Status: **the three steps are approved in order (2026-10-10, decisions 90 to
 96). Step 6a is built and merged into `main` (2026-10-10); see "Step 6a as
 built" below. Step 6b is built and merged into `main` (2026-10-10); see "Step
-6b as built" below. Step 6c is built (2026-10-10) and waits for Jacob's review
-and his word to merge; see "Step 6c as built" below.** Jacob answered every
+6b as built" below. Step 6c is built and merged into `main` (2026-10-10); see
+"Step 6c as built" below. Slice 6 is complete.** Jacob answered every
 question the 6c plan asked (decisions 115 to 120).
 Jacob answered every question the 6b plan asked on 2026-10-10 (decisions 97 to
 114). It follows the rulebook in
