@@ -195,6 +195,14 @@ another location has dealt with. Staff are told so without being shown who.
 - **Nothing is half-saved.** Each change, its history, its audit event and its
   notice are one transaction; a cancellation that also disqualifies the Lead
   is one transaction too.
+- **Release and take back (step 6c, 2026-10-10).** The two call queues are
+  kept apart in the query that finds a Lead, not only on the screen. Take back
+  is refused for everyone but the salesperson the timer released the Lead
+  from, and for a Lead a manager sent back; the page's opener, its save and the
+  action each check. The release is done by the timer with no person recorded.
+  The number of days is validated on the server from 1 to 180 whatever the
+  browser sends. **If the timer stops, no Lead is released**: the Call Queue
+  page already warns managers when the timer has not run lately.
 - **A reminder from this step:** SQLite does not enforce a text column's
   length and MySQL does. A new status, reason or event name must fit every
   column that stores a copy of it; only the MySQL job shows when it does not.

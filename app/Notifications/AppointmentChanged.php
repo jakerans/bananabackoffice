@@ -30,6 +30,12 @@ class AppointmentChanged extends Notification
     /** The salesperson's Lead went back to Contact Center. */
     public const string LEAD_RETURNED = 'lead_returned_from_sales';
 
+    /** The salesperson's cancelled Lead was not booked again in time and went back by itself. */
+    public const string LEAD_RELEASED = 'lead_released_from_sales';
+
+    /** The salesperson's cancelled Lead will go back soon unless it is booked again. */
+    public const string RELEASE_WARNING = 'lead_release_warning';
+
     /**
      * Tell a salesperson that an appointment of theirs changed, or that a Lead
      * they had went back to Contact Center.
@@ -38,11 +44,12 @@ class AppointmentChanged extends Notification
      * only what happened, when the appointment is, and a link the salesperson
      * must be signed in and allowed to open.
      *
-     * @param  self::RESCHEDULED|self::MOVED_TO_YOU|self::MOVED_AWAY|self::CANCELLED|self::LEAD_RETURNED  $kind
+     * @param  self::RESCHEDULED|self::MOVED_TO_YOU|self::MOVED_AWAY|self::CANCELLED|self::LEAD_RETURNED|self::LEAD_RELEASED|self::RELEASE_WARNING  $kind
      * @param  self::IN_APP|self::EMAIL  $channel
      * @param  Appointment|null  $appointment  The appointment as it is after the change, when there is one.
+     * @param  int|null  $days  For a release warning: how many days are left.
      */
-    public function __construct(public int $leadId, public string $kind, public string $channel, public ?Appointment $appointment = null) {}
+    public function __construct(public int $leadId, public string $kind, public string $channel, public ?Appointment $appointment = null, public ?int $days = null) {}
 
     /**
      * Get the notification's delivery channels.
@@ -93,6 +100,8 @@ class AppointmentChanged extends Notification
             self::MOVED_AWAY => __('Your appointment on :when was given to someone else.', ['when' => $this->when()]),
             self::CANCELLED => __('Your appointment on :when was cancelled.', ['when' => $this->when()]),
             self::LEAD_RETURNED => __('A lead you had went back to the Contact Center.'),
+            self::LEAD_RELEASED => __('A cancelled lead of yours was not booked again in time and went back to the Contact Center. You can take it back from the lead.'),
+            self::RELEASE_WARNING => trans_choice('{1} A cancelled lead of yours goes back to the Contact Center in 1 day unless it is booked again.|[2,*] A cancelled lead of yours goes back to the Contact Center in :count days unless it is booked again.', (int) $this->days, ['count' => (int) $this->days]),
         };
     }
 

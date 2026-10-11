@@ -3,6 +3,7 @@
 namespace App\Actions\Queue;
 
 use App\Enums\CadenceState;
+use App\Enums\CallQueue;
 use App\Enums\QueueEventType;
 use App\Enums\QueueHoldEndReason;
 use App\Models\LeadCadence;
@@ -57,9 +58,14 @@ class ClaimNextLead
      *
      * A hold is not assignment: the Lead's assignee is neither read nor changed.
      *
+     * Each button hands out its own queue only (decision 117). In Cancelled
+     * Appointments the Lead that came back from Sales most recently goes
+     * first. A person still holds one Lead at a time, whichever queue it came
+     * from: the one they hold is returned whatever button they press.
+     *
      * @throws AuthorizationException When the caller may not work the queue anywhere.
      */
-    public function handle(User $caller): QueueClaim
+    public function handle(User $caller, CallQueue $queue = CallQueue::Main): QueueClaim
     {
         $endedHold = null;
 
@@ -80,7 +86,7 @@ class ClaimNextLead
             $tried = [];
 
             for ($round = 1; $round <= self::ROUNDS; $round++) {
-                $candidates = $this->transaction->retry(fn (): Collection => $this->candidates($caller, $scope, $tried, now()));
+                $candidates = $this->transaction->retry(fn (): Collection => $this->candidates($caller, $scope, $tried, now(), $queue));
 
                 if ($this->afterCandidatesRead !== null) {
                     ($this->afterCandidatesRead)($candidates, $round);
@@ -182,18 +188,29 @@ class ClaimNextLead
      * @param  list<int>  $tried
      * @return Collection<int, object{id: int, lead_id: int}>
      */
-    private function candidates(User $caller, array $scope, array $tried, CarbonInterface $moment): Collection
+    private function candidates(User $caller, array $scope, array $tried, CarbonInterface $moment, CallQueue $queue): Collection
     {
         if ($scope['locations'] === [] && ! $scope['unrouted']) {
             return new Collection;
         }
 
+        $due = DueQueue::candidateQuery($scope, $moment, $queue)
+            ->whereNotExists(DueQueue::runningCooldown($caller->id, $moment, 'c.id'))
+            ->whereNotIn('c.id', $tried);
+
+        if ($queue === CallQueue::CancelledAppointments) {
+            /** @var Collection<int, object{id: int, lead_id: int}> */
+            return $due
+                ->orderByDesc('l.returned_from_sales_at')
+                ->orderByDesc('c.id')
+                ->limit(self::CANDIDATES)
+                ->get(['c.id', 'c.lead_id']);
+        }
+
         $neverCalled = 'c.cycle = 1 and c.attempts_made = 0';
 
         /** @var Collection<int, object{id: int, lead_id: int}> */
-        return DueQueue::candidateQuery($scope, $moment)
-            ->whereNotExists(DueQueue::runningCooldown($caller->id, $moment, 'c.id'))
-            ->whereNotIn('c.id', $tried)
+        return $due
             ->orderByRaw("case when {$neverCalled} then 0 else 1 end")
             ->orderByRaw("case when {$neverCalled} then l.received_at end desc")
             ->orderByRaw("case when {$neverCalled} then l.id end desc")

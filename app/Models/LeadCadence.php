@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CadenceState;
+use App\Enums\CallQueue;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,6 +22,7 @@ use LogicException;
  * @property int $id
  * @property int $lead_id
  * @property CadenceState $state
+ * @property CallQueue $queue Which "Next" button hands the Lead out (decision 117).
  * @property int $cycle 1 at first; a restart adds 1.
  * @property int $attempts_made Counted attempts in this cycle.
  * @property Carbon|null $due_at The one attempt due. Empty unless in the queue.
@@ -57,6 +59,7 @@ class LeadCadence extends Model
     {
         return [
             'state' => CadenceState::class,
+            'queue' => CallQueue::class,
             'cycle' => 'integer',
             'attempts_made' => 'integer',
             'due_at' => 'datetime',

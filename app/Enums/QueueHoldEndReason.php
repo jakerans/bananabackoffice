@@ -12,6 +12,9 @@ enum QueueHoldEndReason: string
     case DeferredFollowUp = 'deferred_follow_up';
     case AppointmentBooked = 'appointment_booked';
 
+    /** The salesperson it was released from took it back. */
+    case TakenBackBySales = 'taken_back_by_sales';
+
     /** Routed, transferred or returned to central. */
     case Moved = 'moved';
 
@@ -38,6 +41,7 @@ enum QueueHoldEndReason: string
             self::Disqualified => 'The lead was disqualified',
             self::DeferredFollowUp => 'A follow-up was scheduled',
             self::AppointmentBooked => 'An appointment was booked',
+            self::TakenBackBySales => 'Its salesperson took the lead back',
             self::Moved => 'The lead was moved to another location',
             self::AccessLost => 'The setter may no longer work this lead',
             self::AttemptLogged => 'The setter logged a call',
@@ -57,6 +61,7 @@ enum QueueHoldEndReason: string
             self::Disqualified => 'This lead was disqualified, so it is no longer yours to call.',
             self::DeferredFollowUp => 'A follow-up was scheduled for this lead, so it left the queue.',
             self::AppointmentBooked => 'An appointment was booked for this lead, so it left the queue.',
+            self::TakenBackBySales => 'The salesperson this lead came from took it back, so it left the queue.',
             self::Moved => 'This lead was moved to another location.',
             self::AccessLost => 'Your access to this lead changed.',
             self::AttemptLogged => 'Your call was logged.',

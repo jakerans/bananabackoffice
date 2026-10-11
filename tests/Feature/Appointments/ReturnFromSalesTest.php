@@ -10,6 +10,7 @@ use App\Enums\AppointmentState;
 use App\Enums\AssignmentEndReason;
 use App\Enums\AuditAction;
 use App\Enums\CadenceState;
+use App\Enums\CallQueue;
 use App\Enums\CancellationParty;
 use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
@@ -222,10 +223,16 @@ test('the salesperson is told in the app that their lead went back', function ()
 |--------------------------------------------------------------------------
 */
 
-test('a lead sent back is handed out by the call queue after leads nobody has called', function () {
-    sendBack($this->lead, $this->manager);
+test('a lead sent back after its appointment passed is handed out by "Next lead", after leads nobody has called', function () {
+    $this->travelTo('2026-10-09 14:00:00');
+
+    sendBack($this->lead->fresh(), $this->manager);
 
     $returned = LeadCadence::query()->where('lead_id', $this->lead->id)->sole();
+
+    // Its appointment was not cancelled, so it is in the ordinary queue (decisions 105 and 117).
+    expect($returned->queue)->toBe(CallQueue::Main);
+
     $returned->forceFill(['due_at' => now()->subHour()])->save();
 
     // A new Lead that came in later and has waited less is still handed out first.
@@ -234,6 +241,19 @@ test('a lead sent back is handed out by the call queue after leads nobody has ca
 
     expect(nextLead($this->agent)->lead->id)->toBe($new->id);
     expect(nextLead($second)->lead->id)->toBe($this->lead->id);
+});
+
+test('a lead sent back with a cancelled appointment goes into the cancelled appointments queue, not "Next lead" (decision 117)', function () {
+    sendBack($this->lead, $this->manager);
+
+    $returned = LeadCadence::query()->where('lead_id', $this->lead->id)->sole();
+
+    expect($returned->queue)->toBe(CallQueue::CancelledAppointments);
+
+    $this->travelTo($returned->due_at);
+
+    expect(nextLead($this->agent)->given())->toBeFalse();
+    expect(nextLead($this->agent, CallQueue::CancelledAppointments)->lead->id)->toBe($this->lead->id);
 });
 
 test('the call center is told what it is calling: a cancelled appointment, by whom and why', function () {

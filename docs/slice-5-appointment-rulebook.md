@@ -96,7 +96,8 @@ written, the new salesperson is notified, and the history shows **both people**.
   **a reason**.
 - The Lead **stays with the salesperson**, who is expected to rebook it, and it
   **still counts as issued.**
-- If it is **not rebooked within 30 days of the cancellation**, it comes off the
+- If it is **not rebooked within 30 days of the cancellation** (**14 days since
+  decision 119, 2026-10-10**), it comes off the
   salesperson's list **automatically** and goes to the call center in a group of
   its own, **Cancelled Appointments.** The 30 days is `CONFIGURABLE`: an
   adjustable setting.
@@ -257,8 +258,12 @@ over in the ordinary queue; the Appointment cancelled status; who records a
 cancellation; the starting reasons; rebooking with a different salesperson; the
 counting question; send back and move as separate actions; a cancelled Lead
 that is moved; booking another appointment after one has passed; and telling
-the call center a Lead came back from Sales. Step 6c has questions of its own
-still to ask.
+the call center a Lead came back from Sales. Step 6c's questions are answered
+by decisions 115 to 120: the waiting period is one setting and **starts at 14
+days, not the 30 written in rule 8** (decision 119); Cancelled Appointments is
+a queue of its own with its own button (decision 117); the salesperson is
+warned five days before a release (decision 118); and only the salesperson a
+Lead was released from may take it back, with no time limit (decision 120).
 
 - **Which status a Lead shows, and who (if anyone) it is assigned to, after it
   goes back to Contact Center** under rules 8, 9, 10 and 14.

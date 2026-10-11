@@ -52,6 +52,7 @@ class EndLeadCadence
             CadenceEndReason::Disqualified => QueueHoldEndReason::Disqualified,
             CadenceEndReason::DeferredFollowUp => QueueHoldEndReason::DeferredFollowUp,
             CadenceEndReason::AppointmentBooked => QueueHoldEndReason::AppointmentBooked,
+            CadenceEndReason::TakenBackBySales => QueueHoldEndReason::TakenBackBySales,
             CadenceEndReason::Connected => QueueHoldEndReason::AttemptLoggedByOther,
         };
 

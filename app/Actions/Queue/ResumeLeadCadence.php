@@ -3,6 +3,7 @@
 namespace App\Actions\Queue;
 
 use App\Enums\CadenceState;
+use App\Enums\CallQueue;
 use App\Enums\QueueEventType;
 use App\Models\ContactCenterSettings;
 use App\Models\Lead;
@@ -68,6 +69,11 @@ class ResumeLeadCadence
      * among follow-up calls and is not handed out as a Lead nobody has called.
      * A Lead that never had a cadence is given one the same way.
      *
+     * A Lead whose last appointment was cancelled goes into the Cancelled
+     * Appointments queue, which has a button of its own, so the call center
+     * knows it is a cancelled booking before dialling (decision 117). Any
+     * other returned Lead goes into the ordinary queue.
+     *
      * The caller must be inside a transaction, having written or locked the
      * Lead row first.
      *
@@ -84,8 +90,11 @@ class ResumeLeadCadence
         $moment = now();
         $schedule = CadenceSchedule::fromSettings(ContactCenterSettings::current());
 
+        $queue = $lead->appointments()->first()?->isCancelled() ? CallQueue::CancelledAppointments : CallQueue::Main;
+
         $changes = [
             'state' => CadenceState::InQueue,
+            'queue' => $queue,
             'cycle' => ($cadence === null ? 1 : $cadence->cycle) + 1,
             'attempts_made' => 0,
             'due_at' => $schedule->hours->nextOpeningAtOrAfter($moment, CallingHours::timezoneFor($lead->location)),
@@ -100,7 +109,7 @@ class ResumeLeadCadence
             $restarted = DB::table('lead_cadences')
                 ->where('id', $cadence->id)
                 ->where('state', '<>', CadenceState::InQueue->value)
-                ->update([...$changes, 'state' => CadenceState::InQueue->value, 'updated_at' => $moment]);
+                ->update([...$changes, 'state' => CadenceState::InQueue->value, 'queue' => $queue->value, 'updated_at' => $moment]);
 
             if ($restarted !== 1) {
                 return false;

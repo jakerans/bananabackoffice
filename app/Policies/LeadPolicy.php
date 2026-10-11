@@ -250,6 +250,21 @@ class LeadPolicy
     }
 
     /**
+     * Determine whether the user can take the Lead back from the Contact
+     * Center (rulebook, rule 12; decision 120): only the salesperson the timer
+     * released it from, while it is still with the Contact Center at a
+     * Location where they have Sales Consultant access.
+     */
+    public function takeBack(User $user, Lead $lead): bool
+    {
+        return $lead->location !== null
+            && $lead->wasReleasedFromSales()
+            && $lead->released_from_user_id === $user->id
+            && $this->view($user, $lead)
+            && $user->holdsRoleAt(Role::SalesConsultant, $lead->location);
+    }
+
+    /**
      * Whether the person has the manager part of the call queue where this
      * Lead is: they hand out Leads there, and a Call Center Agent also needs
      * the switch Leadership sets for them (decision 85).

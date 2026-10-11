@@ -43,6 +43,7 @@ class CustomerActivity
             AuditAction::LeadAppointmentCancelled,
             AuditAction::LeadAppointmentRebooked,
             AuditAction::LeadReturnedFromSales,
+            AuditAction::LeadTakenBackBySales,
             AuditAction::LeadCustomerLinked,
             AuditAction::LeadCustomerLinkChanged,
         ];
@@ -77,6 +78,7 @@ class CustomerActivity
             AuditAction::LeadAppointmentCancelled => __('Appointment cancelled'),
             AuditAction::LeadAppointmentRebooked => __('Appointment booked again'),
             AuditAction::LeadReturnedFromSales => __('Lead went back to Contact Center'),
+            AuditAction::LeadTakenBackBySales => __('Lead taken back by its salesperson'),
             AuditAction::LeadCustomerLinked => __('Lead linked to customer'),
             AuditAction::LeadCustomerLinkChanged => __('Lead customer link changed'),
             default => throw new \LogicException('This audit action is not customer activity.'),

@@ -2,10 +2,12 @@
 
 namespace App\Actions\Queue;
 
+use App\Actions\Appointments\ReleaseCancelledLead;
 use App\Enums\CadenceEndReason;
 use App\Enums\CadenceState;
 use App\Enums\LeadStatus;
 use App\Enums\QueueHoldEndReason;
+use App\Models\ContactCenterSettings;
 use App\Models\Lead;
 use App\Models\LeadCadence;
 use App\Models\SchedulerHeartbeat;
@@ -22,6 +24,7 @@ class RunQueueTick
         private QueueEligibility $eligibility,
         private EndQueueHold $endQueueHold,
         private EndLeadCadence $endLeadCadence,
+        private ReleaseCancelledLead $releaseCancelledLead,
     ) {}
 
     /**
@@ -36,15 +39,21 @@ class RunQueueTick
      *    Lead is Disqualified or in Deferred Follow-up is ended, and a hold by
      *    someone who may no longer work that Lead is ended.
      *
-     * It never schedules an attempt, never marks a Lead finished and never
-     * contacts anyone. A failure is logged without customer details and the
-     * next tick tries again.
+     * 4. Warn the salesperson of a cancelled Lead that will be released soon,
+     *    and release the cancelled Leads that have waited the whole period
+     *    without being booked again (rulebook, rule 8; decisions 116 to 119).
+     *    This last part is not a repair: it is the one thing here that does
+     *    work nothing else does.
      *
-     * @return array{expired: int, ended: int, access_lost: int, failed: int}
+     * It never schedules an attempt, never marks a Lead finished and never
+     * contacts a customer. A failure is logged without customer details and
+     * the next tick tries again.
+     *
+     * @return array{expired: int, ended: int, access_lost: int, warned: int, released: int, failed: int}
      */
     public function handle(): array
     {
-        $done = ['expired' => 0, 'ended' => 0, 'access_lost' => 0, 'failed' => 0];
+        $done = ['expired' => 0, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'failed' => 0];
 
         $this->safely($done, 'heartbeat', null, function (): bool {
             $heartbeat = SchedulerHeartbeat::query()->where('name', SchedulerHeartbeat::QUEUE_TICK)->first() ?? new SchedulerHeartbeat;
@@ -67,6 +76,18 @@ class RunQueueTick
 
         foreach ($this->ids($done, 'access_lost', fn () => LeadCadence::query()->where('state', CadenceState::InQueue)->whereNotNull('held_by_user_id')) as $id) {
             $done['access_lost'] += (int) $this->safely($done, 'access_lost', $id, fn (): bool => $this->endHoldWithoutAccess($id));
+        }
+
+        $days = $this->releaseDays($done);
+
+        if ($days !== null) {
+            foreach ($this->leadIds($done, 'warned', fn () => ReleaseCancelledLead::dueForWarning(now(), $days)) as $id) {
+                $done['warned'] += (int) $this->safely($done, "warned lead {$id}", null, fn (): bool => $this->releaseCancelledLead->warn($id));
+            }
+
+            foreach ($this->leadIds($done, 'released', fn () => ReleaseCancelledLead::due(now(), $days)) as $id) {
+                $done['released'] += (int) $this->safely($done, "released lead {$id}", null, fn (): bool => $this->releaseCancelledLead->release($id));
+            }
         }
 
         return $done;
@@ -141,10 +162,45 @@ class RunQueueTick
     }
 
     /**
+     * How many days a cancelled Lead stays with its salesperson, or null if
+     * the settings cannot be read this time.
+     *
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, failed: int}  $done
+     */
+    private function releaseDays(array &$done): ?int
+    {
+        try {
+            return ContactCenterSettings::current()->cancelled_release_days;
+        } catch (Throwable $exception) {
+            $this->report($done, 'release_days', null, $exception);
+
+            return null;
+        }
+    }
+
+    /**
+     * The Leads one part has to look at, read the same careful way.
+     *
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, failed: int}  $done
+     * @param  Closure(): Builder<Lead>  $query
+     * @return list<int>
+     */
+    private function leadIds(array &$done, string $part, Closure $query): array
+    {
+        try {
+            return array_values(array_map(intval(...), $query()->orderBy('id')->pluck('id')->all()));
+        } catch (Throwable $exception) {
+            $this->report($done, $part, null, $exception);
+
+            return [];
+        }
+    }
+
+    /**
      * The cadences one part has to look at. If they cannot even be read, that
      * part is skipped this time and the others still run.
      *
-     * @param  array{expired: int, ended: int, access_lost: int, failed: int}  $done
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, failed: int}  $done
      * @param  Closure(): Builder<LeadCadence>  $query
      * @return list<int>
      */
@@ -160,7 +216,7 @@ class RunQueueTick
     }
 
     /**
-     * @param  array{expired: int, ended: int, access_lost: int, failed: int}  $done
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, failed: int}  $done
      * @param  Closure(): bool  $work
      */
     private function safely(array &$done, string $part, ?int $cadenceId, Closure $work): bool
@@ -178,7 +234,7 @@ class RunQueueTick
      * Only what is needed to find the problem: never a name, number or message
      * that could carry customer details.
      *
-     * @param  array{expired: int, ended: int, access_lost: int, failed: int}  $done
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, failed: int}  $done
      */
     private function report(array &$done, string $part, ?int $cadenceId, Throwable $exception): void
     {

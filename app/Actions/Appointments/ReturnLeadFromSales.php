@@ -30,6 +30,9 @@ class ReturnLeadFromSales
     /** It was returned to central while it was with Sales (decision 112). */
     public const string RETURNED_TO_CENTRAL = 'returned_to_central';
 
+    /** The timer released it: cancelled and not booked again within the waiting period (rulebook, rule 8). */
+    public const string RELEASED = 'released';
+
     public function __construct(
         private UnassignLead $unassignLead,
         private RecordLeadStatusChange $recordLeadStatusChange,
@@ -77,7 +80,11 @@ class ReturnLeadFromSales
      * The caller must be inside a transaction, having written or locked the
      * Lead row first, and must have checked that the person may do this.
      *
-     * @param  self::SENT_BACK|self::MOVED|self::RETURNED_TO_CENTRAL  $how
+     * A Lead the timer released remembers who it was released from, so that
+     * salesperson can take it back (rule 12). Going back any other way forgets
+     * it: a manager chose to take the Lead.
+     *
+     * @param  self::SENT_BACK|self::MOVED|self::RETURNED_TO_CENTRAL|self::RELEASED  $how
      * @param  Location|null  $auditLocation  Where it is recorded: the Location the Lead was at.
      */
     public function handle(Lead $lead, ?User $actor, string $how, ?string $note, bool $countsAsIssued, ?Location $auditLocation, ?User $salesperson = null): void
@@ -103,6 +110,8 @@ class ReturnLeadFromSales
             'status' => LeadStatus::Qualified,
             'status_changed_at' => $moment,
             'returned_from_sales_at' => $moment,
+            'released_from_user_id' => $how === self::RELEASED ? $salesperson?->id : null,
+            'released_from_sales_at' => $how === self::RELEASED ? $moment : null,
         ])->save();
 
         $this->recordLeadStatusChange->handle($lead, LeadStatusEvent::ReturnedFromSales, $from, $actor, $salesperson?->id, note: $note);
@@ -120,7 +129,7 @@ class ReturnLeadFromSales
         );
 
         if ($salesperson !== null && ! $salesperson->is($actor)) {
-            $salesperson->notify(new AppointmentChanged($lead->id, AppointmentChanged::LEAD_RETURNED, AppointmentChanged::IN_APP));
+            $salesperson->notify(new AppointmentChanged($lead->id, $how === self::RELEASED ? AppointmentChanged::LEAD_RELEASED : AppointmentChanged::LEAD_RETURNED, AppointmentChanged::IN_APP));
         }
     }
 }

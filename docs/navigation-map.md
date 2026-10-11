@@ -38,7 +38,7 @@ explicitly maps it to an existing working route.
 | Marketing → Reports | Keep `marketing.reporting`, relabel it Reports; no route. | Coming soon; `marketing.access`. |
 | Sales → Performance | Keep `sales.performance` and `/sales/performance-board`. | Existing state and `sales.access`. |
 | Sales → Workspace | Add `sales.workspace`, with `shared.leads` at `/leads` as its live interim child/landing destination. | Existing Sales and Lead permissions; no selling workflow is added. |
-| Sales → Calendar | `sales.calendar`; route name `sales.calendar`; `/sales/calendar`. | **Built (slice 6, steps 6a and 6b, 2026-10-10).** Live; `sales.access`. A plain list of upcoming appointments: a person's own, or every one at the Locations where they hold `appointments.manage`. Under it, "To rebook": Leads whose appointment was cancelled and that still wait for a new one, under the same rule. |
+| Sales → Calendar | `sales.calendar`; route name `sales.calendar`; `/sales/calendar`. | **Built (slice 6, steps 6a and 6b, 2026-10-10).** Live; `sales.access`. A plain list of upcoming appointments: a person's own, or every one at the Locations where they hold `appointments.manage`. Under it, "To rebook": Leads whose appointment was cancelled and that still wait for a new one, with the days left, under the same rule. Since step 6c a third list: Leads released to the Contact Center that can still be taken back. |
 | Sales → Commissions | Keep `sales.commissions`; no route. | Coming soon; `sales.access`. |
 | Sales → Leaderboard | Add `sales.leaderboard`; no route. | Coming soon; `sales.access`. |
 | Sales → Customers | Keep `shared.customers` and `/customers`. | Live; existing `accounts.view`. |

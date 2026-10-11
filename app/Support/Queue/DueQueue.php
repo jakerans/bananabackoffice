@@ -3,6 +3,7 @@
 namespace App\Support\Queue;
 
 use App\Enums\CadenceState;
+use App\Enums\CallQueue;
 use App\Enums\Permission;
 use App\Enums\QueueEventType;
 use App\Models\ContactCenterSettings;
@@ -48,12 +49,17 @@ class DueQueue
      * so). The claim adds the person's skip cooldown, the queue order and its
      * limit; the count adds the cooldown only.
      *
+     * Given a queue, only the Leads in that one: the ordinary queue and
+     * Cancelled Appointments are never handed out by each other's button
+     * (decision 117).
+     *
      * @param  array{locations: list<int>, unrouted: bool, anywhere?: bool}  $scope
      */
-    public static function candidateQuery(array $scope, CarbonInterface $moment): Builder
+    public static function candidateQuery(array $scope, CarbonInterface $moment, ?CallQueue $queue = null): Builder
     {
         return DB::table('lead_cadences as c')
             ->join('leads as l', 'l.id', '=', 'c.lead_id')
+            ->when($queue !== null, fn (Builder $query) => $query->where('c.queue', $queue->value))
             ->where('c.state', CadenceState::InQueue->value)
             ->where('c.due_at', '<=', $moment)
             ->where(fn (Builder $query) => $query->whereNull('c.held_by_user_id')->orWhere('c.held_until', '<=', $moment))
@@ -87,7 +93,7 @@ class DueQueue
      * How many Leads Next lead could give this person right now. The Lead they
      * are holding is not counted: it is on their card.
      */
-    public function dueNowCount(User $user, CarbonInterface $moment): int
+    public function dueNowCount(User $user, CarbonInterface $moment, CallQueue $queue = CallQueue::Main): int
     {
         $scope = $this->eligibility->scope($user, $moment);
 
@@ -95,7 +101,7 @@ class DueQueue
             return 0;
         }
 
-        return self::candidateQuery($scope, $moment)
+        return self::candidateQuery($scope, $moment, $queue)
             ->whereNotExists(self::runningCooldown($user->id, $moment, 'c.id'))
             ->count();
     }
@@ -158,6 +164,7 @@ class DueQueue
      * @param  array{locations: list<int>, unrouted: bool, anywhere: bool}  $scope
      * @return array{
      *     dueNow: int,
+     *     cancelledDueNow: int,
      *     longestWaitSince: CarbonInterface|null,
      *     held: Collection<int, LeadCadence>,
      *     heldCount: int,
@@ -178,9 +185,9 @@ class DueQueue
 
         $openScope = ['locations' => $open, 'unrouted' => $scope['unrouted'] && $hours->isOpen($moment, CallingHours::UNROUTED_TIMEZONE), 'anywhere' => true];
 
-        $due = $open === [] && ! $openScope['unrouted']
-            ? ['count' => 0, 'since' => null]
-            : $this->dueFigures($openScope, $moment);
+        $nothingOpen = $open === [] && ! $openScope['unrouted'];
+        $due = $nothingOpen ? ['count' => 0, 'since' => null] : $this->dueFigures($openScope, $moment, CallQueue::Main);
+        $cancelled = $nothingOpen ? ['count' => 0, 'since' => null] : $this->dueFigures($openScope, $moment, CallQueue::CancelledAppointments);
 
         $held = $this->inScope(LeadCadence::query(), $scope)
             ->where('state', CadenceState::InQueue)
@@ -193,6 +200,7 @@ class DueQueue
 
         return [
             'dueNow' => $due['count'],
+            'cancelledDueNow' => $cancelled['count'],
             'longestWaitSince' => $due['since'],
             'heldCount' => (clone $held)->count(),
             'held' => (clone $held)->with(['lead', 'holder'])->orderBy('held_at')->limit(self::LIST_LIMIT)->get(),
@@ -207,9 +215,9 @@ class DueQueue
      * @param  array{locations: list<int>, unrouted: bool, anywhere: bool}  $scope
      * @return array{count: int, since: CarbonInterface|null}
      */
-    private function dueFigures(array $scope, CarbonInterface $moment): array
+    private function dueFigures(array $scope, CarbonInterface $moment, CallQueue $queue): array
     {
-        $row = self::candidateQuery($scope, $moment)
+        $row = self::candidateQuery($scope, $moment, $queue)
             ->selectRaw('count(*) as total, min(c.due_at) as oldest')
             ->first();
 

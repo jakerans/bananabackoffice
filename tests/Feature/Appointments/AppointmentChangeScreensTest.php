@@ -359,7 +359,13 @@ test('the agent who is handed a lead that came back from Sales is told on the ca
     $this->travelTo(LeadCadence::query()->where('lead_id', $this->lead->id)->sole()->due_at);
 
     Livewire::actingAs($this->agent)->test('pages::marketing.call-queue')
+        // It waits behind its own button and count, and "Next lead" does not hand it out (decision 117).
+        ->assertSee('1 cancelled appointment due now')
+        ->assertSee('0 leads due now')
         ->call('nextLead')
+        ->assertDontSeeHtml('data-test="queue-card"')
+        ->call('nextCancelledAppointment')
+        ->assertSeeHtml('data-test="queue-card"')
         ->assertSeeHtml('data-test="card-sales-return"')
         ->assertSee('Cancelled appointment: this lead came back from Sales')
         ->assertSee('Cancelled by: the customer. Reason: No longer needed.')

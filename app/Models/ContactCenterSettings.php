@@ -20,6 +20,7 @@ use LogicException;
  * @property int $calling_closes_at Minutes after midnight, in each Location's local time.
  * @property list<int> $calling_days ISO weekday numbers, 1 (Monday) to 7 (Sunday).
  * @property int $hold_minutes
+ * @property int $cancelled_release_days Days a Lead whose appointment was cancelled stays with its salesperson.
  * @property int|null $changed_by
  * @property string|null $changed_by_name
  * @property Carbon|null $created_at
@@ -46,6 +47,16 @@ class ContactCenterSettings extends Model
     public const int MINIMUM_HOLD = 1;
 
     public const int MAXIMUM_HOLD = 30;
+
+    /** How long a cancelled Lead stays with its salesperson, in days (decisions 116 and 119). */
+    public const int DEFAULT_RELEASE_DAYS = 14;
+
+    public const int MINIMUM_RELEASE_DAYS = 1;
+
+    public const int MAXIMUM_RELEASE_DAYS = 180;
+
+    /** How many days before a release its salesperson is warned (decision 118). */
+    public const int RELEASE_WARNING_DAYS = 5;
 
     protected $table = 'contact_center_settings';
 
@@ -90,6 +101,7 @@ class ContactCenterSettings extends Model
             'calling_closes_at' => 'integer',
             'calling_days' => 'array',
             'hold_minutes' => 'integer',
+            'cancelled_release_days' => 'integer',
         ];
     }
 

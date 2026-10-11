@@ -436,8 +436,9 @@ Notes:
 
 ## Slice 6: appointments
 
-Status: **steps 6a and 6b are built (2026-10-10, decisions 90 to 114).** The
-plan is [slice-6-appointments-plan.md](slice-6-appointments-plan.md). Step 6b
+Status: **steps 6a and 6b are built and merged, and step 6c is built
+(2026-10-10, decisions 90 to 120).** The plan is
+[slice-6-appointments-plan.md](slice-6-appointments-plan.md). Steps 6b and 6c
 added no permission and changed no role.
 
 Two permissions, both checked at the Lead's own Location:
@@ -488,6 +489,19 @@ Rules:
     on the Lead page and on the Call Queue card. It names the salesperson and
     the manager's note, both of which those people could already read on the
     Lead.
+13. **The Cancelled Appointments queue** is worked by the same people as the
+    ordinary queue, under the same rule (`leads.work_queue` where the Lead is,
+    and calling hours there). It is a second button, not a second permission.
+14. **Take back** (`LeadPolicy::takeBack`, decision 120): only the salesperson
+    the timer released the Lead from, while the Lead is Qualified, still marked
+    as released from them, at a Location where they hold Sales Consultant
+    access and may see Leads. This is the one case in which a Sales Consultant
+    takes a Lead that is not assigned to them (decision 44); it covers only a
+    Lead that was theirs. A manager cannot take back on their behalf.
+15. **The number of days** before a release is changed with
+    `settings.contact_center.manage`, like the rest of that page.
+16. **The release itself has no person.** The timer does it, and the history,
+    the audit event and the notices record that nobody did.
 
 ## Slice 4: the call queue and its settings
 
