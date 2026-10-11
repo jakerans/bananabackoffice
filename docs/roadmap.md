@@ -16,9 +16,11 @@ commit. The staging scheduler is on. The browser review of 4c was done on
 MySQL deadlock fix (decision 87), the fixes for three display faults found in
 the 4c browser review, and the switch, one for each Call Center Agent, that
 lets them see the Call Queue's manager part (decision 85) are built and merged
-into `main` (2026-10-10).** Nothing else after slice 5's
-rulebook is planned or authorized, and every later slice still stops for owner
-review.
+into `main` (2026-10-10).** **Slice 6, appointment booking, was then built in
+three steps and merged into `main` (2026-10-10, decisions 90 to 120); see
+below.** Nothing after slice 6 is planned or authorized, and every later slice
+still stops for owner review. Since decision 122 each slice is checked against
+[product-architecture.md](product-architecture.md) once it is merged.
 
 **Steps B1 to B7 are approved and merged into `main` (2026-10-07).** B1 to B6
 were deployed to staging on 2026-10-06; the automatic staging deployment caused

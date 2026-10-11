@@ -72,6 +72,12 @@ For each meaningful checkpoint or step:
    - decisions still needed;
    - exact browser-review steps, when a visual review is appropriate.
 9. **Stop.** The next checkpoint or step starts only when Jacob says so.
+10. **After a slice is merged, go back to the plan** (decision 122). Check the
+    slice against [product-architecture.md](product-architecture.md) and say:
+    what the plan describes in that area that was not built; what was built
+    that the plan does not describe; and which part of the plan the next step
+    comes from. The next step is proposed from the plan. Anything found
+    missing is listed for Jacob to schedule or set aside, not quietly dropped.
 
 ## Review handoff
 
