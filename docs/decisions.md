@@ -2361,6 +2361,38 @@ The first check, after slice 6, is in the review handoff of 2026-10-11. It was
 prompted by a mistake: the implementation agent said the after-action report
 had no plan, when 5.6 specifies it.
 
+## 123. An appointment that ran must have a result, and whether a proposal was presented is counted (2026-10-11)
+
+**Decided by Jacob,** in answer to the three questions decision 121 left.
+
+- **An appointment's status** is one of: cancelled, rescheduled, no-show
+  (decision 121), or **run**. "Run" is his word: "appointment was run". He
+  also offered "demoed" and "shown"; "run" is the one to use, because an
+  appointment can be run without anything being shown.
+- **"It took place" is not an outcome by itself.** An appointment that ran
+  must be given a result: **Sold, Pending or Lost.** "Sold" is the word he
+  uses for what the product architecture calls Won.
+- **Whether a proposal was presented is its own fact.** "An appointment was
+  run, but no proposal was built": nothing was pitched or demonstrated and no
+  price was given. That is what **Demo Rate** is counted from: of the
+  appointments that ran, how many had a proposal presented with a price.
+- **A run appointment with no proposal still has a result,** and it is often
+  Pending: the salesperson started and has to finish the proposal later.
+- **Demo Rate is to be watched.** "One thing we need to keep an eye on is the
+  demo rate."
+
+What this means beside decision 121, to be settled in the after-action report's
+plan and not assumed:
+
+- Where Sold, Pending or Lost is kept when an appointment ran and no proposal
+  exists yet. Decision 121 puts those results on a proposal; this decision
+  says the appointment needs one even without a proposal.
+- With several proposals from one appointment, whether each has its own result
+  and what the appointment then shows.
+- "Rescheduled" as a status: slice 6 keeps a rescheduled appointment as the
+  same appointment with its earlier times in its history. Whether a report
+  needs to count it apart is for that plan.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

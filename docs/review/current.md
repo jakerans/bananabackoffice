@@ -26,6 +26,7 @@ browser review of slice 6 was on the local site.
 | --- | --- |
 | 121 | An appointment's outcome (he named no-show, cancellation, reschedule) and a proposal's outcome (he named Pending, Lost) are two different things, recorded separately. One proposal can have several appointments and one appointment can produce several proposals. |
 | 122 | After every slice the work is checked against [../product-architecture.md](../product-architecture.md), and the next step is proposed from it. |
+| 123 | An appointment that ran must have a result (Sold, Pending or Lost); "it took place" is not one. Whether a proposal was presented is recorded as its own fact, and Demo Rate is counted from it. |
 
 ## The plan check after slice 6
 
@@ -84,19 +85,24 @@ Slice 6 built rules that Jacob decided in the slice 5 rulebook and in decisions
 - A salesperson taking a released Lead back.
 
 They are decided and recorded, in [../decisions.md](../decisions.md) and the
-rulebook. **The plan has not been updated to say so,** so someone reading only
-the plan would not know they exist. Recommendation: add a short passage to
-sections 4.2, 5.1 and 5.4 of the plan that states them and points at the
-rulebook. That changes the canonical document, so it needs Jacob's word.
+rulebook. The plan did not say so. **On 2026-10-11 Jacob said to make the
+adjustments, and the plan now has a short dated passage in each of sections
+4.2, 5.1, 5.4 and 5.6** that states them, says what is built and what is not,
+and points at the rulebook. Nothing already in the plan was removed or
+reworded.
 
 ### Where the plan and Jacob's new distinction disagree
 
 Section 5.6 puts "Won / Pending / Lost" on the after-action report, which is
 filled in for one appointment. Decision 121 says those belong to a proposal,
-and that appointments and proposals are many to many. Until 5.6 is reworded the
-two disagree; decision 121 is the newer and wins. **There is no proposal record
-in Backoffice yet,** so the after-action report cannot be built before one
-exists, at least as a simple record of what was pitched and for how much.
+and that appointments and proposals are many to many. Decision 123 adds that an
+appointment that ran must have a result even when no proposal was presented,
+and that this no-demo case is what Demo Rate is counted from. Section 5.6 now
+carries a dated passage saying so. **Two things are left for the after-action
+report's build plan,** and are written at the end of decision 123: where the
+result is kept when there is no proposal yet, and what an appointment shows
+when its proposals have different results. **There is no proposal record in
+Backoffice yet.**
 
 ### Which part of the plan the next step comes from
 
