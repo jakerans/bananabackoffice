@@ -93,7 +93,7 @@ test('adding a proposal records what was pitched, the price and the appointment,
     $event = AuditEvent::query()->where('action', AuditAction::LeadProposalAdded)->sole();
 
     expect($event->actor_id)->toBe($this->sam->id);
-    expect($event->values_after)->toBe(['proposal' => 'Whole exterior', 'price' => '$8,450', 'presented_at' => ['2026-10-08T19:00:00+00:00']]);
+    expect($event->values_after)->toEqual(['proposal' => 'Whole exterior', 'price' => '$8,450', 'presented_at' => ['2026-10-08T19:00:00+00:00']]);
     expect(CustomerActivity::actions())->toContain(AuditAction::LeadProposalAdded);
     expect(CustomerActivity::label(AuditAction::LeadProposalAdded))->toBe('Proposal added');
 });
@@ -244,7 +244,7 @@ test('a proposal is recorded at a return visit later, once', function () {
 
     $event = AuditEvent::query()->where('action', AuditAction::LeadProposalPresentedAgain)->sole();
 
-    expect($event->values_after)->toBe(['proposal' => 'Whole exterior', 'presented_at' => '2026-10-12T14:00:00+00:00']);
+    expect($event->values_after)->toEqual(['proposal' => 'Whole exterior', 'presented_at' => '2026-10-12T14:00:00+00:00']);
     expect(CustomerActivity::label(AuditAction::LeadProposalPresentedAgain))->toBe('Proposal presented again');
 
     // The same pair is not kept twice.

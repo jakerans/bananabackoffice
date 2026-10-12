@@ -83,6 +83,13 @@ New tests, 48 in `tests/Feature/Proposals/`:
 
 No existing test changed.
 
+## Found while building
+
+The first push failed the MySQL job on one new test and passed SQLite. The
+app was right and the test was wrong: MySQL does not keep the order of the
+fields in a saved audit record, and the test compared the order. It now
+compares the contents, as the older tests do.
+
 ## Architectural decisions made while building
 
 - **Money is kept in whole cents** (decision 127, made by the implementation
