@@ -98,6 +98,9 @@ are (slice 6).
 
 ### Step 7a as built (2026-10-12)
 
+**Merged into `main` on 2026-10-12** with Jacob's word ("Merge it and
+continue."), and on staging.
+
 Built as planned above. What a reader of the code should know:
 
 - **The actions** are `CloseOutAppointment` and `CorrectAppointmentCloseOut`

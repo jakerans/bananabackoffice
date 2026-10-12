@@ -89,10 +89,9 @@ for why it is next, is
 **Step 7a (mark an appointment run or no-show) is built (2026-10-12)**,
 with what decision 126 added to it: close out first, the prompt, the reminder
 15 minutes after the appointment, and the salesperson told when a manager
-touches their appointment. It
-waits for Jacob's review and his word to merge. Steps 7b (proposals), 7c
-(results and the report) and 7d (the first Sales figures) are approved in
-order and not started.
+touches their appointment. **It was merged on 2026-10-12** and is on staging.
+Step 7b (proposals) is being built. Steps 7c (results and the report) and 7d
+(the first Sales figures) are approved in order and not started.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
