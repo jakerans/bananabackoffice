@@ -241,6 +241,16 @@ class LeadPolicy
     }
 
     /**
+     * Determine whether the user can say what happened to the Lead's
+     * appointment once its time has come, run or no-show (decision 125): the
+     * same people who may give it a new time.
+     */
+    public function closeOutAppointment(User $user, Lead $lead, Appointment $appointment): bool
+    {
+        return $this->rescheduleAppointment($user, $lead, $appointment);
+    }
+
+    /**
      * Determine whether the user can record that the Lead's appointment was
      * cancelled: anyone who may book that Lead (decision 107).
      */

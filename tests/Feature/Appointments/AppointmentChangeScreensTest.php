@@ -291,8 +291,9 @@ test('once the time has passed the card offers another appointment and nothing t
     $this->travelTo('2026-10-09 14:00:00');
 
     appointmentCard($this->sam, $this->lead->fresh())
-        ->assertSeeHtml('data-test="appointment-passed"')
-        ->assertSee('The time of this appointment has passed. If it was missed, book another.')
+        // Since step 7a the card asks what happened, and still offers another appointment.
+        ->assertSeeHtml('data-test="close-out"')
+        ->assertSee('The time of the appointment on Thu, Oct 8 at 3:00 PM EDT has come. What happened?')
         ->assertSee('Book another appointment')
         ->assertDontSeeHtml('data-test="reschedule-appointment"')
         ->assertDontSeeHtml('data-test="cancel-appointment"')

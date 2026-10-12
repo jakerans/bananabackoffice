@@ -52,6 +52,9 @@ enum AuditAction: string
     case LeadAppointmentRebooked = 'lead.appointment_rebooked';
     case LeadReturnedFromSales = 'lead.returned_from_sales';
     case LeadTakenBackBySales = 'lead.taken_back_by_sales';
+    case LeadAppointmentRun = 'lead.appointment_run';
+    case LeadAppointmentNoShow = 'lead.appointment_no_show';
+    case LeadAppointmentCloseOutCorrected = 'lead.appointment_close_out_corrected';
     case LeadReceivedTimeCorrected = 'lead.received_time_corrected';
     case LeadQualified = 'lead.qualified';
     case LeadReturnedToWorking = 'lead.returned_to_working';

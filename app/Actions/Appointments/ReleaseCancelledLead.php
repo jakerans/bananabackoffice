@@ -2,6 +2,7 @@
 
 namespace App\Actions\Appointments;
 
+use App\Enums\AppointmentState;
 use App\Enums\LeadStatus;
 use App\Models\ContactCenterSettings;
 use App\Models\Lead;
@@ -99,7 +100,9 @@ class ReleaseCancelledLead
                 $lead,
                 null,
                 ReturnLeadFromSales::RELEASED,
-                trans_choice('{1} Not booked again within 1 day of the cancellation.|[2,*] Not booked again within :count days of the cancellation.', $days, ['count' => $days]),
+                $lead->appointments()->first()?->state === AppointmentState::NoShow
+                    ? trans_choice('{1} Not booked again within 1 day of the no-show.|[2,*] Not booked again within :count days of the no-show.', $days, ['count' => $days])
+                    : trans_choice('{1} Not booked again within 1 day of the cancellation.|[2,*] Not booked again within :count days of the cancellation.', $days, ['count' => $days]),
                 true,
                 $lead->location,
                 $lead->assignee,

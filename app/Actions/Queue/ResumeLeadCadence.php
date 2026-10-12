@@ -69,7 +69,7 @@ class ResumeLeadCadence
      * among follow-up calls and is not handed out as a Lead nobody has called.
      * A Lead that never had a cadence is given one the same way.
      *
-     * A Lead whose last appointment was cancelled goes into the Cancelled
+     * A Lead whose last appointment was cancelled or was a no-show goes into the Cancelled
      * Appointments queue, which has a button of its own, so the call center
      * knows it is a cancelled booking before dialling (decision 117). Any
      * other returned Lead goes into the ordinary queue.
@@ -90,7 +90,7 @@ class ResumeLeadCadence
         $moment = now();
         $schedule = CadenceSchedule::fromSettings(ContactCenterSettings::current());
 
-        $queue = $lead->appointments()->first()?->isCancelled() ? CallQueue::CancelledAppointments : CallQueue::Main;
+        $queue = $lead->appointments()->first()?->fellThrough() ? CallQueue::CancelledAppointments : CallQueue::Main;
 
         $changes = [
             'state' => CadenceState::InQueue,

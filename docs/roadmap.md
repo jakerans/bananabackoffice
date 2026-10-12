@@ -82,11 +82,14 @@ Lead back) is built and merged into `main` (2026-10-10)** under decisions 115
 to 120. **Slice 6 is complete as planned.**
 
 **Slice 7, what happened at the appointment, proposals and their results, is
-proposed (2026-10-11) and not approved.** It is the after-action report of the
-plan's section 5.6, in four steps. Its plan, with the reasoning from the plan
+approved in four steps (2026-10-12, decision 125).** It is the after-action
+report of the plan's section 5.6. Its plan, with the reasoning from the plan
 for why it is next, is
-[slice-7-appointment-results-plan.md](slice-7-appointment-results-plan.md). It
-waits for Jacob's answers to eleven questions.
+[slice-7-appointment-results-plan.md](slice-7-appointment-results-plan.md).
+**Step 7a (mark an appointment run or no-show) is built (2026-10-12)** and
+waits for Jacob's review and his word to merge. Steps 7b (proposals), 7c
+(results and the report) and 7d (the first Sales figures) are approved in
+order and not started.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

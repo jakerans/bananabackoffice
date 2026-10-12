@@ -1,7 +1,10 @@
 # Slice 7 — What Happened at the Appointment, Proposals and Their Results: Proposed Plan
 
-Status: **proposed on 2026-10-11. Nothing here is approved or built.** It waits
-for Jacob's answers to the eleven questions under "Decisions needed".
+Status: **approved in four steps on 2026-10-12 (decision 125), each stopping
+for Jacob's review. Jacob agreed to every recommendation under "Decisions
+needed". Step 7a is built (2026-10-12) and waits for his review and his word
+to merge; see "Step 7a as built". 7b to 7d are approved in order and not
+started.**
 
 This is the after-action report of
 [product-architecture.md](product-architecture.md), section 5.6, read with
@@ -92,6 +95,45 @@ answered.
 Two new appointment states, run and no-show, with who said so, when, and the
 note. No new table. Cancelled, rescheduled and "booked in error" stay as they
 are (slice 6).
+
+### Step 7a as built (2026-10-12)
+
+Built as planned above. What a reader of the code should know:
+
+- **The actions** are `CloseOutAppointment` and `CorrectAppointmentCloseOut`
+  in `app/Actions/Appointments/`. Both go through `ChangeLeadLifecycle`, as
+  every appointment action does.
+- **Two new appointment states,** run and no-show, on the existing
+  `appointments` row. **No migration:** every column they use already exists
+  and is wide enough.
+- **One new Lead status,** Appointment run. A no-show Lead takes the existing
+  Appointment cancelled status, so the 14-day wait, the "To rebook" list, the
+  release and the Cancelled Appointments queue from slice 6 all apply to it
+  without being built again. The appointment itself says No-show, and so does
+  the notice the call center reads.
+- **Who may answer** is `LeadPolicy::closeOutAppointment`: the same people who
+  may reschedule.
+- **The screens:** the Appointment card asks "What happened?" once the start
+  time has come; Sales > Calendar has "To close out" at the top; the customer
+  page shows Run or No-show.
+
+Readings made while building, none of them a new rule:
+
+- **A no-show Lead reads "Appointment cancelled"** in lists, as any Lead
+  waiting to be booked again does. It was not given a status of its own.
+- **An appointment can be answered from its start time, and can still be
+  cancelled or rescheduled until its end time.** For the length of the
+  appointment both are offered.
+- **Only an appointment whose Lead is still "Appointment booked" can be
+  answered.** One whose Lead was sent back or moved before anyone answered
+  stays as "Time has passed" for good.
+- **When an earlier appointment is answered after a later one was booked,** the
+  Lead stays Appointment booked, because it has an appointment to come.
+- **A correction changes the Lead only if nothing has happened to it since.**
+  Otherwise only the appointment is corrected.
+- **"Booked in error" is no longer offered once an appointment is run or a
+  no-show.** A manager uses Send back, which asks whether it should ever have
+  been booked.
 
 ## Step 7b — Proposals
 
@@ -200,7 +242,10 @@ appointment at the same instant (real processes); and the migrations on MySQL
 
 ## Decisions needed
 
-Each has a recommendation, so "agreed to all" is an answer.
+**Jacob agreed to every recommendation on 2026-10-12 (decision 125).** On
+question 10 he confirmed it is counted for each Lead, and added that two
+proposals sold against one Lead count once unless the customer is booked again
+later for a second job.
 
 1. **Who says an appointment was run or a no-show, and from when?**
    *Recommended:* the salesperson whose appointment it is, or a manager, from

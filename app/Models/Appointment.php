@@ -183,6 +183,35 @@ class Appointment extends Model
     }
 
     /**
+     * Whether the visit did not happen: cancelled, or a no-show.
+     */
+    public function fellThrough(): bool
+    {
+        return $this->state->fellThrough();
+    }
+
+    /**
+     * Whether its time has come and nobody has yet said what happened: it
+     * still stands and its start time has passed (decision 125).
+     */
+    public function awaitsCloseOutAt(CarbonInterface $moment): bool
+    {
+        return $this->stands() && $this->starts_at->lte($moment);
+    }
+
+    /**
+     * Standing appointments whose start time has come, still waiting to be
+     * marked run or no-show.
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function awaitingCloseOutAt(Builder $query, CarbonInterface $moment): void
+    {
+        $query->where('state', AppointmentState::Booked)->where('starts_at', '<=', self::instant($moment));
+    }
+
+    /**
      * Whether the appointment still holds its time and its salesperson.
      */
     public function stands(): bool

@@ -2425,6 +2425,45 @@ the plan, what is next and why (see decision 122). The first such answer is in
 the implementation agent as pasted text. They are his own words and are
 treated as such, an approval to merge included.
 
+## 125. Slice 7 is approved in four steps, with its eleven answers (2026-10-12)
+
+**Approved by Jacob** ("Follow your recommendation. All the rest follow your
+recommendation."). Slice 7 is built from
+[slice-7-appointment-results-plan.md](slice-7-appointment-results-plan.md) in
+its four steps, each stopping for his review: 7a run or no-show; 7b proposals;
+7c results and the after-action report; 7d the first Sales figures. **Step 7a
+is approved to build.** 7b to 7d are approved in order.
+
+His answers to the plan's eleven questions, each as recommended:
+
+1. An appointment is marked run or no-show by the salesperson whose
+   appointment it is, or a manager, from its start time.
+2. A no-show is treated as a cancellation by the customer: the Lead stays with
+   the salesperson for the waiting period, then goes to the Cancelled
+   Appointments queue, where the card says it was a no-show. It still counts as
+   issued.
+3. A Lead whose appointment was run shows a new status, Appointment run, still
+   with the salesperson.
+4. A proposal counts for Demo Rate when it is saved with a name and a price and
+   tied to that appointment.
+5. A proposal cannot exist with no appointment, in this slice.
+6. Sold records the sold amount and the day, and the Lead shows Sold. Creating
+   the Project is a later slice.
+7. A Lost reason comes from the Sales Loss Reasons list as it stands.
+8. Objections are a new managed list that starts with "Other (see note)".
+9. A Lead is Sold when one of its proposals is Sold, and Lost when the
+   salesperson or a manager marks the Lead lost, which marks every proposal
+   still Pending as Lost.
+10. **Close Rate is counted for each Lead, not each appointment.** "Correct,
+    it's per lead, not per appointment." A return visit that closes the sale
+    does not lower the rate. Two proposals sold against one Lead count as one
+    win, "unless it's booked again in the future for a second job". Read as: a
+    second job is its own Lead for that customer, which Backoffice already
+    makes with "New lead for this customer", and so is counted by itself. This
+    settles how decision 124's "against the number of appointments" is
+    counted.
+11. The voice note and its transcript are not in this slice.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

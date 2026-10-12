@@ -287,7 +287,7 @@ test('a salesperson sees their own appointments and a manager sees their locatio
         ->assertSee('Thursday, October 8, 2026');
 });
 
-test('the calendar leaves out appointments that are over or were booked in error', function () {
+test('the calendar\'s upcoming list leaves out appointments that are over or were booked in error', function () {
     $past = bookableLead($this->lakeview);
     $past->account->forceFill(['display_name' => 'Past Customer'])->save();
     $undone = bookableLead($this->lakeview);
@@ -300,10 +300,13 @@ test('the calendar leaves out appointments that are over or were booked in error
     // Later the same day, after the first appointment has finished.
     $this->travelTo('2026-10-07 17:30:00');
 
-    Livewire::actingAs($this->manager)->test('pages::sales.calendar')
+    $page = Livewire::actingAs($this->manager)->test('pages::sales.calendar')
         ->assertSee('No upcoming appointments.')
-        ->assertDontSee('Past Customer')
+        ->assertDontSeeHtml('data-test="calendar-appointment"')
         ->assertDontSee('Undone Customer');
+
+    // Since step 7a the one that is over waits under "To close out" until it is marked run or no-show.
+    $page->assertSeeHtml('data-test="calendar-to-close-out"')->assertSee('Past Customer');
 });
 
 test('a salesperson who lost access to a location no longer sees their appointments there', function () {

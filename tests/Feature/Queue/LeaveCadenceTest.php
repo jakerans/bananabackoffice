@@ -131,8 +131,8 @@ test('a lead with no cadence is disqualified and deferred exactly as before', fu
 });
 
 test('no cadence change adds a lead status or writes to the lifecycle history', function () {
-    // The cadence adds none. "appointment_booked" and "appointment_cancelled" are slice 6's (rulebook, rule 3; decision 106).
-    expect(array_column(LeadStatus::cases(), 'value'))->toBe(['new', 'working', 'qualified', 'appointment_booked', 'appointment_cancelled', 'nurture', 'disqualified']);
+    // The cadence adds none. "appointment_booked" and "appointment_cancelled" are slice 6's (rulebook, rule 3; decision 106), "appointment_run" is slice 7's (decision 125).
+    expect(array_column(LeadStatus::cases(), 'value'))->toBe(['new', 'working', 'qualified', 'appointment_booked', 'appointment_cancelled', 'appointment_run', 'nurture', 'disqualified']);
 
     $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
     $second = Lead::factory()->at($this->lakeview)->create();
