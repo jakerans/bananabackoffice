@@ -226,8 +226,11 @@ Readings made while building, none of them a new rule:
   Lead is theirs.
 - **The salesperson is told** in the app when a manager records a proposal at
   their appointment, following decision 126.
-- **A proposal cannot be edited or removed.** A wrong name or price stays
-  until step 7c decides how a proposal is corrected. See the handoff.
+- **A proposal cannot be edited or removed in this step.** Jacob decided how
+  one is corrected when he approved the merge (decision 128); it is built
+  with step 7c.
+
+**Merged into `main` on 2026-10-12** with Jacob's word ("merge it").
 
 ## Step 7c — Results, and the report
 
@@ -242,6 +245,17 @@ or a manager, marks it:
   on Lead & Sales Lists, and the primary objection.
 - **Still Pending:** with the main objection, so the reason it is open is
   written down.
+
+**Correcting a proposal** (decision 128, added 2026-10-12):
+
+- **Edit:** the salesperson the Lead is with, or a manager, can change the
+  name and price while the proposal is still Pending. Each change is kept in
+  the audit record.
+- **Added in error:** a manager marks a proposal "added in error" with a note.
+  It stays on the card, shown as such, and counts for nothing from then on. An
+  appointment whose only proposal was added in error is again run with
+  nothing presented.
+- Nothing is deleted.
 
 **The after-action report** is one short form opened from the Appointment card
 or from "To close out", built to take a minute or two on a phone:

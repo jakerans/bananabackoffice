@@ -90,9 +90,10 @@ for why it is next, is
 with what decision 126 added to it: close out first, the prompt, the reminder
 15 minutes after the appointment, and the salesperson told when a manager
 touches their appointment. **It was merged on 2026-10-12** and is on staging.
-**Step 7b (proposals) is built (2026-10-12)** and waits for Jacob's review and
-his word to merge. Steps 7c (results and the report) and 7d (the first Sales
-figures) are approved in order and not started.
+**Step 7b (proposals) was built and merged on 2026-10-12.** Step 7c (results,
+correcting a proposal, and the report) is next and waits for Jacob's word to
+start; step 7d (the first Sales figures) follows it. Both are approved in
+order (decision 125).
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

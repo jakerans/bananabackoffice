@@ -2530,6 +2530,24 @@ Why: adding up decimal dollars loses or gains a cent now and then, and Sold
 Revenue, NSLI and commission will all be sums of these amounts. The sold
 amount in step 7c is to be stored the same way.
 
+## 128. A proposal can be corrected, or marked "added in error" (2026-10-12)
+
+**Decided by Jacob** when he approved the merge of step 7b, which had built
+proposals with no way to change one: "yes the proposal should be able to be
+edited or removed or voided or archived. i like your ideas on it". The ideas
+were the recommendation in that step's handoff, which is now the rule:
+
+1. **Edited.** The salesperson the Lead is with, or a manager, can change a
+   proposal's name and price while it is still Pending. Every change is kept
+   in the audit record with what it was before.
+2. **Removed, voided or archived** is one thing: a manager marks the proposal
+   **"added in error"**, with a note. It stays on the record, shown as such,
+   and from then on counts for nothing: not for Demo Rate, not for any result
+   or figure.
+3. **Nothing is ever deleted.**
+
+To be built with step 7c, as recommended.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
