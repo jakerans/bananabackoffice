@@ -285,6 +285,10 @@ Demo Rate:
 Of attended appointments, how many actually receive a pricing/options presentation.
 Use presentation evidence where possible; draft estimate alone is not enough.
 
+Added 2026-10-11 (LOCKED by decision 124):
+- Demo Rate is counted from appointments marked run. One with no proposal created counts against the salesperson until a proposal exists, and for them from the day it is created.
+- Close Rate counts wins against appointments, not proposals. Several proposals from one appointment with one sold is one win, with nothing counted against the others. Two accepted from one appointment is one win.
+
 5.3 Workspace
 iPad-first/tablet-responsive in-home selling flow:
 - appointment context
@@ -337,12 +341,12 @@ Fields:
 
 Appointment remains operationally incomplete until report is submitted.
 
-Added 2026-10-11 (LOCKED by decisions 121 and 123; these change how the fields above are read):
+Added 2026-10-11 (LOCKED by decisions 121, 123 and 124; these change how the fields above are read):
 - The report first says what happened to the appointment: no-show, or run. (Cancelled and rescheduled are recorded when they happen, not here.)
-- An appointment that was run must have a result: Sold, Pending or Lost. "Sold" is the word used for Won. "It took place" alone is not a result.
-- Whether a proposal was presented, with a price, is recorded as its own fact. Run with no proposal presented is a no-demo; it still has a result, often Pending. Demo Rate (5.2) is counted from this and is to be watched.
-- Won/Pending/Lost belong to a proposal, not to the appointment as such. One appointment can have several proposals and one proposal several appointments.
-- OPEN for the after-action report's build plan: where the result is kept when an appointment ran and no proposal exists yet; and what an appointment shows when it has several proposals with different results.
+- An appointment has no result of its own. It shows as run. Only a proposal is Sold, Pending or Lost, and a proposal cannot be given a result before it exists. "Sold" is the word used for Won.
+- Run with no proposal created is a no-demo. Demo Rate (5.2) is counted from this and is to be watched.
+- One appointment can have several proposals and one proposal several appointments.
+- Build plan: slice-7-appointment-results-plan.md.
 
 5.7 Sales commission
 Commission is based on GP dollars.

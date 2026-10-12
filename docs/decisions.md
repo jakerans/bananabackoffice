@@ -2371,7 +2371,9 @@ had no plan, when 5.6 specifies it.
   appointment can be run without anything being shown.
 - **"It took place" is not an outcome by itself.** An appointment that ran
   must be given a result: **Sold, Pending or Lost.** "Sold" is the word he
-  uses for what the product architecture calls Won.
+  uses for what the product architecture calls Won. **Corrected by decision
+  124: the result is given to a proposal, never to the appointment, which
+  simply shows as run.**
 - **Whether a proposal was presented is its own fact.** "An appointment was
   run, but no proposal was built": nothing was pitched or demonstrated and no
   price was given. That is what **Demo Rate** is counted from: of the
@@ -2392,6 +2394,36 @@ plan and not assumed:
 - "Rescheduled" as a status: slice 6 keeps a rescheduled appointment as the
   same appointment with its earlier times in its history. Whether a report
   needs to count it apart is for that plan.
+
+## 124. Only a proposal has a result; how Demo Rate and wins are counted (2026-10-11)
+
+**Decided by Jacob,** answering the two points decision 123 left open. **It
+corrects decision 123 in one place:** an appointment that ran is not itself
+given Sold, Pending or Lost.
+
+- **An appointment has no result.** "Appointments don't have one lost or
+  pending attached to them. Only proposals have one lost or pending attached to
+  them, so the appointment itself would show as run."
+- **A result needs a proposal.** "You can't resolve a proposal that hasn't been
+  created."
+- **Demo Rate** is counted from appointments marked run that have no proposal.
+  Such an appointment counts against the salesperson for as long as no
+  proposal exists, and counts for them from the day one is created, even if
+  that is a day later.
+- **Wins are counted against appointments, not proposals.** A salesperson who
+  wrote three proposals from one appointment and sold one is not marked down
+  for the other two. Two proposals accepted from one appointment count as one
+  win.
+
+**Also from Jacob that day, about how the work is steered:** the implementation
+agent is not to ask him whether a piece of work is next. It is to say, from
+the plan, what is next and why (see decision 122). The first such answer is in
+[slice-7-appointment-results-plan.md](slice-7-appointment-results-plan.md),
+"Why this is next, from the plan".
+
+**And about his messages:** he dictates them with Wispr Flow, and they reach
+the implementation agent as pasted text. They are his own words and are
+treated as such, an approval to merge included.
 
 ## Future decisions already constrained by the brief
 
