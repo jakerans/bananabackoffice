@@ -502,6 +502,17 @@ Rules:
     `settings.contact_center.manage`, like the rest of that page.
 16. **The release itself has no person.** The timer does it, and the history,
     the audit event and the notices record that nobody did.
+17. **Run or no-show** (`LeadPolicy::closeOutAppointment`, slice 7 step 7a,
+    decision 125): the same people who may reschedule, so a manager where the
+    Lead is, or the salesperson whose appointment it is while the Lead is
+    still theirs. From the appointment's start time. A Call Center Agent
+    cannot. **Correcting an answer** is for a manager only
+    (`appointments.manage`), with a note. No permission was added.
+18. **Close out first** (decision 126). While a Lead has an appointment that is
+    over and unanswered, nobody may book it again, send it back, move it,
+    return it to central or disqualify it, whatever their role. A salesperson
+    answers their own appointments oldest first; a manager is not held to
+    that order. No permission was added.
 
 ## Slice 4: the call queue and its settings
 

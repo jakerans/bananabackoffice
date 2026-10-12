@@ -287,13 +287,13 @@ function bookableLeadCancelledWith($test)
     return $lead->fresh();
 }
 
-test('once the time has passed the card offers another appointment and nothing that changes the passed one', function () {
+test('once the time has passed the card asks what happened and offers nothing else until it is answered (decision 126)', function () {
     $this->travelTo('2026-10-09 14:00:00');
 
     appointmentCard($this->sam, $this->lead->fresh())
-        ->assertSeeHtml('data-test="appointment-passed"')
-        ->assertSee('The time of this appointment has passed. If it was missed, book another.')
-        ->assertSee('Book another appointment')
+        ->assertSeeHtml('data-test="close-out"')
+        ->assertSee('The time of the appointment on Thu, Oct 8 at 3:00 PM EDT has come. What happened?')
+        ->assertDontSeeHtml('data-test="book-appointment"')
         ->assertDontSeeHtml('data-test="reschedule-appointment"')
         ->assertDontSeeHtml('data-test="cancel-appointment"')
         ->call('openReschedule')
@@ -301,18 +301,33 @@ test('once the time has passed the card offers another appointment and nothing t
 
     appointmentCard($this->manager, $this->lead->fresh())
         ->assertDontSeeHtml('data-test="move-appointment"')
-        ->assertSeeHtml('data-test="send-lead-back"')
+        ->assertDontSeeHtml('data-test="send-lead-back"')
         ->call('openCancel')
         ->assertStatus(409);
 
+    // Whatever the browser sends, another appointment is refused until this one has an answer.
     appointmentCard($this->sam, $this->lead->fresh())
         ->call('openBook')
         ->set('appointmentDate', '2026-10-13')
         ->set('appointmentTime', '10:00')
         ->call('book')
+        ->assertHasErrors('booking')
+        ->assertSee('Say what happened at this lead\'s last appointment first: run or no-show.');
+
+    expect(Appointment::query()->where('lead_id', $this->lead->id)->count())->toBe(1);
+
+    // Answered: the card offers the next appointment again, and it adds no issued count.
+    appointmentCard($this->sam, $this->lead->fresh())
+        ->call('openCloseOut', 'run')
+        ->call('closeOut')
         ->assertHasNoErrors()
-        ->assertSee('Tue, Oct 13, 2026')
-        ->assertSee('Passed');
+        ->assertSee('Book another appointment')
+        ->call('openBook')
+        ->set('appointmentDate', '2026-10-13')
+        ->set('appointmentTime', '10:00')
+        ->call('book')
+        ->assertHasNoErrors()
+        ->assertSee('Tue, Oct 13, 2026');
 
     expect(LeadIssue::query()->count())->toBe(1);
     expect(Appointment::query()->where('lead_id', $this->lead->id)->count())->toBe(2);

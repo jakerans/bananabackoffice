@@ -2220,6 +2220,9 @@ and no new issued count. Backoffice does not record whether the passed
 appointment was held or missed; that is for the after-action report (decision
 84).
 
+**Changed by decision 126 (2026-10-12):** another appointment can be booked
+only once the one that passed has been marked run or no-show.
+
 ## 114. The call center is told when a Lead came back from Sales (2026-10-10)
 
 **Decided by Jacob,** while step 6b was being built: "if a cancelled appmt is
@@ -2371,7 +2374,9 @@ had no plan, when 5.6 specifies it.
   appointment can be run without anything being shown.
 - **"It took place" is not an outcome by itself.** An appointment that ran
   must be given a result: **Sold, Pending or Lost.** "Sold" is the word he
-  uses for what the product architecture calls Won.
+  uses for what the product architecture calls Won. **Corrected by decision
+  124: the result is given to a proposal, never to the appointment, which
+  simply shows as run.**
 - **Whether a proposal was presented is its own fact.** "An appointment was
   run, but no proposal was built": nothing was pitched or demonstrated and no
   price was given. That is what **Demo Rate** is counted from: of the
@@ -2392,6 +2397,123 @@ plan and not assumed:
 - "Rescheduled" as a status: slice 6 keeps a rescheduled appointment as the
   same appointment with its earlier times in its history. Whether a report
   needs to count it apart is for that plan.
+
+## 124. Only a proposal has a result; how Demo Rate and wins are counted (2026-10-11)
+
+**Decided by Jacob,** answering the two points decision 123 left open. **It
+corrects decision 123 in one place:** an appointment that ran is not itself
+given Sold, Pending or Lost.
+
+- **An appointment has no result.** "Appointments don't have one lost or
+  pending attached to them. Only proposals have one lost or pending attached to
+  them, so the appointment itself would show as run."
+- **A result needs a proposal.** "You can't resolve a proposal that hasn't been
+  created."
+- **Demo Rate** is counted from appointments marked run that have no proposal.
+  Such an appointment counts against the salesperson for as long as no
+  proposal exists, and counts for them from the day one is created, even if
+  that is a day later.
+- **Wins are counted against appointments, not proposals.** A salesperson who
+  wrote three proposals from one appointment and sold one is not marked down
+  for the other two. Two proposals accepted from one appointment count as one
+  win.
+
+**Also from Jacob that day, about how the work is steered:** the implementation
+agent is not to ask him whether a piece of work is next. It is to say, from
+the plan, what is next and why (see decision 122). The first such answer is in
+[slice-7-appointment-results-plan.md](slice-7-appointment-results-plan.md),
+"Why this is next, from the plan".
+
+**And about his messages:** he dictates them with Wispr Flow, and they reach
+the implementation agent as pasted text. They are his own words and are
+treated as such, an approval to merge included.
+
+## 125. Slice 7 is approved in four steps, with its eleven answers (2026-10-12)
+
+**Approved by Jacob** ("Follow your recommendation. All the rest follow your
+recommendation."). Slice 7 is built from
+[slice-7-appointment-results-plan.md](slice-7-appointment-results-plan.md) in
+its four steps, each stopping for his review: 7a run or no-show; 7b proposals;
+7c results and the after-action report; 7d the first Sales figures. **Step 7a
+is approved to build.** 7b to 7d are approved in order.
+
+His answers to the plan's eleven questions, each as recommended:
+
+1. An appointment is marked run or no-show by the salesperson whose
+   appointment it is, or a manager, from its start time.
+2. A no-show is treated as a cancellation by the customer: the Lead stays with
+   the salesperson for the waiting period, then goes to the Cancelled
+   Appointments queue, where the card says it was a no-show. It still counts as
+   issued.
+3. A Lead whose appointment was run shows a new status, Appointment run, still
+   with the salesperson.
+4. A proposal counts for Demo Rate when it is saved with a name and a price and
+   tied to that appointment.
+5. A proposal cannot exist with no appointment, in this slice.
+6. Sold records the sold amount and the day, and the Lead shows Sold. Creating
+   the Project is a later slice.
+7. A Lost reason comes from the Sales Loss Reasons list as it stands.
+8. Objections are a new managed list that starts with "Other (see note)".
+9. A Lead is Sold when one of its proposals is Sold, and Lost when the
+   salesperson or a manager marks the Lead lost, which marks every proposal
+   still Pending as Lost.
+10. **Close Rate is counted for each Lead, not each appointment.** "Correct,
+    it's per lead, not per appointment." A return visit that closes the sale
+    does not lower the rate. Two proposals sold against one Lead count as one
+    win, "unless it's booked again in the future for a second job". Read as: a
+    second job is its own Lead for that customer, which Backoffice already
+    makes with "New lead for this customer", and so is counted by itself. This
+    settles how decision 124's "against the number of appointments" is
+    counted.
+11. The voice note and its transcript are not in this slice.
+
+## 126. Close out first, a reminder after 15 minutes, and the salesperson is told (2026-10-12)
+
+**Decided by Jacob,** in reply to step 7a's handoff, which listed as a known
+limit that nothing made anyone answer. His words: "they can't start another
+appointment until the last one was closed out. There should be a prompt and an
+email that's sent out 15 minutes afterwards to remind them to close out the
+appointment. We want to build the habit that they close it out immediately
+afterwards in the car. Salesperson should get notified if a manager corrects
+or touches their appointments."
+
+The plan (5.6) said "Goal: 1–2 minutes from the car" and "Appointment remains
+operationally incomplete until report is submitted". It did not say what
+"incomplete" stops, or anything about a reminder. This decision does, and the
+plan now carries it.
+
+1. **Close out first.** Once an appointment's end time has passed and nobody
+   has marked it run or no-show, nothing else can be done with its Lead: it
+   cannot be booked again, sent back to the Contact Center, moved to another
+   Location, returned to central or disqualified. Each says "Say what happened
+   at this lead's last appointment first: run or no-show." This changes
+   decision 113.
+2. **In order.** A salesperson cannot mark a later appointment of theirs while
+   an earlier one that is over has no answer. A manager answering for them is
+   not held to this.
+3. **A prompt.** A salesperson with an appointment that is over and unanswered
+   sees a bar under the header on every page, with how many and a link to the
+   oldest. It goes when they are answered.
+4. **A reminder.** Fifteen minutes after an appointment's end time, if it still
+   has no answer, its salesperson gets a notice in the app and an email. Once
+   for each appointment. Neither says anything about the customer.
+5. **The salesperson is told** in the app when a manager marks their
+   appointment run or no-show, corrects that answer, or marks the appointment
+   "booked in error". A new time, a move, a cancellation and a Lead sent back
+   were already told (decisions 91 and 106).
+
+Read by the implementation agent, for Jacob to change if wrong:
+
+- **"Can't start another appointment."** Backoffice has no step where a
+  salesperson starts an appointment, so this is built as items 1 and 2. The
+  salesperson can still open their next appointment's Lead and see where to
+  go.
+- **The block begins at the end time,** not the start. During the appointment
+  it can already be answered, and can still be rescheduled or cancelled.
+- **The reminder is sent once.** After it, the prompt and the "To close out"
+  list are what keep it in view.
+- **A manager is not prompted or reminded** about other people's appointments.
+  They see them under "To close out" in Sales > Calendar.
 
 ## Future decisions already constrained by the brief
 

@@ -2,6 +2,7 @@
 
 namespace App\Support\Appointments;
 
+use App\Enums\AppointmentState;
 use App\Enums\LeadStatusEvent;
 use App\Models\Appointment;
 use App\Models\Lead;
@@ -44,11 +45,16 @@ final readonly class SalesReturn
         $return = $lead->statusChanges()->where('event', LeadStatusEvent::ReturnedFromSales)->with('changedBy')->orderByDesc('id')->first();
 
         $cancelled = $appointment !== null && $appointment->isCancelled();
+        $noShow = $appointment !== null && $appointment->state === AppointmentState::NoShow;
 
         return new self(
             $lead->returned_from_sales_at,
-            $cancelled,
-            $cancelled ? __('Cancelled appointment: this lead came back from Sales') : __('This lead came back from Sales'),
+            $cancelled || $noShow,
+            match (true) {
+                $cancelled => __('Cancelled appointment: this lead came back from Sales'),
+                $noShow => __('No-show: this lead came back from Sales'),
+                default => __('This lead came back from Sales'),
+            },
             $appointment === null ? null : self::describe($appointment),
             $return?->changedBy?->name,
             $return?->note,
@@ -61,6 +67,14 @@ final readonly class SalesReturn
     private static function describe(Appointment $appointment): string
     {
         $when = $appointment->starts_at->copy()->timezone($appointment->timezone)->format('D, M j \a\t g:i A T');
+
+        if ($appointment->state === AppointmentState::NoShow) {
+            return __('The customer was a no-show for the appointment on :when with :name.', ['when' => $when, 'name' => $appointment->salesperson_name]);
+        }
+
+        if ($appointment->state === AppointmentState::Run) {
+            return __('Its appointment on :when with :name was run.', ['when' => $when, 'name' => $appointment->salesperson_name]);
+        }
 
         if (! $appointment->isCancelled()) {
             return __('It had an appointment on :when with :name.', ['when' => $when, 'name' => $appointment->salesperson_name]);

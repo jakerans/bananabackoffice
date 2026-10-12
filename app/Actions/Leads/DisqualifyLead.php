@@ -89,6 +89,12 @@ class DisqualifyLead
             ]);
         }
 
+        if ($lead->isWithSales() && $lead->hasAppointmentToCloseOut()) {
+            throw ValidationException::withMessages([
+                'status' => __('Say what happened at this lead\'s last appointment first: run or no-show.'),
+            ]);
+        }
+
         if (! $reason->is_active) {
             throw ValidationException::withMessages([
                 'disqualificationReasonId' => __(':reason is no longer offered. Choose another.', ['reason' => $reason->name]),

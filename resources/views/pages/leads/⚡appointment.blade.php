@@ -2,13 +2,17 @@
 
 use App\Actions\Appointments\BookAppointment;
 use App\Actions\Appointments\CancelAppointment;
+use App\Actions\Appointments\CloseOutAppointment;
+use App\Actions\Appointments\CorrectAppointmentCloseOut;
 use App\Actions\Appointments\MarkAppointmentBookedInError;
 use App\Actions\Appointments\MoveAppointment;
 use App\Actions\Appointments\RescheduleAppointment;
 use App\Actions\Appointments\SendLeadBackToContactCenter;
 use App\Actions\Appointments\StopCountingLeadAsIssued;
 use App\Actions\Appointments\TakeLeadBackFromContactCenter;
+use App\Enums\AppointmentState;
 use App\Enums\CancellationParty;
+use App\Enums\LeadStatus;
 use App\Enums\Permission;
 use App\Enums\Role;
 use App\Models\Appointment;
@@ -68,6 +72,14 @@ new class extends Component {
 
     public string $takeBackNote = '';
 
+    /** Which answer the close-out dialog was opened for: run, or no-show. */
+    #[Locked]
+    public string $closeOutOutcome = '';
+
+    public string $closeOutNote = '';
+
+    public string $correctionNote = '';
+
     /** The Lead's lifecycle revision when a dialog was opened, so a save refuses a Lead that has changed since. */
     #[Locked]
     public int $knownLifecycleVersion = 0;
@@ -114,6 +126,21 @@ new class extends Component {
     public function earlierAppointments(): Collection
     {
         return $this->lead->appointments()->when($this->appointment !== null, fn ($appointments) => $appointments->whereKeyNot($this->appointment->id))->get();
+    }
+
+    /**
+     * The appointment whose time has come and that is still waiting to be
+     * marked run or no-show: the oldest one, if there are several. Only while
+     * the Lead is still booked with Sales.
+     */
+    #[Computed]
+    public function toCloseOut(): ?Appointment
+    {
+        if ($this->lead->status !== LeadStatus::AppointmentBooked) {
+            return null;
+        }
+
+        return $this->lead->appointments()->awaitingCloseOutAt(now())->reorder('starts_at')->orderBy('id')->first();
     }
 
     /**
@@ -501,6 +528,73 @@ new class extends Component {
         Flux::toast(variant: 'success', text: __('The lead is back with the Contact Center and in the call queue.'));
     }
 
+    public function openCloseOut(string $outcome): void
+    {
+        $appointment = $this->toCloseOut ?? abort(409, __('This appointment is no longer waiting for an answer. Reload the page.'));
+
+        $this->authorize('closeOutAppointment', [$this->lead, $appointment]);
+
+        abort_unless(in_array($outcome, [AppointmentState::Run->value, AppointmentState::NoShow->value], true), 404);
+
+        $this->closeOutOutcome = $outcome;
+        $this->closeOutNote = '';
+        $this->resetValidation();
+        $this->knownLifecycleVersion = (int) $this->lead->lifecycle_version;
+
+        Flux::modal('close-out-appointment')->show();
+    }
+
+    /**
+     * Say what happened to the appointment whose time has come: run, or no-show.
+     */
+    public function closeOut(CloseOutAppointment $closeOutAppointment): void
+    {
+        $appointment = $this->toCloseOut ?? abort(409, __('This appointment is no longer waiting for an answer. Reload the page.'));
+
+        $this->authorize('closeOutAppointment', [$this->lead, $appointment]);
+        $this->resetValidation();
+
+        $closeOutAppointment->handle($this->lead, $appointment, $this->closeOutOutcome, $this->closeOutNote, Auth::user(), $this->knownLifecycleVersion);
+
+        $noShow = $this->closeOutOutcome === AppointmentState::NoShow->value;
+
+        $this->changed();
+
+        Flux::modal('close-out-appointment')->close();
+        Flux::toast(variant: 'success', text: $noShow
+            ? __('Marked as a no-show. The lead stays with its salesperson to be booked again.')
+            : __('Marked as run.'));
+    }
+
+    public function openCorrectCloseOut(): void
+    {
+        $this->authorize('manageAppointment', $this->lead);
+
+        $this->correctionNote = '';
+        $this->resetValidation();
+        $this->knownLifecycleVersion = (int) $this->lead->lifecycle_version;
+
+        Flux::modal('correct-close-out')->show();
+    }
+
+    /**
+     * Change the shown appointment from run to no-show, or back, with why.
+     */
+    public function correctCloseOut(CorrectAppointmentCloseOut $correctAppointmentCloseOut): void
+    {
+        $this->authorize('manageAppointment', $this->lead);
+        $this->resetValidation();
+
+        $appointment = $this->appointment ?? abort(409);
+
+        $correctAppointmentCloseOut->handle($this->lead, $appointment, $this->correctionNote, Auth::user(), $this->knownLifecycleVersion);
+
+        $this->changed();
+
+        Flux::modal('correct-close-out')->close();
+        Flux::toast(variant: 'success', text: __('Corrected.'));
+    }
+
     public function openTakeBack(): void
     {
         $this->authorize('takeBack', $this->lead);
@@ -599,7 +693,7 @@ new class extends Component {
     #[On('lead-changed')]
     public function leadChanged(): void
     {
-        unset($this->lead, $this->appointment, $this->earlierAppointments, $this->gaps, $this->manages, $this->salespeople, $this->otherSalespeople);
+        unset($this->lead, $this->appointment, $this->toCloseOut, $this->earlierAppointments, $this->gaps, $this->manages, $this->salespeople, $this->otherSalespeople);
     }
 
     /**
@@ -709,8 +803,8 @@ new class extends Component {
                 </flux:callout>
             @endif
 
-            @if ($passed && $withSales)
-                <flux:text data-test="appointment-passed">{{ __('The time of this appointment has passed. If it was missed, book another.') }}</flux:text>
+            @if ($passed && $withSales && $this->toCloseOut === null)
+                <flux:text data-test="appointment-passed">{{ __('The time of this appointment has passed.') }}</flux:text>
             @endif
 
             @if ($upcoming)
@@ -734,6 +828,29 @@ new class extends Component {
             @elseif ($this->manages && $lead->status === \App\Enums\LeadStatus::AppointmentBooked)
                 <div>
                     <flux:button size="sm" variant="ghost" wire:click="openBookedInError" data-test="appointment-booked-in-error">{{ __('Booked in error') }}</flux:button>
+                </div>
+            @endif
+        @elseif ($appointment->state->isClosedOut())
+            <flux:callout :icon="$appointment->state === AppointmentState::Run ? 'check-circle' : 'x-circle'" data-test="appointment-closed-out">
+                <flux:callout.heading data-test="appointment-closed-out-as">{{ $appointment->state === AppointmentState::Run ? __('Appointment was run') : __('No-show') }}</flux:callout.heading>
+                <flux:callout.text>
+                    <span class="block">
+                        {{ __('Recorded by') }} {{ $appointment->state_changed_by_name ?? __('Unknown') }}@if ($appointment->state_changed_at !== null) &middot; <x-local-time :at="$appointment->state_changed_at" />@endif
+                    </span>
+                    @if ($appointment->state_note !== null)
+                        <span class="mt-1 block whitespace-pre-line">&ldquo;{{ $appointment->state_note }}&rdquo;</span>
+                    @endif
+                    @if ($appointment->state === AppointmentState::NoShow && $lead->status === LeadStatus::AppointmentCancelled)
+                        <span class="mt-1 block">{{ __('The lead stays with its salesperson to be booked again, as after a cancellation.') }}</span>
+                    @endif
+                </flux:callout.text>
+            </flux:callout>
+
+            @if ($this->manages)
+                <div>
+                    <flux:button size="sm" variant="ghost" wire:click="openCorrectCloseOut" data-test="correct-close-out">
+                        {{ $appointment->state === AppointmentState::Run ? __('Correct: it was a no-show') : __('Correct: it was run') }}
+                    </flux:button>
                 </div>
             @endif
         @elseif ($appointment->isCancelled())
@@ -765,7 +882,48 @@ new class extends Component {
         @endif
     @endif
 
-    @if (! $upcoming)
+    @if ($this->toCloseOut !== null)
+        @php
+            $waiting = $this->toCloseOut;
+        @endphp
+
+        <div class="flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 p-4" data-test="close-out">
+            <flux:text class="text-ink">
+                {{ __('The time of the appointment on :when has come. What happened?', ['when' => $waiting->starts_at->copy()->timezone($waiting->timezone)->format('D, M j \a\t g:i A T')]) }}
+            </flux:text>
+
+            @can('closeOutAppointment', [$lead, $waiting])
+                <div class="flex flex-wrap gap-2">
+                    <flux:button size="sm" variant="primary" wire:click="openCloseOut('{{ AppointmentState::Run->value }}')" data-test="close-out-run">{{ __('Appointment was run') }}</flux:button>
+                    <flux:button size="sm" wire:click="openCloseOut('{{ AppointmentState::NoShow->value }}')" data-test="close-out-no-show">{{ __('No-show') }}</flux:button>
+                </div>
+            @else
+                <flux:text class="text-sm" data-test="close-out-not-yours">{{ __('Its salesperson or a manager says whether it was run or was a no-show.') }}</flux:text>
+            @endcan
+        </div>
+    @endif
+
+    {{-- Kept on the page after the answer is given, so the dialog that was just used can close properly. --}}
+    @if ($appointment !== null)
+        @can('closeOutAppointment', [$lead, $this->toCloseOut ?? $appointment])
+            <x-confirmation-modal
+                name="close-out-appointment"
+                :title="$closeOutOutcome === AppointmentState::NoShow->value ? __('Mark this appointment a no-show?') : __('Mark this appointment as run?')"
+                :description="$closeOutOutcome === AppointmentState::NoShow->value
+                    ? __('The customer was not there. The lead stays with its salesperson to be booked again, as after a cancellation, and still counts as issued.')
+                    : __('The visit happened. The lead stays with its salesperson. Proposals and their results are recorded separately.')"
+                action="closeOut"
+                :confirm-label="$closeOutOutcome === AppointmentState::NoShow->value ? __('No-show') : __('Appointment was run')"
+                confirm-variant="primary"
+                :error="['stale', 'closeOutOutcome']"
+            >
+                <flux:textarea wire:model="closeOutNote" rows="2" :label="__('Note (optional)')" data-test="close-out-note" />
+            </x-confirmation-modal>
+        @endcan
+    @endif
+
+    {{-- Nothing else is offered while an appointment waits to be closed out (decision 126). --}}
+    @if (! $upcoming && $this->toCloseOut === null)
         @if ($this->gaps !== [])
             <ul class="flex flex-col gap-1 text-sm text-zinc-700" data-test="appointment-gaps">
                 <li class="text-zinc-500">{{ __('No appointment can be booked yet.') }}</li>
@@ -780,7 +938,7 @@ new class extends Component {
                 @else
                     <div>
                         <flux:button variant="primary" wire:click="openBook" data-test="book-appointment">
-                            {{ $passed && $withSales ? __('Book another appointment') : ($withSales ? __('Book again') : __('Book appointment')) }}
+                            {{ ($passed && $withSales) || $lead->status === LeadStatus::AppointmentRun ? __('Book another appointment') : ($withSales ? __('Book again') : __('Book appointment')) }}
                         </flux:button>
                     </div>
                 @endif
@@ -790,7 +948,7 @@ new class extends Component {
         @endif
     @endif
 
-    @if ($withSales && $this->manages)
+    @if ($withSales && $this->manages && ! $lead->hasAppointmentToCloseOut())
         <div>
             <flux:button size="sm" variant="ghost" wire:click="openSendBack" data-test="send-lead-back">{{ __('Send back to Contact Center') }}</flux:button>
         </div>
@@ -1042,6 +1200,22 @@ new class extends Component {
                     </div>
                 </form>
             </flux:modal>
+        @endif
+
+        @if ($appointment !== null)
+            <x-confirmation-modal
+                name="correct-close-out"
+                :title="__('Correct what happened at this appointment?')"
+                :description="$appointment->state === AppointmentState::Run
+                    ? __('It is marked as run. This changes it to a no-show.')
+                    : __('It is marked as a no-show. This changes it to run.')"
+                action="correctCloseOut"
+                :confirm-label="__('Correct it')"
+                confirm-variant="primary"
+                :error="['stale']"
+            >
+                <flux:textarea wire:model="correctionNote" rows="2" :label="__('Why it is being corrected (required)')" data-test="correction-note" />
+            </x-confirmation-modal>
         @endif
 
         <x-confirmation-modal

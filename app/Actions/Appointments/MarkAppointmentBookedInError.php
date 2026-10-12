@@ -17,6 +17,7 @@ use App\Models\Appointment;
 use App\Models\Lead;
 use App\Models\LeadIssue;
 use App\Models\User;
+use App\Notifications\AppointmentChanged;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -73,6 +74,11 @@ class MarkAppointmentBookedInError
 
             $moment = now();
             $salespersonName = $appointment->salesperson_name;
+
+            // The salesperson is told when a manager undoes their appointment (decision 126).
+            $salesperson = $appointment->salesperson_id === null || $appointment->salesperson_id === $actor->id ? null : User::query()->find($appointment->salesperson_id);
+
+            $salesperson?->notify(new AppointmentChanged($lead->id, AppointmentChanged::BOOKED_IN_ERROR, AppointmentChanged::IN_APP, $appointment));
 
             $appointment->forceFill([
                 'state' => AppointmentState::BookedInError,

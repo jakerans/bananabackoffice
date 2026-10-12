@@ -3,10 +3,12 @@
 namespace App\Actions\Queue;
 
 use App\Actions\Appointments\ReleaseCancelledLead;
+use App\Actions\Appointments\RemindToCloseOutAppointment;
 use App\Enums\CadenceEndReason;
 use App\Enums\CadenceState;
 use App\Enums\LeadStatus;
 use App\Enums\QueueHoldEndReason;
+use App\Models\Appointment;
 use App\Models\ContactCenterSettings;
 use App\Models\Lead;
 use App\Models\LeadCadence;
@@ -25,6 +27,7 @@ class RunQueueTick
         private EndQueueHold $endQueueHold,
         private EndLeadCadence $endLeadCadence,
         private ReleaseCancelledLead $releaseCancelledLead,
+        private RemindToCloseOutAppointment $remindToCloseOutAppointment,
     ) {}
 
     /**
@@ -44,16 +47,18 @@ class RunQueueTick
      *    without being booked again (rulebook, rule 8; decisions 116 to 119).
      *    This last part is not a repair: it is the one thing here that does
      *    work nothing else does.
+     * 5. Remind a salesperson, once, to say what happened at an appointment
+     *    that ended fifteen minutes ago and has no answer (decision 126).
      *
      * It never schedules an attempt, never marks a Lead finished and never
      * contacts a customer. A failure is logged without customer details and
      * the next tick tries again.
      *
-     * @return array{expired: int, ended: int, access_lost: int, warned: int, released: int, failed: int}
+     * @return array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, failed: int}
      */
     public function handle(): array
     {
-        $done = ['expired' => 0, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'failed' => 0];
+        $done = ['expired' => 0, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'reminded' => 0, 'failed' => 0];
 
         $this->safely($done, 'heartbeat', null, function (): bool {
             $heartbeat = SchedulerHeartbeat::query()->where('name', SchedulerHeartbeat::QUEUE_TICK)->first() ?? new SchedulerHeartbeat;
@@ -68,7 +73,7 @@ class RunQueueTick
 
         $left = fn () => LeadCadence::query()
             ->where('state', CadenceState::InQueue)
-            ->whereIn('lead_id', Lead::query()->select('id')->whereIn('status', [LeadStatus::Disqualified, LeadStatus::Nurture, LeadStatus::AppointmentBooked, LeadStatus::AppointmentCancelled]));
+            ->whereIn('lead_id', Lead::query()->select('id')->whereIn('status', [LeadStatus::Disqualified, LeadStatus::Nurture, LeadStatus::AppointmentBooked, LeadStatus::AppointmentCancelled, LeadStatus::AppointmentRun]));
 
         foreach ($this->ids($done, 'ended', $left) as $id) {
             $done['ended'] += (int) $this->safely($done, 'ended', $id, fn (): bool => $this->endCadenceOfLeadThatLeft($id));
@@ -88,6 +93,10 @@ class RunQueueTick
             foreach ($this->leadIds($done, 'released', fn () => ReleaseCancelledLead::due(now(), $days)) as $id) {
                 $done['released'] += (int) $this->safely($done, "released lead {$id}", null, fn (): bool => $this->releaseCancelledLead->release($id));
             }
+        }
+
+        foreach ($this->leadIds($done, 'reminded', fn () => RemindToCloseOutAppointment::due(now())) as $id) {
+            $done['reminded'] += (int) $this->safely($done, "reminded appointment {$id}", null, fn (): bool => $this->remindToCloseOutAppointment->handle($id));
         }
 
         return $done;
@@ -122,7 +131,7 @@ class RunQueueTick
             $reason = match ($lead?->status) {
                 LeadStatus::Disqualified => CadenceEndReason::Disqualified,
                 LeadStatus::Nurture => CadenceEndReason::DeferredFollowUp,
-                LeadStatus::AppointmentBooked, LeadStatus::AppointmentCancelled => CadenceEndReason::AppointmentBooked,
+                LeadStatus::AppointmentBooked, LeadStatus::AppointmentCancelled, LeadStatus::AppointmentRun => CadenceEndReason::AppointmentBooked,
                 default => null,
             };
 
@@ -165,7 +174,7 @@ class RunQueueTick
      * How many days a cancelled Lead stays with its salesperson, or null if
      * the settings cannot be read this time.
      *
-     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, failed: int}  $done
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, failed: int}  $done
      */
     private function releaseDays(array &$done): ?int
     {
@@ -179,10 +188,10 @@ class RunQueueTick
     }
 
     /**
-     * The Leads one part has to look at, read the same careful way.
+     * The Leads or appointments one part has to look at, read the same careful way.
      *
-     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, failed: int}  $done
-     * @param  Closure(): Builder<Lead>  $query
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, failed: int}  $done
+     * @param  Closure(): (Builder<Lead>|Builder<Appointment>)  $query
      * @return list<int>
      */
     private function leadIds(array &$done, string $part, Closure $query): array
@@ -200,7 +209,7 @@ class RunQueueTick
      * The cadences one part has to look at. If they cannot even be read, that
      * part is skipped this time and the others still run.
      *
-     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, failed: int}  $done
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, failed: int}  $done
      * @param  Closure(): Builder<LeadCadence>  $query
      * @return list<int>
      */
@@ -216,7 +225,7 @@ class RunQueueTick
     }
 
     /**
-     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, failed: int}  $done
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, failed: int}  $done
      * @param  Closure(): bool  $work
      */
     private function safely(array &$done, string $part, ?int $cadenceId, Closure $work): bool
@@ -234,7 +243,7 @@ class RunQueueTick
      * Only what is needed to find the problem: never a name, number or message
      * that could carry customer details.
      *
-     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, failed: int}  $done
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, failed: int}  $done
      */
     private function report(array &$done, string $part, ?int $cadenceId, Throwable $exception): void
     {

@@ -52,6 +52,7 @@ use LogicException;
  * @property int|null $cancellation_reason_id
  * @property string|null $cancellation_reason_name
  * @property int|null $follows_appointment_id The appointment this one follows, when it was booked while the Lead was still with Sales.
+ * @property Carbon|null $close_out_reminded_at When its salesperson was reminded to say what happened at it.
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Lead $lead
@@ -102,6 +103,7 @@ class Appointment extends Model
             'previous_status' => LeadStatus::class,
             'previous_in_queue' => 'boolean',
             'state_changed_at' => 'datetime',
+            'close_out_reminded_at' => 'datetime',
             'cancelled_by_party' => CancellationParty::class,
         ];
     }
@@ -180,6 +182,48 @@ class Appointment extends Model
     public function isCancelled(): bool
     {
         return $this->state === AppointmentState::Cancelled;
+    }
+
+    /**
+     * Whether the visit did not happen: cancelled, or a no-show.
+     */
+    public function fellThrough(): bool
+    {
+        return $this->state->fellThrough();
+    }
+
+    /**
+     * Whether its time has come and nobody has yet said what happened: it
+     * still stands and its start time has passed (decision 125).
+     */
+    public function awaitsCloseOutAt(CarbonInterface $moment): bool
+    {
+        return $this->stands() && $this->starts_at->lte($moment);
+    }
+
+    /**
+     * Standing appointments that are over and still have no answer: overdue
+     * for closing out. Nothing else can be done with the Lead until it has
+     * one (decision 126).
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function overdueForCloseOutAt(Builder $query, CarbonInterface $moment): void
+    {
+        $query->where('state', AppointmentState::Booked)->where('ends_at', '<=', self::instant($moment));
+    }
+
+    /**
+     * Standing appointments whose start time has come, still waiting to be
+     * marked run or no-show.
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function awaitingCloseOutAt(Builder $query, CarbonInterface $moment): void
+    {
+        $query->where('state', AppointmentState::Booked)->where('starts_at', '<=', self::instant($moment));
     }
 
     /**

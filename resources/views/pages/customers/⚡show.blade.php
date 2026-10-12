@@ -1177,11 +1177,12 @@ new #[Title('Customer')] class extends AddressCapturePage {
                                 <span>{{ $appointment->location?->name }}</span>
                                 <span>{{ $appointment->salesperson_name }}</span>
                                 {{-- The word carries the meaning; the color only reinforces it. --}}
-                                <flux:badge size="sm" :color="match (true) { $upcoming => 'indigo', $appointment->stands() => 'zinc', $appointment->isCancelled() => 'rose', default => 'zinc' }" data-test="customer-appointment-state">
+                                <flux:badge size="sm" :color="match (true) { $upcoming => 'indigo', $appointment->stands() => 'zinc', $appointment->fellThrough() => 'rose', $appointment->state === \App\Enums\AppointmentState::Run => 'teal', default => 'zinc' }" data-test="customer-appointment-state">
                                     {{ match (true) {
                                         $upcoming => __('Upcoming'),
                                         $appointment->stands() => __('Time has passed'),
                                         $appointment->isCancelled() => $appointment->cancellation_reason_name === null ? __('Cancelled') : __('Cancelled: :reason', ['reason' => $appointment->cancellation_reason_name]),
+                                        $appointment->state->isClosedOut() => $appointment->state->label(),
                                         default => $appointment->state->label(),
                                     } }}
                                 </flux:badge>

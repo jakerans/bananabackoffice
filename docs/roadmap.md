@@ -79,8 +79,20 @@ cancel, book again, send back) is built and merged into `main` (2026-10-10)**
 under decisions 97 to 114. **Step 6c (the release after 14 days, the Cancelled
 Appointments queue with its own button, and a salesperson taking a released
 Lead back) is built and merged into `main` (2026-10-10)** under decisions 115
-to 120. **Slice 6 is complete as planned.** What comes next is not chosen: it
-needs its own plan and Jacob's approval.
+to 120. **Slice 6 is complete as planned.**
+
+**Slice 7, what happened at the appointment, proposals and their results, is
+approved in four steps (2026-10-12, decision 125).** It is the after-action
+report of the plan's section 5.6. Its plan, with the reasoning from the plan
+for why it is next, is
+[slice-7-appointment-results-plan.md](slice-7-appointment-results-plan.md).
+**Step 7a (mark an appointment run or no-show) is built (2026-10-12)**,
+with what decision 126 added to it: close out first, the prompt, the reminder
+15 minutes after the appointment, and the salesperson told when a manager
+touches their appointment. It
+waits for Jacob's review and his word to merge. Steps 7b (proposals), 7c
+(results and the report) and 7d (the first Sales figures) are approved in
+order and not started.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

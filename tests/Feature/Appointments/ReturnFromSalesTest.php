@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Appointments\CloseOutAppointment;
 use App\Actions\Appointments\SendLeadBackToContactCenter;
 use App\Actions\Appointments\StopCountingLeadAsIssued;
 use App\Actions\Leads\DisqualifyLead;
@@ -184,13 +185,19 @@ test('sending back a lead whose appointment was already cancelled leaves that re
     expect($appointment->state_changed_by)->toBe($this->agent->id);
 });
 
-test('sending back a lead whose appointment has passed leaves the appointment standing on its record', function () {
+test('a lead whose appointment has passed is sent back only once someone has said what happened (decision 126)', function () {
     $this->travelTo('2026-10-09 14:00:00');
 
+    expect(fn () => sendBack($this->lead->fresh(), $this->manager))
+        ->toThrow(ValidationException::class, 'Say what happened at this lead\'s last appointment first: run or no-show.');
+    expect($this->lead->fresh()->status)->toBe(LeadStatus::AppointmentBooked);
+
+    app(CloseOutAppointment::class)->handle($this->lead->fresh(), $this->appointment, AppointmentState::Run->value, null, $this->manager);
     sendBack($this->lead->fresh(), $this->manager);
 
+    // The appointment keeps its answer on its record.
     expect($this->lead->fresh()->status)->toBe(LeadStatus::Qualified);
-    expect($this->appointment->fresh()->state)->toBe(AppointmentState::Booked);
+    expect($this->appointment->fresh()->state)->toBe(AppointmentState::Run);
 });
 
 test('a lead that never had a cadence is given one that starts as a second cycle', function () {
@@ -223,9 +230,10 @@ test('the salesperson is told in the app that their lead went back', function ()
 |--------------------------------------------------------------------------
 */
 
-test('a lead sent back after its appointment passed is handed out by "Next lead", after leads nobody has called', function () {
+test('a lead sent back after its appointment was run is handed out by "Next lead", after leads nobody has called', function () {
     $this->travelTo('2026-10-09 14:00:00');
 
+    app(CloseOutAppointment::class)->handle($this->lead->fresh(), $this->appointment, AppointmentState::Run->value, null, $this->sam);
     sendBack($this->lead->fresh(), $this->manager);
 
     $returned = LeadCadence::query()->where('lead_id', $this->lead->id)->sole();
@@ -281,16 +289,17 @@ test('a lead sent back with its appointment still upcoming says the appointment 
     expect($return->appointment)->toBe('Its appointment on Thu, Oct 8 at 3:00 PM EDT with Sam Sales was cancelled when it was sent back.');
 });
 
-test('a lead sent back after its appointment passed says it had one', function () {
+test('a lead sent back after its appointment was run says so', function () {
     $this->travelTo('2026-10-09 14:00:00');
 
+    app(CloseOutAppointment::class)->handle($this->lead->fresh(), $this->appointment, AppointmentState::Run->value, null, $this->sam);
     sendBack($this->lead->fresh(), $this->manager);
 
     $return = SalesReturn::of($this->lead->fresh());
 
     expect($return->appointmentWasCancelled)->toBeFalse();
     expect($return->headline)->toBe('This lead came back from Sales');
-    expect($return->appointment)->toBe('It had an appointment on Thu, Oct 8 at 3:00 PM EDT with Sam Sales.');
+    expect($return->appointment)->toBe('Its appointment on Thu, Oct 8 at 3:00 PM EDT with Sam Sales was run.');
 });
 
 test('the marker is cleared when the lead is booked again, and that booking is a new issue', function () {

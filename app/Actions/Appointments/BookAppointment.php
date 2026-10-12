@@ -121,6 +121,12 @@ class BookAppointment
         // Still with Sales: this booking follows an earlier appointment and is not a new issue.
         $follows = $lead->isWithSales() ? $lead->appointments()->first() : null;
 
+        if ($lead->isWithSales() && $lead->hasAppointmentToCloseOut()) {
+            throw ValidationException::withMessages([
+                'booking' => __('Say what happened at this lead\'s last appointment first: run or no-show.'),
+            ]);
+        }
+
         if ($lead->isWithSales() && $lead->hasUpcomingAppointment()) {
             throw ValidationException::withMessages([
                 'booking' => __('This lead already has an upcoming appointment. Reschedule that one instead.'),
