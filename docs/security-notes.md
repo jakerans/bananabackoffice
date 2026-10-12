@@ -209,6 +209,14 @@ another location has dealt with. Staff are told so without being shown who.
   its own audit event. The browser cannot send any answer but run or no-show.
   An appointment has no result field at all: Sold, Pending and Lost will exist
   only on proposals (decision 124).
+- **Proposals (slice 7 step 7b, 2026-10-12).** Who may add is checked three
+  times (the card's opener, its save, the action). The appointments a proposal
+  is tied to are read on the server from this Lead's run appointments only, so
+  the browser cannot tie one to another Lead's appointment. A price is read by
+  one strict rule and refused if it is not plainly an amount; nothing is
+  rounded. A proposal and its ties cannot be deleted. The price is visible to
+  everyone who may see the Lead, the Contact Center included, as the plan says
+  (11.4).
 - **Close out first, and the reminder (decision 126, 2026-10-12).** The block
   is in the five actions, not only on the screens, so a request sent by hand
   is refused the same way. The prompt reads only the signed-in person's own

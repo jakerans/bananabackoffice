@@ -406,6 +406,17 @@ class Lead extends Model
     }
 
     /**
+     * What was pitched to the customer for this Lead, in the order it was
+     * added (slice 7 step 7b).
+     *
+     * @return HasMany<Proposal, $this>
+     */
+    public function proposals(): HasMany
+    {
+        return $this->hasMany(Proposal::class)->orderBy('id');
+    }
+
+    /**
      * The appointment that stands for the Lead now, if there is one.
      */
     public function standingAppointment(): ?Appointment
