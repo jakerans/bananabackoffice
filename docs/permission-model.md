@@ -436,8 +436,8 @@ Notes:
 
 ## Slice 6: appointments
 
-Status: **steps 6a and 6b are built and merged, and step 6c is built
-(2026-10-10, decisions 90 to 120).** The plan is
+Status: **steps 6a, 6b and 6c are built and merged (2026-10-10, decisions 90
+to 120).** The plan is
 [slice-6-appointments-plan.md](slice-6-appointments-plan.md). Steps 6b and 6c
 added no permission and changed no role.
 

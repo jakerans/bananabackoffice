@@ -15,6 +15,7 @@ use App\Enums\ContactRole;
 use App\Enums\Permission;
 use App\Enums\PropertyType;
 use App\Models\Account;
+use App\Models\Appointment;
 use App\Models\AccountContact;
 use App\Models\Contact;
 use App\Models\Lead;
@@ -671,6 +672,27 @@ new #[Title('Customer')] class extends AddressCapturePage {
     }
 
     /**
+     * The customer's appointments that this viewer may see, latest first
+     * (product-architecture.md, 11).
+     *
+     * An appointment is listed only when the viewer may see its Lead, the same
+     * rule as the Leads above: one for a Lead at a location they cannot work in
+     * is not listed and not hinted at.
+     *
+     * @return Collection<int, Appointment>
+     */
+    #[Computed]
+    public function appointments(): Collection
+    {
+        return $this->account->appointments()
+            ->whereIn('lead_id', $this->account->leads()->visibleTo(Auth::user())->select('leads.id'))
+            ->with(['location', 'property'])
+            ->orderByDesc('starts_at')
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    /**
      * Asking about the same address applies to the address it was asked about.
      */
     protected function propertyAddressChanged(): void
@@ -1119,6 +1141,50 @@ new #[Title('Customer')] class extends AddressCapturePage {
                                 <span>{{ $lead->location?->name ?? __('Unrouted') }}</span>
                                 <span>{{ $lead->assignee?->name ?? __('Unassigned') }}</span>
                                 <x-lead-status :status="$lead->status" />
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </div>
+
+        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="customer-appointments">
+            <div>
+                <flux:heading size="lg" level="2">{{ __('Appointments') }}</flux:heading>
+                <flux:subheading>{{ __('Appointments booked for this customer\'s leads that you can open, latest first. Each time is in its own location\'s time.') }}</flux:subheading>
+            </div>
+
+            @if ($this->appointments->isEmpty())
+                <flux:text data-test="no-appointments">{{ __('No appointments to show.') }}</flux:text>
+            @else
+                <ul class="flex flex-col divide-y divide-zinc-200">
+                    @foreach ($this->appointments as $appointment)
+                        @php
+                            $startsAt = $appointment->starts_at->copy()->timezone($appointment->timezone);
+                            $endsAt = $appointment->ends_at->copy()->timezone($appointment->timezone);
+                            $upcoming = $appointment->isUpcomingAt(now());
+                        @endphp
+
+                        <li wire:key="appointment-{{ $appointment->id }}" class="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 py-3 first:pt-0 last:pb-0" data-test="customer-appointment">
+                            <div class="flex flex-col">
+                                <a href="{{ route('leads.show', $appointment->lead_id) }}" wire:navigate class="font-semibold text-ink underline decoration-zinc-300 underline-offset-2 hover:decoration-ink">
+                                    {{ $startsAt->format('D, M j, Y') }} &middot; {{ $startsAt->format('g:i A') }} {{ __('to') }} {{ $endsAt->format('g:i A T') }}
+                                </a>
+                                <span class="text-sm text-zinc-600">{{ $appointment->property?->summary() }}</span>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-600">
+                                <span>{{ $appointment->location?->name }}</span>
+                                <span>{{ $appointment->salesperson_name }}</span>
+                                {{-- The word carries the meaning; the color only reinforces it. --}}
+                                <flux:badge size="sm" :color="match (true) { $upcoming => 'indigo', $appointment->stands() => 'zinc', $appointment->isCancelled() => 'rose', default => 'zinc' }" data-test="customer-appointment-state">
+                                    {{ match (true) {
+                                        $upcoming => __('Upcoming'),
+                                        $appointment->stands() => __('Time has passed'),
+                                        $appointment->isCancelled() => $appointment->cancellation_reason_name === null ? __('Cancelled') : __('Cancelled: :reason', ['reason' => $appointment->cancellation_reason_name]),
+                                        default => $appointment->state->label(),
+                                    } }}
+                                </flux:badge>
                             </div>
                         </li>
                     @endforeach

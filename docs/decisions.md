@@ -2307,6 +2307,92 @@ over. There is no time limit: it can be taken back for as long as it is still
 with the Contact Center and has not been booked with someone else or
 disqualified.
 
+## Decisions after slice 6 (121 and 122)
+
+Given by Jacob on 2026-10-11, after slice 6 was merged.
+
+## 121. An appointment's outcome and a proposal's outcome are two different things (2026-10-11)
+
+**Decided by Jacob.** They are recorded separately and never as one field:
+
+- **The appointment outcome** is what happened to the visit. He named: a
+  no-show, a cancellation, a reschedule.
+- **The proposal outcome** is the commercial result. He named: Pending, Lost.
+
+His reason: "you can have multiple appointments for one proposal, and you can
+have one appointment with multiple proposals that come from it." So a proposal
+is a record of its own, and appointments and proposals are linked many to
+many.
+
+What this changes in the record:
+
+- [product-architecture.md](product-architecture.md) 5.6 lists "Won / Pending /
+  Lost" as a field of the after-action report, which is filled in for an
+  appointment. Under this decision those three belong to each proposal pitched,
+  and the report says what happened at the appointment and then gives an
+  outcome for each proposal. 5.6 is to be reworded when the after-action
+  report is planned.
+- Rule 14 of the slice 5 rulebook ("the salesperson owns a Pending") is about a
+  proposal, not an appointment and not a Lead.
+- Slice 6 already records two of the appointment outcomes he named, as part of
+  the appointment: a cancellation (with who and why) and a reschedule (with the
+  earlier times). A no-show is not recorded yet.
+
+**To confirm with Jacob when the after-action report is planned,** because his
+lists did not name them: that an appointment can also simply have taken place,
+and whether "took place but nothing was presented" is its own outcome (the
+architecture's Demo Rate needs it); and that a proposal's outcomes are Won,
+Pending and Lost. **Answered the same day by decision 123.**
+
+## 122. Work is checked against the product architecture after every slice (2026-10-11)
+
+**Decided by Jacob:** "moving forward... we're always sticking to the plan and
+coming back there after each slice or section."
+
+[product-architecture.md](product-architecture.md) is the plan. After a slice
+is merged, and before the next one is proposed, the implementation agent goes
+back to it and reports: what the plan describes in the area just built that
+was not built; what was built that the plan does not describe; and which part
+of the plan the next step comes from. The next step is proposed from the plan,
+not invented. This is step 10 of the workflow in
+[collaboration.md](collaboration.md).
+
+The first check, after slice 6, is in the review handoff of 2026-10-11. It was
+prompted by a mistake: the implementation agent said the after-action report
+had no plan, when 5.6 specifies it.
+
+## 123. An appointment that ran must have a result, and whether a proposal was presented is counted (2026-10-11)
+
+**Decided by Jacob,** in answer to the three questions decision 121 left.
+
+- **An appointment's status** is one of: cancelled, rescheduled, no-show
+  (decision 121), or **run**. "Run" is his word: "appointment was run". He
+  also offered "demoed" and "shown"; "run" is the one to use, because an
+  appointment can be run without anything being shown.
+- **"It took place" is not an outcome by itself.** An appointment that ran
+  must be given a result: **Sold, Pending or Lost.** "Sold" is the word he
+  uses for what the product architecture calls Won.
+- **Whether a proposal was presented is its own fact.** "An appointment was
+  run, but no proposal was built": nothing was pitched or demonstrated and no
+  price was given. That is what **Demo Rate** is counted from: of the
+  appointments that ran, how many had a proposal presented with a price.
+- **A run appointment with no proposal still has a result,** and it is often
+  Pending: the salesperson started and has to finish the proposal later.
+- **Demo Rate is to be watched.** "One thing we need to keep an eye on is the
+  demo rate."
+
+What this means beside decision 121, to be settled in the after-action report's
+plan and not assumed:
+
+- Where Sold, Pending or Lost is kept when an appointment ran and no proposal
+  exists yet. Decision 121 puts those results on a proposal; this decision
+  says the appointment needs one even without a proposal.
+- With several proposals from one appointment, whether each has its own result
+  and what the appointment then shows.
+- "Rescheduled" as a status: slice 6 keeps a rescheduled appointment as the
+  same appointment with its earlier times in its history. Whether a report
+  needs to count it apart is for that plan.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

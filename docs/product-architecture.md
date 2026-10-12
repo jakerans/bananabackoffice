@@ -105,6 +105,13 @@ Aged Leads:
 - shared queue
 - new leads still inject ahead of aged calls
 
+Cancelled Appointments queue (added 2026-10-11; LOCKED by decisions 98 and 117, built in slice 6):
+- a queue of its own with its own button and count, separate from New Lead and warm follow-ups
+- holds every Lead that came back from Sales with its last appointment cancelled and is not disqualified
+- the setter is told on the card that it is a cancelled booking, who cancelled and why, because the script differs
+- same cadence and calling hours as other Leads
+- rules: slice-5-appointment-rulebook.md, rule 8
+
 Every call attempt is a real record:
 - Lead/Contact
 - rep
@@ -251,6 +258,14 @@ Contact Center owns Lead until an appointment is booked.
 Appointment landing on salesperson calendar = Lead Issued.
 Salesperson then owns confirmation, appointment, cancellations/reschedules, rehashes, follow-up, and outcome.
 
+Added 2026-10-11 (LOCKED by the slice 5 rulebook and decisions 75 to 120; built in slice 6). The rules are in slice-5-appointment-rulebook.md; in short:
+- Lead Issued is counted the moment the appointment is saved, once per Lead while it stays with Sales. Reschedule, cancellation and rebooking with the same salesperson add no count.
+- "Booked in error" (manager) undoes the handoff and the count.
+- A manager can send an issued Lead back to Contact Center. A Lead that should never have been booked stops counting as issued; any other reason leaves it counted.
+- After a cancellation the Lead stays with the salesperson for a CONFIGURABLE period (14 days) and is then released to the Cancelled Appointments queue (4.2). The salesperson is warned first.
+- The salesperson a Lead was released from can take it back, with no new count.
+- OPEN with Sales Leadership: which salesperson an issued Lead counts for after a move or a re-issue.
+
 5.2 Performance
 Primary coaching KPI:
 - NSLI — Net Sales per Lead Issued
@@ -294,6 +309,11 @@ Concepts remain distinct internally:
 Salespeople manage their own confirmation, rescheduling, cancellations, rehashes, and schedule.
 Google Calendar is the external conflict source; personal scheduling stays there.
 
+Added 2026-10-11:
+- Built in slice 6: a list of upcoming appointments, cancelled Leads to rebook with the days left, and Leads released to the Contact Center. Rescheduling and cancelling are done on the Lead. Moving an appointment to another salesperson is a manager's.
+- Not built: confirmation, rehash, Google Calendar, a calendar grid, and the booking engine in 12 (today a person picks the salesperson and the time).
+- LOCKED (decisions 121 and 123): an appointment has a status of its own: cancelled, rescheduled, no-show, or run. This is separate from any proposal's result. One proposal can have several appointments and one appointment can produce several proposals.
+
 5.5 Pending / Rehash
 Pending is a commercial status.
 Thinking It Over is an objection, not a status.
@@ -316,6 +336,13 @@ Fields:
 - optional voice note + transcript, preserve original audio
 
 Appointment remains operationally incomplete until report is submitted.
+
+Added 2026-10-11 (LOCKED by decisions 121 and 123; these change how the fields above are read):
+- The report first says what happened to the appointment: no-show, or run. (Cancelled and rescheduled are recorded when they happen, not here.)
+- An appointment that was run must have a result: Sold, Pending or Lost. "Sold" is the word used for Won. "It took place" alone is not a result.
+- Whether a proposal was presented, with a price, is recorded as its own fact. Run with no proposal presented is a no-demo; it still has a result, often Pending. Demo Rate (5.2) is counted from this and is to be watched.
+- Won/Pending/Lost belong to a proposal, not to the appointment as such. One appointment can have several proposals and one proposal several appointments.
+- OPEN for the after-action report's build plan: where the result is kept when an appointment ran and no proposal exists yet; and what an appointment shows when it has several proposals with different results.
 
 5.7 Sales commission
 Commission is based on GP dollars.
