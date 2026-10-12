@@ -922,7 +922,8 @@ new class extends Component {
         @endcan
     @endif
 
-    @if (! $upcoming)
+    {{-- Nothing else is offered while an appointment waits to be closed out (decision 126). --}}
+    @if (! $upcoming && $this->toCloseOut === null)
         @if ($this->gaps !== [])
             <ul class="flex flex-col gap-1 text-sm text-zinc-700" data-test="appointment-gaps">
                 <li class="text-zinc-500">{{ __('No appointment can be booked yet.') }}</li>
@@ -947,7 +948,7 @@ new class extends Component {
         @endif
     @endif
 
-    @if ($withSales && $this->manages)
+    @if ($withSales && $this->manages && ! $lead->hasAppointmentToCloseOut())
         <div>
             <flux:button size="sm" variant="ghost" wire:click="openSendBack" data-test="send-lead-back">{{ __('Send back to Contact Center') }}</flux:button>
         </div>

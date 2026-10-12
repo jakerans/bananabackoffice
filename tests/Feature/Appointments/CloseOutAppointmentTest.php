@@ -2,8 +2,13 @@
 
 use App\Actions\Appointments\CloseOutAppointment;
 use App\Actions\Appointments\CorrectAppointmentCloseOut;
+use App\Actions\Appointments\MarkAppointmentBookedInError;
+use App\Actions\Appointments\RemindToCloseOutAppointment;
 use App\Actions\Appointments\SendLeadBackToContactCenter;
 use App\Actions\Appointments\StopCountingLeadAsIssued;
+use App\Actions\Leads\DisqualifyLead;
+use App\Actions\Leads\ReturnLeadToCentral;
+use App\Actions\Leads\RouteLead;
 use App\Actions\Queue\RunQueueTick;
 use App\Enums\AppointmentState;
 use App\Enums\AuditAction;
@@ -15,13 +20,17 @@ use App\Models\Appointment;
 use App\Models\AuditEvent;
 use App\Models\Lead;
 use App\Models\LeadCadence;
+use App\Models\LeadDisqualificationReason;
 use App\Models\LeadIssue;
 use App\Models\LeadStatusChange;
 use App\Models\Location;
 use App\Models\User;
+use App\Notifications\AppointmentChanged;
 use App\Support\Appointments\SalesReturn;
 use App\Support\Customers\CustomerActivity;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
@@ -267,10 +276,10 @@ test('a lead that changed since the dialog opened is refused', function () {
     expect($this->appointment->fresh()->state)->toBe(AppointmentState::Booked);
 });
 
-test('answering an earlier appointment after a later one was booked leaves the lead as it is', function () {
-    // The first has passed and a second is booked before anyone answered the first (decision 113).
+test('answering an earlier appointment while a later one stands leaves the lead as it is', function () {
+    // Since decision 126 a second cannot be booked before the first is answered. A record from before it can look like this.
     $this->travelTo('2026-10-09 14:00:00');
-    $second = bookAppointment($this->lead->fresh(), $this->sam, $this->sam, '2026-10-12', '10:00')->appointment;
+    $second = Appointment::factory()->forLead($this->lead)->with($this->sam)->at(Carbon::parse('2026-10-12 14:00:00'))->create(['follows_appointment_id' => $this->appointment->id]);
 
     closeOut($this->lead->fresh(), $this->sam, AppointmentState::NoShow, appointment: $this->appointment);
 
@@ -278,6 +287,267 @@ test('answering an earlier appointment after a later one was booked leaves the l
     expect($second->fresh()->state)->toBe(AppointmentState::Booked);
     expect($this->lead->fresh()->status)->toBe(LeadStatus::AppointmentBooked);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Close out first (decision 126)
+|--------------------------------------------------------------------------
+|
+| The appointment ends at 4:30 pm Eastern on Thursday 8 October (20:30 UTC).
+*/
+
+test('once an appointment is over, nothing else can be done with the lead until someone says what happened', function () {
+    $this->travelTo('2026-10-08 20:30:00');
+
+    $lead = $this->lead->fresh();
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $harbor = Location::factory()->create(['name' => 'Harbor']);
+    $refusal = 'Say what happened at this lead\'s last appointment first: run or no-show.';
+
+    expect($lead->hasAppointmentToCloseOut())->toBeTrue();
+
+    expect(fn () => bookAppointment($lead, $this->sam, $this->sam, '2026-10-13', '10:00'))->toThrow(ValidationException::class, $refusal);
+    expect(fn () => app(SendLeadBackToContactCenter::class)->handle($lead, StopCountingLeadAsIssued::ANOTHER_REASON, 'Wants a call first.', $this->manager))->toThrow(ValidationException::class, $refusal);
+    expect(fn () => app(RouteLead::class)->handle($lead, $harbor, 'Wrong office.', $owner))->toThrow(ValidationException::class, $refusal);
+    expect(fn () => app(ReturnLeadToCentral::class)->handle($lead, 'Wrong office.', $owner))->toThrow(ValidationException::class, $refusal);
+    expect(fn () => app(DisqualifyLead::class)->handle($lead, LeadDisqualificationReason::factory()->create(), 'Not real.', $owner))->toThrow(ValidationException::class, $refusal);
+
+    $lead = $lead->fresh();
+
+    expect($lead->status)->toBe(LeadStatus::AppointmentBooked);
+    expect($lead->assigned_user_id)->toBe($this->sam->id);
+    expect($lead->location_id)->toBe($this->lakeview->id);
+    expect(Appointment::query()->count())->toBe(1);
+
+    // With the answer given, the Lead is free again.
+    closeOut($lead, $this->sam);
+
+    expect($lead->fresh()->hasAppointmentToCloseOut())->toBeFalse();
+    expect(bookAppointment($lead->fresh(), $this->sam, $this->sam, '2026-10-13', '10:00')->appointment->follows_appointment_id)->toBe($this->appointment->id);
+});
+
+test('while the appointment is still going on it can be answered and is not yet overdue', function () {
+    $this->travelTo('2026-10-08 20:29:00');
+
+    expect($this->lead->fresh()->hasAppointmentToCloseOut())->toBeFalse();
+    expect($this->appointment->fresh()->awaitsCloseOutAt(now()))->toBeTrue();
+});
+
+test('a salesperson closes out their appointments in order, and a manager is not held to it', function () {
+    $later = bookableLead($this->lakeview);
+    $this->travelTo('2026-10-08 20:00:00');
+    $second = bookAppointment($later, $this->sam, $this->manager, '2026-10-08', '17:00', 30)->appointment;
+
+    // Both are over: 4:30 pm and 5:30 pm.
+    $this->travelTo('2026-10-08 22:00:00');
+
+    expect(fn () => closeOut($later->fresh(), $this->sam))
+        ->toThrow(ValidationException::class, 'Close out your earlier appointment first: the one on Thu, Oct 8 at 3:00 PM EDT.');
+    expect($second->fresh()->state)->toBe(AppointmentState::Booked);
+
+    // Someone else's unanswered appointment does not hold Sam's up, and a manager may answer any.
+    closeOut($later->fresh(), $this->manager, AppointmentState::NoShow);
+    expect($second->fresh()->state)->toBe(AppointmentState::NoShow);
+
+    closeOut($this->lead->fresh(), $this->sam);
+    expect($this->appointment->fresh()->state)->toBe(AppointmentState::Run);
+});
+
+test('an earlier unanswered appointment comes before the one the salesperson is at now', function () {
+    $later = bookableLead($this->lakeview);
+    $this->travelTo('2026-10-08 20:00:00');
+    bookAppointment($later, $this->sam, $this->manager, '2026-10-08', '17:00', 30);
+
+    // The first ended at 4:30 pm; the second started at 5:00 pm.
+    $this->travelTo('2026-10-08 21:05:00');
+
+    expect(fn () => closeOut($later->fresh(), $this->sam))->toThrow(ValidationException::class, 'Close out your earlier appointment first');
+
+    closeOut($this->lead->fresh(), $this->sam);
+    closeOut($later->fresh(), $this->sam);
+
+    expect($later->fresh()->status)->toBe(LeadStatus::AppointmentRun);
+});
+
+/*
+|--------------------------------------------------------------------------
+| The reminder, fifteen minutes after the appointment ends (decision 126)
+|--------------------------------------------------------------------------
+*/
+
+test('fifteen minutes after an appointment ends its salesperson is reminded once, in the app and by email', function () {
+    Notification::fake();
+
+    $this->travelTo('2026-10-08 20:44:00');
+    expect(app(RunQueueTick::class)->handle()['reminded'])->toBe(0);
+    Notification::assertNothingSent();
+
+    $this->travelTo('2026-10-08 20:45:00');
+    expect(app(RunQueueTick::class)->handle()['reminded'])->toBe(1);
+    expect($this->appointment->fresh()->close_out_reminded_at?->toDateTimeString())->toBe('2026-10-08 20:45:00');
+
+    Notification::assertSentToTimes($this->sam, AppointmentChanged::class, 2);
+    Notification::assertNotSentTo($this->manager, AppointmentChanged::class);
+    Notification::assertSentTo($this->sam, AppointmentChanged::class, fn (AppointmentChanged $notice) => $notice->kind === AppointmentChanged::CLOSE_OUT_REMINDER && $notice->channel === AppointmentChanged::IN_APP);
+    Notification::assertSentTo($this->sam, AppointmentChanged::class, fn (AppointmentChanged $notice) => $notice->kind === AppointmentChanged::CLOSE_OUT_REMINDER && $notice->channel === AppointmentChanged::EMAIL);
+
+    // Never a second time, however long it stays unanswered.
+    $this->travelTo('2026-10-09 14:00:00');
+    expect(app(RunQueueTick::class)->handle()['reminded'])->toBe(0);
+    Notification::assertSentToTimes($this->sam, AppointmentChanged::class, 2);
+});
+
+test('the reminder says what to do and carries nothing about the customer', function () {
+    $this->travelTo('2026-10-08 20:45:00');
+
+    $notice = new AppointmentChanged($this->lead->id, AppointmentChanged::CLOSE_OUT_REMINDER, AppointmentChanged::EMAIL, $this->appointment);
+    $mail = $notice->toMail($this->sam);
+    $text = implode(' ', [$mail->subject, $mail->greeting, ...$mail->introLines, ...$mail->outroLines, $mail->actionText, $mail->actionUrl]);
+
+    expect($mail->subject)->toStartWith('Close out your appointment in ');
+    expect($mail->actionText)->toBe('Close it out');
+    expect($text)->toContain('Your appointment on Thu, Oct 8, 2026 at 3:00 PM EDT is over. Say whether it was run or was a no-show.');
+    expect($text)->toContain(route('leads.show', $this->lead->id));
+    expect($text)->not->toContain('Pat Customer');
+    expect($text)->not->toContain((string) $this->lead->inquiry_phone);
+
+    // The notice inside the app says the same and opens the Lead.
+    app(RemindToCloseOutAppointment::class)->handle($this->appointment->id);
+
+    $saved = $this->sam->notifications()->where('type', AppointmentChanged::class)->sole();
+
+    expect($saved->data['message'])->toContain('is over. Say whether it was run or was a no-show.');
+    expect(json_encode($saved->data))->not->toContain('Pat Customer');
+});
+
+test('nobody is reminded about an appointment that needs no answer', function (Closure $change) {
+    Notification::fake();
+
+    $change($this);
+
+    $this->travelTo('2026-10-08 21:00:00');
+
+    expect(app(RunQueueTick::class)->handle()['reminded'])->toBe(0);
+    Notification::assertNotSentTo($this->sam, AppointmentChanged::class, fn (AppointmentChanged $notice) => $notice->kind === AppointmentChanged::CLOSE_OUT_REMINDER);
+})->with([
+    'already marked run' => [fn ($test) => closeOut($test->lead, $test->sam)],
+    'already marked a no-show' => [fn ($test) => closeOut($test->lead, $test->sam, AppointmentState::NoShow)],
+    'undone as booked in error' => [fn ($test) => app(MarkAppointmentBookedInError::class)->handle($test->lead, $test->appointment, 'Wrong customer.', $test->manager)],
+    'its salesperson was deactivated' => [fn ($test) => $test->sam->forceFill(['is_active' => false])->save()],
+]);
+
+/*
+|--------------------------------------------------------------------------
+| The salesperson is told when a manager touches their appointment (decision 126)
+|--------------------------------------------------------------------------
+*/
+
+test('the salesperson is told in the app when a manager says what happened, and not when they say it themselves', function (AppointmentState $outcome, string $kind, string $message) {
+    Notification::fake();
+
+    closeOut($this->lead, $this->manager, $outcome);
+
+    Notification::assertSentToTimes($this->sam, AppointmentChanged::class, 1);
+    Notification::assertNotSentTo($this->manager, AppointmentChanged::class);
+    Notification::assertSentTo($this->sam, AppointmentChanged::class, function (AppointmentChanged $notice) use ($kind, $message) {
+        expect($notice->toArray($this->sam)['message'])->toBe($message);
+
+        return $notice->kind === $kind && $notice->channel === AppointmentChanged::IN_APP;
+    });
+})->with([
+    'run' => [AppointmentState::Run, AppointmentChanged::MARKED_RUN, 'A manager marked your appointment on Thu, Oct 8, 2026 at 3:00 PM EDT as run.'],
+    'no-show' => [AppointmentState::NoShow, AppointmentChanged::MARKED_NO_SHOW, 'A manager marked your appointment on Thu, Oct 8, 2026 at 3:00 PM EDT as a no-show.'],
+]);
+
+test('the salesperson is not told about an answer they gave themselves', function () {
+    Notification::fake();
+
+    closeOut($this->lead, $this->sam);
+
+    Notification::assertNothingSent();
+});
+
+test('the salesperson is told in the app when a manager corrects the answer', function () {
+    closeOut($this->lead, $this->sam);
+
+    Notification::fake();
+
+    app(CorrectAppointmentCloseOut::class)->handle($this->lead->fresh(), $this->appointment->fresh(), 'Nobody was home after all.', $this->manager);
+
+    Notification::assertSentToTimes($this->sam, AppointmentChanged::class, 1);
+    Notification::assertSentTo($this->sam, AppointmentChanged::class, fn (AppointmentChanged $notice) => $notice->kind === AppointmentChanged::CLOSE_OUT_CORRECTED
+        && $notice->channel === AppointmentChanged::IN_APP
+        && $notice->toArray($this->sam)['message'] === 'A manager corrected what happened at your appointment on Thu, Oct 8, 2026 at 3:00 PM EDT.');
+});
+
+test('the salesperson is told in the app when a manager marks their appointment booked in error', function () {
+    Notification::fake();
+
+    app(MarkAppointmentBookedInError::class)->handle($this->lead, $this->appointment, 'Wrong customer.', $this->manager);
+
+    Notification::assertSentToTimes($this->sam, AppointmentChanged::class, 1);
+    Notification::assertSentTo($this->sam, AppointmentChanged::class, fn (AppointmentChanged $notice) => $notice->kind === AppointmentChanged::BOOKED_IN_ERROR && $notice->channel === AppointmentChanged::IN_APP);
+});
+
+/*
+|--------------------------------------------------------------------------
+| The prompt on every page (decision 126)
+|--------------------------------------------------------------------------
+*/
+
+test('every page tells a salesperson about appointments of theirs that are over and unanswered', function () {
+    // Still going on: nothing yet.
+    $this->actingAs($this->sam)->get(route('sales.calendar'))->assertOk()->assertDontSee('data-test="close-out-prompt"', false);
+
+    $this->travelTo('2026-10-08 20:30:00');
+
+    $this->actingAs($this->sam)->get(route('sales.calendar'))
+        ->assertOk()
+        ->assertSee('data-test="close-out-prompt"', false)
+        ->assertSee('You have 1 appointment to close out.')
+        ->assertSee('Close out now');
+
+    $this->actingAs($this->sam)->get(route('leads.show', $this->lead))->assertSee('You have 1 appointment to close out.');
+
+    // It is theirs alone: nobody else is prompted about it.
+    $this->actingAs($this->riley)->get(route('sales.calendar'))->assertOk()->assertDontSee('data-test="close-out-prompt"', false);
+    $this->actingAs($this->manager)->get(route('sales.calendar'))->assertOk()->assertDontSee('data-test="close-out-prompt"', false);
+
+    // The link opens the oldest one's Lead, and the prompt goes as soon as the card says the answer was given.
+    Livewire::actingAs($this->sam)->test('pages::sales.close-out-prompt')
+        ->assertSeeHtml('href="'.route('leads.show', $this->lead).'"')
+        ->tap(fn () => closeOut($this->lead->fresh(), $this->sam))
+        ->dispatch('lead-appointment-changed')
+        ->assertDontSeeHtml('data-test="close-out-prompt"');
+
+    $this->actingAs($this->sam)->get(route('sales.calendar'))->assertOk()->assertDontSee('data-test="close-out-prompt"', false);
+});
+
+test('the prompt counts every appointment waiting and opens the oldest first', function () {
+    $later = bookableLead($this->lakeview);
+    $this->travelTo('2026-10-08 20:00:00');
+    bookAppointment($later, $this->sam, $this->manager, '2026-10-08', '17:00', 30);
+    $this->travelTo('2026-10-08 22:00:00');
+
+    Livewire::actingAs($this->sam)->test('pages::sales.close-out-prompt')
+        ->assertSee('You have 2 appointments to close out.')
+        ->assertSeeHtml('href="'.route('leads.show', $this->lead).'"')
+        ->assertDontSee('Pat Customer');
+});
+
+test('the lead page tells a manager why an unanswered lead cannot be moved, returned or disqualified', function (string $opener) {
+    $this->travelTo('2026-10-09 14:00:00');
+
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+
+    // No dialog whose save would be refused: the person is told why instead.
+    Livewire::actingAs($owner)->test('pages::leads.show', ['lead' => $this->lead->fresh()])
+        ->call($opener)
+        ->assertDispatched('toast-show', fn (string $event, array $with): bool => str_contains((string) json_encode($with), 'last appointment first: run or no-show.'));
+
+    expect($this->lead->fresh()->status)->toBe(LeadStatus::AppointmentBooked);
+    expect($this->lead->fresh()->location_id)->toBe($this->lakeview->id);
+})->with(['openRouting', 'openReturn', 'openDisqualify']);
 
 /*
 |--------------------------------------------------------------------------

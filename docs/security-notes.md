@@ -209,6 +209,15 @@ another location has dealt with. Staff are told so without being shown who.
   its own audit event. The browser cannot send any answer but run or no-show.
   An appointment has no result field at all: Sold, Pending and Lost will exist
   only on proposals (decision 124).
+- **Close out first, and the reminder (decision 126, 2026-10-12).** The block
+  is in the five actions, not only on the screens, so a request sent by hand
+  is refused the same way. The prompt reads only the signed-in person's own
+  appointments. The reminder email and notice carry the appointment's time and
+  a link, never the customer; a test reads the whole email for the customer's
+  name and phone. The reminder is sent by the timer with no person recorded,
+  once for each appointment, and only to a salesperson who is still active.
+  **If the timer stops, no reminder is sent**; the prompt and the block do not
+  depend on it.
 - **A reminder from this step:** SQLite does not enforce a text column's
   length and MySQL does. A new status, reason or event name must fit every
   column that stores a copy of it; only the MySQL job shows when it does not.

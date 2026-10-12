@@ -86,7 +86,10 @@ approved in four steps (2026-10-12, decision 125).** It is the after-action
 report of the plan's section 5.6. Its plan, with the reasoning from the plan
 for why it is next, is
 [slice-7-appointment-results-plan.md](slice-7-appointment-results-plan.md).
-**Step 7a (mark an appointment run or no-show) is built (2026-10-12)** and
+**Step 7a (mark an appointment run or no-show) is built (2026-10-12)**,
+with what decision 126 added to it: close out first, the prompt, the reminder
+15 minutes after the appointment, and the salesperson told when a manager
+touches their appointment. It
 waits for Jacob's review and his word to merge. Steps 7b (proposals), 7c
 (results and the report) and 7d (the first Sales figures) are approved in
 order and not started.

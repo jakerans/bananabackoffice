@@ -5,157 +5,170 @@ No secrets or customer information belong here.
 
 **Updated:** 2026-10-12 · **Branch:** `checkpoint-slice-7a-run-or-no-show`
 
-**State:** slice 7, step 7a is built and waits for Jacob's review and his word
-to merge. `main` and staging have none of it. This branch sits on top of the
-slice 7 plan branch (`checkpoint-slice-7-plan`, also not merged), so merging it
-brings the plan, decisions 124 and 125, and the build together.
+**State:** slice 7, step 7a is built, and so is what Jacob asked to be added
+to it after the first handoff (decision 126). It waits for his review and his
+word to merge. `main` and staging have none of it. This branch sits on top of
+the slice 7 plan branch (`checkpoint-slice-7-plan`, also not merged), so
+merging it brings the plan, decisions 124 to 126, and the build together.
 
-Jacob approved slice 7 in four steps on 2026-10-12 and agreed to all eleven
-recommendations (decision 125). Steps 7b, 7c and 7d are not started.
+Steps 7b, 7c and 7d are approved in order (decision 125) and not started.
 
 ## Step
 
 Slice 7, step 7a: say what happened to an appointment once its time has come,
 run or no-show. Plan:
 [../slice-7-appointment-results-plan.md](../slice-7-appointment-results-plan.md),
-"Step 7a" and "Step 7a as built". From the plan:
-[../product-architecture.md](../product-architecture.md), 5.6, with decisions
-121, 123, 124 and 125.
+"Step 7a", "Step 7a as built" and "Added to step 7a on 2026-10-12". From the
+plan: [../product-architecture.md](../product-architecture.md), 5.6, with
+decisions 121 and 123 to 126.
 
-Objective: when an appointment's time comes, its salesperson or a manager
-says whether it was run or the customer was a no-show, and nothing is left
-unanswered without someone seeing it.
+## What changed since the first handoff (decision 126)
 
-## What changed
+Jacob's reply: a salesperson cannot go on to another appointment until the
+last one is closed out; a prompt, and an email 15 minutes afterwards; the
+salesperson is told when a manager corrects or touches their appointment.
 
-- **On the Lead's Appointment card,** from the appointment's start time: "The
-  time of the appointment on ... has come. What happened?" with two buttons,
-  **Appointment was run** and **No-show**, each with an optional note. For the
-  salesperson whose appointment it is, or a manager.
-- **Run:** the card says so, with who and when. The Lead shows a new status,
-  **Appointment run**, and stays with its salesperson. The card offers "Book
-  another appointment" for a return visit, which adds no issued count.
-- **No-show:** treated as a cancellation by the customer. The Lead shows
-  Appointment cancelled, stays with its salesperson to be booked again, and
-  after 14 days goes to the Cancelled Appointments queue, where the card the
-  agent sees says "No-show". It still counts as issued.
-- **An appointment has no result of its own.** Sold, Pending and Lost will
-  belong to proposals, in steps 7b and 7c (decision 124).
-- **A manager can correct an answer,** with a note: run to no-show, or back.
-- **Sales > Calendar** has a new list at the top, **To close out**:
-  appointments whose time has come with no answer yet, oldest first. A no-show
-  then appears under "To rebook".
-- **The customer page** shows Run or No-show against each appointment.
-- **No database change:** two new appointment states and one new Lead status
-  use columns that already exist. **No new permission, no new package, nothing
-  sent to a customer.**
-- **New audit events:** `lead.appointment_run`, `lead.appointment_no_show`,
-  `lead.appointment_close_out_corrected`.
+- **Close out first.** Once an appointment's end time has passed and nobody
+  has marked it run or no-show, its Lead cannot be booked again, sent back to
+  the Contact Center, moved, returned to central or disqualified. Each says
+  "Say what happened at this lead's last appointment first: run or no-show."
+  The card stops offering "Book another appointment" and "Send back" until it
+  is answered.
+- **In order.** A salesperson cannot mark a later appointment of theirs while
+  an earlier one that is over has no answer: "Close out your earlier
+  appointment first: the one on ...". A manager answering for them can.
+- **A prompt on every page.** A salesperson with an appointment that is over
+  and unanswered sees a bar under the header: "You have 1 appointment to close
+  out. Say whether it was run or was a no-show before anything else. Close out
+  now". The link opens the oldest one's Lead. The bar goes the moment the last
+  one is answered.
+- **A reminder 15 minutes after the appointment ends.** A notice in the bell
+  and an email, once for each appointment. Neither says anything about the
+  customer.
+- **The salesperson is told** in the bell when a manager marks their
+  appointment run or no-show, corrects the answer, or marks the appointment
+  "booked in error".
+- **One database change:** a new column on appointments that records when the
+  reminder went, so it is sent once. **No new permission, no new package,
+  nothing sent to a customer.**
+
+The step as first built (the two buttons, Run and No-show, the correction,
+"To close out" in the Calendar, the customer page) is unchanged and is
+described in the plan under "Step 7a as built".
 
 ## Tests and checks, with their real results
 
 | Check | Result |
 | --- | --- |
-| `composer test` on the Windows development machine (style, static analysis, every test) | **Passed:** 2,314 tests (2,313 passed, 1 skipped, 11,860 assertions) in 348 seconds. The skipped test is the device-time formatter, which cannot find Node on Windows. |
+| `composer test` on the Windows development machine (style, static analysis, every test) | **Passed:** 2,334 tests (2,333 passed, 1 skipped, 11,981 assertions) in 351 seconds. The skipped test is the device-time formatter, which cannot find Node on Windows. |
 | GitHub "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)" | Reported with the branch; not recorded here. |
 | Browser | **Done on 2026-10-12 by the implementation agent: every step passed** and the browser reported no page errors. Results are under "Browser review" below. |
 | Merge, staging | **Not done.** |
 
-New tests, `tests/Feature/Appointments/CloseOutAppointmentTest.php` (26): what
-run records and what the Lead then shows; that an appointment keeps no result;
-what can follow a run appointment; a no-show treated as a cancellation, booked
-again with no new count, and released to the Cancelled Appointments queue
-after 14 days with the notice saying no-show; who may answer, as a matrix of
-six people; not before the start time and from the minute it starts; only run
-or no-show, and only once; a cancelled appointment cannot be answered; a
-changed Lead is refused; an earlier appointment answered after a later one was
-booked; corrections, who may make them, the note, and a Lead that has moved
-on; the card, the Calendar's list, the customer page; and the timer's repair.
+New tests in `tests/Feature/Appointments/CloseOutAppointmentTest.php` (20
+more, 46 in the file): each of the five things refused while an appointment is
+over and unanswered, and allowed again once it is answered; not yet overdue
+while the appointment is still going on; answering in order, and a manager not
+held to it; the reminder at 15 minutes and not at 14, once only, in the app
+and by email; the whole email read for the customer's name and phone; no
+reminder for an appointment already answered, undone, or whose salesperson was
+deactivated; the three notices to the salesperson, and none for their own
+answer; the prompt on a page, for its owner only, with its count and its link,
+and gone once answered; the Lead page saying why instead of opening a dialog.
 
-Existing tests that changed, none weakened or removed:
+Existing tests that changed because the rule changed. Each now tests the new
+rule; none was removed:
 
-- `AppointmentChangeScreensTest.php`: once an appointment's time has passed the
-  card now asks what happened, where it used to say only that the time had
-  passed.
-- `AppointmentScreensTest.php`: a passed appointment is still left out of the
-  upcoming list, and is now expected under "To close out".
-- `LeaveCadenceTest.php` pins the list of Lead statuses; it now includes
-  "appointment_run".
-
-## Found while building
-
-Nothing went wrong this time. Before pushing, each new stored name was checked
-against the length of the column that holds it (the step 6b fault); all fit,
-and no column was added.
+- `CancelAndRebookTest.php`: "another can be booked after an appointment has
+  passed" now expects a refusal first, and the booking once it is marked run.
+- `AppointmentChangeScreensTest.php`: the card of a passed appointment no
+  longer offers "Book another appointment" or "Send back" until answered.
+- `ReturnFromSalesTest.php` (three tests): a Lead is sent back after its
+  appointment was marked run, where it used to be sent back unanswered.
+- `BookedInErrorTest.php`: "a finished appointment no longer blocks the lead"
+  now expects it to block until answered.
+- `CloseOutAppointmentTest.php`: "an earlier appointment answered after a
+  later one was booked" now builds that state directly, as a record from
+  before this rule.
+- `CustomerAppointmentsTest.php`: the upcoming appointment is on another Lead
+  of the same customer.
+- `QueueTickTest.php`: the timer's result has one more count, `reminded`.
 
 ## Architectural decisions made while building
 
-Listed in the plan under "Step 7a as built". The ones Jacob may want to change:
+Listed in decision 126 under "Read by the implementation agent". The ones
+Jacob may want to change:
 
-- **A no-show Lead reads "Appointment cancelled"** in lists, like any Lead
-  waiting to be booked again. Its appointment and the call center's notice say
-  No-show. The alternative is a Lead status of its own, which every list and
-  filter would then carry.
-- **For the length of the appointment both sets of buttons are offered:** it
-  can be marked run or no-show from its start time, and can still be cancelled
-  or rescheduled until its end time.
-- **An appointment whose Lead left Sales before anyone answered can no longer
-  be answered.** It stays "Time has passed".
-- **"Booked in error" is no longer offered once an appointment is run or a
-  no-show.** A manager uses Send back, which asks whether it should ever have
-  been booked.
+- **"Can't start another appointment"** is built as the two blocks above.
+  Backoffice has no step where a salesperson starts an appointment. The
+  salesperson can still open their next appointment's Lead and see where to
+  go; hiding that was judged to do more harm than good.
+- **The block begins at the appointment's end time,** not its start.
+- **The reminder is sent once.** After it, the prompt and the "To close out"
+  list keep it in view.
+- **A manager is not prompted or reminded** about other people's appointments.
+- **The reminder uses the timer that already runs every minute,** so it goes
+  15 to 16 minutes after the end time.
+
+Unchanged from the first handoff: a no-show Lead reads "Appointment
+cancelled"; "booked in error" is not offered once an appointment is answered.
 
 ## Deviations from the approved plan
 
-None.
+None from decision 126. It changes decision 113, and that is recorded there.
 
 ## Known limitations
 
-- **Nothing makes anyone answer.** "To close out" shows what is waiting; no
-  reminder is sent and nothing is blocked. The plan's "operationally
-  incomplete until report is submitted" is shown, not enforced.
+- **If the timer stops, no reminder is sent.** The block and the prompt do not
+  depend on it. The Call Queue page already warns managers when the timer has
+  not run lately.
+- **A salesperson who was deactivated is not reminded.** Their unanswered
+  appointment still blocks the Lead until a manager answers it.
+- **When this reaches staging,** every fictitious appointment there that is
+  already over and unanswered gets its one reminder on the first tick.
 - **A run appointment leads nowhere yet.** Proposals and their results are
-  steps 7b and 7c; until then a run Lead just stays "Appointment run".
-- **No figures yet.** Demo Rate and the rest are step 7d.
-- **The salesperson is not told when a manager answers or corrects** their
-  appointment.
-- Local database only: two fictitious "Close Out Review" Leads and their
-  appointments.
+  steps 7b and 7c.
+- **No figures yet.** Step 7d.
+- Local database only: the two fictitious review Leads' appointments are now
+  answered.
 
 ## Decisions needed from Jacob
 
 1. **Review 7a** and say whether to merge it.
-2. **Any of the four choices under "Architectural decisions" to change?**
-   Recommendation: keep all four.
-3. Nothing is needed to start step 7b: its questions (4 and 5) were answered
-   in decision 125. It starts when Jacob says so.
+2. **Is "can't start another appointment" built the way he meant it?** See
+   the first point under "Architectural decisions". Recommendation: keep it.
+3. Nothing is needed to start step 7b. It starts when Jacob says so.
 
 ## The plan check for this step
 
-Decision 122 asks for this after each slice; step 7a is one step of slice 7,
-so this is short.
-
-- **From the plan:** 5.6, the first thing the after-action report records.
-- **In the plan and not built in this step:** everything else in 5.6, which is
-  steps 7b and 7c; and the voice note, which decision 125 left out.
-- **Built and not in the plan:** correcting an answer. It is in the slice 7
-  plan Jacob approved.
+- **From the plan:** 5.6, the first thing the after-action report records, and
+  "Appointment remains operationally incomplete until report is submitted",
+  which decision 126 now gives a meaning.
+- **In the plan and not built in this step:** the rest of 5.6 (steps 7b and
+  7c); the voice note, which decision 125 left out.
+- **Built and not in the plan before today:** the block, the prompt, the
+  reminder and the notices. Jacob decided them (126) and they are now written
+  into 5.6.
 
 ## Browser review (done 2026-10-12)
 
 Done by the implementation agent on the local site (`https://backoffice.test`)
 with fictitious staff and Leads, in a real browser driven from the command
-line. **Every step passed and the browser reported no page errors.** Two
-fictitious Leads had appointments whose time had come.
+line. **Every step passed and the browser reported no page errors.** The
+fictitious salesperson had two appointments that were over and unanswered,
+and the timer had been run once.
 
 | Step | Result |
 | --- | --- |
-| 1. The salesperson's Calendar | Pass. "To close out" listed both appointments, oldest first, each with its day and time, customer and property. |
-| 2. Run | Pass. The Lead's card said "The time of the appointment on Sat, Oct 10 at 7:00 AM PDT has come. What happened?" with both buttons. "Appointment was run" opened "Mark this appointment as run?". After saving with a note: "Marked as run."; the status read "Appointment run"; the card showed "Appointment was run", who recorded it, when, and the note; "Book another appointment" was offered and opened its dialog without reloading the page. The salesperson was not offered the correction. |
-| 3. No-show | Pass. "No-show" opened "Mark this appointment a no-show?". After saving: "Marked as a no-show. The lead stays with its salesperson to be booked again."; the status read "Appointment cancelled"; the card showed "No-show" and offered "Book again". In the Calendar it had left "To close out" and was under "To rebook" as "No-show" with 14 days. |
-| 4. A manager corrects it | Pass. No note was refused ("Say why this is being corrected."). With a note: "Corrected."; the card showed "Appointment was run" with the manager's note, and the status read "Appointment run". |
-| 5. The customer page | Pass. The appointment was listed as "Run". |
+| 1. The prompt and the reminder | Pass. On the dashboard and on the Calendar: "You have 2 appointments to close out. Say whether it was run or was a no-show before anything else. Close out now", linking to the older one's Lead. The bell held one new notice for each: "Your appointment on Fri, Oct 9, 2026 at 9:00 AM PDT is over. Say whether it was run or was a no-show. Nothing else can be done with the lead until you do." |
+| 2. The later one first | Pass. Its card asked what happened and offered no "Book another appointment" and no reschedule. Marking it run was refused in the dialog: "Close out your earlier appointment first: the one on Fri, Oct 9 at 9:00 AM PDT." |
+| 3. A manager and the unanswered Lead | Pass. The card offered neither "Book another appointment" nor "Send back". Move, Return to central and Disqualify each opened no dialog and said "Say what happened at this lead's last appointment first: run or no-show." |
+| 4. The manager answers for the salesperson | Pass. "Marked as run." and "Send back" was offered again. The salesperson's prompt then read "You have 1 appointment to close out." and linked to the other Lead, and their bell had "A manager marked your appointment on Fri, Oct 9, 2026 at 9:00 AM PDT as run." |
+| 5. The salesperson answers the last one | Pass. Marked a no-show from the card; the prompt disappeared without reloading the page, and "Book again" was offered. |
 
-Not covered in the browser: the 14-day release of a no-show Lead and the notice
-on the Call Queue card, which the automated tests cover and which use the
-screens reviewed in step 6c.
+The steps of the first review (the two buttons, the correction, the Calendar
+list, the customer page) passed on 2026-10-12 and those screens are unchanged
+apart from what step 2 and 3 above show.
+
+Not covered in the browser: the email itself, which the automated tests read
+in full; and the 14-day release of a no-show Lead, reviewed in step 6c.

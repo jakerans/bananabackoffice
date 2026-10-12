@@ -349,6 +349,14 @@ Added 2026-10-11 (LOCKED by decisions 121, 123 and 124; these change how the fie
 - Build plan: slice-7-appointment-results-plan.md. Built so far (2026-10-12): marking an appointment run or no-show. A no-show is treated as a cancellation by the customer (decision 125).
 - Close Rate is counted for each Lead, not each appointment (decision 125): a return visit that closes the sale does not lower it, and two proposals sold against one Lead are one win.
 
+Added 2026-10-12 (LOCKED by decision 126; this is what "operationally incomplete" stops):
+- Close out first. Once an appointment is over and has no answer, its Lead cannot be booked again, sent back, moved, returned to central or disqualified until someone says run or no-show.
+- A salesperson answers their appointments in order: an earlier unanswered one comes before a later one.
+- A salesperson with an unanswered appointment is prompted on every page.
+- 15 minutes after the appointment ends, its salesperson is reminded once, in the app and by email. No customer details.
+- The salesperson is told when a manager answers, corrects or undoes their appointment.
+- The habit wanted: closed out straight afterwards, from the car.
+
 5.7 Sales commission
 Commission is based on GP dollars.
 Effective-dated plan.

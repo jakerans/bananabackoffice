@@ -11,6 +11,7 @@ use App\Enums\LeadStatusEvent;
 use App\Models\Appointment;
 use App\Models\Lead;
 use App\Models\User;
+use App\Notifications\AppointmentChanged;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -92,6 +93,11 @@ class CorrectAppointmentCloseOut
                 location: $lead->location,
                 reason: $note,
             );
+
+            // The salesperson is told when a manager changes their appointment (decision 126).
+            $salesperson = $appointment->salesperson_id === null || $appointment->salesperson_id === $actor->id ? null : User::query()->find($appointment->salesperson_id);
+
+            $salesperson?->notify(new AppointmentChanged($lead->id, AppointmentChanged::CLOSE_OUT_CORRECTED, AppointmentChanged::IN_APP, $appointment));
 
             return true;
         }, retryWhenBusy: true);

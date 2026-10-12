@@ -629,6 +629,12 @@ new #[Title('Lead')] class extends AddressCapturePage {
      */
     private function refusedByAnUpcomingAppointment(): bool
     {
+        if ($this->lead->isWithSales() && $this->lead->hasAppointmentToCloseOut()) {
+            Flux::toast(variant: 'danger', text: __('Say what happened at this lead\'s last appointment first: run or no-show.'));
+
+            return true;
+        }
+
         if (! $this->lead->hasUpcomingAppointment()) {
             return false;
         }

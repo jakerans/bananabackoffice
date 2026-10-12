@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Appointments\CloseOutAppointment;
 use App\Actions\Appointments\MarkAppointmentBookedInError;
 use App\Actions\Staff\DeactivateStaffMember;
 use App\Enums\AppointmentState;
@@ -343,7 +344,7 @@ test('a cancelled lead whose salesperson lost access waits for a manager to choo
     expect(LeadIssue::query()->count())->toBe(1);
 });
 
-test('after an appointment has passed another can be booked, with no new issued count (decision 113)', function () {
+test('after an appointment has passed another can be booked once it is closed out, with no new issued count (decisions 113 and 126)', function () {
     $this->travelTo('2026-10-09 14:00:00');
 
     $lead = $this->lead->fresh();
@@ -351,15 +352,22 @@ test('after an appointment has passed another can be booked, with no new issued 
     expect($lead->status)->toBe(LeadStatus::AppointmentBooked);
     expect($lead->hasUpcomingAppointment())->toBeFalse();
 
-    $another = bookAppointment($lead, $this->sam, $this->agent, '2026-10-13', '10:00')->appointment;
+    // Not before someone says what happened at the one that passed.
+    expect(fn () => bookAppointment($lead, $this->sam, $this->agent, '2026-10-13', '10:00'))
+        ->toThrow(ValidationException::class, 'Say what happened at this lead\'s last appointment first: run or no-show.');
+    expect(Appointment::query()->count())->toBe(1);
+
+    app(CloseOutAppointment::class)->handle($lead, $this->appointment, AppointmentState::Run->value, null, $this->sam);
+
+    $another = bookAppointment($lead->fresh(), $this->sam, $this->agent, '2026-10-13', '10:00')->appointment;
 
     expect($another->follows_appointment_id)->toBe($this->appointment->id);
-    expect($another->previous_status)->toBe(LeadStatus::AppointmentBooked);
+    expect($another->previous_status)->toBe(LeadStatus::AppointmentRun);
     expect($this->lead->fresh()->status)->toBe(LeadStatus::AppointmentBooked);
     expect(LeadIssue::query()->count())->toBe(1);
 
-    // The passed appointment is left exactly as it was.
-    expect($this->appointment->fresh()->state)->toBe(AppointmentState::Booked);
+    // The appointment that was run keeps its answer.
+    expect($this->appointment->fresh()->state)->toBe(AppointmentState::Run);
     expect($this->lead->fresh()->standingAppointment()->id)->toBe($another->id);
 });
 

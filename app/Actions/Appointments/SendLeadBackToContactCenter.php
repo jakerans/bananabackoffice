@@ -49,6 +49,12 @@ class SendLeadBackToContactCenter
                 ]);
             }
 
+            if ($lead->hasAppointmentToCloseOut()) {
+                throw ValidationException::withMessages([
+                    'sendBackNote' => __('Say what happened at this lead\'s last appointment first: run or no-show.'),
+                ]);
+            }
+
             if (! in_array($issuedCount, [StopCountingLeadAsIssued::NEVER_SHOULD_HAVE_BEEN_BOOKED, StopCountingLeadAsIssued::ANOTHER_REASON], true)) {
                 throw ValidationException::withMessages([
                     'issuedCount' => __('Say whether this lead should ever have been booked.'),

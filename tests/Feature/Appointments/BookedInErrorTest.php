@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Appointments\CloseOutAppointment;
 use App\Actions\Appointments\MarkAppointmentBookedInError;
 use App\Actions\Leads\DisqualifyLead;
 use App\Actions\Leads\ReturnLeadToCentral;
@@ -306,17 +307,22 @@ test('once the appointment is undone the lead can be moved again', function () {
     expect($lead->fresh()->location_id)->toBe($this->harbor->id);
 });
 
-test('an appointment that has finished no longer blocks the lead', function () {
+test('an appointment that has finished blocks the lead until someone says what happened, and not after (decision 126)', function () {
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
     $lead = bookableLead($this->lakeview);
-    bookAppointment($lead, $this->sam, $this->manager);
+    $appointment = bookAppointment($lead, $this->sam, $this->manager)->appointment;
+    $reason = LeadDisqualificationReason::factory()->create();
 
     // The day after the appointment.
     $this->travelTo('2026-10-09 14:00:00');
 
     expect($lead->fresh()->hasUpcomingAppointment())->toBeFalse();
+    expect(fn () => app(DisqualifyLead::class)->handle($lead->fresh(), $reason, 'Not real.', $owner))
+        ->toThrow(ValidationException::class, 'Say what happened at this lead\'s last appointment first: run or no-show.');
+    expect($lead->fresh()->status)->toBe(LeadStatus::AppointmentBooked);
 
-    app(DisqualifyLead::class)->handle($lead->fresh(), LeadDisqualificationReason::factory()->create(), 'Not real.', $owner);
+    app(CloseOutAppointment::class)->handle($lead->fresh(), $appointment, AppointmentState::Run->value, null, $this->manager);
+    app(DisqualifyLead::class)->handle($lead->fresh(), $reason, 'Not real.', $owner);
 
     expect($lead->fresh()->status)->toBe(LeadStatus::Disqualified);
 });

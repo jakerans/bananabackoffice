@@ -95,6 +95,12 @@ class RouteLead
             ]);
         }
 
+        if ($lead->isWithSales() && $lead->hasAppointmentToCloseOut()) {
+            throw ValidationException::withMessages([
+                'destinationId' => __('Say what happened at this lead\'s last appointment first: run or no-show.'),
+            ]);
+        }
+
         if (! $destination->is_active) {
             throw ValidationException::withMessages([
                 'destinationId' => __('Choose an active location.'),

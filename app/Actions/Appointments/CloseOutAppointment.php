@@ -12,6 +12,7 @@ use App\Enums\LeadStatusEvent;
 use App\Models\Appointment;
 use App\Models\Lead;
 use App\Models\User;
+use App\Notifications\AppointmentChanged;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -43,6 +44,10 @@ class CloseOutAppointment
      * The Lead's status changes only if it is still Appointment booked and has
      * no other appointment still to come: an earlier appointment answered
      * after a later one was booked leaves the Lead as it is.
+     *
+     * A salesperson answers their appointments in order: an earlier one that
+     * is over and unanswered comes first. When a manager answers for them, the
+     * salesperson is told inside the app (decision 126).
      *
      * All of it is saved together or not at all, and the whole change is tried
      * again if the database reports a deadlock or says it is busy.
@@ -82,6 +87,28 @@ class CloseOutAppointment
                 ]);
             }
 
+            // A salesperson closes their appointments out in order: an earlier
+            // one that is over and unanswered comes first (decision 126). A
+            // manager answering for them is not held to it.
+            if ($appointment->salesperson_id === $actor->id) {
+                $earlier = Appointment::query()
+                    ->overdueForCloseOutAt(now())
+                    ->where('salesperson_id', $actor->id)
+                    ->where('starts_at', '<', $appointment->starts_at)
+                    ->whereKeyNot($appointment->id)
+                    ->whereHas('lead', fn ($leads) => $leads->where('status', LeadStatus::AppointmentBooked))
+                    ->orderBy('starts_at')
+                    ->first();
+
+                if ($earlier !== null) {
+                    throw ValidationException::withMessages([
+                        'closeOutOutcome' => __('Close out your earlier appointment first: the one on :when.', [
+                            'when' => $earlier->starts_at->copy()->timezone($earlier->timezone)->format('D, M j \a\t g:i A T'),
+                        ]),
+                    ]);
+                }
+            }
+
             $moment = now();
             $from = $lead->status;
 
@@ -118,6 +145,16 @@ class CloseOutAppointment
                 location: $lead->location,
                 reason: $note,
             );
+
+            // The salesperson is told when someone else answers for them (decision 126).
+            $salesperson = $appointment->salesperson_id === null || $appointment->salesperson_id === $actor->id ? null : User::query()->find($appointment->salesperson_id);
+
+            $salesperson?->notify(new AppointmentChanged(
+                $lead->id,
+                $state === AppointmentState::Run ? AppointmentChanged::MARKED_RUN : AppointmentChanged::MARKED_NO_SHOW,
+                AppointmentChanged::IN_APP,
+                $appointment,
+            ));
 
             return true;
         }, retryWhenBusy: true);

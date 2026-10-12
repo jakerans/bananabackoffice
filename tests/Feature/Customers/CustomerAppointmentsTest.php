@@ -54,7 +54,9 @@ test('the customer page lists the customer\'s appointments, latest first, each i
     $undone = bookAppointment($undoneLead, $this->sam, $this->manager, '2026-10-13', '10:00')->appointment;
     app(MarkAppointmentBookedInError::class)->handle($undoneLead->fresh(), $undone, 'Wrong customer.', $this->manager);
 
-    bookAppointment($this->lead->fresh(), $this->sam, $this->manager, '2026-10-14', '15:00');
+    // The passed one has no answer yet, so the upcoming one belongs to another Lead of the customer (decision 126).
+    $upcomingLead = Lead::factory()->at($this->lakeview)->from($this->account, $this->account->primaryContact(), $this->lead->property)->qualified()->create();
+    bookAppointment($upcomingLead, $this->sam, $this->manager, '2026-10-14', '15:00');
 
     $page = customerPage($this->manager, $this->account)
         ->assertDontSee('No appointments to show.')

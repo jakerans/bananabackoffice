@@ -508,6 +508,11 @@ Rules:
     still theirs. From the appointment's start time. A Call Center Agent
     cannot. **Correcting an answer** is for a manager only
     (`appointments.manage`), with a note. No permission was added.
+18. **Close out first** (decision 126). While a Lead has an appointment that is
+    over and unanswered, nobody may book it again, send it back, move it,
+    return it to central or disqualify it, whatever their role. A salesperson
+    answers their own appointments oldest first; a manager is not held to
+    that order. No permission was added.
 
 ## Slice 4: the call queue and its settings
 

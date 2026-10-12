@@ -86,6 +86,12 @@ class ReturnLeadToCentral
             ]);
         }
 
+        if ($lead->isWithSales() && $lead->hasAppointmentToCloseOut()) {
+            throw ValidationException::withMessages([
+                'reason' => __('Say what happened at this lead\'s last appointment first: run or no-show.'),
+            ]);
+        }
+
         if (trim($reason) === '') {
             throw ValidationException::withMessages([
                 'reason' => __('Say why this lead is being returned to central.'),

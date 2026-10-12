@@ -125,15 +125,42 @@ Readings made while building, none of them a new rule:
   cancelled or rescheduled until its end time.** For the length of the
   appointment both are offered.
 - **Only an appointment whose Lead is still "Appointment booked" can be
-  answered.** One whose Lead was sent back or moved before anyone answered
-  stays as "Time has passed" for good.
-- **When an earlier appointment is answered after a later one was booked,** the
-  Lead stays Appointment booked, because it has an appointment to come.
+  answered.** Since decision 126 a Lead cannot leave Sales with an unanswered
+  appointment that is over, so this no longer leaves one unanswered for good.
+- **When an earlier appointment is answered while a later one stands,** the
+  Lead stays Appointment booked, because it has an appointment to come. Since
+  decision 126 this can only be a record from before it.
 - **A correction changes the Lead only if nothing has happened to it since.**
   Otherwise only the appointment is corrected.
 - **"Booked in error" is no longer offered once an appointment is run or a
   no-show.** A manager uses Send back, which asks whether it should ever have
   been booked.
+
+### Added to step 7a on 2026-10-12 (decision 126)
+
+Jacob's reply to the first handoff: close out before anything else, a prompt,
+a reminder 15 minutes after the appointment, and the salesperson told when a
+manager touches their appointment.
+
+- **Close out first.** `Lead::hasAppointmentToCloseOut()` is true while the
+  Lead has a standing appointment whose end time has passed. `BookAppointment`,
+  `SendLeadBackToContactCenter`, `RouteLead`, `ReturnLeadToCentral` and
+  `DisqualifyLead` each refuse while it is. The card stops offering "Book
+  another appointment" and "Send back to Contact Center" until the answer is
+  given, and the Lead page says why instead of opening a dialog.
+- **In order.** `CloseOutAppointment` refuses a salesperson's later appointment
+  while an earlier one of theirs is over and unanswered. Not a manager's
+  answer.
+- **The prompt** is the component `pages::sales.close-out-prompt`, in the
+  layout under the header. It counts only the signed-in person's own
+  appointments and names no customer.
+- **The reminder** is `RemindToCloseOutAppointment`, run by the timer that
+  already runs every minute (`RunQueueTick`, counted as `reminded`). One new
+  column, `appointments.close_out_reminded_at`, keeps it to one for each
+  appointment. The notice is saved with that mark; the email goes after and a
+  failure to send is reported, not retried.
+- **Told when a manager touches it:** `AppointmentChanged` has five new kinds:
+  the reminder, marked run, marked no-show, corrected, booked in error.
 
 ## Step 7b — Proposals
 
@@ -302,4 +329,4 @@ issued Lead counts for after a move or a re-issue.
 - Pending has no clock in this slice. A proposal can stay Pending for good.
 - The figures in 7d are counted from what people record. An appointment
   nobody closes out is in none of them, which is why 7a's "To close out" list
-  comes first.
+  comes first, and why decision 126 stops the Lead until it is answered.

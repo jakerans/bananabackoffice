@@ -462,6 +462,17 @@ class Lead extends Model
     }
 
     /**
+     * Whether the Lead has an appointment that is over and that nobody has
+     * yet marked run or no-show. Until someone does, the Lead cannot be booked
+     * again, sent back, moved, returned to central or disqualified (decision
+     * 126).
+     */
+    public function hasAppointmentToCloseOut(): bool
+    {
+        return $this->appointments()->overdueForCloseOutAt(now())->exists();
+    }
+
+    /**
      * What is still missing before an appointment can be booked for the Lead
      * (rulebook, rule 1): it must be Qualified, at a Location, and linked to a
      * customer with a property. An empty list means it may be booked.

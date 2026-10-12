@@ -86,7 +86,7 @@ test('it releases holds whose time has run out and leaves running holds alone', 
     $this->travelTo('2026-10-07 14:05:00');
     $done = app(RunQueueTick::class)->handle();
 
-    expect($done)->toBe(['expired' => 1, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'failed' => 0]);
+    expect($done)->toBe(['expired' => 1, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'reminded' => 0, 'failed' => 0]);
     expect(LeadCadence::query()->where('lead_id', $first->id)->sole()->held_by_user_id)->toBeNull();
     expect(LeadCadence::query()->where('lead_id', $second->id)->sole()->held_by_user_id)->toBe($this->blake->id);
     expect(queueHistory($first))->toBe(['entered', 'claimed', 'hold_expired']);
@@ -125,7 +125,7 @@ test('it repairs a cadence left in the queue for a lead that is disqualified or 
 
     $done = app(RunQueueTick::class)->handle();
 
-    expect($done)->toBe(['expired' => 0, 'ended' => 2, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'failed' => 0]);
+    expect($done)->toBe(['expired' => 0, 'ended' => 2, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'reminded' => 0, 'failed' => 0]);
 
     expect(LeadCadence::query()->where('lead_id', $disqualified->id)->sole()->state)->toBe(CadenceState::Disqualified);
     expect(LeadCadence::query()->where('lead_id', $deferred->id)->sole()->state)->toBe(CadenceState::DeferredFollowUp);
@@ -162,7 +162,7 @@ test('it ends a hold by someone who may no longer work that lead', function (str
 
     $done = app(RunQueueTick::class)->handle();
 
-    expect($done)->toBe(['expired' => 0, 'ended' => 0, 'access_lost' => 1, 'warned' => 0, 'released' => 0, 'failed' => 0]);
+    expect($done)->toBe(['expired' => 0, 'ended' => 0, 'access_lost' => 1, 'warned' => 0, 'released' => 0, 'reminded' => 0, 'failed' => 0]);
     expect(queueHistory($lead))->toBe(['entered', 'claimed', 'hold_ended:access_lost']);
     expect(LeadQueueEvent::query()->where('type', QueueEventType::HoldEnded)->sole()->affected_user_id)->toBe($this->avery->id);
     expect(LeadCadence::query()->where('lead_id', $lead->id)->sole()->state)->toBe(CadenceState::InQueue);
@@ -199,8 +199,8 @@ test('running it twice is the same as running it once', function () {
 
     $second = app(RunQueueTick::class)->handle();
 
-    expect($first)->toBe(['expired' => 1, 'ended' => 1, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'failed' => 0]);
-    expect($second)->toBe(['expired' => 0, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'failed' => 0]);
+    expect($first)->toBe(['expired' => 1, 'ended' => 1, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'reminded' => 0, 'failed' => 0]);
+    expect($second)->toBe(['expired' => 0, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'reminded' => 0, 'failed' => 0]);
     expect(DB::table('lead_cadences')->orderBy('id')->get()->map(fn ($row) => (array) $row)->all())->toBe($cadences);
     expect(LeadQueueEvent::query()->count())->toBe($events);
     expect(SchedulerHeartbeat::query()->count())->toBe(1);
@@ -233,7 +233,7 @@ test('one lead that throws does not stop the others, and the failure is logged w
     $this->travelTo('2026-10-07 14:06:00');
     $done = app(RunQueueTick::class)->handle();
 
-    expect($done)->toBe(['expired' => 1, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'failed' => 1]);
+    expect($done)->toBe(['expired' => 1, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'reminded' => 0, 'failed' => 1]);
     expect($failing->fresh()->held_by_user_id)->toBe($this->avery->id);
     expect(LeadCadence::query()->where('lead_id', $second->id)->sole()->held_by_user_id)->toBeNull();
     expect(SchedulerHeartbeat::query()->count())->toBe(1);
@@ -250,7 +250,7 @@ test('one lead that throws does not stop the others, and the failure is logged w
     $this->forgetMock(EndQueueHold::class);
     app()->forgetInstance(RunQueueTick::class);
 
-    expect(app(RunQueueTick::class)->handle())->toBe(['expired' => 1, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'failed' => 0]);
+    expect(app(RunQueueTick::class)->handle())->toBe(['expired' => 1, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'reminded' => 0, 'failed' => 0]);
     expect($failing->fresh()->held_by_user_id)->toBeNull();
 });
 
@@ -268,7 +268,7 @@ test('a tick that cannot write its heartbeat still tidies up', function () {
         SchedulerHeartbeat::flushEventListeners();
     }
 
-    expect($done)->toBe(['expired' => 1, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'failed' => 1]);
+    expect($done)->toBe(['expired' => 1, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'reminded' => 0, 'failed' => 1]);
     expect(queueHistory($lead))->toBe(['entered', 'claimed', 'hold_expired']);
 });
 

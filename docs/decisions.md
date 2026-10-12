@@ -2220,6 +2220,9 @@ and no new issued count. Backoffice does not record whether the passed
 appointment was held or missed; that is for the after-action report (decision
 84).
 
+**Changed by decision 126 (2026-10-12):** another appointment can be booked
+only once the one that passed has been marked run or no-show.
+
 ## 114. The call center is told when a Lead came back from Sales (2026-10-10)
 
 **Decided by Jacob,** while step 6b was being built: "if a cancelled appmt is
@@ -2463,6 +2466,54 @@ His answers to the plan's eleven questions, each as recommended:
     settles how decision 124's "against the number of appointments" is
     counted.
 11. The voice note and its transcript are not in this slice.
+
+## 126. Close out first, a reminder after 15 minutes, and the salesperson is told (2026-10-12)
+
+**Decided by Jacob,** in reply to step 7a's handoff, which listed as a known
+limit that nothing made anyone answer. His words: "they can't start another
+appointment until the last one was closed out. There should be a prompt and an
+email that's sent out 15 minutes afterwards to remind them to close out the
+appointment. We want to build the habit that they close it out immediately
+afterwards in the car. Salesperson should get notified if a manager corrects
+or touches their appointments."
+
+The plan (5.6) said "Goal: 1–2 minutes from the car" and "Appointment remains
+operationally incomplete until report is submitted". It did not say what
+"incomplete" stops, or anything about a reminder. This decision does, and the
+plan now carries it.
+
+1. **Close out first.** Once an appointment's end time has passed and nobody
+   has marked it run or no-show, nothing else can be done with its Lead: it
+   cannot be booked again, sent back to the Contact Center, moved to another
+   Location, returned to central or disqualified. Each says "Say what happened
+   at this lead's last appointment first: run or no-show." This changes
+   decision 113.
+2. **In order.** A salesperson cannot mark a later appointment of theirs while
+   an earlier one that is over has no answer. A manager answering for them is
+   not held to this.
+3. **A prompt.** A salesperson with an appointment that is over and unanswered
+   sees a bar under the header on every page, with how many and a link to the
+   oldest. It goes when they are answered.
+4. **A reminder.** Fifteen minutes after an appointment's end time, if it still
+   has no answer, its salesperson gets a notice in the app and an email. Once
+   for each appointment. Neither says anything about the customer.
+5. **The salesperson is told** in the app when a manager marks their
+   appointment run or no-show, corrects that answer, or marks the appointment
+   "booked in error". A new time, a move, a cancellation and a Lead sent back
+   were already told (decisions 91 and 106).
+
+Read by the implementation agent, for Jacob to change if wrong:
+
+- **"Can't start another appointment."** Backoffice has no step where a
+  salesperson starts an appointment, so this is built as items 1 and 2. The
+  salesperson can still open their next appointment's Lead and see where to
+  go.
+- **The block begins at the end time,** not the start. During the appointment
+  it can already be answered, and can still be rescheduled or cancelled.
+- **The reminder is sent once.** After it, the prompt and the "To close out"
+  list are what keep it in view.
+- **A manager is not prompted or reminded** about other people's appointments.
+  They see them under "To close out" in Sales > Calendar.
 
 ## Future decisions already constrained by the brief
 

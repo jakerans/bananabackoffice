@@ -36,6 +36,21 @@ class AppointmentChanged extends Notification
     /** The salesperson's cancelled Lead will go back soon unless it is booked again. */
     public const string RELEASE_WARNING = 'lead_release_warning';
 
+    /** The salesperson's appointment is over and nobody has said what happened at it. */
+    public const string CLOSE_OUT_REMINDER = 'appointment_close_out_reminder';
+
+    /** A manager said the salesperson's appointment was run. */
+    public const string MARKED_RUN = 'appointment_marked_run';
+
+    /** A manager said the salesperson's appointment was a no-show. */
+    public const string MARKED_NO_SHOW = 'appointment_marked_no_show';
+
+    /** A manager corrected what the salesperson's appointment was marked as. */
+    public const string CLOSE_OUT_CORRECTED = 'appointment_close_out_corrected';
+
+    /** A manager marked the salesperson's appointment "booked in error". */
+    public const string BOOKED_IN_ERROR = 'appointment_booked_in_error';
+
     /**
      * Tell a salesperson that an appointment of theirs changed, or that a Lead
      * they had went back to Contact Center.
@@ -44,7 +59,7 @@ class AppointmentChanged extends Notification
      * only what happened, when the appointment is, and a link the salesperson
      * must be signed in and allowed to open.
      *
-     * @param  self::RESCHEDULED|self::MOVED_TO_YOU|self::MOVED_AWAY|self::CANCELLED|self::LEAD_RETURNED|self::LEAD_RELEASED|self::RELEASE_WARNING  $kind
+     * @param  self::RESCHEDULED|self::MOVED_TO_YOU|self::MOVED_AWAY|self::CANCELLED|self::LEAD_RETURNED|self::LEAD_RELEASED|self::RELEASE_WARNING|self::CLOSE_OUT_REMINDER|self::MARKED_RUN|self::MARKED_NO_SHOW|self::CLOSE_OUT_CORRECTED|self::BOOKED_IN_ERROR  $kind
      * @param  self::IN_APP|self::EMAIL  $channel
      * @param  Appointment|null  $appointment  The appointment as it is after the change, when there is one.
      * @param  int|null  $days  For a release warning: how many days are left.
@@ -62,18 +77,20 @@ class AppointmentChanged extends Notification
     }
 
     /**
-     * Get the mail representation of the notification. Only a new time and a
-     * newly given appointment are emailed.
+     * Get the mail representation of the notification. Only a new time, a
+     * newly given appointment and the reminder to close one out are emailed.
      */
     public function toMail(User $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject($this->kind === self::MOVED_TO_YOU
-                ? __('You have a new appointment in :app', ['app' => config('app.name')])
-                : __('An appointment of yours has a new time in :app', ['app' => config('app.name')]))
+            ->subject(match ($this->kind) {
+                self::MOVED_TO_YOU => __('You have a new appointment in :app', ['app' => config('app.name')]),
+                self::CLOSE_OUT_REMINDER => __('Close out your appointment in :app', ['app' => config('app.name')]),
+                default => __('An appointment of yours has a new time in :app', ['app' => config('app.name')]),
+            })
             ->greeting(__('Hello :name,', ['name' => $notifiable->name]))
             ->line($this->message())
-            ->action(__('Open the appointment'), $this->url())
+            ->action($this->kind === self::CLOSE_OUT_REMINDER ? __('Close it out') : __('Open the appointment'), $this->url())
             ->line(__('Sign in to see who it is with and where. This email leaves those details out on purpose.'));
     }
 
@@ -100,6 +117,11 @@ class AppointmentChanged extends Notification
             self::MOVED_AWAY => __('Your appointment on :when was given to someone else.', ['when' => $this->when()]),
             self::CANCELLED => __('Your appointment on :when was cancelled.', ['when' => $this->when()]),
             self::LEAD_RETURNED => __('A lead you had went back to the Contact Center.'),
+            self::CLOSE_OUT_REMINDER => __('Your appointment on :when is over. Say whether it was run or was a no-show. Nothing else can be done with the lead until you do.', ['when' => $this->when()]),
+            self::MARKED_RUN => __('A manager marked your appointment on :when as run.', ['when' => $this->when()]),
+            self::MARKED_NO_SHOW => __('A manager marked your appointment on :when as a no-show.', ['when' => $this->when()]),
+            self::CLOSE_OUT_CORRECTED => __('A manager corrected what happened at your appointment on :when.', ['when' => $this->when()]),
+            self::BOOKED_IN_ERROR => __('A manager marked your appointment on :when as booked in error, and the lead went back as it was.', ['when' => $this->when()]),
             self::LEAD_RELEASED => __('A cancelled lead of yours was not booked again in time and went back to the Contact Center. You can take it back from the lead.'),
             self::RELEASE_WARNING => trans_choice('{1} A cancelled lead of yours goes back to the Contact Center in 1 day unless it is booked again.|[2,*] A cancelled lead of yours goes back to the Contact Center in :count days unless it is booked again.', (int) $this->days, ['count' => (int) $this->days]),
         };
