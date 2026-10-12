@@ -2,9 +2,12 @@
 
 use App\Actions\Appointments\BookAppointment;
 use App\Actions\Appointments\CancelAppointment;
+use App\Actions\Appointments\CloseOutAppointment;
 use App\Actions\Leads\RecordManualContactAttempt;
+use App\Actions\Proposals\AddProposal;
 use App\Actions\Queue\ClaimNextLead;
 use App\Actions\Queue\EnterLeadCadence;
+use App\Enums\AppointmentState;
 use App\Enums\CallQueue;
 use App\Enums\CancellationParty;
 use App\Enums\ContactAttemptChannel;
@@ -21,6 +24,7 @@ use App\Models\LeadQueueEvent;
 use App\Models\Location;
 use App\Models\ProjectSize;
 use App\Models\Property;
+use App\Models\Proposal;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\Appointments\BookingResult;
@@ -345,4 +349,44 @@ function cancelAppointment(Lead $lead, User $by, array $with = []): void
         $with['disqualifyFor'] ?? null,
         $with['neverShouldHaveBeenBooked'] ?? false,
     );
+}
+
+/**
+ * Mark the Lead's standing appointment as run through the action, and give it
+ * back as it then is. Its start time must have come.
+ */
+function runAppointment(Lead $lead, User $by): Appointment
+{
+    $appointment = $lead->standingAppointment() ?? throw new LogicException('The lead has no standing appointment to run.');
+
+    app(CloseOutAppointment::class)->handle($lead, $appointment, AppointmentState::Run->value, null, $by);
+
+    return $appointment->refresh();
+}
+
+/**
+ * Add a proposal through the action: "Whole exterior" for $8,450, presented at
+ * the Lead's latest run appointment, unless told otherwise.
+ *
+ * @param  array<string, mixed>  $with  Any of: name, price, appointments (a list of appointment IDs).
+ */
+function addProposal(Lead $lead, User $by, array $with = []): Proposal
+{
+    return app(AddProposal::class)->handle(
+        $lead,
+        array_key_exists('name', $with) ? $with['name'] : 'Whole exterior',
+        array_key_exists('price', $with) ? $with['price'] : '8450',
+        $with['appointments'] ?? Appointment::query()->where('lead_id', $lead->id)->wereRun()->pluck('id')->take(-1)->all(),
+        $by,
+    );
+}
+
+/**
+ * The Proposals card of a Lead, as a staff member sees it on the Lead page.
+ *
+ * @return Testable<Component>
+ */
+function proposalsCard(User $user, Lead $lead): Testable
+{
+    return Livewire::actingAs($user)->test('pages::leads.proposals', ['lead' => $lead]);
 }

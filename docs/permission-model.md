@@ -513,6 +513,11 @@ Rules:
     return it to central or disqualify it, whatever their role. A salesperson
     answers their own appointments oldest first; a manager is not held to
     that order. No permission was added.
+19. **Proposals** (`LeadPolicy::manageProposals`, slice 7 step 7b): adding a
+    proposal, or recording that one was presented at another appointment, is
+    for a manager where the Lead is (`appointments.manage`) or the salesperson
+    the Lead is with while it is with Sales. Anyone who may see the Lead sees
+    its proposals and their prices. No permission was added.
 
 ## Slice 4: the call queue and its settings
 

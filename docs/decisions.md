@@ -2515,6 +2515,21 @@ Read by the implementation agent, for Jacob to change if wrong:
 - **A manager is not prompted or reminded** about other people's appointments.
   They see them under "To close out" in Sales > Calendar.
 
+## 127. Money is kept in whole cents (2026-10-12)
+
+**Made by the implementation agent while building step 7b,** the first time
+Backoffice stores an amount of money. Jacob can change it.
+
+An amount is stored as a whole number of cents (`price_cents`), never as a
+decimal number of dollars. People type dollars ("8450", "8,450.50") and see
+dollars ("$8,450", "$8,450.50"). One place reads and shows amounts:
+`App\Support\Money`. An amount must be above zero and no more than ten million
+dollars; anything else is refused, never rounded or guessed.
+
+Why: adding up decimal dollars loses or gains a cent now and then, and Sold
+Revenue, NSLI and commission will all be sums of these amounts. The sold
+amount in step 7c is to be stored the same way.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

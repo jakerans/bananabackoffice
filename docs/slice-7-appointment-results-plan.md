@@ -190,6 +190,45 @@ moment a proposal is added, even a day later.
 | `proposals` (new) | One row per proposal: the Lead, its Location, customer and property; the name; the price; who added it and when. Never deleted. |
 | `appointment_proposal` (new) | Which proposals were presented at which appointments. One proposal can have several appointments and one appointment several proposals (decision 121). |
 
+### Step 7b as built (2026-10-12)
+
+Built as planned above. What a reader of the code should know:
+
+- **The actions** are `AddProposal` and `PresentProposalAgain` in
+  `app/Actions/Proposals/`. Both go through `ChangeLeadLifecycle` so the Lead
+  cannot change underneath them, and both leave the Lead exactly as it was:
+  same status, same person, same revision.
+- **Two new tables,** `proposals` and `appointment_proposal`, as above. A
+  proposal cannot be deleted.
+- **The price is kept in cents** (decision 127). `App\Support\Money` reads
+  what a person types and shows it.
+- **Who may add** is `LeadPolicy::manageProposals`: a manager where the Lead
+  is, or the salesperson the Lead is with while it is with Sales. Everyone who
+  may see the Lead sees its proposals, the Contact Center included (plan,
+  11.4).
+- **The card** is `pages::leads.proposals`, on the Lead page under the
+  Appointment card. It shows nothing until the Lead has an appointment that
+  was run, and appears the moment one is marked run, without a reload.
+- **Two audit events,** `lead.proposal_added` and
+  `lead.proposal_presented_again`, both in the customer's Activity.
+
+Readings made while building, none of them a new rule:
+
+- **Every proposal has a name, a price and at least one run appointment,** so
+  every saved proposal counts for Demo Rate (decision 125, answers 4 and 5).
+  There is no half-finished proposal.
+- **A run appointment with no proposal says so on the card:** "was run and
+  has no proposal yet. Until one is added it counts as run with nothing
+  presented." This is the no-demo of decision 124, shown where it can be
+  fixed.
+- **Once a Lead has left its salesperson, only a manager can still add** what
+  was pitched at an appointment that was run. The salesperson can while the
+  Lead is theirs.
+- **The salesperson is told** in the app when a manager records a proposal at
+  their appointment, following decision 126.
+- **A proposal cannot be edited or removed.** A wrong name or price stays
+  until step 7c decides how a proposal is corrected. See the handoff.
+
 ## Step 7c — Results, and the report
 
 ### What a person sees

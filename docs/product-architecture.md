@@ -346,7 +346,7 @@ Added 2026-10-11 (LOCKED by decisions 121, 123 and 124; these change how the fie
 - An appointment has no result of its own. It shows as run. Only a proposal is Sold, Pending or Lost, and a proposal cannot be given a result before it exists. "Sold" is the word used for Won.
 - Run with no proposal created is a no-demo. Demo Rate (5.2) is counted from this and is to be watched.
 - One appointment can have several proposals and one proposal several appointments.
-- Build plan: slice-7-appointment-results-plan.md. Built so far (2026-10-12): marking an appointment run or no-show. A no-show is treated as a cancellation by the customer (decision 125).
+- Build plan: slice-7-appointment-results-plan.md. Built so far (2026-10-12): marking an appointment run or no-show, and proposals (a name and a price, tied to the run appointment or appointments they were presented at). A no-show is treated as a cancellation by the customer (decision 125). A proposal has no result yet; that is the next step.
 - Close Rate is counted for each Lead, not each appointment (decision 125): a return visit that closes the sale does not lower it, and two proposals sold against one Lead are one win.
 
 Added 2026-10-12 (LOCKED by decision 126; this is what "operationally incomplete" stops):

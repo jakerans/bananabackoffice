@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
@@ -159,6 +160,19 @@ class Appointment extends Model
     }
 
     /**
+     * The proposals presented at it (decision 121). A run appointment with
+     * none is a "no demo" until one is added (decision 124).
+     *
+     * @return BelongsToMany<Proposal, $this>
+     */
+    public function proposals(): BelongsToMany
+    {
+        return $this->belongsToMany(Proposal::class)
+            ->withPivot(['added_by', 'added_by_name', 'created_at'])
+            ->orderBy('proposals.id');
+    }
+
+    /**
      * Every time it was rescheduled or moved to another salesperson, oldest
      * first (rulebook, rules 6 and 7).
      *
@@ -199,6 +213,17 @@ class Appointment extends Model
     public function awaitsCloseOutAt(CarbonInterface $moment): bool
     {
         return $this->stands() && $this->starts_at->lte($moment);
+    }
+
+    /**
+     * Appointments that were run, earliest first.
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function wereRun(Builder $query): void
+    {
+        $query->where('state', AppointmentState::Run)->reorder('starts_at')->orderBy('id');
     }
 
     /**

@@ -251,6 +251,24 @@ class LeadPolicy
     }
 
     /**
+     * Determine whether the user can add a proposal to the Lead, or record
+     * that one was presented at another appointment (slice 7 step 7b): a
+     * manager where the Lead is, or the salesperson the Lead is with while it
+     * is with Sales.
+     */
+    public function manageProposals(User $user, Lead $lead): bool
+    {
+        if ($lead->location === null || ! $this->view($user, $lead)) {
+            return false;
+        }
+
+        return $user->hasPermissionAt(Permission::ManageAppointments, $lead->location)
+            || ($lead->isWithSales()
+                && $lead->isAssignedTo($user)
+                && $user->holdsRoleAt(Role::SalesConsultant, $lead->location));
+    }
+
+    /**
      * Determine whether the user can record that the Lead's appointment was
      * cancelled: anyone who may book that Lead (decision 107).
      */

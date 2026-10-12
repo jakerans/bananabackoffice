@@ -47,6 +47,8 @@ class CustomerActivity
             AuditAction::LeadAppointmentRun,
             AuditAction::LeadAppointmentNoShow,
             AuditAction::LeadAppointmentCloseOutCorrected,
+            AuditAction::LeadProposalAdded,
+            AuditAction::LeadProposalPresentedAgain,
             AuditAction::LeadCustomerLinked,
             AuditAction::LeadCustomerLinkChanged,
         ];
@@ -85,6 +87,8 @@ class CustomerActivity
             AuditAction::LeadAppointmentRun => __('Appointment run'),
             AuditAction::LeadAppointmentNoShow => __('Appointment was a no-show'),
             AuditAction::LeadAppointmentCloseOutCorrected => __('Appointment run or no-show corrected'),
+            AuditAction::LeadProposalAdded => __('Proposal added'),
+            AuditAction::LeadProposalPresentedAgain => __('Proposal presented again'),
             AuditAction::LeadCustomerLinked => __('Lead linked to customer'),
             AuditAction::LeadCustomerLinkChanged => __('Lead customer link changed'),
             default => throw new \LogicException('This audit action is not customer activity.'),

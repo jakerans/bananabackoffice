@@ -196,6 +196,7 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
         if ($this->appointmentCardSaw !== '' && $this->appointmentCardSaw !== $seen) {
             $this->dispatch('lead-changed')->to('pages::leads.appointment');
+            $this->dispatch('lead-changed')->to('pages::leads.proposals');
         }
 
         $this->appointmentCardSaw = $seen;
@@ -1902,6 +1903,8 @@ new #[Title('Lead')] class extends AddressCapturePage {
         </div>
 
         <livewire:pages::leads.appointment :lead="$lead" :key="'appointment-'.$lead->id" />
+
+        <livewire:pages::leads.proposals :lead="$lead" :key="'proposals-'.$lead->id" />
 
         <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5">
             <flux:heading size="lg" level="2">{{ __('Where it came from') }}</flux:heading>
