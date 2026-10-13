@@ -32,7 +32,7 @@ beforeEach(function () {
 
     $this->price = SalesLossReason::query()->where('name', 'Price')->sole();
     $this->competitor = SalesLossReason::query()->where('name', 'Chose Another Contractor')->sole();
-    $this->thinking = Objection::factory()->create(['name' => 'Wants to think it over']);
+    $this->thinking = Objection::query()->where('name', 'Wants to think it over')->sole();
     $this->otherObjection = Objection::query()->where('name', 'Other (see note)')->sole();
 
     $this->lead = bookableLead($this->lakeview);
@@ -282,10 +282,10 @@ test('a finished lead shows its status on the lead page and is offered nothing t
     'lost' => [fn ($test) => app(MarkLeadLost::class)->handle($test->lead, ['lossReasonId' => $test->price->id, 'objectionId' => $test->thinking->id], $test->sam), 'Lost'],
 ]);
 
-test('objections are a list on lead and sales lists, starting with the one that needs a note', function () {
+test('objections are a list on lead and sales lists, with the starting list and "Other" last (decision 129)', function () {
     Livewire::actingAs($this->owner)->test('pages::settings.lists', ['list' => ManagedList::Objections->value])
         ->assertSee('Objections')
         ->assertSee('What held a customer back from buying')
-        ->assertSee('Other (see note)')
+        ->assertSeeInOrder(['Price', 'Wants to think it over', 'Needs to talk to spouse or partner', 'Getting other bids', 'Timing', 'Financing', 'Other (see note)'])
         ->assertSee('Note required');
 });

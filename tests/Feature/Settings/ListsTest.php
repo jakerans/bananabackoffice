@@ -193,7 +193,10 @@ test('each list starts with the approved values in the approved order', function
     'cancellation reasons' => [ManagedList::CancellationReasons, [
         'Holding off project', 'Went with someone else', 'No longer needed', 'Other',
     ]],
-    'objections' => [ManagedList::Objections, ['Other (see note)']],
+    'objections' => [ManagedList::Objections, [
+        'Price', 'Wants to think it over', 'Needs to talk to spouse or partner', 'Getting other bids', 'Timing', 'Financing',
+        'Other (see note)',
+    ]],
 ]);
 
 test('each disqualification reason starts in its approved reporting category', function () {

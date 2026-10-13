@@ -296,8 +296,8 @@ know:
 - **On `proposals`:** `result` (pending, sold, lost) with who and when;
   `sold_cents`; the loss reason and competitor; the objection; the note; and
   the "added in error" mark. **On `leads`:** why it was lost, and by whom.
-  **New table:** `objections`, a managed list on Lead & Sales Lists that
-  starts with "Other (see note)".
+  **New table:** `objections`, a managed list on Lead & Sales Lists, with
+  its starting list (decision 129).
 - **Two new Lead statuses,** Sold and Lost. Both are finished: not active, not
   "with Sales". They stay on the salesperson's record.
 - **Who may:** `LeadPolicy::manageProposals` for results, changing a pending
@@ -332,9 +332,14 @@ Readings made while building, for Jacob to change if wrong:
   A Sold or Lost one has its result corrected first.
 - **The competitor is optional** ("if known"), and kept only for a reason that
   asks for one.
-- **Still pending needs the main objection.** Until Sales Leadership gives the
-  real list, the only objection is "Other (see note)", which needs a typed
-  note. An Owner can add objections on Lead & Sales Lists today.
+- **Still pending needs the main objection.** The list starts with seven
+  (decision 129): Price, Wants to think it over, Needs to talk to spouse or
+  partner, Getting other bids, Timing, Financing, and Other (see note), which
+  alone needs a typed note. Owner and Leadership change it on Lead & Sales
+  Lists.
+
+**Merged into `main` on 2026-10-13** with Jacob's word ("go ahead and merge and
+use your suggestions").
 - **The sold day is the day it is recorded.** There is no separate "sold on"
   date.
 - **The return-visit check is on the Lead,** not in the report. Decision 126

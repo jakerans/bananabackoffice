@@ -56,7 +56,7 @@ beforeEach(function () {
     $this->price = SalesLossReason::query()->where('name', 'Price')->sole();
     $this->competitor = SalesLossReason::query()->where('name', 'Chose Another Contractor')->sole();
     $this->otherReason = SalesLossReason::query()->where('name', 'Other')->sole();
-    $this->thinking = Objection::factory()->create(['name' => 'Wants to think it over']);
+    $this->thinking = Objection::query()->where('name', 'Wants to think it over')->sole();
     $this->otherObjection = Objection::query()->where('name', 'Other (see note)')->sole();
 
     $this->lead = bookableLead($this->lakeview);

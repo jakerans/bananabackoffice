@@ -92,9 +92,9 @@ with what decision 126 added to it: close out first, the prompt, the reminder
 touches their appointment. **It was merged on 2026-10-12** and is on staging.
 **Step 7b (proposals) was built and merged on 2026-10-12.** **Step 7c
 (results, correcting a proposal, a Lead that is Sold or Lost, and the
-after-action report) is built (2026-10-13)** and waits for Jacob's review and
-his word to merge. Step 7d (the first Sales figures) follows it, approved in
-order (decision 125), and is not started.
+after-action report) was built and merged on 2026-10-13.** Step 7d (the first
+Sales figures) is next and waits for Jacob's word to start; it is approved in
+order (decision 125).
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

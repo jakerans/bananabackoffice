@@ -36,7 +36,7 @@ beforeEach(function () {
     $this->sam = User::factory()->withRoleAt(Role::SalesConsultant, $this->lakeview)->create(['name' => 'Sam Sales']);
 
     $this->price = SalesLossReason::query()->where('name', 'Price')->sole();
-    $this->thinking = Objection::factory()->create(['name' => 'Wants to think it over']);
+    $this->thinking = Objection::query()->where('name', 'Wants to think it over')->sole();
 
     $this->lead = bookableLead($this->lakeview);
     $this->appointment = bookAppointment($this->lead, $this->sam, $this->manager)->appointment;
