@@ -2657,6 +2657,37 @@ deliberately deferred.
 This settles the product questions that were holding step 8b. It records the
 requirements but does not by itself start implementation or merge step 8a.
 
+## 133. Every remaining stakeholder-discovery recommendation is approved (2026-10-13)
+
+**Decided by Jacob:** “Use all of your recommendations to answer the remaining
+questions.” The 29 recommendations in
+[stakeholder-discovery-open-questions.md](stakeholder-discovery-open-questions.md),
+questions 3 through 31, are the answers exactly as written.
+
+This settles, among other things:
+
+- attribution after reassignment; no new no-demo exception; effective-dated
+  Sales compensation, with no undefined “disqualifier” behavior;
+- the PM job-cost materiality rule and rolling review window; the six-week
+  Production-utilization calculation; subcontractor insurance deduction and
+  configurable compliance; PFAD pickup/deposit authority;
+- W-2 and warranty Performance Pay architecture without inventing a formula;
+- the Backoffice/QuickBooks boundary, origin of accounting records, payment and
+  AP sync, late-cost materiality, one operational completion month, accruals,
+  refund/credit/write-off treatment, variable-compensation handoff, entity and
+  dimension starting point, monthly close, controls and reporting; and
+- Gross Receipts Tax as a liability, excluded from revenue and gross margin.
+
+Some answers intentionally defer an exact value until Banana supplies evidence
+or a technical integration check is performed. In particular: the W-2 P4P
+formula is not invented; a QuickBooks product tier follows an integration
+spike; actual legal-entity structure requires accountant confirmation; and
+Commercial Sales remains deferred. Those are decided safeguards, not open
+product questions.
+
+This records policy only. It does not authorize implementation outside an
+approved slice, merge step 8a, or start step 8b.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

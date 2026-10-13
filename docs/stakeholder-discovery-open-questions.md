@@ -1,17 +1,19 @@
-# Stakeholder Discovery — Remaining Questions
+# Stakeholder Discovery — Questions and Approved Answers
 
 Updated: 2026-10-13
 
 This is the deduplicated decision list after comparing *Banana Backoffice
 Stakeholder Discovery Questions.docx* with the canonical product architecture
 and decisions. The Word document is source material; this file is the project
-record of what is still unanswered.
+record of how every remaining question was answered.
 
-Questions that the questionnaire answered are incorporated into
+Questions that the questionnaire itself answered are incorporated into
 [product-architecture.md](product-architecture.md) and decision 131. The two
-slice 8b questions were answered by Jacob on 2026-10-13 (decision 132), leaving
-29 open questions below. Commercial Sales remains deliberately deferred and
-its unanswered questionnaire section does not block residential work.
+slice 8b questions were answered by decision 132. On 2026-10-13 Jacob approved
+all recommendations for the other 29 questions (decision 133). **Every numbered
+question below is therefore answered exactly as its recommendation states.**
+Where an answer says to defer a formula, product tier or Commercial discovery,
+that is an intentional decision not to guess—not an unanswered question.
 
 ## Answered for slice 8b — Production handoff
 
@@ -35,7 +37,7 @@ its unanswered questionnaire section does not block residential work.
 These are no longer open questions. They are kept here so the discovery record
 shows what was asked and how it was settled.
 
-## Remaining — needed before the affected Sales work
+## Answered for future Sales work
 
 3. **Which salesperson receives the Lead Issued and sale figures after an
    appointment is moved or a Lead is re-issued?** Recommended: Lead Issued stays
@@ -62,7 +64,7 @@ shows what was asked and how it was settled.
    not a blocker now. Commercial Sales remains a separate deferred discovery
    exercise.
 
-## Remaining — needed before Production compensation, scheduling or subcontractor work
+## Answered for future Production, compensation, scheduling and subcontractor work
 
 7. **What exactly counts as a materially incorrect PM job cost?** Missing POs
    are confirmed as the main failure, and the third occurrence should notify
@@ -109,7 +111,7 @@ shows what was asked and how it was settled.
     budget and the worker’s normal effective-dated P4P plan; do not invent a
     special reduced rate.
 
-## Remaining — needed before Finance and accounting work
+## Answered for future Finance and accounting work
 
 15. **Confirm the system-of-record boundary.** Should Backoffice own operational
     workflow and approvals while QuickBooks owns the formal ledger, posted

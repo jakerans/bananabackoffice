@@ -294,7 +294,11 @@ Added 2026-10-13 (slice 7 step 7d; build plan: slice-7-appointment-results-plan.
 - Close Rate is counted for each Lead (decision 125), in the month of the Lead's first run appointment.
 - NSLI is the sold amounts recorded in the month over the Leads issued in the month. "Net" has nothing taken off it yet: there are no cancelled sales or refunds to net out.
 - Not built: Average Job Size, Close-on-the-Spot Rate, Pending Rate, % Pending with Rehash booked, Rehash conversion; targets; the Leaderboard (5.8); a figure across all Locations at once.
-- Provisional until Sales Leadership answers the open question in 5.1: a Lead issued counts for the salesperson it was issued to, an appointment for the salesperson it is with, a sale for the salesperson the Lead is with.
+- Attribution is LOCKED by decision 133: Lead Issued stays with the first
+  salesperson who received that issued Lead; appointment figures follow the
+  salesperson assigned when it ran; Sold Revenue and the win follow the
+  salesperson who owned the Lead when the proposal was sold. Corrections create
+  auditable metric adjustments rather than silently rewriting history.
 
 5.3 Workspace
 iPad-first/tablet-responsive in-home selling flow:
@@ -326,7 +330,8 @@ Added 2026-10-13 from stakeholder discovery:
   material quality as the conversation develops; there is no rigid 3/9/12
   option generator.
 - A customer controlling the conversation is a coaching signal, not yet an
-  approved no-demo exclusion.
+  approved no-demo exclusion. Decision 133 confirms there is no additional
+  exclusion: it remains a no-demo and records the coaching reason.
 
 5.4 Calendar
 Salespeople manage their own confirmation, rescheduling, cancellations, rehashes, and schedule.
@@ -400,7 +405,8 @@ Added 2026-10-13 from stakeholder discovery:
   acceptance, a full 50% deposit and a completed Sales-to-Production handoff.
 - Final commission belongs to the pay period in which the Project is complete,
   paid in full and job costed. Exact meaning of the noted “disqualifier” on the
-  $45,000 plan remains open.
+  $45,000 plan was not defined. Decision 133 gives it no product behavior unless
+  Jacob later explicitly defines one.
 
 Advance:
 - only if full required 50% deposit actually collected
@@ -552,8 +558,10 @@ States:
 - rescheduled with reason/history
 
 Production utilization target currently ~80%, CONFIGURABLE, to preserve weather/overrun flexibility.
-The exact numerator, denominator and planning horizon remain open; see
-[stakeholder-discovery-open-questions.md](stakeholder-discovery-open-questions.md).
+Decision 133 defines it as scheduled productive crew-days divided by available
+crew-days for the next six weeks, by Location. Weekends, holidays, approved
+time off and unavailable crews are excluded; show the raw percentage and the
+planned 20% buffer.
 
 PMs plan same-day starts manually. Established, capable subcontractors may run
 their own initial walkthrough; new/unproven crews require staggered starts so
@@ -643,6 +651,11 @@ retain accounting terms where required.
 
 Job-cost accuracy is a PM performance signal. Repeated material corrections should surface to GM/Ops.
 
+Decision 133: a PM accuracy strike is a missing PO or a post-submission
+correction above the larger of $250 or 2% of Project revenue. Normal timing and
+Finance reclassification are excluded. Notify GM/Ops on the third strike in a
+rolling 90-day period; preserve every correction even below the threshold.
+
 6.10 Brand Ambassador closeout
 Separate from Project closure.
 Track obligations individually:
@@ -694,14 +707,16 @@ Portal gathers:
 - master subcontract agreement
 - location/state requirements
 
-Exact compliance = PENDING Ops.
+Base compliance is LOCKED below; Location/state additions are CONFIGURABLE.
 
 Added 2026-10-13 from stakeholder discovery, the base checklist: W-9, general
 liability, workers' compensation with waiver of subrogation, signed
 subcontractor agreement, and an annually renewed New Mexico gross-receipts-tax
 waiver certificate. A subcontractor without required insurance may use Banana's
-coverage and receive a documented deduction. Exact deduction and any
-Location/state additions remain open.
+coverage and receive a documented deduction. Decision 133 starts that deduction
+at 10% of subcontractor payout, effective-dated and overridable by Location or
+state. Show its dollars on the work order and payable; do not keep a second
+competing revenue-based formula.
 
 7.3 Roster
 Statuses:
@@ -959,12 +974,14 @@ Failed payment:
 - collections
 - eventual write-off/external collection as needed
 
-Exact worker pay timing = PENDING Ops.
+Current subcontractor pay timing is confirmed below. W-2 P4P remains an
+intentional deferred formula under decision 133.
 
 Added 2026-10-13: a PFAD day is 8 a.m.–5 p.m.; a subcontractor is currently
 budgeted/paid $300 per day on the normal next-Friday subcontractor schedule.
-A W-2 painter uses the same approximate budget through Performance Pay. Exact
-W-2 formula remains open.
+A W-2 painter uses the same approximate budget through Performance Pay. The
+exact W-2 formula is deliberately not inferred: its eventual plan is
+effective-dated and preserves every pay-period input and result.
 
 8.9 PFAD Rules
 Sells time, not guaranteed project completion.
@@ -977,15 +994,19 @@ Materials:
 - normally homeowner-provided
 - optional pickup/add-on may exist
 - shopping/travel counts against purchased day
-Current pricing/equipment limits are confirmed below; pickup fee and deposit
-approval remain open.
+Current pricing/equipment limits, pickup treatment and deposit approval are
+confirmed below.
 
 Added 2026-10-13: no ladder above 14 feet, no limewash, cabinets, specialty
 staining or spraying; brushes only; standard prep materials included, excessive
 prep extra, no primer. Paint is customer-provided or billed at retail; pickup
 and shopping consume the day. Up to two after-hours hours may be offered at
 $150/hour with approval before 4 p.m. Deposit defaults to 75% and may be
-negotiated to 50%; approval authority remains open.
+negotiated to 50%; decision 133 sets the approval authority below.
+
+Decision 133: version one has no separate paint-pickup fee. A Location Manager
+or Leadership may approve reducing the deposit to 50%; going below 50% requires
+Owner approval, a reason and an audit event.
 
 9. FINANCE CENTER
 
@@ -1063,8 +1084,10 @@ Supports:
 - projected/finalized
 - payroll export/sync
 
-PM formula is confirmed in 6.1; W-2 painter P4P remains PENDING Ops.
-Warranty work is confirmed to have a budget and to be P4P-eligible.
+PM formula is confirmed in 6.1. W-2 painter P4P is intentionally DEFERRED until
+Banana supplies the real formula; its data model remains effective-dated.
+Warranty work uses a separately approved budget and the worker's normal
+effective-dated P4P plan, not an invented reduced rate.
 
 9.5 People & Access
 Finance/Admin function:
@@ -1100,15 +1123,16 @@ Additional:
 - Monthly Close
 
 9.8 QuickBooks
-Recommended V1:
+LOCKED V1 boundary (decision 133):
 Backoffice = operational workflows/management visibility.
 QuickBooks = formal accounting ledger/system of record.
 Approved data syncs to QuickBooks; accounting/payment statuses sync back.
-Exact boundary = PENDING Accountant.
-
-The questionnaire did not yet confirm this boundary. The remaining Finance
-decisions and recommendations are in
-[stakeholder-discovery-open-questions.md](stakeholder-discovery-open-questions.md).
+Backoffice never becomes a second independent ledger. Chart of accounts,
+journal entries, bank/card reconciliation, tax filing and formal period close
+originate in QuickBooks. Backoffice may originate approved operational invoices,
+bills, credits and compensation entries and receives posted identity/status.
+The QuickBooks subscription is chosen only after an integration spike verifies
+invoice, payment, class/location, attachment and API needs.
 
 10. PROJECT ECONOMICS / GP
 
@@ -1192,7 +1216,7 @@ Provisional recommendation:
 - separate from production COGS/GP
 - still attributable to originating project for lifetime economics
 Current bad-debt treatment is confirmed below; transaction implementation still
-needs the Finance boundary decisions in section 24.
+follows the Finance boundary in 9.8.
 
 Added 2026-10-13: bad debt stays below production gross margin and remains
 linked to the originating Project. A write-off requires GM and Accounting after
@@ -1211,6 +1235,46 @@ Finance answers already settled for later planning:
 - late warranty/direct costs after close belong to the current month;
 - Backoffice calculates finalized variable compensation for payroll, which may
   independently verify it; clawbacks remain linked to each Project.
+
+Decision 133 adds the Finance operating rules:
+- Backoffice records operational payment expectations and immutable external
+  references; QuickBooks owns posting, settlement and reconciliation. Cash/check
+  entries require receipt evidence and Finance approval; retries are idempotent.
+- Keep gross subcontractor payout, insurance deduction and Banana insurance
+  expense/allocation as distinct entries.
+- Record every late-cost correction; Finance review and visibly flag one above
+  the larger of $250 or 2% of Project revenue.
+- One operational completion month begins when work is accepted, final payment
+  is collected and job costing is complete. Actual posting dates remain evidence,
+  not a second performance month. Later warranty costs use their current month.
+- Close accruals include signed subcontractor payouts, received-but-unposted
+  materials, earned W-2 labor, rentals, permits, known warranty work and other
+  approved direct costs; Finance approves and reverses them.
+- Refunds reverse cash, credits reduce A/R, cancellation fees are revenue,
+  unrecoverable direct costs remain current-month COGS, and bad debt stays below
+  gross margin while linked to its Project.
+- Backoffice owns operational AP capture/coding/approval and Project assignment;
+  QuickBooks owns vendor accounting, payment execution, reconciliation, tax and
+  formal journals. Gusto remains the subcontractor direct-deposit executor.
+- Backoffice calculates an auditable variable-compensation ledger; an authorized
+  person finalizes and sends it to payroll, which may verify without recalculating.
+- Starting QuickBooks structure, subject to accountant/legal-entity confirmation:
+  one company file where permitted, one chart of accounts, Location for operating
+  Location, Class for department/service line, and Corporate for shared costs.
+- Monthly close: operations cutoff; PM job-cost submission; AP/payroll accruals;
+  cash/A/R reconciliation; unassigned-cost cleanup; Finance review; GM exception
+  approval; compensation finalization; P&L review by the seventh. Each step has
+  an owner, due date and evidence. Preliminary becomes final after reconciliation,
+  accruals, job costs and approvals; later discoveries are linked current-period
+  adjustments.
+- Controls: immutable external IDs, idempotent sync, daily exceptions, control
+  totals by transaction type/Location, monthly A/R/AP/cash/compensation
+  reconciliation, and no silent overwrite of posted accounting records.
+- First additional reports: sync exceptions, unassigned transactions,
+  compensation changes/clawbacks, deposit liability, tax liability, warranty
+  cost and close-checklist status.
+- Gross Receipts Tax is a liability, excluded from revenue, COGS and gross
+  margin; retain QuickBooks' jurisdiction and rate.
 
 11. CUSTOMER / CONTACT WORKSPACE
 
@@ -1584,8 +1648,8 @@ If a person is assigned:
 W-2:
 - clock in/out against Warranty Case
 - hours are COGS
-- no P4P
-- exact warranty rate PENDING Ops
+- warranty work is P4P-eligible, with a separately approved budget
+- use the worker's normal effective-dated P4P plan; do not invent a special rate
 
 Subcontractor:
 - payout case-by-case
@@ -1897,7 +1961,9 @@ Backoffice distinguishes:
 
 Invoice created ≠ cash received.
 
-Exact invoicing/accounting = PENDING Accountant.
+Invoicing/accounting follows the LOCKED V1 boundary in 9.8 and the approved
+Finance rules in 10.7. Provider-specific mapping waits for the integration
+spike; it is not guessed.
 
 23. PEOPLE / WORKFORCE
 
@@ -1911,16 +1977,19 @@ W-2 Field Portal reserved in architecture:
 - upcoming pay
 - time categories
 
-P4P formula = PENDING Ops.
+P4P formula = deliberately DEFERRED until Banana supplies the real formula.
+The architecture is effective-dated and evidence-preserving (decision 133).
 
 Subcontractor portal and PFAD portal remain distinct.
 
 24. OPEN STAKEHOLDER DEPENDENCIES
 
-The 2026-10-13 stakeholder questionnaire answered most of this former list.
-The remaining questions, each with a recommendation and the stage it can block,
-are maintained in
+The 2026-10-13 stakeholder questionnaire and decisions 131–133 answer this
+former list. All questions and exact approved answers are maintained in
 [stakeholder-discovery-open-questions.md](stakeholder-discovery-open-questions.md).
+There are no unanswered discovery questions. Intentional deferrals—W-2 P4P,
+QuickBooks product-tier selection, legal-entity confirmation and Commercial
+Sales discovery—tell future builders not to guess.
 
 Commercial Sales remains deliberately deferred and is not forced into the
 residential workflow. Its discovery section is therefore not a blocker.

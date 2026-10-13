@@ -128,11 +128,12 @@ None from decision 130.
 ## Decisions needed from Jacob
 
 The broader stakeholder questionnaire has also been reconciled. Its answered
-items are now in the product architecture; the 29 remaining questions and a
-recommendation for each are in
+items are now in the product architecture; all 31 questions and approved
+answers are in
 [../stakeholder-discovery-open-questions.md](../stakeholder-discovery-open-questions.md).
-Its first two questions are now answered by decision 132. The rest wait for
-their affected Sales, Production, workforce or Finance slice.
+The first two are decision 132 and the remaining 29 are decision 133. None is
+waiting on an answer. Intentional deferrals wait for evidence or their future
+slice rather than inviting a builder to guess.
 
 1. **Review 8a** and say whether to merge it.
 
