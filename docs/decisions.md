@@ -2688,6 +2688,48 @@ product questions.
 This records policy only. It does not authorize implementation outside an
 approved slice, merge step 8a, or start step 8b.
 
+## 134. Slice 8 is merged; the fixes after it; Close Rate follows lead ownership (2026-10-13)
+
+**Decided by Jacob,** in reply to step 8b's handoff: "merge it. make the fixes
+- especially close rate - we work off lead ownership - so close rate is based
+on who created the proposal and when it was accepted".
+
+1. **Steps 8a and 8b are merged.** Slice 8 is complete.
+2. **The fixes that handoff proposed are approved to build, as one step:**
+   - a Project is named for what was sold, "Lake house deck — 9 Lake Rd", not
+     for the Lead's main service. It stays editable. This changes answer 3 of
+     decision 130.
+   - the three places where Sales > Performance differed from decision 133:
+     whose win it is in Close Rate, corrections, and a no-demo's reason.
+3. **Close Rate works off lead ownership.** A win belongs to the salesperson
+   who has the Lead and made the proposal, and it is counted in the month the
+   proposal was accepted, which is the month it was marked Sold. This replaces
+   step 7d's reading, which placed a Lead in the month of its first run
+   appointment and gave the win to that appointment's salesperson.
+
+Read by the implementation agent, for Jacob to change if wrong:
+
+- **"Who created the proposal"** is read as the salesperson the Lead was with
+  at the sale, because he says "we work off lead ownership" and decision 133
+  says the win follows "the salesperson who owned the Lead when the proposal
+  was sold". If a manager types a proposal in for a salesperson, the win is
+  still the salesperson's.
+- **What the wins are divided by** is unchanged: the Leads whose first run
+  appointment was in the month (decision 125, answer 10). So a month's Close
+  Rate is the Leads won that month over the Leads first seen that month. A
+  sale that closes the month after its first visit is a win in the later
+  month, and a strong month of late closes can read above 100%.
+- **One Lead is one win** (decisions 124 and 125): it counts in the month its
+  first proposal was accepted, and a second proposal sold later adds revenue,
+  not a second win.
+- **Corrections** (decision 133: "auditable metric adjustments rather than
+  silently rewriting history") are built for money and wins and for Leads
+  Issued: a sale corrected in a later month stays in the month it was made,
+  and the correction is taken off the month it was corrected in, shown as
+  such. The same for a Lead Issued that is later voided.
+- **A no-demo's reason** is the salesperson's own words, asked when an
+  appointment is reported as run with nothing presented. It still counts as a
+  no-demo whatever the reason (decision 133).
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

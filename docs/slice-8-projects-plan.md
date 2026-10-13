@@ -6,7 +6,9 @@ for each sold proposal (not one for the Lead), the cancellation rule accepted
 "for now", and a handoff made of questions the salesperson has to complete.
 Step 8a is approved to build. The handoff questions and property-per-proposal
 rule were agreed on 2026-10-13 (decision 132); no product question now blocks
-step 8b.**
+step 8b. Both steps were built and merged into `main` on 2026-10-13 with
+Jacob's word ("merge it", decision 134). Slice 8 is complete. Decision 134
+also changes how a Project is named.**
 
 It follows [product-architecture.md](product-architecture.md), sections 2, 6.2,
 6.3 and 20, the slice 5 rulebook
