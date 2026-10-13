@@ -111,7 +111,7 @@ new class extends Component {
     #[Computed]
     public function proposals(): Collection
     {
-        return $this->lead->proposals()->with('appointments')->get();
+        return $this->lead->proposals()->with(['appointments', 'project.location'])->get();
     }
 
     /**
@@ -538,6 +538,18 @@ new class extends Component {
                                 <flux:badge size="sm" color="amber">{{ __('Pending') }}</flux:badge>
                             @endif
                         </div>
+
+                        {{-- A sold proposal has a Project of its own (decision 130). --}}
+                        @if ($proposal->project !== null && ! $proposal->project->isCancelled())
+                            <span class="text-sm text-zinc-700" data-test="proposal-project">
+                                {{ __('Project:') }}
+                                @can('view', $proposal->project)
+                                    <flux:link :href="route('projects.show', $proposal->project)" wire:navigate>{{ $proposal->project->title }}</flux:link>
+                                @else
+                                    {{ $proposal->project->title }}
+                                @endcan
+                            </span>
+                        @endif
 
                         <span class="text-sm text-zinc-700" data-test="proposal-appointments">
                             {{ __('Presented at:') }} {{ $proposal->appointments->map($when)->implode('; ') }}

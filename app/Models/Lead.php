@@ -427,6 +427,17 @@ class Lead extends Model
     }
 
     /**
+     * The Projects made from this Lead's sold proposals, in the order they
+     * were sold (slice 8 step 8a).
+     *
+     * @return HasMany<Project, $this>
+     */
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class)->orderBy('id');
+    }
+
+    /**
      * The appointment that stands for the Lead now, if there is one.
      */
     public function standingAppointment(): ?Appointment

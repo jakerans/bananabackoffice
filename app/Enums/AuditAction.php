@@ -65,6 +65,10 @@ enum AuditAction: string
     case LeadProposalAddedInError = 'lead.proposal_added_in_error';
     case LeadMarkedLost = 'lead.marked_lost';
     case LeadLostUndone = 'lead.lost_undone';
+    case ProjectCreated = 'project.created';
+    case ProjectBroughtBack = 'project.brought_back';
+    case ProjectCancelled = 'project.cancelled';
+    case ProjectEdited = 'project.edited';
     case LeadReceivedTimeCorrected = 'lead.received_time_corrected';
     case LeadQualified = 'lead.qualified';
     case LeadReturnedToWorking = 'lead.returned_to_working';

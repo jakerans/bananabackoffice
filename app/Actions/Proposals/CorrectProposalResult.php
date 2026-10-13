@@ -5,6 +5,7 @@ namespace App\Actions\Proposals;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Leads\ChangeLeadLifecycle;
 use App\Actions\Leads\RecordLeadStatusChange;
+use App\Actions\Projects\CancelProjectForCorrectedSale;
 use App\Enums\AuditAction;
 use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
@@ -24,6 +25,7 @@ class CorrectProposalResult
         private ChangeLeadLifecycle $changeLeadLifecycle,
         private RecordLeadStatusChange $recordLeadStatusChange,
         private RecordAuditEvent $recordAuditEvent,
+        private CancelProjectForCorrectedSale $cancelProjectForCorrectedSale,
     ) {}
 
     /**
@@ -34,7 +36,8 @@ class CorrectProposalResult
      *
      * What it was is kept in the audit record. If it was the Lead's only sold
      * proposal, the Lead goes back from Sold to Appointment run, still with
-     * its salesperson. A Lead that was marked lost is put right with
+     * its salesperson. A sold proposal's Project is cancelled with the same
+     * note and kept. A Lead that was marked lost is put right with
      * UndoLeadLost first.
      *
      * @throws ValidationException
@@ -86,6 +89,11 @@ class CorrectProposalResult
                 'objection_name' => null,
                 'result_note' => null,
             ])->save();
+
+            // A sale that is taken back takes its Project with it: cancelled, kept, and brought back if sold again (decision 130).
+            if ($was === ProposalResult::Sold) {
+                $this->cancelProjectForCorrectedSale->apply($proposal, $note, $actor);
+            }
 
             // A Lead is Sold only while one of its proposals is.
             if ($lead->status === LeadStatus::Sold && ! $lead->proposals()->counted()->where('result', ProposalResult::Sold)->exists()) {

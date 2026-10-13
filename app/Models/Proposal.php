@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use LogicException;
 
@@ -96,6 +97,17 @@ class Proposal extends Model
     public function lead(): BelongsTo
     {
         return $this->belongsTo(Lead::class);
+    }
+
+    /**
+     * The Project made for it when it was sold (decision 130). A proposal
+     * that was never sold has none.
+     *
+     * @return HasOne<Project, $this>
+     */
+    public function project(): HasOne
+    {
+        return $this->hasOne(Project::class);
     }
 
     /**

@@ -59,6 +59,8 @@ enum Role: string
                 Permission::WorkLeadQueue,
                 Permission::BookAppointments,
                 Permission::ManageAppointments,
+                Permission::ViewProjects,
+                Permission::ManageProjects,
                 Permission::WriteNotes,
                 Permission::RemoveNotes,
                 Permission::ViewAccounts,
@@ -68,6 +70,8 @@ enum Role: string
             ],
             self::Finance => [
                 Permission::FinanceAccess,
+                // Finance sees what was sold and for how much (decision 130).
+                Permission::ViewProjects,
                 Permission::ViewAccounts,
             ],
             self::LocationManager => [
@@ -88,6 +92,9 @@ enum Role: string
                 // A manager books appointments, and is the one who may undo one that was booked in error.
                 Permission::BookAppointments,
                 Permission::ManageAppointments,
+                // A manager sees the Projects at their Location and may edit one (decision 130).
+                Permission::ViewProjects,
+                Permission::ManageProjects,
                 Permission::WriteNotes,
                 // A manager may remove anyone's note from view. Everyone else only their own.
                 Permission::RemoveNotes,
@@ -111,6 +118,8 @@ enum Role: string
             ],
             self::SalesConsultant => [
                 Permission::SalesAccess,
+                // A Sales Consultant sees the Projects at their Location (decision 130).
+                Permission::ViewProjects,
                 Permission::ColorStudioAccess,
                 Permission::ViewLeads,
                 Permission::ManageLeads,
@@ -120,7 +129,8 @@ enum Role: string
             ],
             self::ProductionManager => [
                 Permission::ProductionAccess,
-                // For Projects, when they are built. A Production Manager cannot see Leads.
+                // A Production Manager sees Projects, and still cannot see Leads.
+                Permission::ViewProjects,
                 Permission::WriteNotes,
                 Permission::ViewAccounts,
             ],

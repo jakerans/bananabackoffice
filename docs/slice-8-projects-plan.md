@@ -113,6 +113,58 @@ adds only what it uses, each its own field:
   Manager has it (step 8b). Later slices add to this, and add the other
   dimensions (payment, colors, job cost) as fields of their own.
 
+### Step 8a as built (2026-10-13)
+
+Built as planned above, with decision 130. What a reader of the code should
+know:
+
+- **The sale makes the Project.** `RecordProposalResult` calls
+  `CreateProjectForSoldProposal` inside the same save as the sale, so the
+  after-action report makes one too. Nobody makes a Project by hand.
+- **One Project for one proposal,** enforced by the database: `projects` has a
+  unique `proposal_id`.
+- **Tables:** `projects` and `project_service`. A Project keeps the Lead's
+  Location, customer, contact, property, services and project size as they
+  were at the sale, the proposal's sold amount and day, the salesperson the
+  Lead was with, and who recorded the sale. It cannot be deleted.
+- **States are separate fields:** `production_state` (only "New from Sales"
+  so far) and the cancellation fields. There is no single status.
+- **A corrected sale** (`CorrectProposalResult`) calls
+  `CancelProjectForCorrectedSale`: the Project is marked cancelled with the
+  manager's note and kept. Selling the proposal again brings the same Project
+  back with the new amount and day.
+- **Two new permissions,** `projects.view` and `projects.manage`, as decision
+  130 approved them. `ProjectPolicy` decides everything at the Project's own
+  Location.
+- **The page** is `pages::projects.show` at `/projects/{project}`. It has no
+  menu item (plan, 6.2). It is reached from the Lead's Proposals card, the
+  customer's page and the customer's Activity.
+- **Four audit events,** with the Project as their subject: `project.created`,
+  `project.brought_back`, `project.cancelled`, `project.edited`. The first
+  three are in the customer's Activity.
+- **Proposals sold before this step** are given their Project by a one-time
+  migration, so no sold proposal is left without one.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **The title of a second Project from the same Lead** would read the same as
+  the first, same service and same address. It also says what was sold:
+  "Interior Painting — 123 Oak St (Deck)".
+- **A proposal takes its Lead's property,** so a Project does too. Selling
+  work on another of the customer's houses from the same Lead needs a choice
+  of property on the proposal. Not built; see the handoff.
+- **The customer page lists a Project** to anyone who may see Projects at its
+  Location or may see the Lead it came from. That is how the Contact Center
+  sees the sale and its amount (plan, 11.4) without being able to open the
+  Project.
+- **The Project page shows the contact's name, phone and email and the
+  property's address,** because a Production Manager cannot open the Lead or
+  the customer's page and needs them.
+- **Only the title and description can be edited,** by a manager. A cancelled
+  Project is not edited.
+- **Nobody is told** when a Project is made in this step. Telling Production
+  is step 8b.
+
 ## Step 8b — The handoff
 
 ### What a person sees

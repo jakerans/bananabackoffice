@@ -7,6 +7,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
     expect($role->permissions())->toEqualCanonicalizing($expected);
 })->with([
     'owner' => [Role::Owner, [
+        Permission::ViewProjects,
+        Permission::ManageProjects,
         Permission::CompanyOverviewAccess,
         Permission::MarketingAccess,
         Permission::SalesAccess,
@@ -35,6 +37,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ArchiveAccounts,
     ]],
     'leadership' => [Role::Leadership, [
+        Permission::ViewProjects,
+        Permission::ManageProjects,
         Permission::CompanyOverviewAccess,
         Permission::MarketingAccess,
         Permission::SalesAccess,
@@ -60,10 +64,13 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ArchiveAccounts,
     ]],
     'finance' => [Role::Finance, [
+        Permission::ViewProjects,
         Permission::FinanceAccess,
         Permission::ViewAccounts,
     ]],
     'location manager' => [Role::LocationManager, [
+        Permission::ViewProjects,
+        Permission::ManageProjects,
         Permission::MarketingAccess,
         Permission::SalesAccess,
         Permission::ProductionAccess,
@@ -97,6 +104,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ManageAccounts,
     ]],
     'sales consultant' => [Role::SalesConsultant, [
+        Permission::ViewProjects,
         Permission::SalesAccess,
         Permission::ColorStudioAccess,
         Permission::ViewLeads,
@@ -106,6 +114,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ManageAccounts,
     ]],
     'production manager' => [Role::ProductionManager, [
+        Permission::ViewProjects,
         Permission::ProductionAccess,
         Permission::WriteNotes,
         Permission::ViewAccounts,
