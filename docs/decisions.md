@@ -2610,6 +2610,34 @@ Read by the implementation agent, for Jacob to change if wrong:
   125, answer 9). That is unchanged; each sold proposal now has a Project of
   its own beside it.
 
+## 131. Stakeholder questionnaire reconciled into the plan (2026-10-13)
+
+Jacob supplied *Banana Backoffice Stakeholder Discovery Questions.docx* and
+asked that answered items adjust the plan and every remaining question be
+listed with a recommendation. The document was treated as source material, not
+as implementation instructions.
+
+The answers now constrain the target architecture in
+[product-architecture.md](product-architecture.md), including:
+
+- employee-facing “gross margin” language; the current PM Production Bonus and
+  Sales commission plans; payment timing and future-period cost adjustments;
+- Project closeout, permanent color records, the final walkthrough, PM-owned AR
+  timing and the deposit-paid handoff call;
+- subcontractor compliance, scorecard visibility, VIP thresholds and current
+  bonus rules;
+- PFAD hours, scope/equipment limits, deposit, materials, pay and recovery;
+- Sales confirmation/discovery, proposal validity and Pending ownership,
+  Brand Ambassador tiers and the three current Sales compensation plans;
+- invoice/change-order/tax/COGS/bad-debt rules that Finance already answered.
+
+Nothing in this reconciliation authorizes implementation. Exact unanswered
+items are deduplicated in
+[stakeholder-discovery-open-questions.md](stakeholder-discovery-open-questions.md).
+Questions are grouped by the work they can block so deferred Finance,
+Commercial or W-2 work does not stop slice 8b. Commercial Sales remains
+deliberately deferred.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

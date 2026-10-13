@@ -185,7 +185,11 @@ with a note.
 **The handoff.** Questions the salesperson has to complete for each Project,
 so the Production Manager is not left guessing (decision 130). Which
 questions, and what waits on them, is agreed with Jacob before this step is
-built; the proposal is in the handoff for step 8a.
+built; the proposed first set and rules are questions 1 and 2 in
+[stakeholder-discovery-open-questions.md](stakeholder-discovery-open-questions.md).
+The stakeholder questionnaire confirms that this must carry the Sales
+discovery Production needs, not merely a generic note: scope, exclusions,
+promises, timing, access, colors, condition/prep and customer priorities.
 
 **Telling people** (plan, 20: "every ownership transfer creates an Activity
 event and a notification to the new owner"): the Production Managers at the
@@ -290,7 +294,9 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 
 Still open elsewhere and not needed to start: the Pending ownership period;
 whose figure a Lead, an appointment and a sale count for when an appointment
-is moved between salespeople.
+is moved between salespeople. Pending ownership is now tied to proposal expiry,
+whose default is seven days; attribution remains question 3 in
+[stakeholder-discovery-open-questions.md](stakeholder-discovery-open-questions.md).
 
 ## Known limits of this plan
 

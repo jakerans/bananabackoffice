@@ -126,6 +126,13 @@ None from decision 130.
 
 ## Decisions needed from Jacob
 
+The broader stakeholder questionnaire has also been reconciled. Its answered
+items are now in the product architecture; all remaining questions and a
+recommendation for each are in
+[../stakeholder-discovery-open-questions.md](../stakeholder-discovery-open-questions.md).
+Only its first two questions block step 8b. The rest wait for their affected
+Sales, Production, workforce or Finance slice.
+
 1. **Review 8a** and say whether to merge it.
 
 2. **The handoff questions for step 8b.** Jacob asked for questions the
