@@ -47,6 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // like Leads; every action on it checks the permission again and each Lead by its own location.
     Route::livewire('marketing/contact-center/queue', 'pages::marketing.call-queue')->can(Permission::WorkLeadQueue)->name('marketing.call_center.queue');
     Route::livewire('sales/calendar', 'pages::sales.calendar')->can(Permission::SalesAccess)->name('sales.calendar');
+    Route::livewire('sales/performance-board', 'pages::sales.performance')->can(Permission::SalesAccess)->name('sales.performance');
 
     // Customers is one shared page too. A customer has no location: each one is authorized by
     // what the person can already see of it, never by the location that happens to be selected.
@@ -67,7 +68,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Primary sections that are not built yet. Each becomes a real page when its feature is built.
     Route::get('company/performance', SectionController::class)->defaults('section', 'company.performance')->name('company.performance');
     Route::get('marketing/performance-board', SectionController::class)->defaults('section', 'marketing.performance')->name('marketing.performance');
-    Route::get('sales/performance-board', SectionController::class)->defaults('section', 'sales.performance')->name('sales.performance');
     Route::get('production/performance-board', SectionController::class)->defaults('section', 'production.performance')->name('production.performance');
     Route::get('finance/performance-board', SectionController::class)->defaults('section', 'finance.performance')->name('finance.performance');
     Route::get('color-studio/color-projects', SectionController::class)->defaults('section', 'color_studio.projects')->name('color_studio.projects');

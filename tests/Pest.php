@@ -3,8 +3,10 @@
 use App\Actions\Appointments\BookAppointment;
 use App\Actions\Appointments\CancelAppointment;
 use App\Actions\Appointments\CloseOutAppointment;
+use App\Actions\Appointments\MarkAppointmentBookedInError;
 use App\Actions\Leads\RecordManualContactAttempt;
 use App\Actions\Proposals\AddProposal;
+use App\Actions\Proposals\RecordProposalResult;
 use App\Actions\Queue\ClaimNextLead;
 use App\Actions\Queue\EnterLeadCadence;
 use App\Enums\AppointmentState;
@@ -389,4 +391,54 @@ function addProposal(Lead $lead, User $by, array $with = []): Proposal
 function proposalsCard(User $user, Lead $lead): Testable
 {
     return Livewire::actingAs($user)->test('pages::leads.proposals', ['lead' => $lead]);
+}
+
+/**
+ * A worked month of Sales at one Location, October 2026, in that Location's
+ * time (10:00 am is 14:00 UTC at an Eastern Location):
+ *
+ *   a: issued Oct 5 to the first salesperson, run Oct 6, "Whole exterior" $8,450, sold that day for $8,200
+ *   b: issued Oct 5 to the first, run Oct 7, nothing presented
+ *   c: issued Oct 6 to the first, for Oct 8, cancelled by the customer
+ *   d: issued Oct 6 to the first, for Oct 9, a no-show
+ *   e: issued Oct 7 to the second, run Oct 12, "Cabinets only" $3,000, still pending
+ *   f: issued Oct 7 to the first, for Oct 13, then marked "booked in error"
+ *
+ * It ends at 10:00 am on Oct 12.
+ *
+ * @return array<string, Lead>
+ */
+function octoberOfSales(Location $location, User $first, User $second, User $manager): array
+{
+    $leads = [];
+
+    foreach (['a', 'b', 'c', 'd', 'e', 'f'] as $key) {
+        $leads[$key] = bookableLead($location);
+    }
+
+    test()->travelTo('2026-10-05 14:00:00');
+    bookAppointment($leads['a'], $first, $manager, '2026-10-06', '10:00');
+    bookAppointment($leads['b'], $first, $manager, '2026-10-07', '10:00');
+
+    test()->travelTo('2026-10-06 14:00:00');
+    runAppointment($leads['a']->fresh(), $first);
+    app(RecordProposalResult::class)->handle($leads['a']->fresh(), addProposal($leads['a']->fresh(), $first), 'sold', ['soldAmount' => '8200'], $first);
+    bookAppointment($leads['c'], $first, $manager, '2026-10-08', '10:00');
+    bookAppointment($leads['d'], $first, $manager, '2026-10-09', '10:00');
+
+    test()->travelTo('2026-10-07 14:00:00');
+    runAppointment($leads['b']->fresh(), $first);
+    bookAppointment($leads['e'], $second, $manager, '2026-10-12', '10:00');
+    $mistake = bookAppointment($leads['f'], $first, $manager, '2026-10-13', '10:00')->appointment;
+    app(MarkAppointmentBookedInError::class)->handle($leads['f']->fresh(), $mistake, 'Wrong customer.', $manager);
+    cancelAppointment($leads['c']->fresh(), $manager);
+
+    test()->travelTo('2026-10-09 14:00:00');
+    app(CloseOutAppointment::class)->handle($leads['d']->fresh(), $leads['d']->fresh()->standingAppointment(), AppointmentState::NoShow->value, null, $first);
+
+    test()->travelTo('2026-10-12 14:00:00');
+    runAppointment($leads['e']->fresh(), $second);
+    addProposal($leads['e']->fresh(), $second, ['name' => 'Cabinets only', 'price' => '3000']);
+
+    return array_map(fn (Lead $lead): Lead => $lead->fresh(), $leads);
 }

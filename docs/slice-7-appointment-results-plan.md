@@ -371,6 +371,49 @@ one salesperson or a Location:
 A salesperson sees their own. A manager sees their Locations'. No targets, no
 ranking, no Leaderboard.
 
+### Step 7d as built (2026-10-13)
+
+Built as planned above. What a reader of the code should know:
+
+- **Nothing is stored.** `App\Support\Sales\SalesFigures::for($location,
+  $month, $salespersonId)` counts every figure from the records of slices 6
+  and 7 each time the page is opened. There is no table of totals to fall out
+  of step, and no migration in this step.
+- **The page** is `pages::sales.performance` at `/sales/performance-board`,
+  the address and menu item the placeholder had. It is opened with
+  `sales.access`, like the Calendar.
+- **Who sees what** is decided on the server, never by what the browser asks
+  for. The Locations offered are the ones where the person manages
+  appointments or is a Sales Consultant. A manager there may choose any
+  salesperson or everyone; anyone else is shown their own figures whatever is
+  asked for. A Location or month that is not offered falls back to the
+  person's own Location and this month.
+- **The month is the Location's own calendar month,** and the last twelve can
+  be chosen.
+- **Each figure says how it was reached** ("2 of 3 run appointments have a
+  proposal"), and the page ends with how every figure is counted.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **Leads Issued** are counted in the month the appointment was saved.
+  **Appointments** (run, cancelled, no-show, booked) in the month of the
+  appointment's day. **Sold Revenue** in the month the sale was recorded.
+- **Close Rate** places each Lead once, in the month of its first run
+  appointment: Leads first run that month that are Sold now, over Leads first
+  run that month. A return visit never counts a Lead twice. A past month's
+  rate goes up when one of its Leads is sold later.
+- **NSLI** is this month's Sold Revenue over this month's Leads Issued. A sale
+  this month of a Lead issued last month is in this month's revenue.
+- **Cancellation Rate** is cancelled over booked. A no-show is shown beside it
+  and not counted in it. "Booked in error" is in neither.
+- **Whose figure it is,** provisional: a Lead issued counts for the salesperson
+  it was issued to, an appointment for the salesperson it is with, a sale for
+  the salesperson the Lead is with. The plan leaves this open with Sales
+  Leadership (5.1). For a Location as a whole nothing is lost or counted
+  twice.
+- **One Location at a time.** There is no figure across all Locations.
+- **A rate with nothing to divide by shows a dash,** not 0%.
+
 ## Who may do what
 
 No new permission is proposed. All checked at the Lead's Location.

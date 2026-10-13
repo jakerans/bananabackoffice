@@ -257,7 +257,7 @@ class Navigation
             description: 'Performance, the sales workspace, calendar and commissions.',
             primary: 'sales.performance',
             children: [
-                new NavigationItem('sales.performance', 'Performance', $permissions, route: 'sales.performance'),
+                new NavigationItem('sales.performance', 'Performance', $permissions, NavigationState::Live, route: 'sales.performance'),
                 new NavigationItem('sales.workspace', 'Workspace', $permissions, primary: 'shared.leads', children: [
                     $this->leads(),
                 ]),
