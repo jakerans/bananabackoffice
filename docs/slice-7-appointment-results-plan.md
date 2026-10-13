@@ -465,8 +465,8 @@ Rate is demo to close" below.
 
 ### Close Rate is demo to close (2026-10-13, decision 135)
 
-Built on the branch `checkpoint-close-rate-demo-to-close`. **Not merged; it
-waits for Jacob's review.** One change to `SalesFigures` and the line under
+**Merged into `main` on 2026-10-13** with Jacob's word ("yes merge and
+continue", decision 136). One change to `SalesFigures` and the line under
 the figure; nothing new is stored.
 
 - **Close Rate is the Leads won in the month over the Leads demoed for the

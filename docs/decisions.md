@@ -2776,6 +2776,21 @@ Read by the implementation agent, for Jacob to change if wrong:
   plan keeps booking rates with Marketing and Contact Center, by channel (4.1,
   4.6), and they are not built. Nothing is built for it in this step.
 
+## 136. Close Rate as demo to close is merged; continue from the plan (2026-10-13)
+
+**Decided by Jacob,** in reply to the handoff of the Close Rate change: "yes
+merge and continue".
+
+1. **Close Rate as demo to close is merged.**
+2. **The readings in decision 135 stay as built.** He was asked about two of
+   them and did not change them: proposals for two houses under one Lead are
+   one demo and at most one win, and the lead to appointment booking rate
+   stays with the Contact Center's figures, not built.
+3. **"Continue" is read as: go on from the plan.** What the plan has next is
+   Pending ownership and Rehash (product-architecture.md, 5.5; decision 131).
+   Its plan is written for his approval before anything is built
+   (decision 122).
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
