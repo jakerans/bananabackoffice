@@ -250,6 +250,18 @@ new #[Title('Performance')] class extends Component {
                 ? ($figures->leadsWon + $figures->winsCorrected > 0 ? $won.'. '.__('No lead was first demoed this month, so there is no rate.') : __('No lead was first demoed this month.'))
                 : $won.trans_choice('{1} , against 1 lead first demoed this month.|[2,*] , against :count leads first demoed this month.', $figures->leadsDemoed, ['count' => $figures->leadsDemoed]);
 
+            $pendingDetail = $figures->leadsDemoed === 0
+                ? __('No lead was first demoed this month.')
+                : trans_choice('{1} :pending of 1 lead first demoed this month left the demo still pending.|[2,*] :pending of :count leads first demoed this month left the demo still pending.', $figures->leadsDemoed, ['pending' => $figures->leadsLeftPending, 'count' => $figures->leadsDemoed]);
+
+            $returnVisitDetail = $figures->leadsLeftPending === 0
+                ? __('No lead left its first demo pending this month.')
+                : trans_choice('{1} :booked of 1 pending lead had a return visit booked the day of the demo.|[2,*] :booked of :count pending leads had a return visit booked the day of the demo.', $figures->leadsLeftPending, ['booked' => $figures->pendingWithReturnVisit, 'count' => $figures->leadsLeftPending]);
+
+            $rehashDetail = $figures->leadsReleasedToRehash === 0
+                ? __('No lead went to rehash this month.')
+                : trans_choice('{1} :sold of 1 lead that went to rehash this month has been sold since.|[2,*] :sold of :count leads that went to rehash this month have been sold since.', $figures->leadsReleasedToRehash, ['sold' => $figures->rehashSold, 'count' => $figures->leadsReleasedToRehash]);
+
             $soldDetail = trans_choice('{0} Nothing was sold this month.|{1} From 1 sale this month.|[2,*] From :count sales this month.', $figures->salesMade, ['count' => $figures->salesMade])
                 .($figures->salesCorrected === 0 ? '' : ' '.trans_choice('{1} :amount was taken back by 1 correction this month.|[2,*] :amount was taken back by :count corrections this month.', $figures->salesCorrected, ['amount' => Money::format($figures->correctedCents), 'count' => $figures->salesCorrected]));
         @endphp
@@ -308,6 +320,27 @@ new #[Title('Performance')] class extends Component {
             </div>
         </div>
 
+        {{-- Pending and rehash (plan, 5.2; slice 9, step 9c). --}}
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="figure-pending-rate">
+                <div class="text-sm font-medium text-zinc-500">{{ __('Pending rate') }}</div>
+                <div class="mt-1 font-nav text-3xl font-bold tabular-nums text-ink" data-test="figure-value">{{ $percent($figures->pendingRate()) }}</div>
+                <div class="mt-1 text-sm text-zinc-700" data-test="figure-detail">{{ $pendingDetail }}</div>
+            </div>
+
+            <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="figure-return-visit">
+                <div class="text-sm font-medium text-zinc-500">{{ __('Return visit booked') }}</div>
+                <div class="mt-1 font-nav text-3xl font-bold tabular-nums text-ink" data-test="figure-value">{{ $percent($figures->returnVisitRate()) }}</div>
+                <div class="mt-1 text-sm text-zinc-700" data-test="figure-detail">{{ $returnVisitDetail }}</div>
+            </div>
+
+            <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="figure-rehash-conversion">
+                <div class="text-sm font-medium text-zinc-500">{{ __('Rehash conversion') }}</div>
+                <div class="mt-1 font-nav text-3xl font-bold tabular-nums text-ink" data-test="figure-value">{{ $percent($figures->rehashConversion()) }}</div>
+                <div class="mt-1 text-sm text-zinc-700" data-test="figure-detail">{{ $rehashDetail }}</div>
+            </div>
+        </div>
+
         <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="performance-how">
             <flux:heading size="lg" level="2">{{ __('How these are counted') }}</flux:heading>
 
@@ -320,6 +353,9 @@ new #[Title('Performance')] class extends Component {
                 <li>{{ __('Sold revenue: the sold amounts of the proposals accepted in the month.') }}</li>
                 <li>{{ __('NSLI: sold revenue in the month, divided by leads issued in the month.') }}</li>
                 <li>{{ __('Cancellation rate: of the appointments booked for a day in the month, the ones that were cancelled. No-shows are shown beside it.') }}</li>
+                <li>{{ __('Pending rate: of the leads demoed for the first time in the month, the ones that left that demo with nothing sold and something still open. A lead that was sold a week later still left its demo pending.') }}</li>
+                <li>{{ __('Return visit booked: of those pending leads, the ones with another visit booked by the end of the day of the demo.') }}</li>
+                <li>{{ __('Rehash conversion: of the leads that went from a salesperson to the Contact Center for rehash in the month, the ones sold since, by anyone. A past month goes up when one of its leads is sold later. For one salesperson, it is the leads released from them.') }}</li>
                 <li>{{ __('Whose figure it is: a lead issued counts for the salesperson it was issued to, an appointment for the salesperson it is with, and a sale and its win for the salesperson who had the lead when the proposal was accepted.') }}</li>
                 <li>{{ __('Corrections: a month that has passed is not rewritten. A sale a manager corrects, or a lead issued that is taken back, stays in the month it was made and comes off the month it was corrected in.') }}</li>
             </ul>

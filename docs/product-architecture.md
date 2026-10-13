@@ -303,7 +303,8 @@ Added 2026-10-13 (slice 7 step 7d; build plan: slice-7-appointment-results-plan.
 - The Sales funnel is three rates (decision 135): lead to appointment (booking; kept by channel with Marketing and Contact Center, 4.1 and 4.6, not built), appointment to demo (Demo Rate), demo to close (Close Rate).
 - NSLI is the sold amounts of the month over the Leads issued in the month, each after that month's corrections. There are no refunds to net out yet.
 - A month that has passed is not rewritten (decision 133). A sale corrected later, or a Lead Issued taken back later, stays in its month and comes off the month it was corrected in. Sales and their corrections are kept as lines that are never changed (`sale_entries`).
-- Not built: Average Job Size, Close-on-the-Spot Rate, Pending Rate, % Pending with Rehash booked, Rehash conversion; targets; the Leaderboard (5.8); a figure across all Locations at once.
+- Not built: Average Job Size, Close-on-the-Spot Rate; targets; the Leaderboard (5.8); a figure across all Locations at once.
+- Built in slice 9, step 9c (decision 137): Pending Rate, of the Leads first demoed in the month the ones that left that demo with nothing sold and something still open; % Pending with Rehash booked during the appointment, of those the ones with a return visit booked by the end of that day; and Rehash conversion, of the Leads released to Rehash in the month the ones sold since.
 - Attribution is LOCKED by decision 133: Lead Issued stays with the first
   salesperson who received that issued Lead; appointment figures follow the
   salesperson assigned when it ran; Sold Revenue and the win follow the
@@ -374,7 +375,7 @@ Added 2026-10-13 (slice 9; build plan: slice-9-pending-rehash-plan.md; LOCKED by
 - Built in step 9a: every pending proposal has a "valid until" day, shown with the days left on the Lead and in "Pending bids" on Sales > Calendar; the day can be changed; the salesperson is warned in the bell two days before the last day; the number of days is a Contact Center setting, starting at 7.
 - Built in step 9b: the day after a Lead's last day with its salesperson the timer releases it to the Contact Center's Rehash queue; the call center books a return visit (a new Lead Issued, as a cancelled Lead that is rebooked) or marks the Lead lost with a Sales loss reason; the salesperson it was released from can take it back. A Lead run with nothing presented has the same number of days and then goes to Rehash too.
 - A proposal's "valid until" and the salesperson's ownership stay separate, as above: a Lead is never released sooner than that number of days after it last became Appointment run.
-- Not built yet: the Pending figures (step 9c).
+- Built in step 9c: Pending Rate, return visit booked at the appointment, and Rehash conversion, on Sales > Performance (5.2).
 
 5.6 After-action report
 Goal: 1–2 minutes from the car.

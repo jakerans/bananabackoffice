@@ -119,7 +119,8 @@ class ReturnLeadFromSales
             'released_from_sales_at' => $byTimer ? $moment : null,
         ])->save();
 
-        $this->recordLeadStatusChange->handle($lead, LeadStatusEvent::ReturnedFromSales, $from, $actor, $salesperson?->id, note: $note);
+        // A release to Rehash is its own event, so the Leads that went there can be counted (slice 9, step 9c).
+        $this->recordLeadStatusChange->handle($lead, $how === self::RELEASED_PENDING ? LeadStatusEvent::ReleasedToRehash : LeadStatusEvent::ReturnedFromSales, $from, $actor, $salesperson?->id, note: $note);
 
         $this->resumeLeadCadence->afterReturnFromSales($lead, $actor, $note, $how === self::RELEASED_PENDING ? CallQueue::Rehash : null);
 

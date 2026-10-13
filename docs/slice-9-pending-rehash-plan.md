@@ -4,7 +4,8 @@ Status: **approved on 2026-10-13 (decision 137) in three steps, each stopping
 for Jacob's review, with all nine questions answered as recommended. Step 9a
 was built and merged into `main` on 2026-10-13 (decision 138); see "Step 9a
 as built". Step 9b was built and merged on 2026-10-13 (decision 139); see
-"Step 9b as built". Step 9c is being built.** It was written because Jacob said "yes merge and continue"
+"Step 9b as built". Step 9c is built and waits for his review; see "Step 9c
+as built". It is the last step.** It was written because Jacob said "yes merge and continue"
 (decision 136) and this is what the plan has next.
 
 It follows [product-architecture.md](product-architecture.md), sections 4.2,
@@ -254,6 +255,41 @@ each Lead as Close Rate is (decision 135):
 
 These are readings. Question 8 asks whether they are right before 9c is
 built.
+
+### Step 9c as built (2026-10-13)
+
+Built on the branch `checkpoint-slice-9c-pending-figures`. **Not merged; it
+waits for Jacob's review.** Built as the table above, approved by decision
+137 (answer 8). Nothing new is stored. What a reader of the code should know:
+
+- **The three figures are counted in `SalesFigures`,** live from the records,
+  and shown as a third row of cards on Sales > Performance with a line under
+  each saying how it was reached.
+- **Pending Rate** is counted against the Leads first demoed in the month, the
+  same Leads Close Rate is divided by, for the salesperson of that demo.
+- **Whether a Lead was sold at its demo** is read from the record of sales
+  (`sale_entries`), so a sale corrected in a later month does not change the
+  month of the demo (decision 133).
+- **A release to Rehash is its own event** in the Lead's history,
+  `released_to_rehash`, so the Leads that went there can be counted. Before
+  this step it was recorded as "returned from Sales". Rehash conversion is
+  counted for the salesperson a Lead was released from, whoever sold it.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **"Nothing sold and nothing lost" is read as: nothing sold that day, and
+  something presented still open.** A Lead with one proposal lost at the demo
+  and another still open left pending. A Lead whose every proposal was lost at
+  the demo did not.
+- **"The day of the demo" ends at midnight in the Location's time.**
+- **A return visit counts if it was booked by then** for a later time, even
+  if it was cancelled afterwards. One marked "booked in error" does not.
+- **A proposal typed in days after the visit** makes that visit the Lead's
+  first demo, and the Lead left it pending.
+- **Rehash conversion counts a Lead once in a month,** in the month it went
+  to Rehash, and as sold when one of its proposals is sold now and was sold
+  after it went there. A past month goes up when one of its Leads is sold
+  later.
 
 ## Who may do what
 

@@ -57,7 +57,7 @@ final readonly class SalesReturn
         $appointment = $lead->appointments()->first();
 
         /** @var LeadStatusChange|null $return */
-        $return = $lead->statusChanges()->where('event', LeadStatusEvent::ReturnedFromSales)->with('changedBy')->orderByDesc('id')->first();
+        $return = $lead->statusChanges()->whereIn('event', [LeadStatusEvent::ReturnedFromSales, LeadStatusEvent::ReleasedToRehash])->with('changedBy')->orderByDesc('id')->first();
 
         $cancelled = $appointment !== null && $appointment->isCancelled();
         $noShow = $appointment !== null && $appointment->state === AppointmentState::NoShow;
