@@ -190,6 +190,43 @@ class ChangeContactCenterSettings
     }
 
     /**
+     * Save how many days a proposal is valid from the day it was presented
+     * (product-architecture.md, 5.5; decision 137). A change applies to
+     * proposals presented from then on: one that is already pending keeps the
+     * day it has.
+     *
+     * @return bool Whether a new version was saved.
+     *
+     * @throws ValidationException
+     */
+    public function proposalValidDays(User $actor, int $loadedVersion, mixed $days): bool
+    {
+        $wanted = $this->wholeNumber($days);
+
+        if ($wanted === null || $wanted < ContactCenterSettings::MINIMUM_PROPOSAL_VALID_DAYS || $wanted > ContactCenterSettings::MAXIMUM_PROPOSAL_VALID_DAYS) {
+            throw ValidationException::withMessages([
+                'proposalValidDays' => __('The number of days must be a whole number from :min to :max.', [
+                    'min' => ContactCenterSettings::MINIMUM_PROPOSAL_VALID_DAYS,
+                    'max' => ContactCenterSettings::MAXIMUM_PROPOSAL_VALID_DAYS,
+                ]),
+            ]);
+        }
+
+        return $this->save($actor, $loadedVersion, function (ContactCenterSettings $current) use ($wanted): ?array {
+            if ($current->proposal_valid_days === $wanted) {
+                return null;
+            }
+
+            return [
+                ['proposal_valid_days' => $wanted],
+                AuditAction::ContactCenterProposalValidDaysChanged,
+                ['proposal_valid_days' => $current->proposal_valid_days],
+                ['proposal_valid_days' => $wanted],
+            ];
+        });
+    }
+
+    /**
      * @param  Closure(ContactCenterSettings): (array{0: array<string, mixed>, 1: AuditAction, 2: array<string, mixed>, 3: array<string, mixed>}|null)  $decide
      */
     private function save(User $actor, int $loadedVersion, Closure $decide): bool
@@ -226,6 +263,7 @@ class ChangeContactCenterSettings
                     'calling_days' => $current->calling_days,
                     'hold_minutes' => $current->hold_minutes,
                     'cancelled_release_days' => $current->cancelled_release_days,
+                    'proposal_valid_days' => $current->proposal_valid_days,
                     ...$changes,
                     'changed_by' => $actor->getKey(),
                     'changed_by_name' => $actor->name,

@@ -4,9 +4,11 @@ use App\Actions\Appointments\ReleaseCancelledLead;
 use App\Enums\AppointmentState;
 use App\Enums\LeadStatus;
 use App\Enums\Permission;
+use App\Enums\ProposalResult;
 use App\Models\Appointment;
 use App\Models\ContactCenterSettings;
 use App\Models\Lead;
+use App\Support\Proposals\ProposalValidity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -17,8 +19,9 @@ use Livewire\Component;
 /**
  * Sales > Calendar (docs/slice-6-appointments-plan.md, steps 6a and 6b): a
  * plain list of the appointments still to come, and under it the Leads whose
- * appointment was cancelled and that still wait to be booked again. It is not
- * a calendar and shows no free time.
+ * appointment was cancelled and that still wait to be booked again, and the
+ * pending bids with how long each has left (slice 9, step 9a). It is not a
+ * calendar and shows no free time.
  *
  * A manager sees every appointment at the Locations where they manage
  * appointments. Anyone else sees only their own, and only at a Location where
@@ -180,6 +183,40 @@ new #[Title('Calendar')] class extends Component {
     }
 
     /**
+     * Leads still with their salesperson after an appointment that was run,
+     * with a proposal pending, soonest to expire first
+     * (docs/slice-9-pending-rehash-plan.md, step 9a). A Lead leaves its
+     * salesperson when the last of its pending proposals has expired, so each
+     * is placed by that day. A manager sees every one at the Locations they
+     * manage; anyone else sees the Leads that are theirs.
+     *
+     * @return Collection<int, Lead>
+     */
+    #[Computed]
+    public function pendingBids(): Collection
+    {
+        $user = Auth::user();
+        $managed = $user->locationsWhere(Permission::ManageAppointments)->modelKeys();
+        $viewable = $user->locationsWhere(Permission::ViewLeads)->modelKeys();
+        $pending = fn ($proposals) => $proposals->counted()->where('result', ProposalResult::Pending);
+
+        return Lead::query()
+            ->where('status', LeadStatus::AppointmentRun)
+            ->whereHas('proposals', $pending)
+            ->where(function (Builder $visible) use ($user, $managed, $viewable): void {
+                $visible
+                    ->whereIn('location_id', $managed)
+                    ->orWhere(fn (Builder $own) => $own->where('assigned_user_id', $user->id)->whereIn('location_id', $viewable));
+            })
+            ->with(['account', 'property', 'location', 'assignee', 'proposals' => $pending])
+            ->withMax(['proposals as owned_until' => $pending], 'valid_until')
+            ->orderBy('owned_until')
+            ->orderBy('id')
+            ->limit(self::LIMIT)
+            ->get();
+    }
+
+    /**
      * Whether the person sees other people's appointments, so each row should
      * say whose it is.
      */
@@ -312,6 +349,49 @@ new #[Title('Calendar')] class extends Component {
                             <div>{{ $cancelled->location->name }}</div>
                             @if ($this->seesOthers)
                                 <div data-test="calendar-rebook-salesperson">{{ $cancelled->salesperson_name }}</div>
+                            @endif
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    @if ($this->pendingBids->isNotEmpty())
+        <div class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-5" data-test="calendar-pending">
+            <div>
+                <flux:heading size="lg" level="2">{{ __('Pending bids') }}</flux:heading>
+                <flux:subheading>{{ __('Leads with a proposal still pending, soonest to expire first. When the last one expires the lead goes to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.') }}</flux:subheading>
+            </div>
+
+            <ul class="divide-y divide-zinc-200">
+                @foreach ($this->pendingBids as $pendingLead)
+                    @php($ownedUntil = ProposalValidity::ownershipUntil($pendingLead))
+                    @php($daysLeft = $ownedUntil === null ? null : (int) ProposalValidity::today($pendingLead->location)->diffInDays($ownedUntil))
+                    <li wire:key="calendar-pending-{{ $pendingLead->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="calendar-pending-lead">
+                        <div class="min-w-0">
+                            <a href="{{ route('leads.show', $pendingLead) }}" wire:navigate class="font-semibold text-wall-teal underline">
+                                {{ $pendingLead->account?->display_name ?? $pendingLead->displayName() ?? __('Lead') }}
+                            </a>
+                            @if ($pendingLead->property !== null)
+                                <div class="text-sm text-zinc-700">{{ $pendingLead->property->summary() }}</div>
+                            @endif
+                            @foreach ($pendingLead->proposals as $pendingProposal)
+                                <div class="text-sm text-zinc-700" wire:key="calendar-pending-proposal-{{ $pendingProposal->id }}" data-test="calendar-pending-proposal">
+                                    {{ $pendingProposal->name }}, {{ $pendingProposal->price() }}@if ($pendingProposal->objection_name !== null) &middot; {{ __('Main objection: :objection', ['objection' => $pendingProposal->objection_name]) }}@endif
+                                </div>
+                            @endforeach
+                            @if ($ownedUntil !== null)
+                                <div @class(['text-sm', 'font-semibold text-ink' => $daysLeft <= ContactCenterSettings::PENDING_WARNING_DAYS, 'text-zinc-700' => $daysLeft > ContactCenterSettings::PENDING_WARNING_DAYS]) data-test="calendar-pending-days-left">
+                                    {{ ProposalValidity::label($ownedUntil, $pendingLead->location) }}
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="text-right text-sm text-zinc-700">
+                            <div>{{ $pendingLead->location?->name }}</div>
+                            @if ($this->seesOthers)
+                                <div data-test="calendar-pending-salesperson">{{ $pendingLead->assignee?->name }}</div>
                             @endif
                         </div>
                     </li>

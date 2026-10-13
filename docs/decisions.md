@@ -2791,6 +2791,53 @@ merge and continue".
    Its plan is written for his approval before anything is built
    (decision 122).
 
+## 137. Slice 9, Pending ownership and Rehash, is approved as recommended (2026-10-13)
+
+**Decided by Jacob,** in reply to the slice 9 plan
+([slice-9-pending-rehash-plan.md](slice-9-pending-rehash-plan.md)) and its
+nine questions: "I agree with all of that. Go ahead."
+
+1. **Slice 9 is approved in three steps,** 9a the clock, 9b Rehash, 9c the
+   Pending figures, each stopping for his review.
+2. **All nine answers are as recommended:**
+   1. The seven days start the day the proposal was last presented.
+   2. A Lead with several pending proposals stays with its salesperson until
+      the last of them expires.
+   3. A salesperson may move "valid until" up to 30 days ahead on their own; a
+      manager to any day.
+   4. A booked return visit keeps the Lead with the salesperson past the
+      expiry. If it is cancelled or a no-show, the cancelled rules take over.
+   5. A Lead run with nothing presented gets the same number of days from the
+      appointment, then goes to Rehash too.
+   6. When the customer tells the call center no, the setter marks the Lead
+      lost with a Sales loss reason and the objection.
+   7. A rehash booked by the call center is a new Lead Issued, as a cancelled
+      Lead that is rebooked is today.
+   8. The three figures of step 9c are as the plan's table.
+   9. One bell notice two days before release, no email.
+
+Read by the implementation agent while building step 9a, for Jacob to change
+if wrong:
+
+- **A proposal typed in late** is valid until today at the earliest, so it is
+  never expired the moment it is saved.
+- **A proposal that a correction makes pending again,** or that comes back
+  when a lost Lead is undone, starts its days again from that day.
+- **Presenting a proposal again never shortens its time.**
+- **A day cannot be moved to before today.**
+- **A new number of days in the settings** applies to proposals presented from
+  then on. One that is already pending keeps its day.
+
+## 138. Step 9a is merged; step 9b starts (2026-10-13)
+
+**Decided by Jacob,** in reply to step 9a's handoff: "Merge and start. Let's
+keep this train rolling."
+
+1. **Step 9a, the clock on a pending proposal, is merged.** The readings in
+   decision 137 stay as built; he did not change them.
+2. **Step 9b, Rehash, starts.** It is built as the plan and decision 137 have
+   it and stops for his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

@@ -6,11 +6,13 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Leads\ChangeLeadLifecycle;
 use App\Enums\AppointmentState;
 use App\Enums\AuditAction;
+use App\Enums\ProposalResult;
 use App\Models\Appointment;
 use App\Models\Lead;
 use App\Models\Proposal;
 use App\Models\User;
 use App\Notifications\AppointmentChanged;
+use App\Support\Proposals\ProposalValidity;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -27,7 +29,9 @@ class PresentProposalAgain
      * appointments: a return visit (docs/slice-7-appointment-results-plan.md,
      * step 7b; decision 121). The salesperson the Lead is with, or a manager.
      *
-     * The pair is kept once. Nothing about the Lead itself changes. The link
+     * The pair is kept once. A proposal that is still pending is valid for
+     * the usual number of days from this visit, if that is later than the day
+     * it has (decision 137, answer 1). Nothing about the Lead itself changes. The link
      * and its audit event are saved together or not at all, and when a manager
      * records it the appointment's salesperson is told inside the app
      * (decision 126).
@@ -86,6 +90,19 @@ class PresentProposalAgain
             'created_at' => now(),
         ]);
 
+        // Presented again, a pending proposal's days start again from this visit. It never makes them fewer.
+        $current = Proposal::query()->findOrFail($proposal->id);
+        $validUntil = ProposalValidity::of($current);
+
+        if ($current->result === ProposalResult::Pending) {
+            $fromThisVisit = ProposalValidity::afterPresentation($lead, $appointment->starts_at);
+
+            if ($validUntil === null || $fromThisVisit->greaterThan($validUntil)) {
+                $validUntil = $fromThisVisit;
+                $current->forceFill(['valid_until' => $validUntil])->save();
+            }
+        }
+
         $this->recordAuditEvent->handle(
             AuditAction::LeadProposalPresentedAgain,
             $lead,
@@ -93,6 +110,7 @@ class PresentProposalAgain
             after: [
                 'proposal' => $proposal->name,
                 'presented_at' => $appointment->starts_at->toIso8601String(),
+                'valid_until' => $validUntil?->toDateString(),
             ],
             location: $lead->location,
         );

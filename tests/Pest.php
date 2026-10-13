@@ -275,6 +275,7 @@ function saveQueueSettings(array $changes): ContactCenterSettings
         'calling_days' => $current->calling_days,
         'hold_minutes' => $current->hold_minutes,
         'cancelled_release_days' => $current->cancelled_release_days,
+        'proposal_valid_days' => $current->proposal_valid_days,
         ...$changes,
     ])->save();
 

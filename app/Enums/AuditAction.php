@@ -110,4 +110,5 @@ enum AuditAction: string
     case ContactCenterCallingHoursChanged = 'contact_center.calling_hours_changed';
     case ContactCenterHoldLengthChanged = 'contact_center.hold_length_changed';
     case ContactCenterReleaseDaysChanged = 'contact_center.release_days_changed';
+    case ContactCenterProposalValidDaysChanged = 'contact_center.proposal_valid_days_changed';
 }

@@ -37,6 +37,9 @@ class AppointmentChanged extends Notification
     /** The salesperson's cancelled Lead will go back soon unless it is booked again. */
     public const string RELEASE_WARNING = 'lead_release_warning';
 
+    /** What is pending on the salesperson's Lead is about to expire, and the Lead will then go to rehash. */
+    public const string PENDING_RELEASE_WARNING = 'lead_pending_release_warning';
+
     /** The salesperson's appointment is over and nobody has said what happened at it. */
     public const string CLOSE_OUT_REMINDER = 'appointment_close_out_reminder';
 
@@ -66,10 +69,10 @@ class AppointmentChanged extends Notification
      * only what happened, when the appointment is, and a link the salesperson
      * must be signed in and allowed to open.
      *
-     * @param  self::RESCHEDULED|self::MOVED_TO_YOU|self::MOVED_AWAY|self::CANCELLED|self::LEAD_RETURNED|self::LEAD_RELEASED|self::RELEASE_WARNING|self::CLOSE_OUT_REMINDER|self::MARKED_RUN|self::MARKED_NO_SHOW|self::CLOSE_OUT_CORRECTED|self::BOOKED_IN_ERROR|self::PROPOSAL_RECORDED|self::SALES_RECORD_CHANGED  $kind
+     * @param  self::RESCHEDULED|self::MOVED_TO_YOU|self::MOVED_AWAY|self::CANCELLED|self::LEAD_RETURNED|self::LEAD_RELEASED|self::RELEASE_WARNING|self::PENDING_RELEASE_WARNING|self::CLOSE_OUT_REMINDER|self::MARKED_RUN|self::MARKED_NO_SHOW|self::CLOSE_OUT_CORRECTED|self::BOOKED_IN_ERROR|self::PROPOSAL_RECORDED|self::SALES_RECORD_CHANGED  $kind
      * @param  self::IN_APP|self::EMAIL  $channel
      * @param  Appointment|null  $appointment  The appointment as it is after the change, when there is one.
-     * @param  int|null  $days  For a release warning: how many days are left.
+     * @param  int|null  $days  For a release warning: how many days are left. For a pending bid, 0 is its last day.
      */
     public function __construct(public int $leadId, public string $kind, public string $channel, public ?Appointment $appointment = null, public ?int $days = null) {}
 
@@ -146,6 +149,8 @@ class AppointmentChanged extends Notification
             self::PROPOSAL_RECORDED => __('A manager recorded a proposal at your appointment on :when.', ['when' => $this->when()]),
             self::SALES_RECORD_CHANGED => __('A manager changed the proposals or the result on a lead of yours.'),
             self::LEAD_RELEASED => __('A cancelled lead of yours was not booked again in time and went back to the Contact Center. You can take it back from the lead.'),
+            self::PENDING_RELEASE_WARNING => trans_choice('{0} A pending bid of yours expires today.|{1} A pending bid of yours expires tomorrow.|[2,*] A pending bid of yours expires in :count days.', (int) $this->days, ['count' => (int) $this->days])
+                .' '.__('The lead then goes to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.'),
             self::RELEASE_WARNING => trans_choice('{1} A cancelled lead of yours goes back to the Contact Center in 1 day unless it is booked again.|[2,*] A cancelled lead of yours goes back to the Contact Center in :count days unless it is booked again.', (int) $this->days, ['count' => (int) $this->days]),
         };
     }

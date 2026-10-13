@@ -112,6 +112,14 @@ no-demo's reason). **Decision 135 then made Close Rate demo to close:** the
 wins are divided by the Leads demoed, not the Leads run. **Built and merged
 on 2026-10-13 (decision 136).**
 
+**Slice 9, Pending ownership and Rehash, is approved in three steps
+(2026-10-13, decision 137).** Its plan, with the reasoning from the plan for
+why it is next, is
+[slice-9-pending-rehash-plan.md](slice-9-pending-rehash-plan.md). **Step 9a
+(the clock on a pending proposal) was built and merged on 2026-10-13
+(decision 138).** Step 9b (Rehash) is being built. Step 9c (the Pending
+figures) is not built.
+
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
 Production Workspace instead of separate stage/project modules. Customers and

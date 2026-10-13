@@ -38,6 +38,8 @@ new #[Title('Contact Center settings')] class extends Component {
 
     public string $releaseDays = '';
 
+    public string $proposalValidDays = '';
+
     /**
      * Each Call Center Agent's manager-view switch, by staff ID. A switch
      * saves by itself the moment it is changed.
@@ -143,6 +145,7 @@ new #[Title('Contact Center settings')] class extends Component {
         $this->loadDays($settings);
         $this->loadHold($settings);
         $this->loadReleaseDays($settings);
+        $this->loadProposalValidDays($settings);
 
         $this->resetValidation();
     }
@@ -175,6 +178,11 @@ new #[Title('Contact Center settings')] class extends Component {
     private function loadReleaseDays(ContactCenterSettings $settings): void
     {
         $this->releaseDays = (string) $settings->cancelled_release_days;
+    }
+
+    private function loadProposalValidDays(ContactCenterSettings $settings): void
+    {
+        $this->proposalValidDays = (string) $settings->proposal_valid_days;
     }
 
     /**
@@ -332,6 +340,13 @@ new #[Title('Contact Center settings')] class extends Component {
         $this->authorize(Permission::ManageContactCenterSettings);
 
         $this->saved(fn () => $change->releaseDays(auth()->user(), $this->loadedVersion, $this->releaseDays), __('Days saved.'), fn () => $this->loadReleaseDays(ContactCenterSettings::current()));
+    }
+
+    public function saveProposalValidDays(ChangeContactCenterSettings $change): void
+    {
+        $this->authorize(Permission::ManageContactCenterSettings);
+
+        $this->saved(fn () => $change->proposalValidDays(auth()->user(), $this->loadedVersion, $this->proposalValidDays), __('Days saved.'), fn () => $this->loadProposalValidDays(ContactCenterSettings::current()));
     }
 
     /**
@@ -561,6 +576,29 @@ new #[Title('Contact Center settings')] class extends Component {
 
         <div class="flex justify-end">
             <flux:button type="submit" variant="primary" data-test="save-release-days">{{ __('Save days') }}</flux:button>
+        </div>
+    </form>
+
+    {{-- Pending proposals --}}
+    <form wire:submit="saveProposalValidDays" class="flex flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-6" data-test="proposal-valid-section">
+        <div>
+            <flux:heading size="lg" level="2">{{ __('Pending proposals') }}</flux:heading>
+            <flux:text>{{ __('How many days a proposal is valid from the day it was presented. A lead stays with its salesperson until its last pending proposal expires, and the salesperson is warned :days days before. A new number applies to proposals presented from then on; the salesperson can change the day on any one proposal.', ['days' => ContactCenterSettings::PENDING_WARNING_DAYS]) }}</flux:text>
+        </div>
+
+        <flux:input
+            wire:model="proposalValidDays"
+            type="number"
+            inputmode="numeric"
+            :min="ContactCenterSettings::MINIMUM_PROPOSAL_VALID_DAYS"
+            :max="ContactCenterSettings::MAXIMUM_PROPOSAL_VALID_DAYS"
+            :label="__('Days a proposal is valid')"
+            class="max-w-40 tabular-nums"
+            data-test="proposal-valid-days"
+        />
+
+        <div class="flex justify-end">
+            <flux:button type="submit" variant="primary" data-test="save-proposal-valid-days">{{ __('Save days') }}</flux:button>
         </div>
     </form>
 

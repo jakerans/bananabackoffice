@@ -107,6 +107,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $released_from_user_id The salesperson the timer released it from, who may take it back (decision 120).
  * @property Carbon|null $released_from_sales_at
  * @property Carbon|null $release_warned_at When its salesperson was last warned that it would be released.
+ * @property Carbon|null $pending_warned_for The last day of its pending proposals that its salesperson was warned about (decision 137).
  * @property-read Collection<int, Appointment> $appointments
  */
 class Lead extends Model
@@ -136,6 +137,7 @@ class Lead extends Model
             'returned_from_sales_at' => 'datetime',
             'released_from_sales_at' => 'datetime',
             'release_warned_at' => 'datetime',
+            'pending_warned_for' => 'date',
             'follow_up_on' => 'date',
             'last_disqualified_at' => 'datetime',
             'lost_at' => 'datetime',

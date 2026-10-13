@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Notifications\AppointmentChanged;
 use App\Support\Money;
 use App\Support\Proposals\ProposalInput;
+use App\Support\Proposals\ProposalValidity;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -34,7 +35,8 @@ class AddProposal
      * A proposal always has a name, a price and at least one run appointment
      * of this Lead (decision 125, answers 4 and 5), so every proposal counts
      * for Demo Rate from the moment it is saved (decision 124). It starts
-     * Pending.
+     * Pending, valid for the number of days in the settings from the day it
+     * was last presented (decision 137).
      *
      * Nothing about the Lead itself changes: its status, who has it and its
      * revision stay as they are. The proposal, its appointments and the audit
@@ -112,6 +114,9 @@ class AddProposal
 
         $property = ProposalInput::property($lead, $propertyId, $prefix.'proposalPropertyId');
 
+        // Valid for so many days from the latest appointment it was presented at (decision 137, answer 1).
+        $validUntil = ProposalValidity::afterPresentation($lead, $appointments->last()->starts_at);
+
         $proposal = new Proposal;
         $proposal->forceFill([
             'lead_id' => $lead->id,
@@ -120,6 +125,7 @@ class AddProposal
             'property_id' => $property->id,
             'name' => $name,
             'price_cents' => $cents,
+            'valid_until' => $validUntil,
             'created_by' => $actor->id,
             'created_by_name' => $actor->name,
         ])->save();
@@ -138,6 +144,7 @@ class AddProposal
                 'proposal' => $name,
                 'price' => Money::format($cents),
                 'presented_at' => $appointments->map(fn (Appointment $appointment): string => $appointment->starts_at->toIso8601String())->all(),
+                'valid_until' => $validUntil->toDateString(),
             ],
             location: $lead->location,
         );
