@@ -3,6 +3,28 @@
 This document keeps the findings of security reviews so that nothing is lost between
 checkpoints. Each open item says when it has to be dealt with.
 
+## The repository is public (added 2026-10-13, decision 140)
+
+Jacob made the GitHub repository public on 2026-10-13 so that its checks run
+without the monthly limit on a private one. It can be made private again; when
+is not decided.
+
+- **Everything in this document can be read by anyone,** the open items
+  included. Treat each as known to an outsider when deciding how soon to close
+  it.
+- **The address of the staging site is public,** with the code that guards it.
+  Staging holds only fictitious data and must keep doing so.
+- **Nothing secret was in the history when it was opened:** every commit on
+  every branch was searched for passwords, keys, tokens, customer information,
+  database dumps and `.env` files, and none was found.
+- **A mistake is now published at once.** A credential or a customer's details
+  pushed by accident must be treated as taken: the credential replaced, and
+  the customer's information handled as disclosed. Removing the commit does
+  not undo it.
+- **Before production holds real customer data,** decide whether the
+  repository goes back to private. It is listed under "Open: must be handled
+  before real staff use the system".
+
 ## Review of Checkpoint A (2026-10-04)
 
 The whole `checkpoint-a` branch was reviewed against `main` before merging: once by
@@ -333,6 +355,10 @@ another location has dealt with. Staff are told so without being shown who.
 
 ### Open: must be handled before real staff use the systemThese are not blocking for development, but they must be closed before Backoffice
 is used with real accounts on a server.
+
+**The repository is public.**
+Decide whether it goes back to private before production holds real customer
+data (decision 140). See "The repository is public" at the top of this document.
 
 **Two-factor sign-in is optional for every role.**
 Decide whether Owner and Finance accounts must use it. Already listed in

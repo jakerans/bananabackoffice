@@ -119,7 +119,15 @@ why it is next, is
 (the clock on a pending proposal) was built and merged on 2026-10-13
 (decision 138).** **Step 9b (Rehash: the release, the Rehash call queue,
 marking lost from it and taking a Lead back) was built and merged on
-2026-10-13 (decision 139).** Step 9c (the Pending figures) is being built.
+2026-10-13 (decision 139).** **Step 9c (the Pending figures on Sales >
+Performance) was built and merged on 2026-10-13 (decision 141).** **Slice 9
+is complete as planned.**
+
+**Slice 10, pre-production, is approved in three steps (2026-10-13, decision
+141).** Its plan, with the reasoning from the plan for why it is next, is
+[slice-10-pre-production-plan.md](slice-10-pre-production-plan.md). Step 10a
+(the welcome call and the rough timeframe) is being built. Steps 10b (the
+Color Specification) and 10c (readiness) are not built.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

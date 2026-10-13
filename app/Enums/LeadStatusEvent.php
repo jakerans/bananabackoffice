@@ -25,6 +25,9 @@ enum LeadStatusEvent: string
     case AppointmentCancelled = 'appointment_cancelled';
     case AppointmentRebooked = 'appointment_rebooked';
     case ReturnedFromSales = 'returned_from_sales';
+
+    /** The timer released it from its salesperson to the Contact Center's Rehash queue (slice 9). Counted by Rehash conversion. */
+    case ReleasedToRehash = 'released_to_rehash';
     case TakenBackBySales = 'taken_back_by_sales';
     case AppointmentRun = 'appointment_run';
     case AppointmentNoShow = 'appointment_no_show';

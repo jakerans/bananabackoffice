@@ -3,9 +3,13 @@
 namespace App\Support\Sales;
 
 use App\Enums\AppointmentState;
+use App\Enums\LeadStatusEvent;
+use App\Enums\ProposalResult;
 use App\Models\Appointment;
 use App\Models\LeadIssue;
+use App\Models\LeadStatusChange;
 use App\Models\Location;
+use App\Models\Proposal;
 use App\Models\SaleEntry;
 use App\Support\Queue\CallingHours;
 use Carbon\CarbonImmutable;
@@ -16,7 +20,8 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 /**
  * The first Sales figures for one month at one Location, for everyone there or
  * for one salesperson (docs/slice-7-appointment-results-plan.md, step 7d;
- * product-architecture.md, 5.2; decisions 133, 134 and 135).
+ * product-architecture.md, 5.2; decisions 133, 134 and 135), and the Pending
+ * figures (docs/slice-9-pending-rehash-plan.md, step 9c; decision 137).
  *
  * Nothing here is stored. Every figure is counted from what people recorded:
  * issues (slice 6), appointments and whether they were run (step 7a),
@@ -60,6 +65,14 @@ final readonly class SalesFigures
         public int $correctedCents,
         /** How many sales were corrected in the month. */
         public int $salesCorrected,
+        /** Of the Leads first demoed in the month, the ones that left that demo with nothing sold and something still open. */
+        public int $leadsLeftPending,
+        /** Of those, the ones with a return visit booked by the end of the day of the demo. */
+        public int $pendingWithReturnVisit,
+        /** Leads the timer released to Rehash in the month, each once. */
+        public int $leadsReleasedToRehash,
+        /** Of those, the ones sold since. */
+        public int $rehashSold,
     ) {}
 
     /**
@@ -120,6 +133,60 @@ final readonly class SalesFigures
             ->where('occurred_at', '<', $to)
             ->when($salespersonId !== null, fn (Builder $query) => $query->where('salesperson_id', $salespersonId));
 
+        // Where each Lead first demoed in the month stood at the end of that day, in the Location's time.
+        $demos = (clone $firstDemos)->with(['proposals' => fn ($proposals) => $proposals->counted()])->get();
+        $endOfDay = fn (Appointment $demo): CarbonImmutable => CarbonImmutable::instance($demo->starts_at)->timezone($demo->timezone)->endOfDay()->utc();
+        // Whether a proposal stood as sold then is read from the record of sales, so a sale corrected in a later
+        // month does not change the month of the demo (decision 133).
+        $demoSales = $demos->isEmpty() ? collect() : SaleEntry::query()
+            ->whereIn('proposal_id', $demos->flatMap(fn (Appointment $demo) => $demo->proposals->modelKeys()))
+            ->get(['proposal_id', 'kind', 'occurred_at']);
+
+        $soldBy = fn (Proposal $proposal, CarbonImmutable $end): bool => $demoSales
+            ->filter(fn (SaleEntry $entry): bool => $entry->proposal_id === $proposal->id && $entry->occurred_at->lessThanOrEqualTo($end))
+            ->sum(fn (SaleEntry $entry): int => $entry->kind === SaleEntry::SALE ? 1 : -1) > 0;
+
+        $lostBy = fn (Proposal $proposal, CarbonImmutable $end): bool => $proposal->result === ProposalResult::Lost
+            && $proposal->result_at !== null
+            && $proposal->result_at->lessThanOrEqualTo($end);
+
+        // Pending: nothing presented at the demo was sold that day, and something presented at it was still open.
+        $leftPending = $demos->filter(fn (Appointment $demo): bool => ! $demo->proposals->contains(fn (Proposal $proposal): bool => $soldBy($proposal, $endOfDay($demo)))
+            && $demo->proposals->contains(fn (Proposal $proposal): bool => ! $lostBy($proposal, $endOfDay($demo))));
+
+        // The plan's "rehash booked during the appointment": another visit for the Lead, saved by the end of that day.
+        $visits = $leftPending->isEmpty() ? collect() : Appointment::query()
+            ->whereIn('lead_id', $leftPending->pluck('lead_id'))
+            ->where('state', '<>', AppointmentState::BookedInError)
+            ->get(['id', 'lead_id', 'starts_at', 'created_at']);
+
+        $withReturnVisit = $leftPending->filter(fn (Appointment $demo): bool => $visits->contains(fn (Appointment $visit): bool => $visit->lead_id === $demo->lead_id
+            && $visit->id !== $demo->id
+            && $visit->starts_at->greaterThan($demo->starts_at)
+            && $visit->created_at !== null
+            && $visit->created_at->lessThanOrEqualTo($endOfDay($demo))));
+
+        // Leads the timer released to Rehash in the month, by the salesperson each was released from, and whether one was sold afterwards.
+        $releases = LeadStatusChange::query()
+            ->where('event', LeadStatusEvent::ReleasedToRehash)
+            ->where('location_id', $location->id)
+            ->where('created_at', '>=', $from)
+            ->where('created_at', '<', $to)
+            ->when($salespersonId !== null, fn (Builder $query) => $query->where('assigned_user_id', $salespersonId))
+            ->orderBy('id')
+            ->get(['lead_id', 'created_at'])
+            ->unique('lead_id');
+
+        $soldSince = $releases->isEmpty() ? collect() : Proposal::query()
+            ->counted()
+            ->where('result', ProposalResult::Sold)
+            ->whereIn('lead_id', $releases->pluck('lead_id'))
+            ->get(['lead_id', 'result_at']);
+
+        $rehashSold = $releases->filter(fn (LeadStatusChange $release): bool => $soldSince->contains(fn (Proposal $proposal): bool => $proposal->lead_id === $release->lead_id
+            && $proposal->result_at !== null
+            && $proposal->result_at->greaterThan($release->created_at)));
+
         return new self(
             leadsIssued: $issues('issued_at'),
             issuesVoided: $issues('voided_at'),
@@ -131,13 +198,17 @@ final readonly class SalesFigures
                 ->count(),
             appointmentsCancelled: $count(AppointmentState::Cancelled),
             appointmentsNoShow: $count(AppointmentState::NoShow),
-            leadsDemoed: $firstDemos->count(),
+            leadsDemoed: $demos->count(),
             leadsWon: $entries(SaleEntry::SALE)->where('is_lead_win', true)->count(),
             winsCorrected: $entries(SaleEntry::CORRECTION)->where('is_lead_win', true)->count(),
             salesMade: $entries(SaleEntry::SALE)->count(),
             soldCents: (int) $entries(SaleEntry::SALE)->sum('cents'),
             correctedCents: -1 * (int) $entries(SaleEntry::CORRECTION)->sum('cents'),
             salesCorrected: $entries(SaleEntry::CORRECTION)->count(),
+            leadsLeftPending: $leftPending->count(),
+            pendingWithReturnVisit: $withReturnVisit->count(),
+            leadsReleasedToRehash: $releases->count(),
+            rehashSold: $rehashSold->count(),
         );
     }
 
@@ -209,6 +280,37 @@ final readonly class SalesFigures
     public function closeRate(): ?int
     {
         return self::percent($this->netWins(), $this->leadsDemoed);
+    }
+
+    /**
+     * Pending Rate (plan, 5.2; decision 137): of the Leads first demoed in the
+     * month, the share that left that demo pending: nothing sold that day, and
+     * something presented still open. A Lead that sold a week later still
+     * left its demo pending.
+     */
+    public function pendingRate(): ?int
+    {
+        return self::percent($this->leadsLeftPending, $this->leadsDemoed);
+    }
+
+    /**
+     * Of the Leads that left their first demo pending, the share with a return
+     * visit booked by the end of that day: the plan's "% Pending with Rehash
+     * booked during appointment".
+     */
+    public function returnVisitRate(): ?int
+    {
+        return self::percent($this->pendingWithReturnVisit, $this->leadsLeftPending);
+    }
+
+    /**
+     * Rehash conversion: of the Leads released to Rehash in the month, the
+     * share sold since, by anyone. A past month's goes up when one of its
+     * Leads is sold later.
+     */
+    public function rehashConversion(): ?int
+    {
+        return self::percent($this->rehashSold, $this->leadsReleasedToRehash);
     }
 
     /**

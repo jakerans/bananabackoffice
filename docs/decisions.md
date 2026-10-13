@@ -2852,6 +2852,76 @@ keep this train rolling."
 2. **Step 9c, the Pending figures, starts.** It is built as the plan's table
    and decision 137 (answer 8) have it and stops for his review.
 
+## 140. The repository is public, for now (2026-10-13)
+
+**Decided and done by Jacob.** On 2026-10-13 GitHub stopped running the two
+checks: the month's free allowance of minutes for a private repository was
+used up, by about 143 runs of roughly 14 billed minutes each. He was told what
+a public repository exposes, that it cannot be fully undone, and that the
+implementation agent recommended paying a small amount instead. His words, in
+order: "we'll move ot public"; "thats fine - no one will ever know its there";
+"can i move it back to private after we're done"; and, having changed it
+himself, "okaY ITS PUBLIC - CONTINUE".
+
+1. **The repository is public.** GitHub runs the checks on a public repository
+   without the monthly limit, so the rule in
+   [collaboration.md](collaboration.md) stands as written: both jobs, SQLite
+   and MySQL 8.4, are confirmed on every pushed step.
+2. **It can go back to private,** and he asked about doing so "after we're
+   done". When is not decided. The natural time is before production holds
+   real customer data. Whatever was copied while it was public stays copied.
+3. **What is public as a result,** recorded so that it is treated as known to
+   outsiders: all the code and its history; the plan and every decision,
+   including pay, commission and margin rules and his words quoted in them;
+   [security-notes.md](security-notes.md) with its open items; the address of
+   the staging site; and the email address on the commits.
+4. **Checked before it was changed:** all 187 commits on every branch held no
+   password, key or token, no customer information, no database dump and no
+   `.env` file. The accounts with a known password are made only on a
+   development machine.
+5. **While it is public, every commit is published the moment it is pushed.**
+   The standing rules do not change, and there is now no margin for a
+   mistake: no credential, token, key or customer information in any tracked
+   file, and `docs/reference/` is never committed.
+
+## 141. Step 9c is merged; slice 10, pre-production, is approved (2026-10-13)
+
+**Decided by Jacob,** in reply to step 9c's handoff and the slice 10 plan
+([slice-10-pre-production-plan.md](slice-10-pre-production-plan.md)): "Merge
+and approve. For the welcome call, yes, it's mainly just a checklist item.
+We'll have a separate SOP to do that, so that's just a checklist item for
+those things. Yes, a workplace should flag a job that no one has called. After
+2 business days, it gets flagged for falling behind."
+
+1. **Step 9c, the Pending figures, is merged.** Slice 9 is complete. The
+   readings in its handoff stay as built; he did not change them.
+2. **Slice 10 is approved in three steps,** 10a onboarding and the rough
+   timeframe, 10b the Color Specification, 10c readiness, each stopping for
+   his review.
+3. **The welcome call is a checklist item** (question 1). How the call is
+   made is a procedure the business keeps outside Backoffice. Backoffice
+   records that it was done.
+4. **A job nobody has called is flagged as falling behind after two business
+   days** in pre-production (question 3), in Production > Workspace.
+5. **The other seven questions are as recommended:** a rough timeframe is an
+   earliest and a latest start; the Production Manager or a manager writes the
+   colors and records the customer's approval; changed colors are a new
+   version needing approval again; sheen from a short list and the rest typed
+   in; the salesperson reads colors and does not write them; colors are not
+   required for "ready to schedule"; and no message goes to the customer.
+
+Read by the implementation agent, for Jacob to change if wrong:
+
+- **"A checklist item" is one tick, "Welcome call made",** with the day it was
+  made and an optional note. Who they spoke to is not asked for. It can be
+  unticked by the same people if it was ticked by mistake.
+- **Business days are Monday to Friday,** in the Project's Location's time,
+  counted from when the Production Manager took the job or was assigned it.
+  Public holidays are not known to Backoffice and count as working days.
+- **"Falling behind" is shown, not sent:** a mark on the job in the Workspace
+  for its Production Manager and for a manager. No bell notice and no email,
+  as the plan's question 3 proposed.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
