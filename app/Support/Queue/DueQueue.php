@@ -165,6 +165,7 @@ class DueQueue
      * @return array{
      *     dueNow: int,
      *     cancelledDueNow: int,
+     *     rehashDueNow: int,
      *     longestWaitSince: CarbonInterface|null,
      *     held: Collection<int, LeadCadence>,
      *     heldCount: int,
@@ -188,6 +189,7 @@ class DueQueue
         $nothingOpen = $open === [] && ! $openScope['unrouted'];
         $due = $nothingOpen ? ['count' => 0, 'since' => null] : $this->dueFigures($openScope, $moment, CallQueue::Main);
         $cancelled = $nothingOpen ? ['count' => 0, 'since' => null] : $this->dueFigures($openScope, $moment, CallQueue::CancelledAppointments);
+        $rehash = $nothingOpen ? ['count' => 0, 'since' => null] : $this->dueFigures($openScope, $moment, CallQueue::Rehash);
 
         $held = $this->inScope(LeadCadence::query(), $scope)
             ->where('state', CadenceState::InQueue)
@@ -201,6 +203,7 @@ class DueQueue
         return [
             'dueNow' => $due['count'],
             'cancelledDueNow' => $cancelled['count'],
+            'rehashDueNow' => $rehash['count'],
             'longestWaitSince' => $due['since'],
             'heldCount' => (clone $held)->count(),
             'held' => (clone $held)->with(['lead', 'holder'])->orderBy('held_at')->limit(self::LIST_LIMIT)->get(),

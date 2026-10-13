@@ -619,7 +619,10 @@ new class extends Component {
         $this->changed();
 
         Flux::modal('take-lead-back')->close();
-        Flux::toast(variant: 'success', text: __('This lead is yours again. Book its appointment when you have a time.'));
+        // Back from Rehash it has its proposals and a visit already run; back from a cancellation it needs an appointment.
+        Flux::toast(variant: 'success', text: $this->lead->status === LeadStatus::AppointmentRun
+            ? __('This lead is yours again, with its proposals. Its time with you starts again today.')
+            : __('This lead is yours again. Book its appointment when you have a time.'));
     }
 
     public function openBookedInError(): void
@@ -723,7 +726,11 @@ new class extends Component {
 
     @can('takeBack', $lead)
         <div class="flex flex-col gap-2" data-test="take-back">
-            <flux:text>{{ __('This lead was released from you because it was not booked again in time. If the customer has come back to you, you can take it back.') }}</flux:text>
+            <flux:text>
+                {{ $lead->isInRehash()
+                    ? __('This lead went from you to the Contact Center for rehash because it was not sold, lost or booked again in time. If the customer has come back to you, you can take it back.')
+                    : __('This lead was released from you because it was not booked again in time. If the customer has come back to you, you can take it back.') }}
+            </flux:text>
 
             <div>
                 <flux:button wire:click="openTakeBack" data-test="take-lead-back">{{ __('Take this lead back') }}</flux:button>
@@ -733,7 +740,9 @@ new class extends Component {
         <x-confirmation-modal
             name="take-lead-back"
             :title="__('Take this lead back?')"
-            :description="__('It becomes yours again, to book. It leaves the call queue and does not count as a new issued lead.')"
+            :description="$lead->isInRehash()
+                ? __('It becomes yours again, with its proposals, and its time with you starts again. It leaves the call queue and does not count as a new issued lead.')
+                : __('It becomes yours again, to book. It leaves the call queue and does not count as a new issued lead.')"
             action="takeBack"
             :confirm-label="__('Take it back')"
             confirm-variant="primary"

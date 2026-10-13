@@ -17,9 +17,9 @@ class WarnOfPendingRelease
 {
     /**
      * Leads that may be due the warning: with their salesperson after an
-     * appointment that was run, with something pending whose last day is
-     * near. A wide net, read in UTC; handle() decides each one by its own
-     * Location's calendar.
+     * appointment that was run, whose last day with them is near, with
+     * something pending or with nothing presented. A wide net, read in UTC;
+     * handle() decides each one by its own Location's calendar.
      *
      * A Lead with a return visit booked is not here: it shows Appointment
      * booked and is not released while that stands (decision 137, answer 4).
@@ -29,17 +29,19 @@ class WarnOfPendingRelease
     public static function due(CarbonInterface $moment): Builder
     {
         $near = $moment->copy()->addDays(ContactCenterSettings::PENDING_WARNING_DAYS + 1);
+        $days = ContactCenterSettings::current()->proposal_valid_days;
 
         return Lead::query()
             ->where('status', LeadStatus::AppointmentRun)
             ->whereNotNull('assigned_user_id')
-            // Something pending is on its last days, and has not been expired for more than a day.
-            ->whereHas('proposals', fn (Builder $proposals) => self::pending($proposals)->where('valid_until', '<=', $near)->where('valid_until', '>=', $moment->copy()->subDays(2)))
-            // Nothing pending runs past them: the Lead leaves when the last one expires.
+            // It has been Appointment run for nearly as long as a proposal is valid.
+            ->where('status_changed_at', '<=', $near->copy()->subDays($days))
+            // Nothing pending runs past the next few days: the Lead leaves when the last one expires.
             ->whereDoesntHave('proposals', fn (Builder $proposals) => self::pending($proposals)->where('valid_until', '>', $near))
-            // Not warned yet, or the last day has moved on since the warning.
+            // Not already warned about a day that is still to come or only just gone.
             ->where(fn (Builder $unwarned) => $unwarned
                 ->whereNull('pending_warned_for')
+                ->orWhere('pending_warned_for', '<', $moment->copy()->subDays(2))
                 ->orWhereHas('proposals', fn (Builder $proposals) => self::pending($proposals)->whereColumn('valid_until', '>', 'leads.pending_warned_for')));
     }
 
@@ -55,10 +57,10 @@ class WarnOfPendingRelease
     }
 
     /**
-     * Warn one Lead's salesperson, inside the app, that what is pending on it
-     * is about to expire and the Lead will then go to the Contact Center for
-     * rehash (docs/slice-9-pending-rehash-plan.md, step 9a; decision 137,
-     * answer 9). Once for each last day: if the day is moved on, they are
+     * Warn one Lead's salesperson, inside the app, that the Lead is on its
+     * last days with them and will then go to the Contact Center for rehash
+     * (docs/slice-9-pending-rehash-plan.md, steps 9a and 9b; decision 137,
+     * answers 5 and 9). Once for each last day: if the day is moved on, they are
      * warned again when the new one is near.
      *
      * Done by the timer, so nobody is recorded as having done it. Safe to

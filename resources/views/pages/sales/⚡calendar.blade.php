@@ -366,7 +366,9 @@ new #[Title('Calendar')] class extends Component {
 
             <ul class="divide-y divide-zinc-200">
                 @foreach ($this->pendingBids as $pendingLead)
-                    @php($ownedUntil = ProposalValidity::ownershipUntil($pendingLead))
+                    {{-- Placed by the bid's own last day: the latest of what is pending. --}}
+                    @php($latestPending = $pendingLead->proposals->sortBy('valid_until')->last())
+                    @php($ownedUntil = $latestPending === null ? null : ProposalValidity::of($latestPending))
                     @php($daysLeft = $ownedUntil === null ? null : (int) ProposalValidity::today($pendingLead->location)->diffInDays($ownedUntil))
                     <li wire:key="calendar-pending-{{ $pendingLead->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="calendar-pending-lead">
                         <div class="min-w-0">
@@ -404,7 +406,7 @@ new #[Title('Calendar')] class extends Component {
         <div class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-5" data-test="calendar-released">
             <div>
                 <flux:heading size="lg" level="2">{{ $this->seesOthers ? __('Released to the Contact Center') : __('Released from you') }}</flux:heading>
-                <flux:subheading>{{ __('Cancelled leads that were not booked again in time. The call center is trying to rebook them. The salesperson a lead was released from can take it back from the lead if the customer comes back to them.') }}</flux:subheading>
+                <flux:subheading>{{ __('Leads that were not booked again, sold or lost in time. The call center is working them. The salesperson a lead was released from can take it back from the lead if the customer comes back to them.') }}</flux:subheading>
             </div>
 
             <ul class="divide-y divide-zinc-200">

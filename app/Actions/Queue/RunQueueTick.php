@@ -5,6 +5,7 @@ namespace App\Actions\Queue;
 use App\Actions\Appointments\ReleaseCancelledLead;
 use App\Actions\Appointments\RemindToCloseOutAppointment;
 use App\Actions\Projects\RemindToCompleteHandoff;
+use App\Actions\Proposals\ReleasePendingLead;
 use App\Actions\Proposals\WarnOfPendingRelease;
 use App\Enums\CadenceEndReason;
 use App\Enums\CadenceState;
@@ -32,6 +33,7 @@ class RunQueueTick
         private RemindToCloseOutAppointment $remindToCloseOutAppointment,
         private RemindToCompleteHandoff $remindToCompleteHandoff,
         private WarnOfPendingRelease $warnOfPendingRelease,
+        private ReleasePendingLead $releasePendingLead,
     ) {}
 
     /**
@@ -55,9 +57,10 @@ class RunQueueTick
      *    that ended fifteen minutes ago and has no answer (decision 126).
      * 6. Remind a salesperson, once, the morning after a sale, to answer the
      *    handoff questions for Production if they have not (decision 132).
-     * 7. Warn a salesperson, two days ahead, that what is pending on a Lead of
-     *    theirs is about to expire (decision 137). Counted with the warnings
-     *    of part 4.
+     * 7. Warn a salesperson, two days ahead, that a Lead of theirs is on its
+     *    last days with them, and release to Rehash the Leads whose last day
+     *    has passed: what was pending expired, or nothing was presented
+     *    (decision 137). Counted with the warnings and releases of part 4.
      *
      * It never schedules an attempt, never marks a Lead finished and never
      * contacts a customer. A failure is logged without customer details and
@@ -114,6 +117,10 @@ class RunQueueTick
 
         foreach ($this->leadIds($done, 'pending_warned', fn () => WarnOfPendingRelease::due(now())) as $id) {
             $done['warned'] += (int) $this->safely($done, "warned pending lead {$id}", null, fn (): bool => $this->warnOfPendingRelease->handle($id));
+        }
+
+        foreach ($this->leadIds($done, 'pending_released', fn () => ReleasePendingLead::due(now())) as $id) {
+            $done['released'] += (int) $this->safely($done, "released pending lead {$id}", null, fn (): bool => $this->releasePendingLead->release($id));
         }
 
         return $done;

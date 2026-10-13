@@ -9,6 +9,7 @@ use App\Actions\Queue\ResumeLeadCadence;
 use App\Enums\AppointmentState;
 use App\Enums\AssignmentEndReason;
 use App\Enums\AuditAction;
+use App\Enums\CallQueue;
 use App\Enums\CancellationParty;
 use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
@@ -32,6 +33,9 @@ class ReturnLeadFromSales
 
     /** The timer released it: cancelled and not booked again within the waiting period (rulebook, rule 8). */
     public const string RELEASED = 'released';
+
+    /** The timer released it: what was pending on it expired, or nothing was presented (slice 9, step 9b). It goes to Rehash. */
+    public const string RELEASED_PENDING = 'released_pending';
 
     public function __construct(
         private UnassignLead $unassignLead,
@@ -84,7 +88,7 @@ class ReturnLeadFromSales
      * salesperson can take it back (rule 12). Going back any other way forgets
      * it: a manager chose to take the Lead.
      *
-     * @param  self::SENT_BACK|self::MOVED|self::RETURNED_TO_CENTRAL|self::RELEASED  $how
+     * @param  self::SENT_BACK|self::MOVED|self::RETURNED_TO_CENTRAL|self::RELEASED|self::RELEASED_PENDING  $how
      * @param  Location|null  $auditLocation  Where it is recorded: the Location the Lead was at.
      */
     public function handle(Lead $lead, ?User $actor, string $how, ?string $note, bool $countsAsIssued, ?Location $auditLocation, ?User $salesperson = null): void
@@ -92,6 +96,7 @@ class ReturnLeadFromSales
         $from = $lead->status;
         $moment = now();
         $salesperson ??= $lead->assignee;
+        $byTimer = $how === self::RELEASED || $how === self::RELEASED_PENDING;
 
         Appointment::query()->where('lead_id', $lead->id)->upcomingAt($moment)->lockForUpdate()->get()->each(
             fn (Appointment $appointment) => $appointment->forceFill([
@@ -110,13 +115,13 @@ class ReturnLeadFromSales
             'status' => LeadStatus::Qualified,
             'status_changed_at' => $moment,
             'returned_from_sales_at' => $moment,
-            'released_from_user_id' => $how === self::RELEASED ? $salesperson?->id : null,
-            'released_from_sales_at' => $how === self::RELEASED ? $moment : null,
+            'released_from_user_id' => $byTimer ? $salesperson?->id : null,
+            'released_from_sales_at' => $byTimer ? $moment : null,
         ])->save();
 
         $this->recordLeadStatusChange->handle($lead, LeadStatusEvent::ReturnedFromSales, $from, $actor, $salesperson?->id, note: $note);
 
-        $this->resumeLeadCadence->afterReturnFromSales($lead, $actor, $note);
+        $this->resumeLeadCadence->afterReturnFromSales($lead, $actor, $note, $how === self::RELEASED_PENDING ? CallQueue::Rehash : null);
 
         $this->recordAuditEvent->handle(
             AuditAction::LeadReturnedFromSales,
@@ -129,7 +134,11 @@ class ReturnLeadFromSales
         );
 
         if ($salesperson !== null && ! $salesperson->is($actor)) {
-            $salesperson->notify(new AppointmentChanged($lead->id, $how === self::RELEASED ? AppointmentChanged::LEAD_RELEASED : AppointmentChanged::LEAD_RETURNED, AppointmentChanged::IN_APP));
+            $salesperson->notify(new AppointmentChanged($lead->id, match ($how) {
+                self::RELEASED => AppointmentChanged::LEAD_RELEASED,
+                self::RELEASED_PENDING => AppointmentChanged::PENDING_LEAD_RELEASED,
+                default => AppointmentChanged::LEAD_RETURNED,
+            }, AppointmentChanged::IN_APP));
         }
     }
 }
