@@ -4,8 +4,9 @@ Status: **approved on 2026-10-13 (decision 130) in two steps, each stopping
 for Jacob's review. Three of his answers changed the plan below: one Project
 for each sold proposal (not one for the Lead), the cancellation rule accepted
 "for now", and a handoff made of questions the salesperson has to complete.
-Step 8a is approved to build. Step 8b waits for the handoff questions to be
-agreed.**
+Step 8a is approved to build. The handoff questions and property-per-proposal
+rule were agreed on 2026-10-13 (decision 132); no product question now blocks
+step 8b.**
 
 It follows [product-architecture.md](product-architecture.md), sections 2, 6.2,
 6.3 and 20, the slice 5 rulebook
@@ -183,13 +184,29 @@ Manager can also take a waiting job at their own Location. It can be changed,
 with a note.
 
 **The handoff.** Questions the salesperson has to complete for each Project,
-so the Production Manager is not left guessing (decision 130). Which
-questions, and what waits on them, is agreed with Jacob before this step is
-built; the proposed first set and rules are questions 1 and 2 in
-[stakeholder-discovery-open-questions.md](stakeholder-discovery-open-questions.md).
-The stakeholder questionnaire confirms that this must carry the Sales
-discovery Production needs, not merely a generic note: scope, exclusions,
-promises, timing, access, colors, condition/prep and customer priorities.
+so the Production Manager is not left guessing (decisions 130 and 132). The
+first version requires:
+
+1. exact included scope: rooms, sides, surfaces and coats;
+2. exclusions the customer might otherwise assume;
+3. promises outside the proposal: dates, extras, touch-ups or discounts;
+4. requested timing and dates to hit or avoid;
+5. site access: who will be home, gates/lockboxes, parking and pets;
+6. colors: selected details, customer will choose, or consultation needed;
+7. existing condition and preparation risks;
+8. customer priorities and expectations learned during WNBET discovery; and
+9. an optional “anything else Production should know?” field.
+
+Required questions accept an explicit “None”. Production can see a waiting
+Project but cannot take it until the handoff is complete. Until then the
+salesperson sees a persistent prompt and receives one bell/email reminder the
+next morning. These questions are fixed in the first version rather than an
+editable managed list.
+
+**Property per proposal.** Every proposal selects one of the customer's
+properties, defaulting to the Lead's property. A proposal and its Project cover
+exactly one property. Work at another property uses another proposal and
+therefore another Project.
 
 **Telling people** (plan, 20: "every ownership transfer creates an Activity
 event and a notification to the new owner"): the Production Managers at the

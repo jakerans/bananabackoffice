@@ -8,30 +8,34 @@ and decisions. The Word document is source material; this file is the project
 record of what is still unanswered.
 
 Questions that the questionnaire answered are incorporated into
-[product-architecture.md](product-architecture.md) and decision 131. Commercial
-Sales remains deliberately deferred and its unanswered questionnaire section
-does not block residential work.
+[product-architecture.md](product-architecture.md) and decision 131. The two
+slice 8b questions were answered by Jacob on 2026-10-13 (decision 132), leaving
+29 open questions below. Commercial Sales remains deliberately deferred and
+its unanswered questionnaire section does not block residential work.
 
-## Needed for slice 8b — Production handoff
+## Answered for slice 8b — Production handoff
 
-1. **Which handoff questions must Sales answer?** Recommended first version:
+1. **Which handoff questions must Sales answer?** **Answered as recommended:**
    exact included scope; exclusions; promises outside the proposal; requested
    timing; site access; colors; condition/prep risks; customer priorities and
    expectations learned during WNBET discovery; and an optional “anything else
    Production should know?” field.
 
-   Recommended rules: required fields accept an explicit “None”; Production
+   Approved rules: required fields accept an explicit “None”; Production
    can see a waiting Project but cannot take it until the handoff is complete;
    the salesperson sees a persistent prompt and receives one bell/email reminder
    the next morning; keep the questions fixed in code for the first version.
 
 2. **Which property does a proposal concern when one Lead covers work at more
-   than one house?** Recommended: every proposal selects one of the customer’s
+   than one house?** **Answered as recommended:** every proposal selects one of the customer’s
    properties, defaulting to the Lead’s property. Its Project takes that
    property. A proposal cannot span properties; use a separate proposal and
    Project for each.
 
-## Needed before the affected Sales work
+These are no longer open questions. They are kept here so the discovery record
+shows what was asked and how it was settled.
+
+## Remaining — needed before the affected Sales work
 
 3. **Which salesperson receives the Lead Issued and sale figures after an
    appointment is moved or a Lead is re-issued?** Recommended: Lead Issued stays
@@ -58,7 +62,7 @@ does not block residential work.
    not a blocker now. Commercial Sales remains a separate deferred discovery
    exercise.
 
-## Needed before Production compensation, scheduling or subcontractor work
+## Remaining — needed before Production compensation, scheduling or subcontractor work
 
 7. **What exactly counts as a materially incorrect PM job cost?** Missing POs
    are confirmed as the main failure, and the third occurrence should notify
@@ -105,7 +109,7 @@ does not block residential work.
     budget and the worker’s normal effective-dated P4P plan; do not invent a
     special reduced rate.
 
-## Needed before Finance and accounting work
+## Remaining — needed before Finance and accounting work
 
 15. **Confirm the system-of-record boundary.** Should Backoffice own operational
     workflow and approvals while QuickBooks owns the formal ledger, posted

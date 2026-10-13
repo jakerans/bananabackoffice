@@ -510,6 +510,11 @@ Added 2026-10-13 (slice 8 step 8a; rulebook rule 13; decision 130; build plan: s
 - Built: a Project is made the moment a proposal is Sold, one for each sold proposal, with what was sold, for how much, for whom and where. It has its own page, and shows on the Lead and the customer. Its states are separate fields; so far only Production: New from Sales.
 - A corrected sale cancels its Project and keeps it; sold again, the same Project comes back. Jacob accepted this "for now".
 - Not built: the handoff questions and Production's Workspace (step 8b), the confirmation email or text, the Coordinator, colors, readiness, the schedule.
+- Decision 132 settles the step 8b handoff: structured scope, exclusions,
+  promises, timing, access, colors, condition/prep and WNBET priorities are
+  required before Production can take the Project; an optional final note is
+  allowed. A proposal selects exactly one customer property and its Project
+  uses that property.
 
 6.4 Color Specification
 Every normal sold job ultimately has an authoritative Color Specification.

@@ -2638,6 +2638,25 @@ Questions are grouped by the work they can block so deferred Finance,
 Commercial or W-2 work does not stop slice 8b. Commercial Sales remains
 deliberately deferred.
 
+## 132. Slice 8b handoff questions and property-per-proposal rule (2026-10-13)
+
+**Decided by Jacob:** “I like your recommendations for both of those answers.”
+
+1. The Sales-to-Production handoff requires structured answers for included
+   scope, exclusions, promises beyond the proposal, requested timing, site
+   access, colors, condition/prep risks, and customer priorities/expectations
+   learned during WNBET discovery. It also has an optional final note.
+2. Required fields may be answered explicitly with “None”. Production sees a
+   waiting Project but cannot take it until the handoff is complete. The
+   salesperson sees a persistent prompt and gets one bell/email reminder the
+   next morning. The questions are fixed for the first version.
+3. Every proposal selects one customer property, defaulting to the Lead's
+   property. Its Project uses that property. One proposal cannot span multiple
+   properties; each other property needs another proposal and Project.
+
+This settles the product questions that were holding step 8b. It records the
+requirements but does not by itself start implementation or merge step 8a.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

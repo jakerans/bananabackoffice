@@ -10,8 +10,9 @@ to merge. `main` and staging have none of it. This branch sits on top of the
 slice 8 plan branch (`checkpoint-slice-8-plan`, also not merged), so merging it
 brings the plan, decision 130 and the build together.
 
-**Step 8b cannot start until Jacob agrees the handoff questions.** A proposal
-for them is below, under "Decisions needed".
+**The step 8b product questions are settled** by decision 132. The exact
+handoff and property rules are now in the slice 8 plan. Step 8a still waits for
+the word to merge; implementation has not moved on to 8b.
 
 ## Step
 
@@ -127,15 +128,16 @@ None from decision 130.
 ## Decisions needed from Jacob
 
 The broader stakeholder questionnaire has also been reconciled. Its answered
-items are now in the product architecture; all remaining questions and a
+items are now in the product architecture; the 29 remaining questions and a
 recommendation for each are in
 [../stakeholder-discovery-open-questions.md](../stakeholder-discovery-open-questions.md).
-Only its first two questions block step 8b. The rest wait for their affected
-Sales, Production, workforce or Finance slice.
+Its first two questions are now answered by decision 132. The rest wait for
+their affected Sales, Production, workforce or Finance slice.
 
 1. **Review 8a** and say whether to merge it.
 
-2. **The handoff questions for step 8b.** Jacob asked for questions the
+2. **The handoff questions for step 8b — answered as proposed in decision
+   132.** Jacob asked for questions the
    salesperson has to complete, because thin handovers have caused trouble
    for project managers. Proposed, for him to cut, add to or reword:
 
@@ -162,7 +164,7 @@ Sales, Production, workforce or Finance slice.
      edits. Changing them is a small change to make when he asks. An editable
      list of questions can come later.
 
-3. **Separate houses.** Today a proposal, and so its Project, is on the
+3. **Separate houses — answered as recommended in decision 132.** Today a proposal, and so its Project, is on the
    Lead's property. To sell work on another of the customer's houses from the
    same Lead, "Add proposal" would ask which of the customer's properties it
    is for, starting on the Lead's. Recommended: add it with step 8b. The
