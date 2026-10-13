@@ -418,6 +418,49 @@ Readings made while building, for Jacob to change if wrong:
 - **One Location at a time.** There is no figure across all Locations.
 - **A rate with nothing to divide by shows a dash,** not 0%.
 
+### Changed after slice 8 (2026-10-13, decisions 133 and 134)
+
+Built on the branch `checkpoint-sales-figures-decision-134`. **Not merged;
+it waits for Jacob's review.** Where this differs from "Step 7d as built"
+above, this is what the code does now.
+
+- **A record of sales.** Table `sale_entries`: one line when a proposal is
+  marked Sold, and one more, for the same amount below zero, when a manager
+  corrects that sale. A line is never changed or deleted
+  (`App\Models\SaleEntry` refuses both). Each carries the Location, the
+  salesperson who had the Lead at the sale, who recorded it, when, and
+  whether it is the Lead's win. Written only by
+  `App\Actions\Proposals\RecordSaleEntry`, inside the same save as the sale
+  or the correction. Sales made before the table existed are written into it
+  by its migration.
+- **Close Rate works off lead ownership (decision 134).** A win belongs to
+  the salesperson who had the Lead when the proposal was accepted, whoever
+  typed it in, and counts in the month it was accepted. One Lead is one win:
+  a second proposal sold later adds revenue, not a win. The wins are divided
+  by the Leads whose first appointment was run in the month, as before
+  (decision 125). So a sale closed on a return visit the month after is a win
+  in the later month, and a month can read above 100%. A month with wins and
+  no Lead first run shows a dash and says why.
+- **Corrections are adjustments (decision 133).** A sale corrected in a later
+  month stays in the month it was made; the amount, and the win if it was the
+  Lead's only sale, come off the month it was corrected in, shown as "taken
+  back by a correction". The same for a Lead Issued that is taken back later
+  (booked in error, or should never have been booked): it comes off the month
+  it was taken back in. A month that has passed reads the same for good.
+  Sold Revenue, Leads Issued and NSLI are shown after corrections, and can be
+  below zero in a month with only corrections.
+- **Why nothing was presented (decision 133).** The after-action report asks
+  it, in the salesperson's own words, when the answer is "run, nothing
+  presented", and is refused without it. An appointment marked run from the
+  Lead page has it given afterwards from the Proposals card, by the
+  salesperson or a manager, and it can be changed. It is kept on the
+  appointment (`no_demo_reason`, who and when) with an audit event that is
+  not in the customer's Activity. It changes nothing about how the
+  appointment counts.
+- **Not built:** adjustments for an appointment's run or no-show answer that
+  is corrected later, or for a proposal marked "added in error" later. Those
+  still change the month the appointment was in.
+
 ## Who may do what
 
 No new permission is proposed. All checked at the Lead's Location.

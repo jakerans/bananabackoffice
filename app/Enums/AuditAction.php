@@ -55,6 +55,7 @@ enum AuditAction: string
     case LeadAppointmentRun = 'lead.appointment_run';
     case LeadAppointmentNoShow = 'lead.appointment_no_show';
     case LeadAppointmentCloseOutCorrected = 'lead.appointment_close_out_corrected';
+    case LeadAppointmentNoDemoReason = 'lead.appointment_no_demo_reason';
     case LeadProposalAdded = 'lead.proposal_added';
     case LeadProposalPresentedAgain = 'lead.proposal_presented_again';
     case LeadProposalSold = 'lead.proposal_sold';

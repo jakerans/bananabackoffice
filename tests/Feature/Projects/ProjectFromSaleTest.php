@@ -81,8 +81,8 @@ test('marking a proposal sold makes its project in the same save, with what the 
         'property_id' => $this->lead->property_id,
     ]);
 
-    // "Main service — street address" (decision 54, kept by 130).
-    expect($project->title)->toBe($this->lead->primaryService()->name.' — 123 Oak St');
+    // "What was sold — street address", not the Lead's main service (decision 134).
+    expect($project->title)->toBe('Whole exterior — 123 Oak St');
 
     // The sold amount is the proposal's and is never typed again (decision 36).
     expect($project->sold_cents)->toBe(820000);
@@ -121,8 +121,8 @@ test('each sold proposal has a project of its own (decision 130)', function () {
     expect($this->lead->projects()->pluck('id')->all())->toBe([$first->id, $second->id]);
     expect([$first->sold_cents, $second->sold_cents])->toBe([845000, 300000]);
 
-    // The same service at the same address would read the same, so the second says what was sold.
-    expect($second->title)->toBe($first->title.' (Cabinets only)');
+    // Each is named for what was sold, so two at one address read differently (decision 134).
+    expect([$first->title, $second->title])->toBe(['Whole exterior — 123 Oak St', 'Cabinets only — 123 Oak St']);
 
     // A proposal that is not sold has none.
     expect($deck->project)->toBeNull();
@@ -322,7 +322,8 @@ test('a proposal that was sold before projects existed is given one, once', func
     $asMade = $made->only(['proposal_id', 'lead_id', 'location_id', 'account_id', 'contact_id', 'property_id', 'title', 'project_size_id', 'sold_cents', 'salesperson_id', 'salesperson_name', 'created_by', 'created_by_name']);
     $services = $made->services->pluck('pivot.is_primary', 'id')->map(fn ($main) => (bool) $main)->all();
 
-    // As it was for the day between the two steps: sold, and no Project.
+    // As it was for the day between the two steps: sold, and no Project (nor the record of sales, which came later still).
+    DB::table('sale_entries')->delete();
     DB::table('project_service')->delete();
     DB::table('projects')->delete();
 
@@ -336,8 +337,8 @@ test('a proposal that was sold before projects existed is given one, once', func
     expect($filled->services->pluck('pivot.is_primary', 'id')->map(fn ($main) => (bool) $main)->all())->toBe($services);
     expect($filled->isCancelled())->toBeFalse();
 
-    // The second one from the same Lead says what was sold, as a sale would have named it.
-    expect(Project::query()->where('proposal_id', $cabinets->id)->sole()->title)->toBe($filled->title.' (Cabinets only)');
+    // The second one from the same Lead is named for what was sold, as a sale names it.
+    expect(Project::query()->where('proposal_id', $cabinets->id)->sole()->title)->toBe('Cabinets only — 123 Oak St');
 
     // Run again, it makes nothing more; and a proposal that is not sold gets none.
     addProposal($this->lead->fresh(), $this->sam, ['name' => 'Deck', 'price' => '1800']);

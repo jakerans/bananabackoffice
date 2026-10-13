@@ -42,16 +42,11 @@ return new class extends Migration
             }
 
             $services = DB::table('lead_service')->where('lead_id', $lead->id)->get();
-            $main = $services->firstWhere('is_primary', 1) ?? $services->firstWhere('is_primary', true);
-            $service = $main === null ? null : DB::table('services')->where('id', $main->service_id)->value('name');
             $property = DB::table('properties')->where('id', $lead->property_id)->first();
             $street = $property === null ? null : ($property->address_line1 === null ? $property->address : AddressKey::shortStreet($property->address_line1));
 
-            $title = ($service ?? $proposal->name).($street === null || $street === '' ? '' : ' — '.$street);
-
-            if (DB::table('projects')->where('lead_id', $lead->id)->where('title', $title)->exists()) {
-                $title .= ' ('.$proposal->name.')';
-            }
+            // Named for what was sold, as a sale names it (decision 134).
+            $title = $proposal->name.($street === null || $street === '' ? '' : ' — '.$street);
 
             $projectId = DB::table('projects')->insertGetId([
                 'proposal_id' => $proposal->id,

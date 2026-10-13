@@ -37,7 +37,7 @@ class CreateProjectForSoldProposal
             return $this->bringBack($existing, $lead, $proposal, $actor);
         }
 
-        $title = self::titleFor($lead, $proposal);
+        $title = self::titleFor($proposal);
 
         $project = new Project;
         $project->forceFill([
@@ -76,24 +76,17 @@ class CreateProjectForSoldProposal
     }
 
     /**
-     * The title a Project starts with: the Lead's main service and the
-     * property's short street address, "Exterior Painting — 123 Oak St"
-     * (decision 54, kept by decision 130). A second Project from the same Lead
-     * would read the same, so it also carries what was sold: "(Deck)".
+     * The title a Project starts with: what was sold and the short street
+     * address of the property it is for, "Lake house deck — 9 Lake Rd"
+     * (decision 134, which changes answer 3 of decision 130). One Lead can
+     * have several Projects, so each is named for its own proposal, not for
+     * the Lead's main service. It can be edited afterwards.
      */
-    public static function titleFor(Lead $lead, Proposal $proposal): string
+    public static function titleFor(Proposal $proposal): string
     {
-        $service = $lead->services()->get()->first(
-            fn (Service $service): bool => (bool) $service->getRelationValue('pivot')?->getAttribute('is_primary'),
-        )->name ?? $proposal->name;
-
         $property = $proposal->property;
         $street = $property === null ? null : ($property->address_line1 === null ? $property->address : AddressKey::shortStreet($property->address_line1));
-        $title = $street === null || $street === '' ? $service : $service.' — '.$street;
-
-        if (Project::query()->where('lead_id', $lead->id)->where('title', $title)->exists()) {
-            $title .= ' ('.$proposal->name.')';
-        }
+        $title = $street === null || $street === '' ? $proposal->name : $proposal->name.' — '.$street;
 
         return mb_substr($title, 0, Project::TITLE_LENGTH);
     }

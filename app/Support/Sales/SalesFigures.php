@@ -3,13 +3,10 @@
 namespace App\Support\Sales;
 
 use App\Enums\AppointmentState;
-use App\Enums\LeadStatus;
-use App\Enums\ProposalResult;
 use App\Models\Appointment;
-use App\Models\Lead;
 use App\Models\LeadIssue;
 use App\Models\Location;
-use App\Models\Proposal;
+use App\Models\SaleEntry;
 use App\Support\Queue\CallingHours;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,22 +15,29 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 /**
  * The first Sales figures for one month at one Location, for everyone there or
  * for one salesperson (docs/slice-7-appointment-results-plan.md, step 7d;
- * product-architecture.md, 5.2).
+ * product-architecture.md, 5.2; decisions 133 and 134).
  *
  * Nothing here is stored. Every figure is counted from what people recorded:
  * issues (slice 6), appointments and whether they were run (step 7a),
- * proposals (7b), and results (7c). The month is the Location's own calendar
- * month.
+ * proposals (7b), and the record of sales and their corrections (sale
+ * entries). The month is the Location's own calendar month.
  *
- * Whose figure each thing is, until Sales Leadership decides otherwise: a
- * Lead issued counts for the salesperson it was issued to; an appointment for
- * the salesperson it is with; a sale for the salesperson the Lead is with.
+ * Whose figure each thing is (decision 133): a Lead issued counts for the
+ * salesperson it was issued to; an appointment for the salesperson it is
+ * with; a sale and its win for the salesperson who had the Lead when the
+ * proposal was sold.
+ *
+ * A month that has passed is not rewritten (decision 133). A sale corrected,
+ * or an issue voided, stays in the month it was made and is taken off the
+ * month it was corrected in.
  */
 final readonly class SalesFigures
 {
     public function __construct(
-        /** Issues that still count, by the moment the appointment was saved. */
+        /** Leads handed to Sales in the month, whatever became of the issue later. */
         public int $leadsIssued,
+        /** Issues taken back in the month: booked in error, or should never have been booked. */
+        public int $issuesVoided,
         /** Appointments whose day is in the month, leaving out "booked in error". */
         public int $appointmentsBooked,
         public int $appointmentsRun,
@@ -43,12 +47,18 @@ final readonly class SalesFigures
         public int $appointmentsNoShow,
         /** Leads whose first run appointment was in the month: each Lead once, ever. */
         public int $leadsRun,
-        /** Of those Leads, the ones that are Sold now (decision 125, answer 10). */
+        /** Leads whose first proposal was accepted in the month: one Lead is one win (decision 134). */
         public int $leadsWon,
+        /** Wins taken back in the month, because a manager corrected a Lead's only sale. */
+        public int $winsCorrected,
+        /** How many proposals were sold in the month. */
+        public int $salesMade,
         /** The sold amounts recorded in the month, in cents. */
         public int $soldCents,
-        /** How many Leads those sales belong to. */
-        public int $leadsSold,
+        /** The sold amounts taken back in the month by corrections, in cents. */
+        public int $correctedCents,
+        /** How many sales were corrected in the month. */
+        public int $salesCorrected,
     ) {}
 
     /**
@@ -71,7 +81,7 @@ final readonly class SalesFigures
         $count = fn (AppointmentState $state): int => (int) ($byState[$state->value] ?? 0);
 
         // Each Lead is placed once, in the month of its first run appointment, so a return visit never counts it twice.
-        $firstRuns = fn (): Builder => $appointments()
+        $firstRuns = $appointments()
             ->where('appointments.state', AppointmentState::Run)
             ->whereNotExists(fn (QueryBuilder $earlier) => $earlier
                 ->selectRaw('1')
@@ -84,23 +94,24 @@ final readonly class SalesFigures
                         ->whereColumn('earlier.starts_at', '=', 'appointments.starts_at')
                         ->whereColumn('earlier.id', '<', 'appointments.id'))));
 
-        $sales = Proposal::query()
-            ->counted()
-            ->where('result', ProposalResult::Sold)
-            ->where('result_at', '>=', $from)
-            ->where('result_at', '<', $to)
-            ->whereHas('lead', fn (Builder $lead) => $lead
-                ->where('location_id', $location->id)
-                ->when($salespersonId !== null, fn (Builder $query) => $query->where('assigned_user_id', $salespersonId)));
+        $issues = fn (string $moment): int => LeadIssue::query()
+            ->where('location_id', $location->id)
+            ->where($moment, '>=', $from)
+            ->where($moment, '<', $to)
+            ->when($salespersonId !== null, fn (Builder $query) => $query->where('salesperson_id', $salespersonId))
+            ->count();
+
+        // A sale counts in the month it was accepted, for whoever had the Lead then (decision 134).
+        $entries = fn (string $kind): Builder => SaleEntry::query()
+            ->where('kind', $kind)
+            ->where('location_id', $location->id)
+            ->where('occurred_at', '>=', $from)
+            ->where('occurred_at', '<', $to)
+            ->when($salespersonId !== null, fn (Builder $query) => $query->where('salesperson_id', $salespersonId));
 
         return new self(
-            leadsIssued: LeadIssue::query()
-                ->where('location_id', $location->id)
-                ->whereNull('voided_at')
-                ->where('issued_at', '>=', $from)
-                ->where('issued_at', '<', $to)
-                ->when($salespersonId !== null, fn (Builder $query) => $query->where('salesperson_id', $salespersonId))
-                ->count(),
+            leadsIssued: $issues('issued_at'),
+            issuesVoided: $issues('voided_at'),
             appointmentsBooked: (int) $byState->sum() - $count(AppointmentState::BookedInError),
             appointmentsRun: $count(AppointmentState::Run),
             appointmentsPresented: $appointments()
@@ -109,10 +120,13 @@ final readonly class SalesFigures
                 ->count(),
             appointmentsCancelled: $count(AppointmentState::Cancelled),
             appointmentsNoShow: $count(AppointmentState::NoShow),
-            leadsRun: $firstRuns()->count(),
-            leadsWon: $firstRuns()->whereHas('lead', fn (Builder $lead) => $lead->where('status', LeadStatus::Sold))->count(),
-            soldCents: (int) (clone $sales)->sum('sold_cents'),
-            leadsSold: (clone $sales)->distinct()->count('lead_id'),
+            leadsRun: $firstRuns->count(),
+            leadsWon: $entries(SaleEntry::SALE)->where('is_lead_win', true)->count(),
+            winsCorrected: $entries(SaleEntry::CORRECTION)->where('is_lead_win', true)->count(),
+            salesMade: $entries(SaleEntry::SALE)->count(),
+            soldCents: (int) $entries(SaleEntry::SALE)->sum('cents'),
+            correctedCents: -1 * (int) $entries(SaleEntry::CORRECTION)->sum('cents'),
+            salesCorrected: $entries(SaleEntry::CORRECTION)->count(),
         );
     }
 
@@ -130,13 +144,38 @@ final readonly class SalesFigures
     }
 
     /**
-     * Net Sales per Lead Issued, in cents: the sold amounts recorded in the
-     * month over the Leads issued in it. The plan's primary coaching figure
-     * (5.2). Nothing when no Lead was issued.
+     * Leads issued in the month, less the issues taken back in it.
+     */
+    public function netLeadsIssued(): int
+    {
+        return $this->leadsIssued - $this->issuesVoided;
+    }
+
+    /**
+     * Leads won in the month, less the wins taken back in it.
+     */
+    public function netWins(): int
+    {
+        return $this->leadsWon - $this->winsCorrected;
+    }
+
+    /**
+     * Sold revenue for the month, in cents: what was sold in it, less what
+     * corrections took back in it.
+     */
+    public function netSoldCents(): int
+    {
+        return $this->soldCents - $this->correctedCents;
+    }
+
+    /**
+     * Net Sales per Lead Issued, in cents: the month's sold revenue over the
+     * Leads issued in it, each after corrections. The plan's primary coaching
+     * figure (5.2). Nothing when no Lead issued is left to divide by.
      */
     public function nsliCents(): ?int
     {
-        return $this->leadsIssued === 0 ? null : (int) round($this->soldCents / $this->leadsIssued);
+        return $this->netLeadsIssued() <= 0 ? null : (int) round($this->netSoldCents() / $this->netLeadsIssued());
     }
 
     /**
@@ -148,13 +187,16 @@ final readonly class SalesFigures
     }
 
     /**
-     * Of the Leads first run in the month, the share that are Sold. Counted
-     * for each Lead, not each appointment, so a return visit that closes the
-     * sale does not lower it, and two proposals sold to one Lead are one win.
+     * The Leads won in the month against the Leads first run in it (decisions
+     * 125 and 134). Counted for each Lead, not each appointment, so a return
+     * visit that closes the sale does not lower it and two proposals sold to
+     * one Lead are one win. A win counts in the month the proposal was
+     * accepted, so a month of sales closed from earlier visits can read above
+     * 100%.
      */
     public function closeRate(): ?int
     {
-        return self::percent($this->leadsWon, $this->leadsRun);
+        return self::percent($this->netWins(), $this->leadsRun);
     }
 
     /**

@@ -105,7 +105,8 @@ handoff questions and Production > Workspace) were built and merged on
 2026-10-13. Slice 8 is complete as planned.**
 
 **The fixes after slice 8 are approved (2026-10-13, decision 134)** and are
-being built as one step: a Project named for what was sold, and Sales >
+built as one step on `checkpoint-sales-figures-decision-134`, waiting for
+Jacob's review and not merged: a Project named for what was sold, and Sales >
 Performance brought in line with decisions 133 and 134 (Close Rate by lead
 ownership and the month a proposal was accepted, corrections as adjustments,
 and a no-demo's reason).

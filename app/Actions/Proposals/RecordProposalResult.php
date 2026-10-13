@@ -28,6 +28,7 @@ class RecordProposalResult
         private RecordLeadStatusChange $recordLeadStatusChange,
         private RecordAuditEvent $recordAuditEvent,
         private CreateProjectForSoldProposal $createProjectForSoldProposal,
+        private RecordSaleEntry $recordSaleEntry,
     ) {}
 
     /**
@@ -38,7 +39,8 @@ class RecordProposalResult
      * - Sold: with the sold amount, which starts at the proposal's price and
      *   can differ. The Lead then shows Sold (answer 6 and 9). Its other
      *   proposals stay as they are. A Project is made for the proposal in the
-     *   same save (decision 130).
+     *   same save (decision 130), and the sale is written to the record the
+     *   Sales figures count from (decision 134).
      * - Lost: with a reason from Sales Loss Reasons and the primary objection.
      *   The Lead does not change; marking the Lead lost is MarkLeadLost.
      * - Still pending: with the main objection, so the reason it is open is
@@ -123,7 +125,10 @@ class RecordProposalResult
             $proposal->forceFill([...$recorded, 'result' => ProposalResult::Sold, 'sold_cents' => $cents, 'result_note' => $with->note])->save();
 
             // A sold proposal has a Project of its own from this moment (rulebook, rule 13; decision 130).
-            $this->createProjectForSoldProposal->apply($lead, $proposal, $actor);
+            $project = $this->createProjectForSoldProposal->apply($lead, $proposal, $actor);
+
+            // The line the Sales figures count from: this salesperson's, in this month (decisions 133 and 134).
+            $this->recordSaleEntry->sale($lead, $proposal, $project, firstForLead: $from !== LeadStatus::Sold, actor: $actor);
 
             if ($lead->status !== LeadStatus::Sold) {
                 $lead->forceFill(['status' => LeadStatus::Sold, 'status_changed_at' => $moment])->save();

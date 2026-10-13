@@ -80,7 +80,9 @@ Not in slice 8, each needing its own plan and approval:
 a Project is made at once, with nothing more to fill in:
 
 - its **title**, "Exterior Painting — 123 Oak St", from the Lead's main
-  service and the property's street address, which can be edited;
+  service and the property's street address, which can be edited (changed by
+  decision 134: it is now what was sold and the address, "Lake house deck —
+  9 Lake Rd");
 - the **customer, contact and property** the Lead has;
 - the **Location** the Lead is at;
 - the Lead's **services and project size**, copied so that changing the Lead
@@ -152,7 +154,8 @@ Readings made while building, for Jacob to change if wrong:
 
 - **The title of a second Project from the same Lead** would read the same as
   the first, same service and same address. It also says what was sold:
-  "Interior Painting — 123 Oak St (Deck)".
+  "Interior Painting — 123 Oak St (Deck)". *Replaced by decision 134: every
+  Project is named for what was sold, so two at one address already differ.*
 - **A proposal takes its Lead's property,** so a Project does too. Selling
   work on another of the customer's houses from the same Lead needs a choice
   of property on the proposal. Not built; see the handoff.
@@ -282,6 +285,21 @@ Readings made while building, for Jacob to change if wrong:
 - **The title still starts with the Lead's main service.** A deck sold from an
   interior-painting Lead reads "Interior Painting — 9 Lake Rd". See the
   handoff.
+
+### Changed after slice 8 (2026-10-13, decision 134)
+
+Built on the branch `checkpoint-sales-figures-decision-134`. **Not merged;
+it waits for Jacob's review.**
+
+- **A Project is named for what was sold:** the proposal's name and the short
+  street address of the proposal's property, "Lake house deck — 9 Lake Rd".
+  The Lead's main service is no longer in it, and the "(Deck)" ending for a
+  second Project is gone because it is no longer needed. It can still be
+  edited by a manager. Projects that already exist keep the title they have.
+- **The sale is also written to the record the Sales figures count from**
+  (`sale_entries`; see the slice 7 plan, "Changed after slice 8"). A corrected
+  sale still cancels and keeps its Project, and now also takes the sale off
+  the month it was corrected in.
 ## Who may do what
 
 **This slice needs new permissions,** which need Jacob's approval. None exist

@@ -75,11 +75,9 @@ test('a project is for its proposal\'s property, and two houses are two proposal
     expect($atHome->property_id)->toBe($this->lead->property_id);
     expect($atLake->property_id)->toBe($this->lakeHouse->id);
 
-    // Each is named for its own address, so neither needs telling apart.
-    $service = $this->lead->primaryService()->name;
-
-    expect($atHome->title)->toBe($service.' — 123 Oak St');
-    expect($atLake->title)->toBe($service.' — 9 Lake Rd');
+    // Each is named for what was sold and its own address (decision 134).
+    expect($atHome->title)->toBe($home->name.' — 123 Oak St');
+    expect($atLake->title)->toBe('Lake house deck — 9 Lake Rd');
 });
 
 test('a pending proposal\'s property can be changed, and what it was is kept', function () {

@@ -15,7 +15,8 @@ use Carbon\CarbonImmutable;
 /*
  * The first Sales figures, counted from what people recorded
  * (docs/slice-7-appointment-results-plan.md, step 7d; product-architecture.md,
- * 5.2; decisions 124 and 125).
+ * 5.2; decisions 124, 125, 133 and 134). What a later correction does to a
+ * month is in SaleAdjustmentsTest.
  *
  * Most tests use the worked month in tests/Pest.php, octoberOfSales():
  * October 2026 at Lakeview, Sam Sales with five Leads and Riley Rep with one.
@@ -43,8 +44,8 @@ test('a month of work is counted for everyone at the location', function () {
 
     $october = figures($this->lakeview, '2026-10');
 
-    // Five Leads were issued and still count; the one booked in error does not.
-    expect($october->leadsIssued)->toBe(5);
+    // Six Leads were issued and one was taken back the same month, booked in error: five count.
+    expect([$october->leadsIssued, $october->issuesVoided, $october->netLeadsIssued()])->toBe([6, 1, 5]);
     expect($october->appointmentsBooked)->toBe(5);
     expect($october->appointmentsRun)->toBe(3);
     expect($october->appointmentsPresented)->toBe(2);
@@ -52,10 +53,11 @@ test('a month of work is counted for everyone at the location', function () {
     expect($october->appointmentsNoShow)->toBe(1);
     expect($october->leadsRun)->toBe(3);
     expect($october->leadsWon)->toBe(1);
+    expect($october->salesMade)->toBe(1);
     expect($october->soldCents)->toBe(820000);
-    expect($october->leadsSold)->toBe(1);
+    expect([$october->winsCorrected, $october->salesCorrected, $october->correctedCents])->toBe([0, 0, 0]);
 
-    // $8,200 over 5 Leads issued; 2 of 3 run appointments presented; 1 of 3 Leads sold; 1 of 5 booked cancelled.
+    // $8,200 over 5 Leads issued; 2 of 3 run appointments presented; 1 Lead won against 3 first run; 1 of 5 booked cancelled.
     expect($october->nsliCents())->toBe(164000);
     expect($october->demoRate())->toBe(67);
     expect($october->closeRate())->toBe(33);
@@ -67,14 +69,14 @@ test('each salesperson\'s figures are their own', function () {
 
     $sam = figures($this->lakeview, '2026-10', $this->sam);
 
-    expect([$sam->leadsIssued, $sam->appointmentsBooked, $sam->appointmentsRun, $sam->appointmentsPresented, $sam->appointmentsCancelled, $sam->appointmentsNoShow])->toBe([4, 4, 2, 1, 1, 1]);
-    expect([$sam->leadsRun, $sam->leadsWon, $sam->soldCents, $sam->leadsSold])->toBe([2, 1, 820000, 1]);
+    expect([$sam->netLeadsIssued(), $sam->appointmentsBooked, $sam->appointmentsRun, $sam->appointmentsPresented, $sam->appointmentsCancelled, $sam->appointmentsNoShow])->toBe([4, 4, 2, 1, 1, 1]);
+    expect([$sam->leadsRun, $sam->leadsWon, $sam->soldCents, $sam->salesMade])->toBe([2, 1, 820000, 1]);
     expect([$sam->nsliCents(), $sam->demoRate(), $sam->closeRate(), $sam->cancellationRate()])->toBe([205000, 50, 50, 25]);
 
     $riley = figures($this->lakeview, '2026-10', $this->riley);
 
     expect([$riley->leadsIssued, $riley->appointmentsBooked, $riley->appointmentsRun, $riley->appointmentsPresented])->toBe([1, 1, 1, 1]);
-    expect([$riley->leadsRun, $riley->leadsWon, $riley->soldCents, $riley->leadsSold])->toBe([1, 0, 0, 0]);
+    expect([$riley->leadsRun, $riley->leadsWon, $riley->soldCents, $riley->salesMade])->toBe([1, 0, 0, 0]);
     // A Lead issued and nothing sold yet is $0 a Lead, not "nothing to show".
     expect([$riley->nsliCents(), $riley->demoRate(), $riley->closeRate(), $riley->cancellationRate()])->toBe([0, 100, 0, 0]);
 });
@@ -110,18 +112,18 @@ test('three proposals with one sold are one win, and two sold to one lead are on
     $riley = figures($this->lakeview, '2026-10', $this->riley);
 
     expect([$riley->leadsRun, $riley->leadsWon, $riley->closeRate()])->toBe([1, 1, 100]);
-    expect([$riley->soldCents, $riley->leadsSold, $riley->appointmentsPresented])->toBe([180000, 1, 1]);
+    expect([$riley->soldCents, $riley->salesMade, $riley->appointmentsPresented])->toBe([180000, 1, 1]);
 
-    // A second one is sold to the same Lead: still one win and one Lead sold, and the revenue is both.
+    // A second one is sold to the same Lead: still one win, two sales, and the revenue is both.
     app(RecordProposalResult::class)->handle($leads['e']->fresh(), $leads['e']->proposals()->where('name', 'Cabinets only')->sole(), 'sold', ['soldAmount' => '2,750'], $this->riley);
 
     $riley = figures($this->lakeview, '2026-10', $this->riley);
 
-    expect([$riley->leadsWon, $riley->closeRate(), $riley->leadsSold, $riley->soldCents])->toBe([1, 100, 1, 455000]);
+    expect([$riley->leadsWon, $riley->closeRate(), $riley->salesMade, $riley->soldCents])->toBe([1, 100, 2, 455000]);
     expect($riley->nsliCents())->toBe(455000);
 });
 
-test('a return visit that closes the sale does not lower close rate, and the lead counts in the month it was first run', function () {
+test('a sale closed on a return visit is one win, in the month the proposal was accepted (decision 134)', function () {
     $leads = octoberOfSales($this->lakeview, $this->sam, $this->riley, $this->manager);
 
     // Lead e was first run on Oct 12. Riley goes back on Nov 3 and it is sold that day.
@@ -133,26 +135,30 @@ test('a return visit that closes the sale does not lower close rate, and the lea
     $october = figures($this->lakeview, '2026-10', $this->riley);
     $november = figures($this->lakeview, '2026-11', $this->riley);
 
-    // One Lead, two visits: one win in one, in October where it was first run.
-    expect([$october->leadsRun, $october->leadsWon, $october->closeRate()])->toBe([1, 1, 100]);
-    expect([$november->leadsRun, $november->leadsWon, $november->closeRate()])->toBe([0, 0, null]);
+    // One Lead, two visits: it is first run in October, and won once, in November when it was accepted.
+    expect([$october->leadsRun, $october->leadsWon, $october->closeRate()])->toBe([1, 0, 0]);
+    expect([$november->leadsRun, $november->leadsWon, $november->netWins()])->toBe([0, 1, 1]);
+    // With no Lead first run in November there is nothing to divide the win by.
+    expect($november->closeRate())->toBeNull();
 
     // The visit and the money are counted when they happened.
     expect([$october->appointmentsRun, $november->appointmentsRun])->toBe([1, 1]);
-    expect([$october->soldCents, $november->soldCents, $november->leadsSold])->toBe([0, 300000, 1]);
+    expect([$october->soldCents, $november->soldCents, $november->salesMade])->toBe([0, 300000, 1]);
 
     // No Lead was issued in November, so there is no NSLI for it; the return visit is not a new issue.
     expect([$november->leadsIssued, $november->nsliCents()])->toBe([0, null]);
 });
 
-test('what was taken back no longer counts: a corrected sale, a proposal added in error, a lead that should never have been booked', function () {
+test('what is taken back in the same month comes off it: a corrected sale, a proposal added in error, a lead that should never have been booked', function () {
     $leads = octoberOfSales($this->lakeview, $this->sam, $this->riley, $this->manager);
 
     app(CorrectProposalResult::class)->handle($leads['a'], $leads['a']->proposals()->sole(), 'Marked on the wrong lead.', $this->manager);
 
     $sam = figures($this->lakeview, '2026-10', $this->sam);
 
-    expect([$sam->soldCents, $sam->leadsSold, $sam->leadsWon, $sam->nsliCents(), $sam->closeRate()])->toBe([0, 0, 0, 0, 0]);
+    // The sale and its correction are both in October, so October comes to nothing.
+    expect([$sam->soldCents, $sam->correctedCents, $sam->salesCorrected, $sam->winsCorrected])->toBe([820000, 820000, 1, 1]);
+    expect([$sam->netSoldCents(), $sam->netWins(), $sam->nsliCents(), $sam->closeRate()])->toBe([0, 0, 0, 0]);
     // The appointment was still run and still has its proposal.
     expect([$sam->appointmentsRun, $sam->appointmentsPresented])->toBe([2, 1]);
 
@@ -164,7 +170,9 @@ test('what was taken back no longer counts: a corrected sale, a proposal added i
     // Lead b is sent back as one that should never have been booked: its issue stops counting.
     app(SendLeadBackToContactCenter::class)->handle($leads['b'], StopCountingLeadAsIssued::NEVER_SHOULD_HAVE_BEEN_BOOKED, 'Renter, not the owner.', $this->manager);
 
-    expect(figures($this->lakeview, '2026-10', $this->sam)->leadsIssued)->toBe(3);
+    $sam = figures($this->lakeview, '2026-10', $this->sam);
+
+    expect([$sam->leadsIssued, $sam->issuesVoided, $sam->netLeadsIssued()])->toBe([5, 2, 3]);
 });
 
 test('whose figure it is when an appointment is moved to another salesperson', function () {
@@ -181,8 +189,8 @@ test('whose figure it is when an appointment is moved to another salesperson', f
     $sam = figures($this->lakeview, '2026-10', $this->sam);
     $riley = figures($this->lakeview, '2026-10', $this->riley);
 
-    // Until Sales Leadership decides otherwise: the issue stays with the salesperson it was issued to,
-    // the appointment and the sale go to the salesperson who has them.
+    // Decision 133: the issue stays with the salesperson it was issued to; the appointment goes to the
+    // salesperson it is with, and the sale to the salesperson who has the Lead when it is sold.
     expect([$sam->leadsIssued, $sam->appointmentsRun, $sam->soldCents])->toBe([1, 0, 0]);
     expect([$riley->leadsIssued, $riley->appointmentsRun, $riley->leadsWon, $riley->soldCents])->toBe([0, 1, 1, 845000]);
 

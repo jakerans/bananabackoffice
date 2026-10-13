@@ -77,12 +77,14 @@ test('a no-show is the whole report', function () {
 });
 
 test('run with nothing presented ends the report, and the appointment counts as run with no proposal', function () {
-    submitReport($this->lead, $this->appointment, $this->sam, ['outcome' => 'run', 'presented' => 'no', 'note' => 'They want to wait until spring.']);
+    submitReport($this->lead, $this->appointment, $this->sam, ['outcome' => 'run', 'presented' => 'no', 'noDemoReason' => 'Only one of the two owners was home.', 'note' => 'They want to wait until spring.']);
 
     expect($this->appointment->fresh()->state)->toBe(AppointmentState::Run);
     expect($this->appointment->fresh()->state_note)->toBe('They want to wait until spring.');
     expect($this->lead->fresh()->status)->toBe(LeadStatus::AppointmentRun);
     expect($this->appointment->proposals()->count())->toBe(0);
+    // Why nothing was presented is kept with the appointment (decision 133).
+    expect($this->appointment->fresh()->no_demo_reason)->toBe('Only one of the two owners was home.');
 });
 
 test('run, one proposal, sold: the appointment, the proposal, its result and the lead in one go', function () {
@@ -255,7 +257,7 @@ test('the report follows the rules of the buttons: not before the start, once, a
     expect(fn () => submitReport($later->fresh(), $second, $this->sam, ['outcome' => 'run', 'presented' => 'no']))
         ->toThrow(ValidationException::class, 'Close out your earlier appointment first');
 
-    submitReport($this->lead, $this->appointment, $this->sam, ['outcome' => 'run', 'presented' => 'no']);
+    submitReport($this->lead, $this->appointment, $this->sam, ['outcome' => 'run', 'presented' => 'no', 'noDemoReason' => 'Customer had to leave.']);
 
     expect(fn () => submitReport($this->lead->fresh(), $this->appointment, $this->sam, ['outcome' => 'no_show']))
         ->toThrow(ValidationException::class, 'This appointment is no longer waiting for an answer.');
