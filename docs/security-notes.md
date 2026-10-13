@@ -209,6 +209,16 @@ another location has dealt with. Staff are told so without being shown who.
   its own audit event. The browser cannot send any answer but run or no-show.
   An appointment has no result field at all: Sold, Pending and Lost will exist
   only on proposals (decision 124).
+- **Results and the report (slice 7 step 7c, 2026-10-13).** Each result,
+  correction and lost mark is checked at the opener, the save and the action.
+  A result is given once; changing one is manager-only, needs a note, and keeps
+  what it was in the audit record. The report is one transaction that runs the
+  same rules as the buttons, so it cannot do anything the buttons cannot, and a
+  refusal saves nothing at all. The report page is refused to anyone who may
+  not answer that appointment, and an appointment of another Lead is not
+  found. Loss reasons and objections are read from the lists on the server;
+  one that is no longer offered is refused. Nothing is deleted: "added in
+  error" keeps the row.
 - **Proposals (slice 7 step 7b, 2026-10-12).** Who may add is checked three
   times (the card's opener, its save, the action). The appointments a proposal
   is tied to are read on the server from this Lead's run appointments only, so

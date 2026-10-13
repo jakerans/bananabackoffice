@@ -513,9 +513,9 @@ test('every page tells a salesperson about appointments of theirs that are over 
     $this->actingAs($this->riley)->get(route('sales.calendar'))->assertOk()->assertDontSee('data-test="close-out-prompt"', false);
     $this->actingAs($this->manager)->get(route('sales.calendar'))->assertOk()->assertDontSee('data-test="close-out-prompt"', false);
 
-    // The link opens the oldest one's Lead, and the prompt goes as soon as the card says the answer was given.
+    // The link opens the oldest one's after-action report, and the prompt goes as soon as the card says the answer was given.
     Livewire::actingAs($this->sam)->test('pages::sales.close-out-prompt')
-        ->assertSeeHtml('href="'.route('leads.show', $this->lead).'"')
+        ->assertSeeHtml('href="'.route('leads.report', [$this->lead, $this->appointment]).'"')
         ->tap(fn () => closeOut($this->lead->fresh(), $this->sam))
         ->dispatch('lead-appointment-changed')
         ->assertDontSeeHtml('data-test="close-out-prompt"');
@@ -531,7 +531,7 @@ test('the prompt counts every appointment waiting and opens the oldest first', f
 
     Livewire::actingAs($this->sam)->test('pages::sales.close-out-prompt')
         ->assertSee('You have 2 appointments to close out.')
-        ->assertSeeHtml('href="'.route('leads.show', $this->lead).'"')
+        ->assertSeeHtml('href="'.route('leads.report', [$this->lead, $this->appointment]).'"')
         ->assertDontSee('Pat Customer');
 });
 

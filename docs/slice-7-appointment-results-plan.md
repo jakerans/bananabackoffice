@@ -246,7 +246,7 @@ or a manager, marks it:
 - **Still Pending:** with the main objection, so the reason it is open is
   written down.
 
-**Correcting a proposal** (decision 128, added 2026-10-12):
+**Correcting a proposal** (decision 128, added 2026-10-12; built in step 7c):
 
 - **Edit:** the salesperson the Lead is with, or a manager, can change the
   name and price while the proposal is still Pending. Each change is kept in
@@ -277,6 +277,76 @@ page. The report writes the same records; it is not a second copy.
 On `proposals`: the result, the sold amount and when, the loss reason, the
 objection, the note, and who recorded each. A new managed list, **Objections**
 (question 8). New Lead statuses as question 3 and question 9 decide.
+
+### Step 7c as built (2026-10-13)
+
+Built as planned above, with decision 128. What a reader of the code should
+know:
+
+- **The actions,** all in `app/Actions/Proposals/`: `RecordProposalResult`
+  (sold, lost, still pending), `CorrectProposalResult`, `EditProposal`,
+  `MarkProposalAddedInError`, `MarkLeadLost`, `UndoLeadLost`, and
+  `SubmitAfterActionReport`. Each goes through `ChangeLeadLifecycle`.
+- **The report writes nothing of its own.** `SubmitAfterActionReport` claims
+  the Lead once and calls the same rules the buttons use
+  (`CloseOutAppointment::apply`, `AddProposal::apply`,
+  `PresentProposalAgain::apply`, `RecordProposalResult::apply`) inside that one
+  save, so it is saved whole or not at all and a refusal names the proposal it
+  is about.
+- **On `proposals`:** `result` (pending, sold, lost) with who and when;
+  `sold_cents`; the loss reason and competitor; the objection; the note; and
+  the "added in error" mark. **On `leads`:** why it was lost, and by whom.
+  **New table:** `objections`, a managed list on Lead & Sales Lists that
+  starts with "Other (see note)".
+- **Two new Lead statuses,** Sold and Lost. Both are finished: not active, not
+  "with Sales". They stay on the salesperson's record.
+- **Who may:** `LeadPolicy::manageProposals` for results, changing a pending
+  proposal and marking the Lead lost; `appointments.manage` for a correction,
+  "added in error" and undoing a lost Lead. No permission was added.
+- **The screens:** the Proposals card (`pages::leads.proposals`) carries the
+  results and corrections; the report is its own page, `pages::leads.report`
+  at `/leads/{lead}/appointments/{appointment}/report`, reached from the
+  Appointment card, each "To close out" row in the Calendar, and the prompt.
+- **Eight audit events:** `lead.proposal_sold`, `lead.proposal_lost`,
+  `lead.proposal_still_pending`, `lead.proposal_result_corrected`,
+  `lead.proposal_edited`, `lead.proposal_added_in_error`, `lead.marked_lost`,
+  `lead.lost_undone`. All but the edit are in the customer's Activity.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **A Sold or Lost Lead is finished.** It cannot be booked, sent back, moved or
+  disqualified, and it leaves the lists of open Leads. It stays assigned to its
+  salesperson, for the record and the figures. Only a manager's correction
+  brings it back.
+- **One lost proposal does not make the Lead lost.** The Lead is lost when
+  someone marks the Lead lost (decision 125, answer 9). A Lead can be lost with
+  nothing presented.
+- **A sale is refused while the Lead still has an appointment booked.** The
+  appointment is answered or cancelled first.
+- **A result is given once.** After that only a manager changes it, by
+  putting the proposal back to Pending with a note; it is then answered again.
+  If it was the Lead's only sale, the Lead goes back to Appointment run.
+- **Undoing a lost Lead** puts back to Pending exactly the proposals that
+  marking it lost had turned Lost. One lost before that stays lost.
+- **"Added in error" is for a Pending proposal** and cannot itself be undone.
+  A Sold or Lost one has its result corrected first.
+- **The competitor is optional** ("if known"), and kept only for a reason that
+  asks for one.
+- **Still pending needs the main objection.** Until Sales Leadership gives the
+  real list, the only objection is "Other (see note)", which needs a typed
+  note. An Owner can add objections on Lead & Sales Lists today.
+- **The sold day is the day it is recorded.** There is no separate "sold on"
+  date.
+- **The return-visit check is on the Lead,** not in the report. Decision 126
+  means a return visit cannot be booked before the appointment is answered, so
+  at report time there is never one to find. Once the report is saved the
+  Proposals card says "No return visit is booked for what is still pending."
+  or names the one that is.
+- **The two quick buttons stay** beside the report: "Appointment was run" and
+  "No-show" answer step 1 only.
+- **The salesperson is told** in the app when a manager gives a result,
+  changes or marks a proposal, marks the Lead lost or undoes that (decision
+  126). One notice covers them all.
 
 ## Step 7d — The first Sales figures
 

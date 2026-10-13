@@ -28,6 +28,12 @@ enum LeadStatus: string
     /** Its appointment was run; it is with the salesperson, who is selling (decision 125). */
     case AppointmentRun = 'appointment_run';
 
+    /** One of its proposals was sold (decision 125). Finished for Sales; it stays on its salesperson's record. */
+    case Sold = 'sold';
+
+    /** The salesperson or a manager marked it lost, with a reason (decision 125). Finished. */
+    case Lost = 'lost';
+
     /** A deliberate manual callback. The stored value is retained for compatibility. */
     case Nurture = 'nurture';
 
@@ -43,6 +49,8 @@ enum LeadStatus: string
             self::AppointmentBooked => 'Appointment booked',
             self::AppointmentCancelled => 'Appointment cancelled',
             self::AppointmentRun => 'Appointment run',
+            self::Sold => 'Sold',
+            self::Lost => 'Lost',
             self::Nurture => 'Deferred Follow-up',
             self::Disqualified => 'Disqualified',
         };
@@ -51,12 +59,22 @@ enum LeadStatus: string
     /**
      * Whether a Lead in this status still needs someone's attention.
      *
-     * Everything but Disqualified does. Qualified records remain active; this milestone alone does not
-     * create or imply any downstream workflow.
+     * Everything does but Disqualified, Sold and Lost, which are finished. Qualified records remain
+     * active; this milestone alone does not create or imply any downstream workflow.
      */
     public function isActive(): bool
     {
-        return $this !== self::Disqualified;
+        return $this !== self::Disqualified && ! $this->isFinishedBySales();
+    }
+
+    /**
+     * Whether Sales has finished with a Lead in this status: it was sold, or
+     * marked lost. It is no longer "with Sales" to be booked or sent back, and
+     * only a manager's correction changes it.
+     */
+    public function isFinishedBySales(): bool
+    {
+        return $this === self::Sold || $this === self::Lost;
     }
 
     /**

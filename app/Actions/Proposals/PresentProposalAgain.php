@@ -38,58 +38,70 @@ class PresentProposalAgain
     public function handle(Lead $lead, Proposal $proposal, ?int $appointmentId, User $actor, ?int $expectedVersion = null): void
     {
         $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $proposal, $appointmentId, $actor): bool {
-            Gate::forUser($actor)->authorize('manageProposals', $lead);
-
-            if ($proposal->lead_id !== $lead->id) {
-                throw ValidationException::withMessages([
-                    'againAppointmentId' => __('This proposal belongs to another lead.'),
-                ]);
-            }
-
-            // Only this Lead's appointments, and only ones that were run.
-            $appointment = $appointmentId === null ? null : Appointment::query()
-                ->where('lead_id', $lead->id)
-                ->where('state', AppointmentState::Run)
-                ->find($appointmentId);
-
-            if ($appointment === null) {
-                throw ValidationException::withMessages([
-                    'againAppointmentId' => __('Choose one of this lead\'s appointments that were run.'),
-                ]);
-            }
-
-            if ($proposal->appointments()->whereKey($appointment->id)->exists()) {
-                throw ValidationException::withMessages([
-                    'againAppointmentId' => __('This proposal is already recorded at that appointment.'),
-                ]);
-            }
-
-            $proposal->appointments()->attach($appointment->id, [
-                'added_by' => $actor->id,
-                'added_by_name' => $actor->name,
-                'created_at' => now(),
-            ]);
-
-            $this->recordAuditEvent->handle(
-                AuditAction::LeadProposalPresentedAgain,
-                $lead,
-                actor: $actor,
-                after: [
-                    'proposal' => $proposal->name,
-                    'presented_at' => $appointment->starts_at->toIso8601String(),
-                ],
-                location: $lead->location,
-            );
-
-            // The salesperson is told when someone else records a proposal at their appointment (decision 126).
-            if ($appointment->salesperson_id !== null && $appointment->salesperson_id !== $actor->id) {
-                User::query()->find($appointment->salesperson_id)?->notify(
-                    new AppointmentChanged($lead->id, AppointmentChanged::PROPOSAL_RECORDED, AppointmentChanged::IN_APP, $appointment),
-                );
-            }
+            $this->apply($lead, $proposal, $appointmentId, $actor);
 
             // The Lead's own lifecycle did not change.
             return false;
         });
+    }
+
+    /**
+     * The same, for a caller that has already claimed the Lead's row and is
+     * saving this with other changes: the after-action report.
+     *
+     * @param  string  $field  The field a refusal is shown at.
+     *
+     * @throws ValidationException
+     * @throws AuthorizationException
+     */
+    public function apply(Lead $lead, Proposal $proposal, ?int $appointmentId, User $actor, string $field = 'againAppointmentId'): void
+    {
+        Gate::forUser($actor)->authorize('manageProposals', $lead);
+
+        if ($proposal->lead_id !== $lead->id) {
+            throw ValidationException::withMessages([$field => __('This proposal belongs to another lead.')]);
+        }
+
+        if ($proposal->isAddedInError()) {
+            throw ValidationException::withMessages([$field => __('This proposal was marked "added in error".')]);
+        }
+
+        // Only this Lead's appointments, and only ones that were run.
+        $appointment = $appointmentId === null ? null : Appointment::query()
+            ->where('lead_id', $lead->id)
+            ->where('state', AppointmentState::Run)
+            ->find($appointmentId);
+
+        if ($appointment === null) {
+            throw ValidationException::withMessages([$field => __('Choose one of this lead\'s appointments that were run.')]);
+        }
+
+        if ($proposal->appointments()->whereKey($appointment->id)->exists()) {
+            throw ValidationException::withMessages([$field => __('This proposal is already recorded at that appointment.')]);
+        }
+
+        $proposal->appointments()->attach($appointment->id, [
+            'added_by' => $actor->id,
+            'added_by_name' => $actor->name,
+            'created_at' => now(),
+        ]);
+
+        $this->recordAuditEvent->handle(
+            AuditAction::LeadProposalPresentedAgain,
+            $lead,
+            actor: $actor,
+            after: [
+                'proposal' => $proposal->name,
+                'presented_at' => $appointment->starts_at->toIso8601String(),
+            ],
+            location: $lead->location,
+        );
+
+        // The salesperson is told when someone else records a proposal at their appointment (decision 126).
+        if ($appointment->salesperson_id !== null && $appointment->salesperson_id !== $actor->id) {
+            User::query()->find($appointment->salesperson_id)?->notify(
+                new AppointmentChanged($lead->id, AppointmentChanged::PROPOSAL_RECORDED, AppointmentChanged::IN_APP, $appointment),
+            );
+        }
     }
 }

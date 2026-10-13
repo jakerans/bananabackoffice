@@ -12,6 +12,8 @@
         LeadStatus::AppointmentBooked => 'indigo',
         LeadStatus::AppointmentCancelled => 'rose',
         LeadStatus::AppointmentRun => 'teal',
+        LeadStatus::Sold => 'emerald',
+        LeadStatus::Lost => 'zinc',
         LeadStatus::Nurture => 'purple',
         LeadStatus::Disqualified => 'zinc',
     };

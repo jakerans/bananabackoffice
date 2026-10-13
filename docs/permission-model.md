@@ -518,6 +518,14 @@ Rules:
     for a manager where the Lead is (`appointments.manage`) or the salesperson
     the Lead is with while it is with Sales. Anyone who may see the Lead sees
     its proposals and their prices. No permission was added.
+20. **Results** (slice 7 step 7c). The same people as rule 19 give a proposal
+    its result (sold, lost, still pending), change one that is still pending,
+    and mark the Lead lost; the salesperson can still do so on their own Lead
+    once it shows Sold. **A manager only** (`appointments.manage`), each with a
+    note: correcting a result already given, marking a proposal "added in
+    error", and undoing a lost Lead. **The after-action report** is opened and
+    saved by whoever may answer that appointment (rule 17). No permission was
+    added.
 
 ## Slice 4: the call queue and its settings
 

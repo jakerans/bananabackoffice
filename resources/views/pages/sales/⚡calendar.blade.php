@@ -227,6 +227,7 @@ new #[Title('Calendar')] class extends Component {
                             @if ($this->seesOthers)
                                 <div data-test="calendar-close-out-salesperson">{{ $waiting->salesperson_name }}</div>
                             @endif
+                            <a href="{{ route('leads.report', [$waiting->lead_id, $waiting->id]) }}" wire:navigate class="font-semibold text-wall-teal underline" data-test="calendar-report-link">{{ __('After-action report') }}</a>
                         </div>
                     </li>
                 @endforeach

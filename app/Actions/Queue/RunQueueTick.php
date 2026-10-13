@@ -73,7 +73,7 @@ class RunQueueTick
 
         $left = fn () => LeadCadence::query()
             ->where('state', CadenceState::InQueue)
-            ->whereIn('lead_id', Lead::query()->select('id')->whereIn('status', [LeadStatus::Disqualified, LeadStatus::Nurture, LeadStatus::AppointmentBooked, LeadStatus::AppointmentCancelled, LeadStatus::AppointmentRun]));
+            ->whereIn('lead_id', Lead::query()->select('id')->whereIn('status', [LeadStatus::Disqualified, LeadStatus::Nurture, LeadStatus::AppointmentBooked, LeadStatus::AppointmentCancelled, LeadStatus::AppointmentRun, LeadStatus::Sold, LeadStatus::Lost]));
 
         foreach ($this->ids($done, 'ended', $left) as $id) {
             $done['ended'] += (int) $this->safely($done, 'ended', $id, fn (): bool => $this->endCadenceOfLeadThatLeft($id));
@@ -131,7 +131,7 @@ class RunQueueTick
             $reason = match ($lead?->status) {
                 LeadStatus::Disqualified => CadenceEndReason::Disqualified,
                 LeadStatus::Nurture => CadenceEndReason::DeferredFollowUp,
-                LeadStatus::AppointmentBooked, LeadStatus::AppointmentCancelled, LeadStatus::AppointmentRun => CadenceEndReason::AppointmentBooked,
+                LeadStatus::AppointmentBooked, LeadStatus::AppointmentCancelled, LeadStatus::AppointmentRun, LeadStatus::Sold, LeadStatus::Lost => CadenceEndReason::AppointmentBooked,
                 default => null,
             };
 

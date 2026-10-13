@@ -62,102 +62,114 @@ class CloseOutAppointment
         $note = trim((string) $note) === '' ? null : trim((string) $note);
 
         $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $appointment, $outcome, $note, $actor): bool {
-            // Read as it is now; the Lead's row is already claimed, so it cannot change underneath.
-            $appointment = Appointment::query()->findOrFail($appointment->id);
-
-            Gate::forUser($actor)->authorize('closeOutAppointment', [$lead, $appointment]);
-
-            $state = AppointmentState::tryFrom((string) $outcome);
-
-            if ($state === null || ! $state->isClosedOut()) {
-                throw ValidationException::withMessages([
-                    'closeOutOutcome' => __('Say whether the appointment was run or was a no-show.'),
-                ]);
-            }
-
-            if ($appointment->stands() && $appointment->starts_at->gt(now())) {
-                throw ValidationException::withMessages([
-                    'closeOutOutcome' => __('This appointment has not started yet. To call it off, cancel it.'),
-                ]);
-            }
-
-            if (! $appointment->stands() || ! $lead->isWithSales()) {
-                throw ValidationException::withMessages([
-                    'closeOutOutcome' => __('This appointment is no longer waiting for an answer.'),
-                ]);
-            }
-
-            // A salesperson closes their appointments out in order: an earlier
-            // one that is over and unanswered comes first (decision 126). A
-            // manager answering for them is not held to it.
-            if ($appointment->salesperson_id === $actor->id) {
-                $earlier = Appointment::query()
-                    ->overdueForCloseOutAt(now())
-                    ->where('salesperson_id', $actor->id)
-                    ->where('starts_at', '<', $appointment->starts_at)
-                    ->whereKeyNot($appointment->id)
-                    ->whereHas('lead', fn ($leads) => $leads->where('status', LeadStatus::AppointmentBooked))
-                    ->orderBy('starts_at')
-                    ->first();
-
-                if ($earlier !== null) {
-                    throw ValidationException::withMessages([
-                        'closeOutOutcome' => __('Close out your earlier appointment first: the one on :when.', [
-                            'when' => $earlier->starts_at->copy()->timezone($earlier->timezone)->format('D, M j \a\t g:i A T'),
-                        ]),
-                    ]);
-                }
-            }
-
-            $moment = now();
-            $from = $lead->status;
-
-            $appointment->forceFill([
-                'state' => $state,
-                'state_changed_at' => $moment,
-                'state_changed_by' => $actor->id,
-                'state_changed_by_name' => $actor->name,
-                'state_note' => $note,
-            ])->save();
-
-            if ($lead->status === LeadStatus::AppointmentBooked && ! $lead->hasUpcomingAppointment()) {
-                $lead->forceFill([
-                    'status' => self::leadStatusFor($state),
-                    'status_changed_at' => $moment,
-                ])->save();
-            }
-
-            $this->recordLeadStatusChange->handle(
-                $lead,
-                $state === AppointmentState::Run ? LeadStatusEvent::AppointmentRun : LeadStatusEvent::AppointmentNoShow,
-                $from,
-                $actor,
-                $lead->assigned_user_id,
-                note: $note,
-            );
-
-            $this->recordAuditEvent->handle(
-                $state === AppointmentState::Run ? AuditAction::LeadAppointmentRun : AuditAction::LeadAppointmentNoShow,
-                $lead,
-                actor: $actor,
-                before: ['status' => $from->value, 'starts_at' => $appointment->starts_at->toIso8601String()],
-                after: ['status' => $lead->status->value, 'appointment' => $state->value, 'salesperson' => $appointment->salesperson_name],
-                location: $lead->location,
-                reason: $note,
-            );
-
-            // The salesperson is told when someone else answers for them (decision 126).
-            $salesperson = $appointment->salesperson_id === null || $appointment->salesperson_id === $actor->id ? null : User::query()->find($appointment->salesperson_id);
-
-            $salesperson?->notify(new AppointmentChanged(
-                $lead->id,
-                $state === AppointmentState::Run ? AppointmentChanged::MARKED_RUN : AppointmentChanged::MARKED_NO_SHOW,
-                AppointmentChanged::IN_APP,
-                $appointment,
-            ));
+            $this->apply($lead, $appointment, $outcome, $note, $actor);
 
             return true;
         }, retryWhenBusy: true);
+    }
+
+    /**
+     * The same, for a caller that has already claimed the Lead's row and is
+     * saving this with other changes: the after-action report.
+     *
+     * @throws ValidationException
+     * @throws AuthorizationException
+     */
+    public function apply(Lead $lead, Appointment $appointment, ?string $outcome, ?string $note, User $actor): void
+    {
+        // Read as it is now; the Lead's row is already claimed, so it cannot change underneath.
+        $appointment = Appointment::query()->findOrFail($appointment->id);
+
+        Gate::forUser($actor)->authorize('closeOutAppointment', [$lead, $appointment]);
+
+        $state = AppointmentState::tryFrom((string) $outcome);
+
+        if ($state === null || ! $state->isClosedOut()) {
+            throw ValidationException::withMessages([
+                'closeOutOutcome' => __('Say whether the appointment was run or was a no-show.'),
+            ]);
+        }
+
+        if ($appointment->stands() && $appointment->starts_at->gt(now())) {
+            throw ValidationException::withMessages([
+                'closeOutOutcome' => __('This appointment has not started yet. To call it off, cancel it.'),
+            ]);
+        }
+
+        if (! $appointment->stands() || ! $lead->isWithSales()) {
+            throw ValidationException::withMessages([
+                'closeOutOutcome' => __('This appointment is no longer waiting for an answer.'),
+            ]);
+        }
+
+        // A salesperson closes their appointments out in order: an earlier
+        // one that is over and unanswered comes first (decision 126). A
+        // manager answering for them is not held to it.
+        if ($appointment->salesperson_id === $actor->id) {
+            $earlier = Appointment::query()
+                ->overdueForCloseOutAt(now())
+                ->where('salesperson_id', $actor->id)
+                ->where('starts_at', '<', $appointment->starts_at)
+                ->whereKeyNot($appointment->id)
+                ->whereHas('lead', fn ($leads) => $leads->where('status', LeadStatus::AppointmentBooked))
+                ->orderBy('starts_at')
+                ->first();
+
+            if ($earlier !== null) {
+                throw ValidationException::withMessages([
+                    'closeOutOutcome' => __('Close out your earlier appointment first: the one on :when.', [
+                        'when' => $earlier->starts_at->copy()->timezone($earlier->timezone)->format('D, M j \a\t g:i A T'),
+                    ]),
+                ]);
+            }
+        }
+
+        $moment = now();
+        $from = $lead->status;
+
+        $appointment->forceFill([
+            'state' => $state,
+            'state_changed_at' => $moment,
+            'state_changed_by' => $actor->id,
+            'state_changed_by_name' => $actor->name,
+            'state_note' => $note,
+        ])->save();
+
+        if ($lead->status === LeadStatus::AppointmentBooked && ! $lead->hasUpcomingAppointment()) {
+            $lead->forceFill([
+                'status' => self::leadStatusFor($state),
+                'status_changed_at' => $moment,
+            ])->save();
+        }
+
+        $this->recordLeadStatusChange->handle(
+            $lead,
+            $state === AppointmentState::Run ? LeadStatusEvent::AppointmentRun : LeadStatusEvent::AppointmentNoShow,
+            $from,
+            $actor,
+            $lead->assigned_user_id,
+            note: $note,
+        );
+
+        $this->recordAuditEvent->handle(
+            $state === AppointmentState::Run ? AuditAction::LeadAppointmentRun : AuditAction::LeadAppointmentNoShow,
+            $lead,
+            actor: $actor,
+            before: ['status' => $from->value, 'starts_at' => $appointment->starts_at->toIso8601String()],
+            after: ['status' => $lead->status->value, 'appointment' => $state->value, 'salesperson' => $appointment->salesperson_name],
+            location: $lead->location,
+            reason: $note,
+        );
+
+        // The salesperson is told when someone else answers for them (decision 126).
+        $salesperson = $appointment->salesperson_id === null || $appointment->salesperson_id === $actor->id ? null : User::query()->find($appointment->salesperson_id);
+
+        $salesperson?->notify(new AppointmentChanged(
+            $lead->id,
+            $state === AppointmentState::Run ? AppointmentChanged::MARKED_RUN : AppointmentChanged::MARKED_NO_SHOW,
+            AppointmentChanged::IN_APP,
+            $appointment,
+        ));
     }
 
     /**
