@@ -75,6 +75,10 @@ enum AuditAction: string
     case ProjectProductionManagerAssigned = 'project.production_manager_assigned';
     case ProjectProductionManagerChanged = 'project.production_manager_changed';
     case ProjectTaken = 'project.taken';
+    case ProjectWelcomeCallRecorded = 'project.welcome_call_recorded';
+    case ProjectWelcomeCallUndone = 'project.welcome_call_undone';
+    case ProjectTimeframeSet = 'project.timeframe_set';
+    case ProjectTimeframeChanged = 'project.timeframe_changed';
     case LeadReceivedTimeCorrected = 'lead.received_time_corrected';
     case LeadQualified = 'lead.qualified';
     case LeadReturnedToWorking = 'lead.returned_to_working';

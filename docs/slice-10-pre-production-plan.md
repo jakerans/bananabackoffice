@@ -4,7 +4,8 @@ Status: **approved on 2026-10-13 (decision 141) in three steps, each stopping
 for Jacob's review. He answered two questions in his own words: the welcome
 call is a checklist item, with the procedure for it kept outside Backoffice;
 and a job nobody has called is flagged as falling behind after two business
-days. The other seven are as recommended. Step 10a is being built.** It was
+days. The other seven are as recommended. Step 10a is built and waits for his
+review; see "Step 10a as built". Steps 10b and 10c are not built.** It was
 written as what the implementation agent recommended after slice 9, from the
 plan.
 
@@ -97,6 +98,48 @@ Not in slice 10, each needing its own plan and approval:
 | --- | --- |
 | `projects` | The welcome call: the day it was made, an optional note, and who ticked it and when. The rough timeframe: earliest start, latest start, note. |
 | `project_timeframes` (new) | Each timeframe a Project has had, with who set it, when and why, so a change keeps what it was. |
+
+### Step 10a as built (2026-10-13)
+
+Built on the branch `checkpoint-slice-10a-onboarding-timeframe`. **Not merged;
+it waits for Jacob's review.** Built as planned above, with the welcome call
+as decision 141 has it. What a reader of the code should know:
+
+- **The welcome call is one tick** (`App\Actions\Projects\RecordWelcomeCall`):
+  the day the call was made, which cannot be a day still to come, and an
+  optional note. It records who ticked it and when. It can be unticked with a
+  note saying why. Nothing is sent to the customer.
+- **Falling behind** is worked out, not stored
+  (`App\Support\Projects\RoughTimeframe`): a job with a Production Manager and
+  no tick, two business days after the Production Manager took it or was
+  given it. It is a red mark on the Project and in the Workspace. Nothing is
+  sent to anyone.
+- **The rough timeframe** (`App\Actions\Projects\SetProjectTimeframe`) is two
+  days on the Project, with every timeframe it has had kept in
+  `project_timeframes`. Changing one needs a reason. It is shown in thirds of
+  a month, "Late November to mid December", with the two days under it and
+  the words "Not a booked date."
+- **Who may:** `ProjectPolicy::managePreProduction`, the Project's Production
+  Manager or anyone with `projects.manage` there, once the Project has a
+  Production Manager. Everyone else who may see the Project reads it.
+- **Production > Workspace** shows on each job in pre-production what it
+  still needs. A person's own jobs come first; within that, jobs with no
+  timeframe, then the soonest expected start.
+- **The Lead's Proposals card** shows the timeframe under the sold proposal.
+
+Readings made while building, for Jacob to change if wrong (also in decision
+141):
+
+- **The tick asks for the day of the call and an optional note,** and not for
+  who they spoke to.
+- **Business days are Monday to Friday** in the Location's time. Public
+  holidays are not known to Backoffice and count as working days.
+- **The two days run from when the job's present Production Manager got it.**
+  If a manager gives the job to someone else, the two days start again.
+- **A timeframe cannot be wholly in the past** when it is set. Its earliest
+  day can be.
+- **The salesperson is not told** when the timeframe is set or changed. They
+  see it on the Lead and the Project.
 
 ## Step 10b — The Color Specification
 

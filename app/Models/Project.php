@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use LogicException;
@@ -51,6 +52,14 @@ use LogicException;
  * @property int|null $production_manager_id
  * @property string|null $production_manager_name
  * @property Carbon|null $production_manager_assigned_at
+ * @property Carbon|null $welcome_call_on The day the welcome call was made: a checklist item (decision 141). Empty until it is ticked.
+ * @property string|null $welcome_call_note
+ * @property int|null $welcome_call_by
+ * @property string|null $welcome_call_by_name
+ * @property Carbon|null $welcome_call_recorded_at
+ * @property Carbon|null $timeframe_earliest The earliest day the work is expected to start. Not a booked date.
+ * @property Carbon|null $timeframe_latest
+ * @property string|null $timeframe_note
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Proposal $proposal
@@ -98,6 +107,10 @@ class Project extends Model
             'cancelled_at' => 'datetime',
             'handoff_reminded_at' => 'datetime',
             'production_manager_assigned_at' => 'datetime',
+            'welcome_call_on' => 'date',
+            'welcome_call_recorded_at' => 'datetime',
+            'timeframe_earliest' => 'date',
+            'timeframe_latest' => 'date',
             'project_size_min_value' => 'integer',
             'project_size_max_value' => 'integer',
         ];
@@ -178,6 +191,16 @@ class Project extends Model
     public function handoff(): HasOne
     {
         return $this->hasOne(ProjectHandoff::class);
+    }
+
+    /**
+     * Every rough timeframe it has had, the one in force first.
+     *
+     * @return HasMany<ProjectTimeframe, $this>
+     */
+    public function timeframes(): HasMany
+    {
+        return $this->hasMany(ProjectTimeframe::class)->orderByDesc('id');
     }
 
     /**

@@ -18,6 +18,7 @@ use App\Models\Objection;
 use App\Models\Property;
 use App\Models\Proposal;
 use App\Models\SalesLossReason;
+use App\Support\Projects\RoughTimeframe;
 use App\Support\Proposals\ProposalValidity;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
@@ -685,6 +686,11 @@ new class extends Component {
                                     {{ $proposal->project->title }}
                                 @endcan
                             </span>
+
+                            {{-- When the work is roughly expected, so Sales can answer the customer (slice 10, step 10a). --}}
+                            @if (RoughTimeframe::of($proposal->project) !== null)
+                                <span class="text-sm text-zinc-700" data-test="proposal-timeframe">{{ __('Rough timeframe: :when. Not a booked date.', ['when' => RoughTimeframe::of($proposal->project)]) }}</span>
+                            @endif
 
                             {{-- Production cannot take the Project until the salesperson's handoff is complete (decision 132). --}}
                             @if ($proposal->project->handoff === null)

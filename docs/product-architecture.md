@@ -542,7 +542,13 @@ Added 2026-10-13 (slice 8 step 8a; rulebook rule 13; decision 130; build plan: s
   allowed. A proposal selects exactly one customer property and its Project
   uses that property.
 - Built in slice 8 step 8b (2026-10-13): the property choice on a proposal; the handoff questions, the gate, the salesperson's prompt and next-morning reminder; Production > Workspace with three lists (waiting for handoff, new from Sales, pre-production); a Production Manager taking a job or a manager assigning one, each telling the new owner and the salesperson (20).
-- Still not built from 6.2 and 6.3: the confirmation email or text, the Coordinator, the deposit-paid handoff call, customer onboarding, Color Readiness, rough scheduling, work orders and everything after.
+- Still not built from 6.2 and 6.3: the confirmation email or text, the Coordinator, the deposit-paid handoff call, Color Readiness, the exact schedule, work orders and everything after.
+
+Added 2026-10-13 (slice 10; build plan: slice-10-pre-production-plan.md; LOCKED by decision 141):
+- Customer onboarding is a welcome call the Production Manager makes. In Backoffice it is a checklist item, ticked with the day it was made; how the call is made is a procedure the business keeps outside Backoffice. A job nobody has called is flagged as falling behind two business days after its Production Manager got it.
+- The rough timeframe is an earliest and a latest start, shown in words and never as a booked date; changing it needs a reason and what it was is kept.
+- Built in step 10a: both of those, on the Project and in Production > Workspace, and the timeframe on the Lead for Sales.
+- Not built yet: the Color Specification (step 10b) and readiness (step 10c).
 
 6.4 Color Specification
 Every normal sold job ultimately has an authoritative Color Specification.
