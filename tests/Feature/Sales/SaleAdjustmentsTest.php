@@ -16,7 +16,7 @@ use Livewire\Livewire;
 
 /*
  * Whose a sale is, which month it counts in, and what a later correction does
- * (decisions 133 and 134).
+ * (decisions 133, 134 and 135).
  *
  * - A sale and its win belong to the salesperson who had the Lead when the
  *   proposal was accepted, in the month it was accepted.
@@ -91,16 +91,17 @@ test('the win follows whoever has the lead when it is sold, not whoever ran the 
     runAppointment($this->leads['b']->fresh(), $this->riley);
     app(RecordProposalResult::class)->handle($this->leads['b']->fresh(), addProposal($this->leads['b']->fresh(), $this->riley, ['name' => 'Deck', 'price' => '1800']), 'sold', [], $this->riley);
 
-    // Sam ran the first visit: it stays in Sam's October, with no win for it.
+    // Sam ran the first visit and presented nothing: a no-demo in Sam's October, and no part of Sam's Close Rate.
     $sam = monthOf('2026-10', $this->sam);
 
-    expect([$sam->leadsRun, $sam->leadsWon])->toBe([2, 1]);
+    expect([$sam->appointmentsRun, $sam->leadsDemoed, $sam->leadsWon, $sam->closeRate()])->toBe([2, 1, 1, 100]);
     expect([monthOf('2026-11', $this->sam)->leadsWon, monthOf('2026-11', $this->sam)->soldCents])->toBe([0, 0]);
 
-    // Riley had the Lead when it was sold, in November.
+    // Riley demoed it and had the Lead when it was sold, in November.
     $riley = monthOf('2026-11', $this->riley);
 
-    expect([$riley->leadsWon, $riley->salesMade, $riley->soldCents])->toBe([1, 1, 180000]);
+    expect([$riley->leadsDemoed, $riley->leadsWon, $riley->closeRate()])->toBe([1, 1, 100]);
+    expect([$riley->salesMade, $riley->soldCents])->toBe([1, 180000]);
     expect(monthOf('2026-10', $this->riley)->leadsWon)->toBe(0);
 });
 
@@ -112,7 +113,7 @@ test('a sale corrected in a later month stays in its month and comes off the mon
 
     // October reads exactly as it did.
     expect(monthOf('2026-10', $this->sam))->toEqual($october);
-    expect([$october->soldCents, $october->leadsWon, $october->closeRate(), $october->nsliCents()])->toBe([820000, 1, 50, 205000]);
+    expect([$october->soldCents, $october->leadsWon, $october->closeRate(), $october->nsliCents()])->toBe([820000, 1, 100, 205000]);
 
     // November carries the correction, for the same salesperson.
     $november = monthOf('2026-11', $this->sam);
@@ -120,7 +121,7 @@ test('a sale corrected in a later month stays in its month and comes off the mon
     expect([$november->soldCents, $november->salesMade, $november->leadsWon])->toBe([0, 0, 0]);
     expect([$november->correctedCents, $november->salesCorrected, $november->winsCorrected])->toBe([820000, 1, 1]);
     expect([$november->netSoldCents(), $november->netWins()])->toBe([-820000, -1]);
-    // Nothing was issued or first run in November, so there is no rate to show.
+    // Nothing was issued or first demoed in November, so there is no rate to show.
     expect([$november->nsliCents(), $november->closeRate()])->toBe([null, null]);
 
     // The record: the sale as it was, and a second line taking it back.
@@ -196,7 +197,7 @@ test('the performance page shows a later month\'s corrections as what they are',
     $page->assertSee('Everyone at Lakeview, November 2026');
 
     expect([$value('sold-revenue'), $line('sold-revenue')])->toBe(['-$8,200', 'Nothing was sold this month. $8,200 was taken back by 1 correction this month.']);
-    expect([$value('close-rate'), $line('close-rate')])->toBe(['—', 'No lead had its first appointment run this month. 1 win was taken back by a correction this month.']);
+    expect([$value('close-rate'), $line('close-rate')])->toBe(['—', 'No lead won this month, less 1 taken back by a correction. No lead was first demoed this month, so there is no rate.']);
     expect([$value('leads-issued'), $line('leads-issued')])->toBe(['-1', '0 handed to Sales this month, less 1 taken back this month.']);
     expect([$value('nsli'), $line('nsli')])->toBe(['—', 'No leads were issued this month.']);
 
@@ -204,7 +205,7 @@ test('the performance page shows a later month\'s corrections as what they are',
     $page->set('month', '2026-10');
 
     expect([$value('sold-revenue'), $line('sold-revenue')])->toBe(['$8,200', 'From 1 sale this month.']);
-    expect([$value('close-rate'), $line('close-rate')])->toBe(['33%', '1 lead won this month, against 3 leads first run this month.']);
+    expect([$value('close-rate'), $line('close-rate')])->toBe(['50%', '1 lead won this month, against 2 leads first demoed this month.']);
     expect([$value('leads-issued'), $line('leads-issued')])->toBe(['5', '6 handed to Sales this month, less 1 taken back this month.']);
 });
 

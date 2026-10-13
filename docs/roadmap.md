@@ -110,7 +110,8 @@ brought in line with decisions 133 and 134 (Close Rate by lead ownership and
 the month a proposal was accepted, corrections as adjustments, and a
 no-demo's reason). **Decision 135 then made Close Rate demo to close:** the
 wins are divided by the Leads demoed, not the Leads run. That one change is
-built on its own branch and is not merged without Jacob's word.
+built on `checkpoint-close-rate-demo-to-close`, waiting for Jacob's review,
+and is not merged without his word.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

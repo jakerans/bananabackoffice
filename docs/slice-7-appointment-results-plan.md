@@ -423,8 +423,8 @@ Readings made while building, for Jacob to change if wrong:
 **Merged into `main` on 2026-10-13** with Jacob's word ("merge it", decision
 135). Where this differs from "Step 7d as built" above, this is what the code
 does now. Decision 135 also changes what Close Rate is divided by, from the
-Leads first run in the month to the Leads first demoed in it. That change
-is built separately.
+Leads first run in the month to the Leads first demoed in it; see "Close
+Rate is demo to close" below.
 
 - **A record of sales.** Table `sale_entries`: one line when a proposal is
   marked Sold, and one more, for the same amount below zero, when a manager
@@ -438,11 +438,11 @@ is built separately.
 - **Close Rate works off lead ownership (decision 134).** A win belongs to
   the salesperson who had the Lead when the proposal was accepted, whoever
   typed it in, and counts in the month it was accepted. One Lead is one win:
-  a second proposal sold later adds revenue, not a win. The wins are divided
-  by the Leads whose first appointment was run in the month, as before
-  (decision 125). So a sale closed on a return visit the month after is a win
-  in the later month, and a month can read above 100%. A month with wins and
-  no Lead first run shows a dash and says why.
+  a second proposal sold later adds revenue, not a win. The wins were divided
+  by the Leads whose first appointment was run in the month; decision 135
+  changed that to the Leads first demoed, below. A sale closed on a return
+  visit the month after is a win in the later month, and a month can read
+  above 100%.
 - **Corrections are adjustments (decision 133).** A sale corrected in a later
   month stays in the month it was made; the amount, and the win if it was the
   Lead's only sale, come off the month it was corrected in, shown as "taken
@@ -462,6 +462,34 @@ is built separately.
 - **Not built:** adjustments for an appointment's run or no-show answer that
   is corrected later, or for a proposal marked "added in error" later. Those
   still change the month the appointment was in.
+
+### Close Rate is demo to close (2026-10-13, decision 135)
+
+Built on the branch `checkpoint-close-rate-demo-to-close`. **Not merged; it
+waits for Jacob's review.** One change to `SalesFigures` and the line under
+the figure; nothing new is stored.
+
+- **Close Rate is the Leads won in the month over the Leads demoed for the
+  first time in the month.** A Lead is demoed when an appointment of its that
+  was run has a proposal that counts. Before, the wins were divided by the
+  Leads first *run*, so an appointment run with nothing presented counted
+  against Close Rate as well as against Demo Rate. Now it counts against Demo
+  Rate only.
+- **Each Lead is one demo, ever, and at most one win.** Three proposals for
+  one Lead are one demo; all three accepted, or one of the three, is one win.
+  Making more proposals cannot move the rate. A return visit where the
+  proposal is presented again is a demo for Demo Rate and not a second demo
+  here.
+- **A Lead is placed in the month of its first demo,** for the salesperson
+  that appointment is with. The win is unchanged from decision 134: the month
+  the proposal was accepted, for the salesperson who had the Lead then. So a
+  month can read above 100%, and a month with wins and no first demo shows a
+  dash and says why.
+- **The line under the figure** reads "4 leads won this month, less 1 taken
+  back by a correction, against 6 leads first demoed this month."
+- **The funnel's first rate, lead to appointment, is not on this page.** The
+  plan keeps booking rates with Marketing and Contact Center, by channel (4.1,
+  4.6); they are not built.
 
 ## Who may do what
 

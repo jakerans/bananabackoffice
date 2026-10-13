@@ -9,13 +9,14 @@ use App\Models\Location;
 use App\Models\SaleEntry;
 use App\Support\Queue\CallingHours;
 use Carbon\CarbonImmutable;
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * The first Sales figures for one month at one Location, for everyone there or
  * for one salesperson (docs/slice-7-appointment-results-plan.md, step 7d;
- * product-architecture.md, 5.2; decisions 133 and 134).
+ * product-architecture.md, 5.2; decisions 133, 134 and 135).
  *
  * Nothing here is stored. Every figure is counted from what people recorded:
  * issues (slice 6), appointments and whether they were run (step 7a),
@@ -45,8 +46,8 @@ final readonly class SalesFigures
         public int $appointmentsPresented,
         public int $appointmentsCancelled,
         public int $appointmentsNoShow,
-        /** Leads whose first run appointment was in the month: each Lead once, ever. */
-        public int $leadsRun,
+        /** Leads demoed for the first time in the month: their first run appointment with a proposal. Each Lead once, ever (decision 135). */
+        public int $leadsDemoed,
         /** Leads whose first proposal was accepted in the month: one Lead is one win (decision 134). */
         public int $leadsWon,
         /** Wins taken back in the month, because a manager corrected a Lead's only sale. */
@@ -80,14 +81,24 @@ final readonly class SalesFigures
         $byState = $appointments()->toBase()->selectRaw('state, count(*) as total')->groupBy('state')->pluck('total', 'state');
         $count = fn (AppointmentState $state): int => (int) ($byState[$state->value] ?? 0);
 
-        // Each Lead is placed once, in the month of its first run appointment, so a return visit never counts it twice.
-        $firstRuns = $appointments()
+        // A demo is an appointment that was run and has a proposal that counts (decision 124).
+        $demoed = fn (string $appointment): Closure => fn (QueryBuilder $proposal) => $proposal
+            ->selectRaw('1')
+            ->from('appointment_proposal')
+            ->join('proposals', 'proposals.id', '=', 'appointment_proposal.proposal_id')
+            ->whereColumn('appointment_proposal.appointment_id', $appointment.'.id')
+            ->whereNull('proposals.added_in_error_at');
+
+        // Each Lead is placed once, in the month of its first demo, so a return visit or a second proposal never counts it twice.
+        $firstDemos = $appointments()
             ->where('appointments.state', AppointmentState::Run)
+            ->whereExists($demoed('appointments'))
             ->whereNotExists(fn (QueryBuilder $earlier) => $earlier
                 ->selectRaw('1')
                 ->from('appointments as earlier')
                 ->whereColumn('earlier.lead_id', 'appointments.lead_id')
                 ->where('earlier.state', AppointmentState::Run->value)
+                ->whereExists($demoed('earlier'))
                 ->where(fn (QueryBuilder $before) => $before
                     ->whereColumn('earlier.starts_at', '<', 'appointments.starts_at')
                     ->orWhere(fn (QueryBuilder $tie) => $tie
@@ -120,7 +131,7 @@ final readonly class SalesFigures
                 ->count(),
             appointmentsCancelled: $count(AppointmentState::Cancelled),
             appointmentsNoShow: $count(AppointmentState::NoShow),
-            leadsRun: $firstRuns->count(),
+            leadsDemoed: $firstDemos->count(),
             leadsWon: $entries(SaleEntry::SALE)->where('is_lead_win', true)->count(),
             winsCorrected: $entries(SaleEntry::CORRECTION)->where('is_lead_win', true)->count(),
             salesMade: $entries(SaleEntry::SALE)->count(),
@@ -187,16 +198,17 @@ final readonly class SalesFigures
     }
 
     /**
-     * The Leads won in the month against the Leads first run in it (decisions
-     * 125 and 134). Counted for each Lead, not each appointment, so a return
-     * visit that closes the sale does not lower it and two proposals sold to
-     * one Lead are one win. A win counts in the month the proposal was
-     * accepted, so a month of sales closed from earlier visits can read above
-     * 100%.
+     * Demo to close (decision 135): the Leads won in the month against the
+     * Leads demoed for the first time in it. A Lead run with nothing presented
+     * is not in it; that is Demo Rate's to count. Counted for each Lead, so
+     * several proposals for one job are one demo and at most one win, and
+     * making more proposals cannot raise it. A win counts in the month the
+     * proposal was accepted (decision 134), so a month of sales closed from
+     * earlier demos can read above 100%.
      */
     public function closeRate(): ?int
     {
-        return self::percent($this->netWins(), $this->leadsRun);
+        return self::percent($this->netWins(), $this->leadsDemoed);
     }
 
     /**
