@@ -22,9 +22,9 @@ class CreateProjectForSoldProposal
      * The caller has already claimed the Lead's row.
      *
      * Each sold proposal has one Project of its own (decision 130). It takes
-     * the Lead's Location, customer, contact, property, services and project
-     * size as they are now, the proposal's sold amount, and the salesperson
-     * the Lead is with. It starts as "New from Sales".
+     * the Lead's Location, customer, contact, services and project size as
+     * they are now, the proposal's property and sold amount, and the
+     * salesperson the Lead is with. It starts as "New from Sales".
      *
      * If this proposal was sold before and that sale was corrected, its
      * Project is brought back with the new amount and day, not made again.
@@ -46,7 +46,8 @@ class CreateProjectForSoldProposal
             'location_id' => $lead->location_id,
             'account_id' => $lead->account_id,
             'contact_id' => $lead->contact_id,
-            'property_id' => $lead->property_id,
+            // The proposal's own property: one Lead can sell work at more than one house (decision 132).
+            'property_id' => $proposal->property_id,
             'title' => $title,
             'project_size_id' => $lead->project_size_id,
             'project_size_min_value' => $lead->project_size_min_value,
@@ -86,7 +87,7 @@ class CreateProjectForSoldProposal
             fn (Service $service): bool => (bool) $service->getRelationValue('pivot')?->getAttribute('is_primary'),
         )->name ?? $proposal->name;
 
-        $property = $lead->property;
+        $property = $proposal->property;
         $street = $property === null ? null : ($property->address_line1 === null ? $property->address : AddressKey::shortStreet($property->address_line1));
         $title = $street === null || $street === '' ? $service : $service.' — '.$street;
 

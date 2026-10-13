@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use LogicException;
 
@@ -46,6 +47,10 @@ use LogicException;
  * @property int|null $cancelled_by
  * @property string|null $cancelled_by_name
  * @property string|null $cancellation_note
+ * @property Carbon|null $handoff_reminded_at When the salesperson was reminded to complete the handoff.
+ * @property int|null $production_manager_id
+ * @property string|null $production_manager_name
+ * @property Carbon|null $production_manager_assigned_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Proposal $proposal
@@ -54,6 +59,7 @@ use LogicException;
  * @property-read Account $account
  * @property-read Contact|null $contact
  * @property-read Property $property
+ * @property-read ProjectHandoff|null $handoff
  */
 class Project extends Model
 {
@@ -90,6 +96,8 @@ class Project extends Model
             'production_state' => ProjectProductionState::class,
             'sold_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'handoff_reminded_at' => 'datetime',
+            'production_manager_assigned_at' => 'datetime',
             'project_size_min_value' => 'integer',
             'project_size_max_value' => 'integer',
         ];
@@ -159,6 +167,26 @@ class Project extends Model
             ->withTimestamps()
             ->orderBy('services.position')
             ->orderBy('services.id');
+    }
+
+    /**
+     * What the salesperson told Production: the answers to the handoff
+     * questions, once they are complete (decision 132).
+     *
+     * @return HasOne<ProjectHandoff, $this>
+     */
+    public function handoff(): HasOne
+    {
+        return $this->hasOne(ProjectHandoff::class);
+    }
+
+    /**
+     * Whether the salesperson's handoff is complete. Production cannot take a
+     * Project until it is.
+     */
+    public function hasHandoff(): bool
+    {
+        return $this->handoff()->exists();
     }
 
     /**

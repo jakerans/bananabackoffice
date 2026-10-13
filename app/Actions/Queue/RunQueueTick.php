@@ -4,6 +4,7 @@ namespace App\Actions\Queue;
 
 use App\Actions\Appointments\ReleaseCancelledLead;
 use App\Actions\Appointments\RemindToCloseOutAppointment;
+use App\Actions\Projects\RemindToCompleteHandoff;
 use App\Enums\CadenceEndReason;
 use App\Enums\CadenceState;
 use App\Enums\LeadStatus;
@@ -28,6 +29,7 @@ class RunQueueTick
         private EndLeadCadence $endLeadCadence,
         private ReleaseCancelledLead $releaseCancelledLead,
         private RemindToCloseOutAppointment $remindToCloseOutAppointment,
+        private RemindToCompleteHandoff $remindToCompleteHandoff,
     ) {}
 
     /**
@@ -49,16 +51,18 @@ class RunQueueTick
      *    work nothing else does.
      * 5. Remind a salesperson, once, to say what happened at an appointment
      *    that ended fifteen minutes ago and has no answer (decision 126).
+     * 6. Remind a salesperson, once, the morning after a sale, to answer the
+     *    handoff questions for Production if they have not (decision 132).
      *
      * It never schedules an attempt, never marks a Lead finished and never
      * contacts a customer. A failure is logged without customer details and
      * the next tick tries again.
      *
-     * @return array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, failed: int}
+     * @return array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, handoffs_reminded: int, failed: int}
      */
     public function handle(): array
     {
-        $done = ['expired' => 0, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'reminded' => 0, 'failed' => 0];
+        $done = ['expired' => 0, 'ended' => 0, 'access_lost' => 0, 'warned' => 0, 'released' => 0, 'reminded' => 0, 'handoffs_reminded' => 0, 'failed' => 0];
 
         $this->safely($done, 'heartbeat', null, function (): bool {
             $heartbeat = SchedulerHeartbeat::query()->where('name', SchedulerHeartbeat::QUEUE_TICK)->first() ?? new SchedulerHeartbeat;
@@ -99,7 +103,29 @@ class RunQueueTick
             $done['reminded'] += (int) $this->safely($done, "reminded appointment {$id}", null, fn (): bool => $this->remindToCloseOutAppointment->handle($id));
         }
 
+        foreach ($this->handoffsDue($done) as $id) {
+            $done['handoffs_reminded'] += (int) $this->safely($done, "handoff reminder for project {$id}", null, fn (): bool => $this->remindToCompleteHandoff->handle($id));
+        }
+
         return $done;
+    }
+
+    /**
+     * The Projects whose salesperson is due the handoff reminder. If they
+     * cannot be read, the part is skipped this time and reported.
+     *
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, handoffs_reminded: int, failed: int}  $done
+     * @return list<int>
+     */
+    private function handoffsDue(array &$done): array
+    {
+        try {
+            return RemindToCompleteHandoff::due(now());
+        } catch (Throwable $exception) {
+            $this->report($done, 'handoffs_reminded', null, $exception);
+
+            return [];
+        }
     }
 
     private function releaseExpiredHold(int $cadenceId): bool
@@ -174,7 +200,7 @@ class RunQueueTick
      * How many days a cancelled Lead stays with its salesperson, or null if
      * the settings cannot be read this time.
      *
-     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, failed: int}  $done
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, handoffs_reminded: int, failed: int}  $done
      */
     private function releaseDays(array &$done): ?int
     {
@@ -190,7 +216,7 @@ class RunQueueTick
     /**
      * The Leads or appointments one part has to look at, read the same careful way.
      *
-     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, failed: int}  $done
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, handoffs_reminded: int, failed: int}  $done
      * @param  Closure(): (Builder<Lead>|Builder<Appointment>)  $query
      * @return list<int>
      */
@@ -209,7 +235,7 @@ class RunQueueTick
      * The cadences one part has to look at. If they cannot even be read, that
      * part is skipped this time and the others still run.
      *
-     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, failed: int}  $done
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, handoffs_reminded: int, failed: int}  $done
      * @param  Closure(): Builder<LeadCadence>  $query
      * @return list<int>
      */
@@ -225,7 +251,7 @@ class RunQueueTick
     }
 
     /**
-     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, failed: int}  $done
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, handoffs_reminded: int, failed: int}  $done
      * @param  Closure(): bool  $work
      */
     private function safely(array &$done, string $part, ?int $cadenceId, Closure $work): bool
@@ -243,7 +269,7 @@ class RunQueueTick
      * Only what is needed to find the problem: never a name, number or message
      * that could carry customer details.
      *
-     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, failed: int}  $done
+     * @param  array{expired: int, ended: int, access_lost: int, warned: int, released: int, reminded: int, handoffs_reminded: int, failed: int}  $done
      */
     private function report(array &$done, string $part, ?int $cadenceId, Throwable $exception): void
     {

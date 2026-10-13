@@ -1,6 +1,9 @@
 <?php
 
 use App\Actions\Projects\EditProject;
+use App\Actions\Projects\TakeProject;
+use App\Enums\Permission;
+use App\Models\ProjectHandoff;
 use App\Enums\AuditAction;
 use App\Models\Appointment;
 use App\Models\AuditEvent;
@@ -26,7 +29,11 @@ use Livewire\Component;
  */
 new #[Title('Project')] class extends Component {
     /** The audit events shown as the Project's Activity. */
-    private const array ACTIVITY = [AuditAction::ProjectCreated, AuditAction::ProjectBroughtBack, AuditAction::ProjectCancelled, AuditAction::ProjectEdited];
+    private const array ACTIVITY = [
+        AuditAction::ProjectCreated, AuditAction::ProjectBroughtBack, AuditAction::ProjectCancelled, AuditAction::ProjectEdited,
+        AuditAction::ProjectHandoffCompleted, AuditAction::ProjectHandoffChanged,
+        AuditAction::ProjectProductionManagerAssigned, AuditAction::ProjectProductionManagerChanged, AuditAction::ProjectTaken,
+    ];
 
     #[Locked]
     public int $projectId;
@@ -45,7 +52,7 @@ new #[Title('Project')] class extends Component {
     #[Computed]
     public function project(): Project
     {
-        return Project::query()->with(['location', 'account', 'contact', 'property', 'services', 'proposal', 'lead'])->findOrFail($this->projectId);
+        return Project::query()->with(['location', 'account', 'contact', 'property', 'services', 'proposal', 'lead', 'handoff'])->findOrFail($this->projectId);
     }
 
     /**
@@ -78,7 +85,26 @@ new #[Title('Project')] class extends Component {
 
     public function activityLabel(AuditEvent $event): string
     {
-        return $event->action === AuditAction::ProjectEdited ? __('Title or description changed') : CustomerActivity::label($event->action);
+        return match ($event->action) {
+            AuditAction::ProjectEdited => __('Title or description changed'),
+            AuditAction::ProjectHandoffChanged => __('Handoff answers changed'),
+            default => CustomerActivity::label($event->action),
+        };
+    }
+
+    /**
+     * Take the Project as its Production Manager.
+     */
+    public function take(TakeProject $takeProject): void
+    {
+        $this->authorize('take', $this->project);
+        $this->resetValidation();
+
+        $takeProject->handle($this->project, Auth::user());
+
+        unset($this->project, $this->activity);
+
+        Flux::toast(variant: 'success', text: __('It is yours. This project is now in pre-production.'));
     }
 
     public function openEdit(): void
@@ -117,6 +143,12 @@ new #[Title('Project')] class extends Component {
         $when = fn (Appointment $appointment): string => $appointment->starts_at->copy()->timezone($appointment->timezone)->format('D, M j, Y \a\t g:i A T');
     @endphp
 
+    @if (Auth::user()->hasPermissionAt(Permission::ProductionAccess, $project->location))
+        <div>
+            <flux:link :href="route('production.workspace', ['location' => $project->location_id])" wire:navigate class="text-sm" data-test="project-workspace-link">&larr; {{ __('Workspace') }}</flux:link>
+        </div>
+    @endif
+
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div class="flex flex-col gap-2">
             <flux:heading size="xl" level="1" data-test="project-title">{{ $project->title }}</flux:heading>
@@ -134,10 +166,18 @@ new #[Title('Project')] class extends Component {
             </div>
         </div>
 
-        @can('update', $project)
-            <flux:button icon="pencil-square" wire:click="openEdit" data-test="edit-project">{{ __('Edit title') }}</flux:button>
-        @endcan
+        <div class="flex flex-wrap gap-2">
+            @can('take', $project)
+                <flux:button variant="primary" wire:click="take" data-test="take-project">{{ __('Take this project') }}</flux:button>
+            @endcan
+
+            @can('update', $project)
+                <flux:button icon="pencil-square" wire:click="openEdit" data-test="edit-project">{{ __('Edit title') }}</flux:button>
+            @endcan
+        </div>
     </div>
+
+    <flux:error name="productionManagerId" />
 
     @if ($project->isCancelled())
         <flux:callout icon="x-circle" data-test="project-cancelled">
@@ -151,6 +191,64 @@ new #[Title('Project')] class extends Component {
             </flux:callout.text>
         </flux:callout>
     @endif
+
+    @unless ($project->isCancelled())
+        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-handoff">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <flux:heading size="lg" level="2">{{ __('Handoff from Sales') }}</flux:heading>
+                    <flux:subheading data-test="project-production-manager">
+                        {{ $project->production_manager_name === null
+                            ? __('No Production Manager yet.')
+                            : __('Production Manager: :name', ['name' => $project->production_manager_name]) }}
+                    </flux:subheading>
+                </div>
+
+                @can('completeHandoff', $project)
+                    <flux:button :variant="$project->handoff === null ? 'primary' : 'ghost'" :href="route('projects.handoff', $project)" wire:navigate data-test="project-handoff-link">
+                        {{ $project->handoff === null ? __('Complete the handoff') : __('Change the answers') }}
+                    </flux:button>
+                @endcan
+            </div>
+
+            @if ($project->handoff === null)
+                <flux:callout icon="clock" data-test="project-handoff-waiting">
+                    <flux:callout.heading>{{ __('Waiting for the salesperson\'s handoff') }}</flux:callout.heading>
+                    <flux:callout.text>{{ __(':name has not answered the handoff questions yet. Production cannot take this project until they do.', ['name' => $project->salesperson_name ?? __('The salesperson')]) }}</flux:callout.text>
+                </flux:callout>
+            @else
+                @php
+                    $handoff = $project->handoff;
+                    $answers = [
+                        __('What is included') => $handoff->included_scope,
+                        __('What is not included') => $handoff->exclusions,
+                        __('Promised beyond the proposal') => $handoff->promises,
+                        __('When the customer expects the work') => $handoff->timing,
+                        __('Access') => $handoff->access,
+                        __('Colors') => __($handoff->colors_status->label()).($handoff->colors_details === null ? '' : ': '.$handoff->colors_details),
+                        __('Condition and prep') => $handoff->condition_prep,
+                        __('What matters most to the customer') => $handoff->customer_priorities,
+                        __('Anything else') => $handoff->other_notes,
+                    ];
+                @endphp
+
+                <dl class="grid gap-4 lg:grid-cols-2" data-test="project-handoff-answers">
+                    @foreach ($answers as $question => $answer)
+                        @if ($answer !== null)
+                            <div wire:key="handoff-answer-{{ $loop->index }}">
+                                <dt class="text-sm text-zinc-500">{{ $question }}</dt>
+                                <dd class="whitespace-pre-line text-ink">{{ $answer }}</dd>
+                            </div>
+                        @endif
+                    @endforeach
+                </dl>
+
+                <flux:text class="text-sm">
+                    {{ __('Completed by :name', ['name' => $handoff->completed_by_name ?? __('Unknown')]) }} &middot; <x-local-time :at="$handoff->completed_at" />@if ($handoff->updated_by_name !== null) &middot; {{ __('last changed by :name', ['name' => $handoff->updated_by_name]) }}@endif
+                </flux:text>
+            @endif
+        </div>
+    @endunless
 
     <div class="grid gap-6 lg:grid-cols-2">
         <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-sale">

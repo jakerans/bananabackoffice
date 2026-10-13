@@ -5,6 +5,7 @@ use App\Actions\Appointments\CancelAppointment;
 use App\Actions\Appointments\CloseOutAppointment;
 use App\Actions\Appointments\MarkAppointmentBookedInError;
 use App\Actions\Leads\RecordManualContactAttempt;
+use App\Actions\Projects\CompleteProjectHandoff;
 use App\Actions\Proposals\AddProposal;
 use App\Actions\Proposals\RecordProposalResult;
 use App\Actions\Queue\ClaimNextLead;
@@ -24,6 +25,8 @@ use App\Models\Lead;
 use App\Models\LeadCadence;
 use App\Models\LeadQueueEvent;
 use App\Models\Location;
+use App\Models\Project;
+use App\Models\ProjectHandoff;
 use App\Models\ProjectSize;
 use App\Models\Property;
 use App\Models\Proposal;
@@ -370,7 +373,7 @@ function runAppointment(Lead $lead, User $by): Appointment
  * Add a proposal through the action: "Whole exterior" for $8,450, presented at
  * the Lead's latest run appointment, unless told otherwise.
  *
- * @param  array<string, mixed>  $with  Any of: name, price, appointments (a list of appointment IDs).
+ * @param  array<string, mixed>  $with  Any of: name, price, appointments (a list of appointment IDs), property (a property ID).
  */
 function addProposal(Lead $lead, User $by, array $with = []): Proposal
 {
@@ -380,6 +383,7 @@ function addProposal(Lead $lead, User $by, array $with = []): Proposal
         array_key_exists('price', $with) ? $with['price'] : '8450',
         $with['appointments'] ?? Appointment::query()->where('lead_id', $lead->id)->wereRun()->pluck('id')->take(-1)->all(),
         $by,
+        propertyId: $with['property'] ?? null,
     );
 }
 
@@ -441,4 +445,58 @@ function octoberOfSales(Location $location, User $first, User $second, User $man
     addProposal($leads['e']->fresh(), $second, ['name' => 'Cabinets only', 'price' => '3000']);
 
     return array_map(fn (Lead $lead): Lead => $lead->fresh(), $leads);
+}
+
+/**
+ * A sold job at a Location, made from bare records: a Lead with the
+ * salesperson, a sold proposal and its Project. For tests about what happens
+ * to a Project after the sale, where how it was sold does not matter.
+ *
+ * @param  array<string, mixed>  $attributes  Anything about the Project to set.
+ */
+function soldProject(Location $location, User $salesperson, array $attributes = []): Project
+{
+    $lead = bookableLead($location, $salesperson);
+    $proposal = Proposal::factory()->forLead($lead)->create(['result' => 'sold', 'sold_cents' => 845000, 'result_at' => now()]);
+
+    return Project::factory()->forProposal($proposal)->create([
+        'sold_cents' => 845000,
+        'sold_at' => now(),
+        'salesperson_id' => $salesperson->id,
+        'salesperson_name' => $salesperson->name,
+        ...$attributes,
+    ]);
+}
+
+/**
+ * Answers to every handoff question, for the tests that are not about them.
+ *
+ * @param  array<string, mixed>  $with  Any answer to replace.
+ * @return array<string, mixed>
+ */
+function handoffAnswers(array $with = []): array
+{
+    return [
+        'includedScope' => 'All four sides, trim and both doors. Two coats.',
+        'exclusions' => 'None',
+        'promises' => 'Done before the 24th.',
+        'timing' => 'The week of the 19th. Not the 21st.',
+        'access' => 'Gate code 4411. Dog in the yard.',
+        'colorsStatus' => 'customer_will_choose',
+        'colorsDetails' => '',
+        'conditionPrep' => 'Peeling on the south side.',
+        'customerPriorities' => 'A tidy site each evening matters most to them.',
+        'otherNotes' => '',
+        ...$with,
+    ];
+}
+
+/**
+ * Complete a Project's handoff through the action.
+ *
+ * @param  array<string, mixed>  $with  Any answer to replace.
+ */
+function completeHandoff(Project $project, User $by, array $with = []): ProjectHandoff
+{
+    return app(CompleteProjectHandoff::class)->handle($project, handoffAnswers($with), $by);
 }

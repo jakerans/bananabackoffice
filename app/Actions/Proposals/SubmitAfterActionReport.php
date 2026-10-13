@@ -39,7 +39,7 @@ class SubmitAfterActionReport
      * saved and the refusal names the part.
      *
      * @param  array<string, mixed>  $report  outcome ("run" or "no_show"), note, presented ("yes" or "no"),
-     *                                        proposals (a list of: name, price, result, soldAmount, lossReasonId, lostTo, objectionId, note),
+     *                                        proposals (a list of: name, price, propertyId, result, soldAmount, lossReasonId, lostTo, objectionId, note),
      *                                        existing (by proposal ID: presented, result, soldAmount, lossReasonId, lostTo, objectionId, note).
      *
      * @throws ValidationException
@@ -96,6 +96,7 @@ class SubmitAfterActionReport
                     [$appointment->id],
                     $actor,
                     "proposals.{$index}.",
+                    is_numeric($row['propertyId'] ?? null) ? (int) $row['propertyId'] : null,
                 );
 
                 $this->recordProposalResult->apply($lead, $proposal, is_string($row['result'] ?? null) ? $row['result'] : null, $row, $actor, "proposals.{$index}.");

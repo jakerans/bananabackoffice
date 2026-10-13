@@ -46,6 +46,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // A Project is reached from its Lead, its customer and, later, Production's Workspace. It has no menu item
     // of its own (product-architecture.md, 6.2) and is authorized by its own location.
     Route::livewire('projects/{project}', 'pages::projects.show')->can('view', 'project')->name('projects.show');
+    Route::livewire('projects/{project}/handoff', 'pages::projects.handoff')->can('completeHandoff', 'project')->name('projects.handoff');
+    Route::livewire('production/workspace', 'pages::production.workspace')->can(Permission::ProductionAccess)->name('production.workspace');
 
     // The Call Queue is a Marketing > Contact Center page. It is opened by the queue permission,
     // like Leads; every action on it checks the permission again and each Lead by its own location.

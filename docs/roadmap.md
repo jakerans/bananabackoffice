@@ -101,8 +101,9 @@ approved in two steps (2026-10-13, decision 130).** Its plan, with the
 reasoning from the plan for why it is next, is
 [slice-8-projects-plan.md](slice-8-projects-plan.md). **Step 8a (the Project,
 one for each sold proposal) is built (2026-10-13)** and waits for Jacob's
-review and his word to merge. Step 8b (the handoff) waits for its questions to
-be agreed.
+review and his word to merge. **Step 8b (the property of a proposal, the
+handoff questions and Production > Workspace) is built (2026-10-13)** on top
+of it, after decision 132 settled its questions, and waits for the same.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

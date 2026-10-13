@@ -13,6 +13,7 @@ use App\Enums\ProposalResult;
 use App\Models\Appointment;
 use App\Models\Lead;
 use App\Models\Objection;
+use App\Models\Property;
 use App\Models\Proposal;
 use App\Models\SalesLossReason;
 use Flux\Flux;
@@ -47,6 +48,9 @@ new class extends Component {
 
     /** @var list<int|string> The run appointments the new proposal was presented at. */
     public array $proposalAppointmentIds = [];
+
+    /** Which of the customer's properties the proposal is for. */
+    public ?int $proposalPropertyId = null;
 
     /** The proposal the open dialog is about. */
     #[Locked]
@@ -111,7 +115,18 @@ new class extends Component {
     #[Computed]
     public function proposals(): Collection
     {
-        return $this->lead->proposals()->with(['appointments', 'project.location'])->get();
+        return $this->lead->proposals()->with(['appointments', 'property', 'project.location', 'project.handoff'])->get();
+    }
+
+    /**
+     * The customer's properties a proposal can be for (decision 132).
+     *
+     * @return Collection<int, Property>
+     */
+    #[Computed]
+    public function properties(): Collection
+    {
+        return $this->lead->account?->properties()->notArchived()->orderBy('id')->get() ?? new Collection;
     }
 
     /**
@@ -190,6 +205,7 @@ new class extends Component {
         // With one run appointment, it is the one. With several, the latest is the likely one.
         $latest = $this->runAppointments->last();
         $this->proposalAppointmentIds = $latest === null ? [] : [(string) $latest->id];
+        $this->proposalPropertyId = $this->lead->property_id;
 
         $this->knownLifecycleVersion = (int) $this->lead->lifecycle_version;
 
@@ -205,7 +221,7 @@ new class extends Component {
         $this->authorize('manageProposals', $this->lead);
         $this->resetValidation();
 
-        $proposal = $addProposal->handle($this->lead, $this->proposalName, $this->proposalPrice, $this->proposalAppointmentIds, Auth::user(), $this->knownLifecycleVersion);
+        $proposal = $addProposal->handle($this->lead, $this->proposalName, $this->proposalPrice, $this->proposalAppointmentIds, Auth::user(), $this->knownLifecycleVersion, $this->proposalPropertyId);
 
         $this->saved('add-proposal', __('Proposal added: :name, :price.', ['name' => $proposal->name, 'price' => $proposal->price()]));
     }
@@ -289,6 +305,7 @@ new class extends Component {
 
         $this->proposalName = $proposal->name;
         $this->proposalPrice = ltrim($proposal->price(), '$');
+        $this->proposalPropertyId = $proposal->property_id;
 
         Flux::modal('edit-proposal')->show();
     }
@@ -301,7 +318,7 @@ new class extends Component {
         $this->authorize('manageProposals', $this->lead);
         $this->resetValidation();
 
-        $editProposal->handle($this->lead, $this->chosen(), $this->proposalName, $this->proposalPrice, Auth::user(), $this->knownLifecycleVersion);
+        $editProposal->handle($this->lead, $this->chosen(), $this->proposalName, $this->proposalPrice, Auth::user(), $this->knownLifecycleVersion, $this->proposalPropertyId);
 
         $this->saved('edit-proposal', __('Proposal changed.'));
     }
@@ -473,7 +490,7 @@ new class extends Component {
 
     private function changed(): void
     {
-        unset($this->lead, $this->runAppointments, $this->proposals, $this->shown, $this->manages, $this->returnVisit, $this->canBeLost);
+        unset($this->lead, $this->runAppointments, $this->proposals, $this->properties, $this->shown, $this->manages, $this->returnVisit, $this->canBeLost);
     }
 }; ?>
 
@@ -549,6 +566,21 @@ new class extends Component {
                                     {{ $proposal->project->title }}
                                 @endcan
                             </span>
+
+                            {{-- Production cannot take the Project until the salesperson's handoff is complete (decision 132). --}}
+                            @if ($proposal->project->handoff === null)
+                                <span class="text-sm" data-test="proposal-handoff-needed">
+                                    @can('completeHandoff', $proposal->project)
+                                        <flux:link :href="route('projects.handoff', $proposal->project)" wire:navigate>{{ __('Complete the handoff for Production') }}</flux:link>
+                                    @else
+                                        <span class="text-zinc-700">{{ __('Waiting for the salesperson\'s handoff.') }}</span>
+                                    @endcan
+                                </span>
+                            @endif
+                        @endif
+
+                        @if ($this->properties->count() > 1 && $proposal->property !== null)
+                            <span class="text-sm text-zinc-700" data-test="proposal-property">{{ __('For:') }} {{ $proposal->property->summary() }}</span>
                         @endif
 
                         <span class="text-sm text-zinc-700" data-test="proposal-appointments">
@@ -638,6 +670,14 @@ new class extends Component {
 
                     <flux:input wire:model="proposalPrice" inputmode="decimal" :label="__('Price, in dollars')" placeholder="8,450" data-test="proposal-price-field" />
 
+                    {{-- One proposal is for one of the customer's properties (decision 132). Asked only when there is a choice. --}}
+                    @if ($this->properties->count() > 1)
+                        <flux:select wire:model="proposalPropertyId" :label="__('Property')" data-test="proposal-property-field">
+                            @foreach ($this->properties as $property)
+                                <flux:select.option :value="$property->id" wire:key="add-proposal-property-{{ $property->id }}">{{ $property->summary() }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    @endif
                     <fieldset class="flex flex-col gap-2" data-test="proposal-appointment-choices">
                         <legend class="text-sm font-medium text-ink">
                             {{ __('Presented at') }}
@@ -741,6 +781,14 @@ new class extends Component {
 
                     <flux:input wire:model="proposalPrice" inputmode="decimal" :label="__('Price, in dollars')" data-test="edit-proposal-price" />
 
+                    {{-- One proposal is for one of the customer's properties (decision 132). Asked only when there is a choice. --}}
+                    @if ($this->properties->count() > 1)
+                        <flux:select wire:model="proposalPropertyId" :label="__('Property')" data-test="edit-proposal-property">
+                            @foreach ($this->properties as $property)
+                                <flux:select.option :value="$property->id" wire:key="edit-proposal-property-{{ $property->id }}">{{ $property->summary() }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    @endif
                     <div class="flex justify-end gap-2">
                         <flux:modal.close>
                             <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>

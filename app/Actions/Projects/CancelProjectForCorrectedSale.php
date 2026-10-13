@@ -7,6 +7,7 @@ use App\Enums\AuditAction;
 use App\Models\Project;
 use App\Models\Proposal;
 use App\Models\User;
+use App\Notifications\ProjectNotice;
 
 class CancelProjectForCorrectedSale
 {
@@ -46,6 +47,11 @@ class CancelProjectForCorrectedSale
             location: $project->location,
             reason: $note,
         );
+
+        // Its Production Manager is told (docs/slice-8-projects-plan.md, question 4).
+        if ($project->production_manager_id !== null && $project->production_manager_id !== $actor->id) {
+            User::query()->find($project->production_manager_id)?->notify(new ProjectNotice($project->id, ProjectNotice::CANCELLED));
+        }
 
         return $project;
     }

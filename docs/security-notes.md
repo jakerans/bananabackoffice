@@ -209,6 +209,19 @@ another location has dealt with. Staff are told so without being shown who.
   its own audit event. The browser cannot send any answer but run or no-show.
   An appointment has no result field at all: Sold, Pending and Lost will exist
   only on proposals (decision 124).
+- **The handoff and the Production Manager (slice 8 step 8b, 2026-10-13).** No
+  new permission. The property of a proposal is read on the server from that
+  customer's own, unarchived properties, so the browser cannot attach another
+  customer's address to a sale. The handoff gate is in the policy and the
+  action, not only on the screens: a Project with no handoff cannot be taken
+  or assigned by a request sent by hand. Taking locks the Project's row, so
+  two Production Managers cannot both get it. The Workspace finds a Project
+  only at the Location shown, and the Location shown only among those the
+  person may see. The handoff answers hold access details such as gate codes;
+  they are shown only on the Project page, to people with `projects.view`
+  there, and are kept in the audit record when changed. Notices and the
+  reminder email carry no customer, no address and no Project title; a test
+  reads every kind of notice for both.
 - **Projects (slice 8 step 8a, 2026-10-13).** Two new permissions, approved in
   decision 130. A Project is authorized by its own Location, never by the
   Location in the header and never by whose it is. Nobody creates or cancels

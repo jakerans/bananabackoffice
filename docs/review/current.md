@@ -3,200 +3,261 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-13 · **Branch:** `checkpoint-slice-8a-project`
+**Updated:** 2026-10-13 · **Branch:** `checkpoint-slice-8b-handoff`
 
-**State:** slice 8, step 8a is built and waits for Jacob's review and his word
-to merge. `main` and staging have none of it. This branch sits on top of the
-slice 8 plan branch (`checkpoint-slice-8-plan`, also not merged), so merging it
-brings the plan, decision 130 and the build together.
+**State:** slice 8, steps 8a and 8b are both built and wait for Jacob's review
+and his word to merge. `main` and staging have neither. This branch holds
+everything: the slice 8 plan, decisions 130 to 133 with the stakeholder
+discovery record, step 8a and step 8b. Merging it brings them together.
 
-**The step 8b product questions are settled** by decision 132. The exact
-handoff and property rules are now in the slice 8 plan. Step 8a still waits for
-the word to merge; implementation has not moved on to 8b.
+Jacob said on 2026-10-13 that the answers were updated and the blocker was
+gone, and to get started. He has not yet said to merge step 8a.
+
+## What Jacob's three commits changed, as read back
+
+Read in full before building: decisions 131 to 133,
+[../stakeholder-discovery-open-questions.md](../stakeholder-discovery-open-questions.md)
+and every changed passage of the product architecture.
+
+- **For step 8b (decision 132), built here:** eight required handoff questions
+  and an optional ninth, the eighth being the customer's priorities and
+  expectations from WNBET discovery; "None" is an answer; Production sees a
+  waiting Project and cannot take it until the handoff is complete; a prompt
+  on every page and one bell and email reminder the next morning; the
+  questions fixed for now. And one property for each proposal, the Lead's
+  unless another is chosen, which its Project takes.
+- **Confirmed: nothing now blocks step 8b.**
+- **Settled for later work, not built here (decisions 131 and 133):**
+  compensation plans, the deposit, payments and A/R timing, closeout, colors,
+  subcontractors, PFAD, the QuickBooks boundary and the monthly close.
+  Decision 133 says it records policy and authorizes no build outside an
+  approved slice.
+- **Three places where what is already built differs from what is now
+  decided.** None was changed. See "Decisions needed", 3.
 
 ## Step
 
-Slice 8, step 8a: the Project. Plan:
-[../slice-8-projects-plan.md](../slice-8-projects-plan.md), "Step 8a" and
-"Step 8a as built". From the plan:
-[../product-architecture.md](../product-architecture.md), 2, 6.2 and 20;
-rulebook rule 13; decision 130.
+Slice 8, step 8b: the handoff. Plan:
+[../slice-8-projects-plan.md](../slice-8-projects-plan.md), "Step 8b" and
+"Step 8b as built". From the plan:
+[../product-architecture.md](../product-architecture.md), 6.2, 6.3 and 20;
+decisions 130 and 132. Step 8a is described in the same plan under "Step 8a as
+built"; its handoff was the previous version of this page.
 
-Objective: the moment a proposal is sold there is a Project for it, with what
-was sold, for how much, for whom and where, that Sales, Production and Finance
-can each open.
+Objective: a sold job reaches Production with what the Production Manager
+needs to know, and Production can see what is coming, take it and know whose
+it is.
 
-## What changed
+## What changed in step 8b
 
-- **A Project is made the moment a proposal is marked Sold,** from the card or
-  from the after-action report, with nothing more to fill in.
-- **One Project for each sold proposal** (decision 130). A Lead with two sold
-  proposals has two Projects.
-- **It carries:** a title ("Interior Painting — 123 Oak St", editable), the
-  customer, contact and property, the Location, the services and project
-  size, the proposal and its sold amount, and who sold it and when.
-- **The Project page** shows all of that, the appointments the proposal was
-  presented at, its states (Sold; Production: New from Sales) and its
-  Activity. A manager can edit the title and add a description.
-- **On the Lead,** each sold proposal shows "Project: ..." with a link.
-- **On the customer page,** a new Projects section. **In the customer's
-  Activity,** "Project created from a sale".
-- **If a manager corrects the sale,** the Project is marked "Cancelled: sale
-  corrected" with the note, and kept. If the proposal is sold again, the same
-  Project comes back.
-- **Two new permissions,** as approved: who can see Projects, and who can edit
-  one. A Production Manager and Finance can now open a Project; the Contact
-  Center cannot, but sees its title and sold amount on the customer page.
-- **Two new tables.** A one-time step gives a Project to any proposal that was
-  already sold before this step. **No new package, nothing sent to a
-  customer.**
+**The property of a proposal.**
 
-Also in this branch: the slice 8 plan and decision 130.
+- "Add proposal", "Change" and the after-action report ask which of the
+  customer's properties the proposal is for, when the customer has more than
+  one. It starts on the Lead's.
+- The Project is for that property and named for its address. Work at two
+  houses is two proposals and two Projects.
+
+**The handoff.**
+
+- A page of its own, made for a phone, with the nine questions: what is
+  included; what is not; what was promised beyond the proposal; timing;
+  access; colors (chosen, the customer will choose, or a color consultation
+  is needed); condition and prep; what matters most to this customer; and an
+  optional "anything else".
+- Every question but the last needs an answer, and "None" is one. If the
+  colors are chosen it asks which.
+- For the salesperson who sold it, or a manager. It can be corrected later;
+  what the answers were is kept and the Production Manager is told.
+- **Production cannot take a Project until it is done,** and a manager cannot
+  assign it either.
+- **The salesperson is prompted on every page** while a job they sold has no
+  handoff: "You have 1 sold job waiting for your handoff. Production cannot
+  take it until you answer the handoff questions. Complete it now".
+- **One reminder,** in the bell and by email, at 8:00 the next morning.
+- The Lead's Proposals card and the Project page both say the handoff is
+  needed and link to it.
+
+**Production > Workspace** is now a real page, where "Coming soon" stood.
+Three lists for one Location:
+
+- **New from Sales:** handed over and ready, longest-waiting first, each with
+  the customer, what was sold, for how much, by whom and how long ago. A
+  Production Manager has "Take it"; a manager has "Assign".
+- **Waiting for the salesperson's handoff:** sold and coming, marked "No
+  handoff yet", with nothing to take.
+- **Pre-production:** jobs that have a Production Manager, the viewer's own
+  first. A manager can change one, with a note.
+
+**Telling people,** all in the bell: the Production Managers at the Location
+when a job is ready; the one a job is assigned to; the one it is taken from;
+the salesperson, who is told who has their job; the Production Manager when a
+handoff is changed or a sale is corrected.
+
+**The Project page** shows the handoff answers, the Production Manager, and
+"Take this project" for a Production Manager who may.
+
+**Database:** two new tables and four new columns on projects. **No new
+permission, no new package, nothing sent to a customer.**
 
 ## Tests and checks, with their real results
 
 | Check | Result |
 | --- | --- |
-| `composer test` on the Windows development machine (style, static analysis, every test) | **Passed:** 2,553 tests (2,552 passed, 1 skipped) in about 400 seconds. The skipped test is the device-time formatter, which cannot find Node on Windows. |
+| `composer test` on the Windows development machine (style, static analysis, every test) | **Passed:** 2,637 tests (2,636 passed, 1 skipped) in about 410 seconds. The skipped test is the device-time formatter, which cannot find Node on Windows. |
 | GitHub "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)" | Reported with the branch; not recorded here. |
-| Browser | **Done on 2026-10-13 by the implementation agent: every step passed.** Results are under "Browser review" below. |
+| Browser | **Done on 2026-10-13 by the implementation agent: every step passed** and the browser reported no page errors. Results are under "Browser review" below. |
 | Merge, staging | **Not done.** |
 
-New tests, 38, in `tests/Feature/Projects/`:
+New tests, 84, in `tests/Feature/Projects/`:
 
-- `ProjectFromSaleTest.php`: the sale making the Project in the same save,
-  field by field; one Project for each sold proposal, and the second one's
-  title; none for a lost or pending proposal; the after-action report making
-  them; the salesperson being the Lead's whoever records the sale; the Project
-  keeping what the Lead had when the Lead changes later; a corrected sale
-  cancelling and keeping it, and the same one coming back when sold again; one
-  correction leaving the Lead's other Project alone; the database refusing a
-  second Project for a proposal; no deleting; who may see and who may edit, as
-  a matrix of ten people; editing, what is kept, and its refusals; and the
-  one-time step for proposals already sold.
-- `ProjectScreensTest.php`: the page's contents; who may open it, as a matrix
-  of seven people, and a guest; a Production Manager shown what they need with
-  no link to the Lead or the customer; editing from the page; a cancelled
-  Project; the link on the Lead's card, with and without the right to open it;
-  the customer page's Projects section for a manager and for the Contact
-  Center; and the customer's Activity.
+- `ProposalPropertyTest.php` (9): the default and a chosen property; another
+  customer's, an archived one and one that does not exist refused; the Project
+  taking the proposal's property and its address; changing a pending
+  proposal's property and what is kept; the card asking only when there is a
+  choice; the browser sending another customer's property; the report.
+- `ProjectHandoffTest.php` (39): completing it and who is told; "None";
+  each of eleven refusals at its own question, and all of them at once; who
+  may, as a matrix of seven people; a correction, what is kept and who is
+  told; a cancelled Project; the reminder at 8:00 and not at 7:59, once, in
+  the app and by email, by the Location's own morning, and not when it is not
+  owed; every notice read for the customer's name and the address; the
+  prompt; who may open the page; the form itself; the Project page and the
+  Lead's card.
+- `ProductionManagerTest.php` (24): taking, the history and who is told; who
+  may take, as a matrix; nobody taking or being given a Project before its
+  handoff; two people taking one after the other; assigning; six people who
+  cannot be given a Project; who may assign; changing with a note; a corrected
+  sale; holding a Project granting nothing.
+- `ProductionWorkspaceTest.php` (12): the page being live and who may open it;
+  each job in the right list; taking and assigning from the page; a job
+  somebody else took a moment ago; a job waiting for its handoff refused
+  whatever the browser sends; only the Location shown, and never one that is
+  not theirs; cancelled Projects in no list; taking from the Project page.
 
 Existing tests that changed, none weakened:
 
-- `RoleTest.php` pins each role's permissions; it now includes the two new
-  ones for the roles decision 130 named.
-
-## Found while building
-
-- **A proposal sold before this step would have had no Project.** Staging has
-  none today, but one could be marked sold there before this merges. A
-  one-time migration gives each such proposal its Project, and a test proves
-  it makes the same Project a sale would have.
+- `QueueTickTest.php`: the timer's result has one more count,
+  `handoffs_reminded`.
+- `ProposalResultsTest.php`: the record kept when a proposal is changed now
+  also holds its property.
 
 ## Architectural decisions made while building
 
-Listed in the plan under "Step 8a as built". The ones Jacob may want to
+Listed in the plan under "Step 8b as built". The ones Jacob may want to
 change:
 
-- **A second Project from the same Lead also says what was sold in its
-  title,** "Interior Painting — 123 Oak St (Deck)", because the service and
-  address alone would read the same as the first.
-- **The Project page shows the contact's phone and email and the property's
-  address** to everyone who may see Projects there. A Production Manager
-  cannot open the Lead or the customer page, so this is where they get them.
-- **The customer page lists a Project** to anyone who may see Projects at its
-  Location or may see its Lead. The Contact Center sees the title and the
-  sold amount that way, and cannot open it.
-- **Nobody is told when a Project is made.** Telling Production is step 8b.
+- **The handoff is saved whole,** not kept half-finished as a draft.
+- **A manager cannot assign before the handoff either.**
+- **Production is told when a job is ready to take,** not at the sale.
+- **"The next morning" is 8:00 am** in the Location's time.
+- **A manager assigns and does not take.** Only someone with the Production
+  Manager role at that Location can hold a Project.
+- **No notice carries the Project's title,** because the title has the street
+  address in it. A notice says "A sold job at Northside is ready for
+  Production." and links to it.
 
 ## Deviations from the approved plan
 
-None from decision 130.
+None from decisions 130 and 132.
 
 ## Known limitations
 
-- **A Project is on the Lead's property.** Jacob's "separate houses" needs a
-  choice of property on a proposal. See "Decisions needed", 3.
-- **The Project page has no menu behind it.** It belongs to no menu item until
-  step 8b lists Projects in Production > Workspace, so the second row of the
-  menu is empty on it. It is reached from the Lead and the customer.
-- **Production is not told and has no list yet.** Step 8b.
-- **No handoff yet.** Step 8b.
-- Local database only: the review left one fictitious Project, and the
-  one-time step made one for a proposal sold in an earlier review.
+- **No reminder after the first.** The prompt stays until the handoff is done.
+- **Nothing escalates** a handoff that is still not done after days. A manager
+  can complete it themselves, and sees it in Production > Workspace.
+- **A Production Manager is one person.** No Coordinator (decision 130).
+- **Pre-production is one state.** Readiness, colors, the schedule and the
+  rest of 6.3 are later slices.
+- **The deposit-paid handoff call** from the stakeholder answers needs
+  payments, which are not built.
+- **The Project page still has no menu row behind it** for someone who came
+  from Sales. Production reaches it from the Workspace, which has one.
+- **Two people pressing "Take it" at the same instant** is guarded by a lock
+  on the Project's row and tested one after the other, not with two real
+  processes at once.
+- Local database only: a fictitious Production Manager at Northside and a
+  second fictitious property were added for the review, and the review left
+  two Projects handed over.
 
 ## Decisions needed from Jacob
 
-The broader stakeholder questionnaire has also been reconciled. Its answered
-items are now in the product architecture; all 31 questions and approved
-answers are in
-[../stakeholder-discovery-open-questions.md](../stakeholder-discovery-open-questions.md).
-The first two are decision 132 and the remaining 29 are decision 133. None is
-waiting on an answer. Intentional deferrals wait for evidence or their future
-slice rather than inviting a builder to guess.
+1. **Review 8a and 8b** and say whether to merge. They are on one branch and
+   merge together.
 
-1. **Review 8a** and say whether to merge it.
+2. **A Project's title.** It starts with the Lead's main service, as decision
+   130 kept it. Now that each sold proposal is its own Project, that can read
+   oddly: in the browser review a deck sold from an interior-painting Lead
+   became "Interior Painting — 9 Lake Rd". Recommended: name it for what was
+   sold, "Lake house deck — 9 Lake Rd". It stays editable either way.
 
-2. **The handoff questions for step 8b — answered as proposed in decision
-   132.** Jacob asked for questions the
-   salesperson has to complete, because thin handovers have caused trouble
-   for project managers. Proposed, for him to cut, add to or reword:
+3. **Three places where what is built differs from what decision 133 now
+   says.** Decision 133 does not authorize changing them, so they are as they
+   were:
+   - **Close Rate, whose win it is.** The plan now says the win follows the
+     salesperson who owned the Lead when the proposal was sold. Sales >
+     Performance counts it for the salesperson of the Lead's first run
+     appointment. They differ only when a Lead changes salesperson between
+     its first visit and the sale.
+   - **Corrections.** The plan now says a correction makes "an auditable
+     metric adjustment rather than silently rewriting history". Today a
+     corrected sale simply stops counting; the correction is in the audit
+     record, but there is no adjustment entry in the figures.
+   - **A no-demo's coaching reason.** The plan now says an appointment run
+     with nothing presented "records the coaching reason". Nothing asks for
+     one today.
 
-   | # | Question | Answer |
-   | --- | --- | --- |
-   | 1 | **What exactly is included?** Rooms, sides of the house, surfaces, coats. | Text, required |
-   | 2 | **What is not included,** that the customer might assume is? | Text, required ("Nothing" is an answer) |
-   | 3 | **What did you promise the customer** beyond the proposal? Dates, extras, touch-ups, a discount. | Text, required ("Nothing") |
-   | 4 | **When does the customer expect the work?** Any date that must be hit or avoided. | Text, required |
-   | 5 | **Access.** Who will be home, gate or lockbox codes, parking, pets. | Text, required |
-   | 6 | **Colors.** | One of: Chosen (say which) / The customer will choose / Needs a color consultation |
-   | 7 | **Condition and prep.** Peeling, rot, repairs, heights, anything that will take longer than it looks. | Text, required |
-   | 8 | **Anything else Production should know** about this customer or job? | Text, optional |
+   Recommended: one small step after slice 8, "Sales figures follow decision
+   133", for all three.
 
-   And three rules to go with them. Recommended:
+4. **What comes after slice 8.** See "The plan check" below.
 
-   - **(a) Production cannot take a Project until its handoff is complete.**
-     Until then it is listed for Production as "Waiting for the salesperson's
-     handoff", so they can see it coming.
-   - **(b) The salesperson is prompted on every page** while a sold job of
-     theirs has no handoff, the same way as "You have 1 appointment to close
-     out", and reminded once in the bell and by email the next morning.
-   - **(c) The questions are fixed in Backoffice for now,** not a list Jacob
-     edits. Changing them is a small change to make when he asks. An editable
-     list of questions can come later.
+## The plan check after slice 8
 
-3. **Separate houses — answered as recommended in decision 132.** Today a proposal, and so its Project, is on the
-   Lead's property. To sell work on another of the customer's houses from the
-   same Lead, "Add proposal" would ask which of the customer's properties it
-   is for, starting on the Lead's. Recommended: add it with step 8b. The
-   alternative that works today is a new Lead for that property.
+Decision 122 asks for this after each slice.
 
-## The plan check for this step
+- **Built from the plan in slice 8:** a Project when a sale is Won (rule 13);
+  separate states (2); the Sales to Production handoff, PM assignment and the
+  start of pre-production (6.2, 6.3); every ownership transfer telling the new
+  owner (20); the handoff questions and property rule (decision 132).
+- **In 6.2 and 6.3 and not built:** the confirmation email or text; the
+  Coordinator; customer onboarding; Color Readiness; rough scheduling; work
+  orders; crew and subcontractor assignment; and everything after.
+- **Built and not in the plan before its decision:** the one-time step for
+  proposals already sold; the readings listed above.
 
-- **From the plan:** rule 13 (a Project when the sale is Won); section 2
-  (separate states, responsibility is not permission); section 20 (the path
-  after Won); decision 36 (the sold amount comes from the proposal).
-- **In the plan and not built in this step:** the handoff, Production's
-  Workspace and the Production Manager (step 8b); the confirmation to the
-  customer, the Coordinator, colors, readiness and the schedule (later).
-- **Built and not in the plan:** the one-time step for proposals already sold.
+**What the plan says could be next,** none of it approved:
 
-## Browser review (done 2026-10-13)
+1. **Pending ownership and Rehash** (5.5). Decision 131 unblocked it: a
+   proposal is valid for seven days by default, Sales ownership ends with it,
+   and the Pending then goes to Contact Center Rehash. Today a Pending has no
+   clock at all. Recommended next, with the small step in 3 above: both
+   finish what Sales already does before Production's side grows.
+2. **Pre-production** (6.3, 6.4): rough timeframe, colors and readiness on
+   the Project. This is the next step on the customer's path.
+3. **The deposit and payments** (10.4, 10.6): needed for the deposit-paid
+   handoff call, the commission advance and every Finance rule now settled.
+   It touches QuickBooks, whose integration check has not been done.
+
+Each needs its own plan and Jacob's approval before anything is built.
+
+## Browser review of step 8b (done 2026-10-13)
 
 Done by the implementation agent on the local site (`https://backoffice.test`)
-with fictitious staff and Leads, in a real browser driven from the command
-line. **Every step passed.** The only errors the browser reported were the two
-refusals that step 5 expects.
+with fictitious staff, customers and Leads, in a real browser driven from the
+command line. **Every step passed and the browser reported no page errors.**
+The handoff was filled in at a phone's width. Step 8a's review is recorded in
+the previous version of this page.
 
 | Step | Result |
 | --- | --- |
-| 1. A sale | Pass. The salesperson marked a pending proposal sold for $5,400: "Sold: Interior, main floor. The lead now shows Sold." The card showed "Project: Interior Painting — 7119 Oak St" as a link, where there had been none. |
-| 2. The Project page | Pass. The title; "Sold" and "Production: New from Sales"; the proposal, "Priced at $5,600", "Sold for $5,400", the salesperson, the appointment it was presented at; the customer, contact and property; the service and size; Activity "Project created from a sale". The salesperson was not offered "Edit title". |
-| 3. A manager edits the title | Pass. An empty title was refused ("Give the project a title."). Saved with a description: "Project saved.", both shown, and Activity "Title or description changed". |
-| 4. The customer | Pass. The customer page listed the Project with its proposal, property, Location, salesperson, $5,400 and "Sold", as a link. The customer's Activity showed "Project created from a sale". |
-| 5. Who cannot open it | Pass. A Production Manager of another Location was refused the page (403). A Call Center Agent was refused the page (403) and, on the customer page, saw the Project's title with no link. |
-| 6. A corrected sale | Pass. After "Correct result" the Lead went back to "Appointment run" and the card no longer showed the Project. The Project page read "Cancelled: sale corrected" with the manager's note and "If the proposal is sold again, this project comes back.", and offered no edit. Sold again, the card linked to the same Project. |
+| 1. The prompt | Pass. The salesperson, with two sold jobs not handed over, saw "You have 2 sold jobs waiting for your handoff. Production cannot take it until you answer the handoff questions. Complete it now", linking to the older one's handoff. |
+| 2. Another house | Pass. "Add proposal" offered the customer's two properties. A proposal added for the second showed "For: Lake house (Sample) — 9 Lake Rd". Sold: its Project was named for 9 Lake Rd, and the card showed "Complete the handoff for Production". |
+| 3. The handoff | Pass. The page named the Project, the customer, the property and what was sold. Saved empty, it refused eight questions, each at its own field. "Which colors?" appeared only after "Chosen". Completed: "Handoff complete. Production can take this project now."; the Project page showed every answer and the Lake house as its property. |
+| 4. The Production Manager | Pass. Their bell had "A sold job at Northside is ready for Production." Workspace listed the job under "New from Sales" with the customer, what was sold, $2,400 and "Sold by Sam Sales", and the other sold jobs under "Waiting for the salesperson's handoff" with nothing to take. "Take it": "It is yours", and it moved to Pre-production as "Yours". They were not offered "Assign". |
+| 5. A manager | Pass. A manager completed another Project's handoff, then in Workspace was offered "Assign" and not "Take it". The dialog offered the Location's Production Manager; saved, the job moved to Pre-production under their name. Choosing the same person again was refused. |
+| 6. Who was told | Pass. The salesperson's bell had "Remy Production (Sample) is now the Production Manager for a job you sold." twice, and their prompt was down to one job. The Production Manager's bell had "You were made the Production Manager of a project." |
 
-Not covered in the browser: a Production Manager at the Project's own
-Location, because the local sample Production Manager is at another one. The
-automated tests cover that view.
+Not covered in the browser: the next-morning reminder, which needs a day to
+pass and which the automated tests cover minute by minute; and changing a
+Production Manager to another person, because the local Location has one.

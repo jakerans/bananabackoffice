@@ -549,6 +549,18 @@ Rules:
     sale and its correction do (rule 20). A Call Center Agent cannot open a
     Project; on the customer page they see its title and sold amount when they
     may see the Lead it came from.
+23. **The handoff and the Production Manager** (slice 8 step 8b, decisions 130
+    and 132). **Answering or correcting the handoff questions**
+    (`ProjectPolicy::completeHandoff`): the salesperson who sold the Project,
+    or anyone with `projects.manage` there. A Production Manager reads the
+    answers and cannot write them. **Assigning or changing the Production
+    Manager** (`assignProductionManager`): `projects.manage`. **Taking a
+    waiting job** (`take`): someone with the Production Manager role at the
+    Project's own Location, for themselves, once the handoff is complete and
+    nobody has it. Only a person with that role there can hold a Project.
+    Holding one grants nothing. **Production > Workspace** opens with
+    `production.access` and lists only the Locations where the person has
+    `projects.view`. No permission was added.
 
 ## Slice 4: the call queue and its settings
 

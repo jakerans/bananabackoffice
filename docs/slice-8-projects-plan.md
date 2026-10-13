@@ -219,6 +219,67 @@ to the customer.
 On `projects`: the Production Manager and when, the handoff notes and who
 wrote them. A history of who has held it.
 
+### Step 8b as built (2026-10-13)
+
+Built as planned above, with decisions 130 and 132. What a reader of the code
+should know:
+
+- **A proposal's property.** `AddProposal` and `EditProposal` take one of the
+  customer's properties, the Lead's unless another is chosen, and refuse one
+  that is another customer's or archived. `CreateProjectForSoldProposal` gives
+  the Project the proposal's property and names it for that address. The card
+  and the after-action report ask only when the customer has more than one.
+- **The handoff** is `project_handoffs`, one row for a Project, written by
+  `CompleteProjectHandoff`. The nine questions are fixed in code
+  (`ProjectHandoff::TEXT_ANSWERS` and the `HandoffColors` choices). It is its
+  own page, `pages::projects.handoff`, made for a phone.
+- **The gate.** A Project with no handoff row cannot be taken
+  (`ProjectPolicy::take`) or assigned (`AssignProductionManager`). Production
+  sees it listed as waiting.
+- **The prompt** is `pages::sales.handoff-prompt`, under the header beside the
+  close-out prompt. **The reminder** is `RemindToCompleteHandoff`, run by the
+  timer that already runs every minute and counted as `handoffs_reminded`; it
+  is due at 8:00 on the morning after the sale by the Location's own clock,
+  and `projects.handoff_reminded_at` keeps it to one.
+- **The Production Manager.** `TakeProject` and `AssignProductionManager`
+  share one rule (`place`). The first time, the Project's production state
+  goes from New from Sales to Pre-production. `project_production_managers`
+  keeps who has held it. Both lock the Project's row, so two people cannot
+  take it at once.
+- **Production > Workspace** is `pages::production.workspace` at
+  `/production/workspace`, opened with `production.access`: three lists for
+  one Location.
+- **Notices** are a new `ProjectNotice`, all inside the app except the
+  reminder, which is also emailed. None names the customer, and none carries
+  the Project's title, because the title has the street address in it.
+- **Five audit events:** `project.handoff_completed`,
+  `project.handoff_changed`, `project.production_manager_assigned`,
+  `project.production_manager_changed`, `project.taken`. All but the changed
+  handoff are in the customer's Activity.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **The handoff is one form, saved whole.** There is no half-finished handoff
+  kept as a draft. It can be corrected afterwards by the salesperson or a
+  manager; what the answers were is kept, and the Production Manager is told.
+- **A manager cannot assign before the handoff either.** "Production cannot
+  take it until the handoff is complete" was read as covering a manager
+  assigning it as well as a Production Manager taking it.
+- **Production is told when a job is ready to take,** that is when its handoff
+  is completed, not at the sale. They can already see it in the waiting list.
+- **"The next morning" is 8:00 am** on the day after the sale, in the
+  Location's time.
+- **Colors that are "Chosen" must say which.** The other two choices need
+  nothing more.
+- **Changing a Production Manager needs a note; the first assignment does
+  not.** The one it was taken from, the new one and the salesperson are told.
+- **A manager assigns and does not take.** Taking is for someone with the
+  Production Manager role at that Location. An Owner can assign anywhere.
+- **A Project brought back after a corrected sale keeps its handoff and its
+  Production Manager.**
+- **The title still starts with the Lead's main service.** A deck sold from an
+  interior-painting Lead reads "Interior Painting — 9 Lake Rd". See the
+  handoff.
 ## Who may do what
 
 **This slice needs new permissions,** which need Jacob's approval. None exist

@@ -45,7 +45,8 @@ explicitly maps it to an existing working route.
 | Sales → Customers | Keep `shared.customers` and `/customers`. | Live; existing `accounts.view`. |
 | Sales → Reports | Keep `sales.reports`; no route. | Coming soon; `sales.access`. |
 | Production → Performance | Keep `production.performance` and `/production/performance-board`. | Existing state and `production.access`. |
-| Production → Workspace | Add `production.workspace`; no route. | Coming soon; `production.access`. No Project or stage page is built. |
+| Production → Workspace | `production.workspace`; route name `production.workspace`; `/production/workspace`. | **Built (slice 8 step 8b, 2026-10-13).** Live; `production.access`. Sold jobs at one Location in three lists: waiting for the salesperson's handoff, new from Sales, and pre-production. A Production Manager takes a job; a manager assigns one. No stage page beyond pre-production is built. |
+| *(no menu item)* A Project's handoff | `/projects/{project}/handoff`, route name `projects.handoff`. | **Built (slice 8 step 8b, 2026-10-13).** The salesperson who sold it, or `projects.manage`. Reached from the prompt under the header, the Lead's Proposals card and the Project page. |
 | Production → Schedule | Add `production.schedule`; no route. | Coming soon; `production.access`. |
 | Production → Subcontractors | Keep `production.crews` and change only its label. | Coming soon; `production.access`. |
 | Production → Warranty | Add `production.warranty`; no route. | Coming soon; `production.access`. |

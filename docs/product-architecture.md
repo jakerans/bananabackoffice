@@ -521,6 +521,8 @@ Added 2026-10-13 (slice 8 step 8a; rulebook rule 13; decision 130; build plan: s
   required before Production can take the Project; an optional final note is
   allowed. A proposal selects exactly one customer property and its Project
   uses that property.
+- Built in slice 8 step 8b (2026-10-13): the property choice on a proposal; the handoff questions, the gate, the salesperson's prompt and next-morning reminder; Production > Workspace with three lists (waiting for handoff, new from Sales, pre-production); a Production Manager taking a job or a manager assigning one, each telling the new owner and the salesperson (20).
+- Still not built from 6.2 and 6.3: the confirmation email or text, the Coordinator, the deposit-paid handoff call, customer onboarding, Color Readiness, rough scheduling, work orders and everything after.
 
 6.4 Color Specification
 Every normal sold job ultimately has an authoritative Color Specification.

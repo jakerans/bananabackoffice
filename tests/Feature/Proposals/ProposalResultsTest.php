@@ -426,8 +426,8 @@ test('the salesperson changes a pending proposal\'s name and price, and what it 
     $event = AuditEvent::query()->where('action', AuditAction::LeadProposalEdited)->sole();
 
     expect($event->actor_id)->toBe($this->sam->id);
-    expect($event->values_before)->toEqual(['proposal' => 'Whole exterior', 'price' => '$8,450']);
-    expect($event->values_after)->toEqual(['proposal' => 'Whole exterior, two coats', 'price' => '$9,100.50']);
+    expect($event->values_before)->toEqual(['proposal' => 'Whole exterior', 'price' => '$8,450', 'property_id' => $this->lead->property_id]);
+    expect($event->values_after)->toEqual(['proposal' => 'Whole exterior, two coats', 'price' => '$9,100.50', 'property_id' => $this->lead->property_id]);
 
     // Saving it unchanged records nothing.
     app(EditProposal::class)->handle($this->lead, $this->proposal, 'Whole exterior, two coats', '9100.50', $this->sam);
