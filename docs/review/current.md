@@ -7,25 +7,25 @@ No secrets or customer information belong here.
 
 **State:** slice 9, step 9c is built and waits for Jacob's review and his word
 to merge. `main` and staging do not have it. It is the last step of slice 9.
+This branch also records decision 140: the repository is public.
 
 Step 9b is merged, on 2026-10-13 with Jacob's word ("Merge and start.",
 decision 139), and staging deployed it.
 
-## GitHub is not running the checks
+## The GitHub checks
 
-**GitHub did not run either job on step 9b's merge,** and has not run them
-since. Its own message on both jobs: "The job was not started because recent
-account payments have failed or your spending limit needs to be increased.
-Please check the 'Billing & plans' section in your settings."
+**Both jobs have now run and passed** on step 9c and on step 9b's merge.
 
-- **This is the GitHub account's billing, not the code.** No step of either
-  job started, so there is no test result at all.
-- **What was merged had passed.** Step 9b's own commit passed both jobs
-  before the merge; the merge added one commit that changes only documents.
-- **Step 9c has therefore not been checked on MySQL 8.4.** It was checked on
-  the development machine only, which uses SQLite. It adds no migration.
-- **Only Jacob can fix it,** in GitHub under Settings > Billing & plans. Once
-  it is fixed the jobs can be run again on the same commits.
+- On 2026-10-13 GitHub stopped starting the jobs: the month's free allowance
+  of minutes for a private repository was used up. Its message was "The job
+  was not started because recent account payments have failed or your
+  spending limit needs to be increased."
+- **Jacob made the repository public** the same day (decision 140). GitHub
+  runs the checks on a public repository without that limit.
+- The two runs it had refused were then run again on the same commits, and
+  both jobs passed on each.
+- What being public exposes, and what was checked first, is in decision 140
+  and at the top of [../security-notes.md](../security-notes.md).
 
 ## Step
 
@@ -64,7 +64,7 @@ sees their Locations'.
 | Check | Result |
 | --- | --- |
 | `composer test` on the Windows development machine (style, static analysis, every test) | **Passed:** 2,732 tests (2,731 passed, 1 skipped) in about 390 seconds. The skipped test is the device-time formatter, which cannot find Node on Windows. |
-| GitHub "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)" | **Not run.** GitHub refused to start them; see "GitHub is not running the checks" above. |
+| GitHub "Checks and tests (SQLite)" and "Migrations and tests (MySQL 8.4)" | Reported with the branch; not recorded here. Both ran only after the repository was made public; see "The GitHub checks" above. |
 | Browser | **Done on 2026-10-13 by the implementation agent: every step passed** and the browser reported no page errors. Results are under "Browser review" below. |
 | Merge, staging | **Not done.** |
 
@@ -118,12 +118,13 @@ None from decision 137.
 
 ## Decisions needed from Jacob
 
-1. **Fix GitHub's billing** so the checks run again. Until then nothing can be
-   confirmed on MySQL 8.4.
-2. **Review step 9c** and say whether to merge. Recommended: merge once both
-   GitHub jobs have run on it and passed.
-3. **What comes next.** Slice 9 is complete with this step. See "The plan
+1. **Review step 9c** and say whether to merge. Both GitHub jobs have passed
+   on it.
+2. **What comes next.** Slice 9 is complete with this step. See "The plan
    check" below.
+3. **When the repository goes back to private** (decision 140). Nothing is
+   needed now; it is listed in the security notes to be settled before
+   production holds real customer data.
 
 ## The plan check after slice 9
 

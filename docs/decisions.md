@@ -2852,6 +2852,38 @@ keep this train rolling."
 2. **Step 9c, the Pending figures, starts.** It is built as the plan's table
    and decision 137 (answer 8) have it and stops for his review.
 
+## 140. The repository is public, for now (2026-10-13)
+
+**Decided and done by Jacob.** On 2026-10-13 GitHub stopped running the two
+checks: the month's free allowance of minutes for a private repository was
+used up, by about 143 runs of roughly 14 billed minutes each. He was told what
+a public repository exposes, that it cannot be fully undone, and that the
+implementation agent recommended paying a small amount instead. His words, in
+order: "we'll move ot public"; "thats fine - no one will ever know its there";
+"can i move it back to private after we're done"; and, having changed it
+himself, "okaY ITS PUBLIC - CONTINUE".
+
+1. **The repository is public.** GitHub runs the checks on a public repository
+   without the monthly limit, so the rule in
+   [collaboration.md](collaboration.md) stands as written: both jobs, SQLite
+   and MySQL 8.4, are confirmed on every pushed step.
+2. **It can go back to private,** and he asked about doing so "after we're
+   done". When is not decided. The natural time is before production holds
+   real customer data. Whatever was copied while it was public stays copied.
+3. **What is public as a result,** recorded so that it is treated as known to
+   outsiders: all the code and its history; the plan and every decision,
+   including pay, commission and margin rules and his words quoted in them;
+   [security-notes.md](security-notes.md) with its open items; the address of
+   the staging site; and the email address on the commits.
+4. **Checked before it was changed:** all 187 commits on every branch held no
+   password, key or token, no customer information, no database dump and no
+   `.env` file. The accounts with a known password are made only on a
+   development machine.
+5. **While it is public, every commit is published the moment it is pushed.**
+   The standing rules do not change, and there is now no margin for a
+   mistake: no credential, token, key or customer information in any tracked
+   file, and `docs/reference/` is never committed.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
