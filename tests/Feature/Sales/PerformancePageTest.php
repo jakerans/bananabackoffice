@@ -85,7 +85,7 @@ test('a manager sees the month for everyone at their location, each figure with 
     expectFigure($page, 'leads-issued', '5', '6 handed to Sales this month, less 1 taken back this month.');
     expectFigure($page, 'appointments-run', '3', 'of 5 booked for this month');
     expectFigure($page, 'demo-rate', '67%', '2 of 3 run appointments have a proposal');
-    expectFigure($page, 'close-rate', '33%', '1 lead won this month, against 3 leads first run this month.');
+    expectFigure($page, 'close-rate', '50%', '1 lead won this month, against 2 leads first demoed this month.');
     expectFigure($page, 'sold-revenue', '$8,200', 'From 1 sale this month.');
     expectFigure($page, 'cancellation-rate', '20%', '1 of 5 booked appointments were cancelled. 1 no-show, counted beside it.');
 });
@@ -100,13 +100,13 @@ test('a manager chooses one salesperson', function () {
 
     expectFigure($page, 'nsli', '$2,050', '$8,200 sold, over 4 leads issued');
     expectFigure($page, 'demo-rate', '50%', '1 of 2 run appointments have a proposal');
-    expectFigure($page, 'close-rate', '50%', '1 lead won this month, against 2 leads first run this month.');
+    expectFigure($page, 'close-rate', '100%', '1 lead won this month, against 1 lead first demoed this month.');
 
     $page->set('salespersonId', $this->riley->id)->assertSee('Riley Rep at Lakeview, October 2026');
 
     expectFigure($page, 'nsli', '$0', '$0 sold, over 1 lead issued');
     expectFigure($page, 'sold-revenue', '$0', 'Nothing was sold this month.');
-    expectFigure($page, 'close-rate', '0%', 'No lead won this month, against 1 lead first run this month.');
+    expectFigure($page, 'close-rate', '0%', 'No lead won this month, against 1 lead first demoed this month.');
 });
 
 test('a salesperson sees their own figures and nobody else\'s, whatever the browser asks for', function () {

@@ -5,6 +5,7 @@ use App\Actions\Appointments\SendLeadBackToContactCenter;
 use App\Actions\Appointments\StopCountingLeadAsIssued;
 use App\Actions\Proposals\CorrectProposalResult;
 use App\Actions\Proposals\MarkProposalAddedInError;
+use App\Actions\Proposals\PresentProposalAgain;
 use App\Actions\Proposals\RecordProposalResult;
 use App\Enums\Role;
 use App\Models\Location;
@@ -15,7 +16,7 @@ use Carbon\CarbonImmutable;
 /*
  * The first Sales figures, counted from what people recorded
  * (docs/slice-7-appointment-results-plan.md, step 7d; product-architecture.md,
- * 5.2; decisions 124, 125, 133 and 134). What a later correction does to a
+ * 5.2; decisions 124, 125, 133, 134 and 135). What a later correction does to a
  * month is in SaleAdjustmentsTest.
  *
  * Most tests use the worked month in tests/Pest.php, octoberOfSales():
@@ -51,16 +52,17 @@ test('a month of work is counted for everyone at the location', function () {
     expect($october->appointmentsPresented)->toBe(2);
     expect($october->appointmentsCancelled)->toBe(1);
     expect($october->appointmentsNoShow)->toBe(1);
-    expect($october->leadsRun)->toBe(3);
+    // Three Leads were run; two of them were demoed, and those are what Close Rate is counted against (decision 135).
+    expect($october->leadsDemoed)->toBe(2);
     expect($october->leadsWon)->toBe(1);
     expect($october->salesMade)->toBe(1);
     expect($october->soldCents)->toBe(820000);
     expect([$october->winsCorrected, $october->salesCorrected, $october->correctedCents])->toBe([0, 0, 0]);
 
-    // $8,200 over 5 Leads issued; 2 of 3 run appointments presented; 1 Lead won against 3 first run; 1 of 5 booked cancelled.
+    // $8,200 over 5 Leads issued; 2 of 3 run appointments presented; 1 Lead won against 2 demoed; 1 of 5 booked cancelled.
     expect($october->nsliCents())->toBe(164000);
     expect($october->demoRate())->toBe(67);
-    expect($october->closeRate())->toBe(33);
+    expect($october->closeRate())->toBe(50);
     expect($october->cancellationRate())->toBe(20);
 });
 
@@ -70,13 +72,14 @@ test('each salesperson\'s figures are their own', function () {
     $sam = figures($this->lakeview, '2026-10', $this->sam);
 
     expect([$sam->netLeadsIssued(), $sam->appointmentsBooked, $sam->appointmentsRun, $sam->appointmentsPresented, $sam->appointmentsCancelled, $sam->appointmentsNoShow])->toBe([4, 4, 2, 1, 1, 1]);
-    expect([$sam->leadsRun, $sam->leadsWon, $sam->soldCents, $sam->salesMade])->toBe([2, 1, 820000, 1]);
-    expect([$sam->nsliCents(), $sam->demoRate(), $sam->closeRate(), $sam->cancellationRate()])->toBe([205000, 50, 50, 25]);
+    // Sam ran two and demoed one, which sold: half for Demo Rate, all of it for Close Rate.
+    expect([$sam->leadsDemoed, $sam->leadsWon, $sam->soldCents, $sam->salesMade])->toBe([1, 1, 820000, 1]);
+    expect([$sam->nsliCents(), $sam->demoRate(), $sam->closeRate(), $sam->cancellationRate()])->toBe([205000, 50, 100, 25]);
 
     $riley = figures($this->lakeview, '2026-10', $this->riley);
 
     expect([$riley->leadsIssued, $riley->appointmentsBooked, $riley->appointmentsRun, $riley->appointmentsPresented])->toBe([1, 1, 1, 1]);
-    expect([$riley->leadsRun, $riley->leadsWon, $riley->soldCents, $riley->salesMade])->toBe([1, 0, 0, 0]);
+    expect([$riley->leadsDemoed, $riley->leadsWon, $riley->soldCents, $riley->salesMade])->toBe([1, 0, 0, 0]);
     // A Lead issued and nothing sold yet is $0 a Lead, not "nothing to show".
     expect([$riley->nsliCents(), $riley->demoRate(), $riley->closeRate(), $riley->cancellationRate()])->toBe([0, 100, 0, 0]);
 });
@@ -99,6 +102,8 @@ test('a proposal added a day late moves the appointment into demo rate (decision
     $sam = figures($this->lakeview, '2026-10', $this->sam);
 
     expect([$sam->appointmentsPresented, $sam->appointmentsRun, $sam->demoRate()])->toBe([2, 2, 100]);
+    // Now that it was demoed it is in Close Rate too: one won of two demoed.
+    expect([$sam->leadsDemoed, $sam->closeRate()])->toBe([2, 50]);
 });
 
 test('three proposals with one sold are one win, and two sold to one lead are one win with both amounts', function () {
@@ -111,7 +116,8 @@ test('three proposals with one sold are one win, and two sold to one lead are on
 
     $riley = figures($this->lakeview, '2026-10', $this->riley);
 
-    expect([$riley->leadsRun, $riley->leadsWon, $riley->closeRate()])->toBe([1, 1, 100]);
+    // Three proposals for one Lead are one demo, so making more of them cannot move the rate (decision 135).
+    expect([$riley->leadsDemoed, $riley->leadsWon, $riley->closeRate()])->toBe([1, 1, 100]);
     expect([$riley->soldCents, $riley->salesMade, $riley->appointmentsPresented])->toBe([180000, 1, 1]);
 
     // A second one is sold to the same Lead: still one win, two sales, and the revenue is both.
@@ -129,16 +135,19 @@ test('a sale closed on a return visit is one win, in the month the proposal was 
     // Lead e was first run on Oct 12. Riley goes back on Nov 3 and it is sold that day.
     bookAppointment($leads['e'], $this->riley, $this->riley, '2026-11-03', '10:00');
     $this->travelTo('2026-11-03 15:00:00');
-    runAppointment($leads['e']->fresh(), $this->riley);
+    $visit = runAppointment($leads['e']->fresh(), $this->riley);
+    app(PresentProposalAgain::class)->handle($leads['e']->fresh(), $leads['e']->proposals()->sole(), $visit->id, $this->riley);
     app(RecordProposalResult::class)->handle($leads['e']->fresh(), $leads['e']->proposals()->sole(), 'sold', [], $this->riley);
 
     $october = figures($this->lakeview, '2026-10', $this->riley);
     $november = figures($this->lakeview, '2026-11', $this->riley);
 
-    // One Lead, two visits: it is first run in October, and won once, in November when it was accepted.
-    expect([$october->leadsRun, $october->leadsWon, $october->closeRate()])->toBe([1, 0, 0]);
-    expect([$november->leadsRun, $november->leadsWon, $november->netWins()])->toBe([0, 1, 1]);
-    // With no Lead first run in November there is nothing to divide the win by.
+    // One Lead, demoed on both visits: it is one demo, in October, and one win, in November when it was accepted.
+    expect([$october->leadsDemoed, $october->leadsWon, $october->closeRate()])->toBe([1, 0, 0]);
+    expect([$november->leadsDemoed, $november->leadsWon, $november->netWins()])->toBe([0, 1, 1]);
+    // The November visit is still a demo for Demo Rate.
+    expect([$november->appointmentsPresented, $november->demoRate()])->toBe([1, 100]);
+    // With no Lead first demoed in November there is nothing to divide the win by.
     expect($november->closeRate())->toBeNull();
 
     // The visit and the money are counted when they happened.
@@ -166,6 +175,8 @@ test('what is taken back in the same month comes off it: a corrected sale, a pro
 
     expect(figures($this->lakeview, '2026-10', $this->sam)->appointmentsPresented)->toBe(0);
     expect(figures($this->lakeview, '2026-10', $this->sam)->demoRate())->toBe(0);
+    // With its only proposal gone the Lead was never demoed, so Close Rate has nothing to count.
+    expect([figures($this->lakeview, '2026-10', $this->sam)->leadsDemoed, figures($this->lakeview, '2026-10', $this->sam)->closeRate()])->toBe([0, null]);
 
     // Lead b is sent back as one that should never have been booked: its issue stops counting.
     app(SendLeadBackToContactCenter::class)->handle($leads['b'], StopCountingLeadAsIssued::NEVER_SHOULD_HAVE_BEEN_BOOKED, 'Renter, not the owner.', $this->manager);

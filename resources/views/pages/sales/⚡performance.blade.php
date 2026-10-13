@@ -232,7 +232,6 @@ new #[Title('Performance')] class extends Component {
         @php
             // Each line under a figure is built whole here, so it reads as one sentence on the page.
             $issued = $figures->netLeadsIssued();
-            $wins = $figures->netWins();
 
             $nsliDetail = match (true) {
                 $figures->leadsIssued === 0 => __('No leads were issued this month.'),
@@ -244,11 +243,12 @@ new #[Title('Performance')] class extends Component {
                 ? __('Handed to Sales this month.')
                 : trans_choice('{1} :issued handed to Sales this month, less 1 taken back this month.|[2,*] :issued handed to Sales this month, less :count taken back this month.', $figures->issuesVoided, ['issued' => $figures->leadsIssued, 'count' => $figures->issuesVoided]);
 
-            $won = trans_choice('{0} No lead won this month|{1} 1 lead won this month|[2,*] :count leads won this month', max($wins, 0), ['count' => $wins]);
-            $closeDetail = ($figures->leadsRun === 0
-                ? ($wins > 0 ? $won.'. '.__('No lead had its first appointment run this month, so there is no rate.') : __('No lead had its first appointment run this month.'))
-                : $won.trans_choice('{1} , against 1 lead first run this month.|[2,*] , against :count leads first run this month.', $figures->leadsRun, ['count' => $figures->leadsRun]))
-                .($figures->winsCorrected === 0 ? '' : ' '.trans_choice('{1} 1 win was taken back by a correction this month.|[2,*] :count wins were taken back by corrections this month.', $figures->winsCorrected, ['count' => $figures->winsCorrected]));
+            // Wins are said as they were made, then what was taken back, like leads issued above.
+            $won = trans_choice('{0} No lead won this month|{1} 1 lead won this month|[2,*] :count leads won this month', $figures->leadsWon, ['count' => $figures->leadsWon])
+                .($figures->winsCorrected === 0 ? '' : trans_choice('{1} , less 1 taken back by a correction|[2,*] , less :count taken back by corrections', $figures->winsCorrected, ['count' => $figures->winsCorrected]));
+            $closeDetail = $figures->leadsDemoed === 0
+                ? ($figures->leadsWon + $figures->winsCorrected > 0 ? $won.'. '.__('No lead was first demoed this month, so there is no rate.') : __('No lead was first demoed this month.'))
+                : $won.trans_choice('{1} , against 1 lead first demoed this month.|[2,*] , against :count leads first demoed this month.', $figures->leadsDemoed, ['count' => $figures->leadsDemoed]);
 
             $soldDetail = trans_choice('{0} Nothing was sold this month.|{1} From 1 sale this month.|[2,*] From :count sales this month.', $figures->salesMade, ['count' => $figures->salesMade])
                 .($figures->salesCorrected === 0 ? '' : ' '.trans_choice('{1} :amount was taken back by 1 correction this month.|[2,*] :amount was taken back by :count corrections this month.', $figures->salesCorrected, ['amount' => Money::format($figures->correctedCents), 'count' => $figures->salesCorrected]));
@@ -316,7 +316,7 @@ new #[Title('Performance')] class extends Component {
                 <li>{{ __('Leads issued: each lead handed to Sales in the month.') }}</li>
                 <li>{{ __('Appointments run: appointments on a day in the month that were marked run.') }}</li>
                 <li>{{ __('Demo rate: of those, the ones with a proposal. An appointment run with nothing presented counts against it until a proposal is added, whatever the reason given.') }}</li>
-                <li>{{ __('Close rate: the leads won in the month, against the leads whose first appointment was run in the month. A lead is won in the month its proposal was accepted, so a sale closed from an earlier month\'s visit counts here, and a month can read above 100%. Two proposals sold to one lead are one win.') }}</li>
+                <li>{{ __('Close rate: demo to close. The leads won in the month, against the leads demoed for the first time in the month. A lead is demoed when an appointment that was run has a proposal; one run with nothing presented counts against demo rate, not close rate. Several proposals for one lead are one demo, and several sold are one win. A lead is won in the month its proposal was accepted, so a sale closed from an earlier month\'s demo counts here, and a month can read above 100%.') }}</li>
                 <li>{{ __('Sold revenue: the sold amounts of the proposals accepted in the month.') }}</li>
                 <li>{{ __('NSLI: sold revenue in the month, divided by leads issued in the month.') }}</li>
                 <li>{{ __('Cancellation rate: of the appointments booked for a day in the month, the ones that were cancelled. No-shows are shown beside it.') }}</li>

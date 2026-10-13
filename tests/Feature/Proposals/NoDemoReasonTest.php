@@ -89,6 +89,8 @@ test('it is still a no-demo whatever the reason (decision 133)', function () {
     $october = SalesFigures::for($this->lakeview, CarbonImmutable::parse('2026-10-15 12:00:00', 'UTC'), $this->sam->id);
 
     expect([$october->appointmentsRun, $october->appointmentsPresented, $october->demoRate()])->toBe([1, 0, 0]);
+    // It counts against Demo Rate only: Close Rate is demo to close, and there was no demo (decision 135).
+    expect([$october->leadsDemoed, $october->closeRate()])->toBe([0, null]);
 
     // A proposal added later is what moves it, as before (decision 124).
     addProposal($this->lead->fresh(), $this->sam);

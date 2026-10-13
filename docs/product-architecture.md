@@ -291,7 +291,8 @@ Added 2026-10-11 (LOCKED by decision 124):
 
 Added 2026-10-13 (slice 7 step 7d; build plan: slice-7-appointment-results-plan.md):
 - Built on Sales > Performance, for a chosen month at one Location, for everyone there or one salesperson: NSLI, Leads Issued, appointments run, Demo Rate, Close Rate, Sold Revenue, Cancellation Rate. A salesperson sees their own; a manager sees their Locations'.
-- Close Rate is counted for each Lead (decision 125): the Leads won in the month over the Leads whose first appointment was run in the month. A Lead is won in the month its proposal was accepted, for the salesperson who had the Lead then (decision 134).
+- Close Rate is demo to close (decision 135), counted for each Lead (decision 125): the Leads won in the month over the Leads demoed for the first time in the month. A Lead run with nothing presented counts against Demo Rate only. Several proposals for one Lead are one demo and at most one win. A Lead is won in the month its proposal was accepted, for the salesperson who had the Lead then (decision 134).
+- The Sales funnel is three rates (decision 135): lead to appointment (booking; kept by channel with Marketing and Contact Center, 4.1 and 4.6, not built), appointment to demo (Demo Rate), demo to close (Close Rate).
 - NSLI is the sold amounts of the month over the Leads issued in the month, each after that month's corrections. There are no refunds to net out yet.
 - A month that has passed is not rewritten (decision 133). A sale corrected later, or a Lead Issued taken back later, stays in its month and comes off the month it was corrected in. Sales and their corrections are kept as lines that are never changed (`sale_entries`).
 - Not built: Average Job Size, Close-on-the-Spot Rate, Pending Rate, % Pending with Rehash booked, Rehash conversion; targets; the Leaderboard (5.8); a figure across all Locations at once.
