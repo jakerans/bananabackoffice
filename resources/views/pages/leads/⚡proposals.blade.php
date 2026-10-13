@@ -12,11 +12,13 @@ use App\Actions\Proposals\UndoLeadLost;
 use App\Enums\LeadStatus;
 use App\Enums\ProposalResult;
 use App\Models\Appointment;
+use App\Models\ContactCenterSettings;
 use App\Models\Lead;
 use App\Models\Objection;
 use App\Models\Property;
 use App\Models\Proposal;
 use App\Models\SalesLossReason;
+use App\Support\Proposals\ProposalValidity;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +34,8 @@ use Livewire\Component;
  * appointment that was run, or a proposal.
  *
  * Anyone who may see the Lead sees it. The salesperson the Lead is with, or a
- * manager, adds proposals, changes one that is still pending, gives each its
+ * manager, adds proposals, changes one that is still pending (the day it is
+ * valid until among the rest, step 9a of slice 9), gives each its
  * result, says why nothing was presented at a run appointment, and marks the
  * Lead lost. A manager alone corrects a result, marks a proposal "added in
  * error" and undoes a lost Lead.
@@ -53,6 +56,9 @@ new class extends Component {
 
     /** Which of the customer's properties the proposal is for. */
     public ?int $proposalPropertyId = null;
+
+    /** The day the proposal being changed is valid until, as "2026-10-20". */
+    public string $proposalValidUntil = '';
 
     /** The proposal the open dialog is about. */
     #[Locked]
@@ -314,19 +320,21 @@ new class extends Component {
         $this->proposalName = $proposal->name;
         $this->proposalPrice = ltrim($proposal->price(), '$');
         $this->proposalPropertyId = $proposal->property_id;
+        $this->proposalValidUntil = (string) $proposal->valid_until?->toDateString();
 
         Flux::modal('edit-proposal')->show();
     }
 
     /**
-     * Change the name or price of a proposal that is still pending.
+     * Change the name, price, property or "valid until" day of a proposal that
+     * is still pending.
      */
     public function saveEdit(EditProposal $editProposal): void
     {
         $this->authorize('manageProposals', $this->lead);
         $this->resetValidation();
 
-        $editProposal->handle($this->lead, $this->chosen(), $this->proposalName, $this->proposalPrice, Auth::user(), $this->knownLifecycleVersion, $this->proposalPropertyId);
+        $editProposal->handle($this->lead, $this->chosen(), $this->proposalName, $this->proposalPrice, Auth::user(), $this->knownLifecycleVersion, $this->proposalPropertyId, $this->proposalValidUntil);
 
         $this->saved('edit-proposal', __('Proposal changed.'));
     }
@@ -596,6 +604,16 @@ new class extends Component {
             </div>
         @endforeach
 
+        {{-- When the Lead leaves its salesperson: the day after the last pending proposal expires (slice 9, step 9a). --}}
+        @php($ownedUntil = $lead->status === LeadStatus::AppointmentRun ? ProposalValidity::ownershipUntil($lead) : null)
+        @if ($ownedUntil !== null)
+            <flux:text data-test="pending-ownership">
+                {{ $ownedUntil->lessThan(ProposalValidity::today($lead->location))
+                    ? __('Everything pending on this lead has expired. It is due to go to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.')
+                    : __('After :day this lead goes to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.', ['day' => $ownedUntil->format('D, M j')]) }}
+            </flux:text>
+        @endif
+
         @if ($this->proposals->isNotEmpty())
             <ul class="flex flex-col gap-4">
                 @foreach ($this->proposals as $proposal)
@@ -642,6 +660,11 @@ new class extends Component {
 
                         @if ($this->properties->count() > 1 && $proposal->property !== null)
                             <span class="text-sm text-zinc-700" data-test="proposal-property">{{ __('For:') }} {{ $proposal->property->summary() }}</span>
+                        @endif
+
+                        @if ($proposal->isOpen() && $proposal->valid_until !== null)
+                            @php($daysLeft = ProposalValidity::daysLeft($proposal, $lead->location))
+                            <span @class(['text-sm', 'font-semibold text-ink' => $daysLeft <= ContactCenterSettings::PENDING_WARNING_DAYS, 'text-zinc-700' => $daysLeft > ContactCenterSettings::PENDING_WARNING_DAYS]) data-test="proposal-validity">{{ ProposalValidity::label(ProposalValidity::of($proposal), $lead->location) }}</span>
                         @endif
 
                         <span class="text-sm text-zinc-700" data-test="proposal-appointments">
@@ -856,7 +879,7 @@ new class extends Component {
 
                     <div>
                         <flux:heading size="lg">{{ __('Change this proposal') }}</flux:heading>
-                        <flux:subheading>{{ __('For a wrong name or price. What it was before is kept in the record.') }}</flux:subheading>
+                        <flux:subheading>{{ __('For a wrong name or price, or to move the day it is valid until. What it was before is kept in the record.') }}</flux:subheading>
                     </div>
 
                     <flux:input wire:model="proposalName" maxlength="{{ Proposal::NAME_LENGTH }}" :label="__('What was pitched')" data-test="edit-proposal-name" />
@@ -871,6 +894,17 @@ new class extends Component {
                             @endforeach
                         </flux:select>
                     @endif
+
+                    {{-- The last day the proposal is valid. The Lead stays with its salesperson until the last pending one expires. --}}
+                    <flux:input
+                        wire:model="proposalValidUntil"
+                        type="date"
+                        :label="__('Valid until')"
+                        :description="$this->manages ? __('The lead stays with its salesperson until its last pending proposal expires.') : __('You can move it up to :days days ahead. A manager can set a later day.', ['days' => ProposalValidity::SALESPERSON_MAX_DAYS])"
+                        class="max-w-52"
+                        data-test="edit-proposal-valid-until"
+                    />
+
                     <div class="flex justify-end gap-2">
                         <flux:modal.close>
                             <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>

@@ -12,6 +12,7 @@ use App\Enums\ProposalResult;
 use App\Models\Lead;
 use App\Models\User;
 use App\Notifications\AppointmentChanged;
+use App\Support\Proposals\ProposalValidity;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -76,6 +77,8 @@ class UndoLeadLost
                     'objection_id' => null,
                     'objection_name' => null,
                     'result_note' => null,
+                    // Pending again, its days start again from today (decision 137).
+                    'valid_until' => ProposalValidity::fromToday($lead),
                 ])->save();
             }
 

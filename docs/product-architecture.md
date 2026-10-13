@@ -361,6 +361,11 @@ Added 2026-10-13 from stakeholder discovery:
 - Sales ownership normally ends with that same expiry. On expiry, the Pending
   opportunity releases to Contact Center Rehash.
 
+Added 2026-10-13 (slice 9; build plan: slice-9-pending-rehash-plan.md; LOCKED by decision 137):
+- The days start the day the proposal was last presented. A Lead with several pending proposals stays with its salesperson until the last expires. A salesperson may move a proposal's day up to 30 days ahead; a manager to any day. A booked return visit keeps the Lead with the salesperson.
+- Built in step 9a: every pending proposal has a "valid until" day, shown with the days left on the Lead and in "Pending bids" on Sales > Calendar; the day can be changed; the salesperson is warned in the bell two days before the last day; the number of days is a Contact Center setting, starting at 7.
+- Not built yet: the release to Rehash and its call queue (step 9b), and the Pending figures (step 9c).
+
 5.6 After-action report
 Goal: 1–2 minutes from the car.
 Fields:

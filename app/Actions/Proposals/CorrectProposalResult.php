@@ -15,6 +15,7 @@ use App\Models\Proposal;
 use App\Models\User;
 use App\Notifications\AppointmentChanged;
 use App\Support\Money;
+use App\Support\Proposals\ProposalValidity;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -91,6 +92,8 @@ class CorrectProposalResult
                 'objection_id' => null,
                 'objection_name' => null,
                 'result_note' => null,
+                // Pending again, its days start again from today (decision 137).
+                'valid_until' => ProposalValidity::fromToday($lead),
             ])->save();
 
             // A sale that is taken back takes its Project with it: cancelled, kept, and brought back if sold again (decision 130).

@@ -21,6 +21,7 @@ use LogicException;
  * @property list<int> $calling_days ISO weekday numbers, 1 (Monday) to 7 (Sunday).
  * @property int $hold_minutes
  * @property int $cancelled_release_days Days a Lead whose appointment was cancelled stays with its salesperson.
+ * @property int $proposal_valid_days Days a proposal is valid from the day it was presented.
  * @property int|null $changed_by
  * @property string|null $changed_by_name
  * @property Carbon|null $created_at
@@ -57,6 +58,16 @@ class ContactCenterSettings extends Model
 
     /** How many days before a release its salesperson is warned (decision 118). */
     public const int RELEASE_WARNING_DAYS = 5;
+
+    /** How long a proposal is valid from the day it was presented, in days (plan, 5.5; decision 137). */
+    public const int DEFAULT_PROPOSAL_VALID_DAYS = 7;
+
+    public const int MINIMUM_PROPOSAL_VALID_DAYS = 1;
+
+    public const int MAXIMUM_PROPOSAL_VALID_DAYS = 90;
+
+    /** How many days before a pending bid's last day its salesperson is warned (decision 137, answer 9). */
+    public const int PENDING_WARNING_DAYS = 2;
 
     protected $table = 'contact_center_settings';
 
@@ -102,6 +113,7 @@ class ContactCenterSettings extends Model
             'calling_days' => 'array',
             'hold_minutes' => 'integer',
             'cancelled_release_days' => 'integer',
+            'proposal_valid_days' => 'integer',
         ];
     }
 

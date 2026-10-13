@@ -45,6 +45,7 @@ use LogicException;
  * @property int|null $objection_id
  * @property string|null $objection_name
  * @property string|null $result_note
+ * @property Carbon|null $valid_until The last day it is valid, in its Location's calendar (decision 137). Its salesperson keeps the Lead until the last pending one expires.
  * @property Carbon|null $added_in_error_at
  * @property int|null $added_in_error_by
  * @property string|null $added_in_error_by_name
@@ -80,6 +81,7 @@ class Proposal extends Model
         return [
             'result' => ProposalResult::class,
             'result_at' => 'datetime',
+            'valid_until' => 'date',
             'added_in_error_at' => 'datetime',
         ];
     }

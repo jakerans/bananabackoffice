@@ -1,8 +1,10 @@
 # Slice 9 — Pending Ownership and Rehash: Proposed Plan
 
-Status: **proposed on 2026-10-13, for Jacob's approval. Nothing in it is
-built.** It was written because Jacob said "yes merge and continue" (decision
-136) and this is what the plan has next.
+Status: **approved on 2026-10-13 (decision 137) in three steps, each stopping
+for Jacob's review, with all nine questions answered as recommended. Step 9a
+is built and waits for his review; see "Step 9a as built". Steps 9b and 9c
+are not built.** It was written because Jacob said "yes merge and continue"
+(decision 136) and this is what the plan has next.
 
 It follows [product-architecture.md](product-architecture.md), sections 4.2,
 5.1, 5.5, 5.6 and 20, the slice 5 rulebook
@@ -99,6 +101,51 @@ they can be looked at before anything moves.
 proposals (question 2), so the two cannot disagree by accident. It becomes a
 stored date of its own the day a rule needs it to differ.
 
+### Step 9a as built (2026-10-13)
+
+Built on the branch `checkpoint-slice-9a-pending-clock`. **Not merged; it
+waits for Jacob's review.** Built as planned above. What a reader of the code
+should know:
+
+- **The rules are in one place,** `App\Support\Proposals\ProposalValidity`:
+  the day a proposal is valid until, the days left, the day a Lead's
+  ownership ends, and reading a day a person chose. Every day is a day in the
+  Lead's Location's own calendar, and a last day ends at midnight there.
+- **A proposal gets its day when it is added** (`AddProposal`): the number of
+  days in the settings after the latest appointment it was presented at.
+  **Presented again** (`PresentProposalAgain`), a pending proposal gets that
+  many days from the return visit, if that is later than the day it has.
+- **The day is changed in the proposal's "Change" dialog** (`EditProposal`),
+  while the proposal is pending. The salesperson may go 30 days ahead; a
+  manager any day from today. What it was is in the audit record with the
+  name and price.
+- **The warning** is `App\Actions\Proposals\WarnOfPendingRelease`, run by the
+  every-minute timer and counted with its other warnings. One bell notice
+  when the last pending proposal has two days or fewer left, once for each
+  last day: if the day is moved on, the salesperson is warned again when the
+  new one is near. A Lead with a return visit booked, sold or lost is not
+  warned.
+- **"Pending bids" on Sales > Calendar** lists Leads that show Appointment
+  run and have something pending, placed by the day their ownership ends.
+- **The setting** is `proposal_valid_days` in the Contact Center settings,
+  from 1 to 90, changed by whoever may change those settings.
+
+Readings made while building, for Jacob to change if wrong (also in decision
+137):
+
+- **A proposal typed in late** is valid until today at the earliest.
+- **A proposal made pending again by a correction,** or when a lost Lead is
+  undone, starts its days again from that day.
+- **Presenting again never shortens** a proposal's time.
+- **A day cannot be moved to before today.**
+- **A new number of days applies from then on;** a proposal already pending
+  keeps its day.
+- **The Lead stores the day it was warned about,** `pending_warned_for`, not
+  when it was warned as the table above says, so that moving the day on
+  brings a new warning by itself.
+- **A Lead run with nothing presented** (answer 5) gets its clock in step 9b,
+  with the release it belongs to.
+
 ## Step 9b — Rehash
 
 ### What a person sees
@@ -173,6 +220,10 @@ processes); the warning sent once; the figures against a worked month; and the
 migrations on MySQL 8.4, with the new queue name checked against its column.
 
 ## Decisions needed
+
+**Answered by Jacob on 2026-10-13 (decision 137): "I agree with all of that.
+Go ahead."** All nine are as recommended. The questions are kept below as
+they were asked.
 
 Each has a recommendation. "Follow your recommendations" is a complete answer.
 
