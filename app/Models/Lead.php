@@ -82,6 +82,15 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $last_disqualified_at
  * @property int|null $disqualified_by
  * @property int|null $duplicate_of_lead_id
+ * @property Carbon|null $lost_at When Sales marked it lost; empty unless it is lost now.
+ * @property int|null $lost_by
+ * @property string|null $lost_by_name
+ * @property int|null $lost_reason_id
+ * @property string|null $lost_reason_name
+ * @property string|null $lost_to The competitor, when the reason asks for one.
+ * @property int|null $lost_objection_id
+ * @property string|null $lost_objection_name
+ * @property string|null $lost_note
  * @property-read LeadDisqualificationReason|null $disqualificationReason
  * @property-read User|null $disqualifiedBy
  * @property-read Lead|null $duplicateOf
@@ -129,6 +138,7 @@ class Lead extends Model
             'release_warned_at' => 'datetime',
             'follow_up_on' => 'date',
             'last_disqualified_at' => 'datetime',
+            'lost_at' => 'datetime',
             'disqualification_category' => DisqualificationCategory::class,
             'project_size_min_value' => 'integer',
             'project_size_max_value' => 'integer',

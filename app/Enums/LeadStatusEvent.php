@@ -29,4 +29,8 @@ enum LeadStatusEvent: string
     case AppointmentRun = 'appointment_run';
     case AppointmentNoShow = 'appointment_no_show';
     case AppointmentCloseOutCorrected = 'appointment_close_out_corrected';
+    case Sold = 'sold';
+    case SaleCorrected = 'sale_corrected';
+    case Lost = 'lost';
+    case LostUndone = 'lost_undone';
 }

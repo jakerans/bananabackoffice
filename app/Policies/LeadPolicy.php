@@ -149,7 +149,7 @@ class LeadPolicy
      */
     public function reopen(User $user, Lead $lead): bool
     {
-        return ! $lead->isActive() && $this->update($user, $lead) && $this->distributes($user, $lead);
+        return $lead->status === LeadStatus::Disqualified && $this->update($user, $lead) && $this->distributes($user, $lead);
     }
 
     /**
@@ -254,7 +254,8 @@ class LeadPolicy
      * Determine whether the user can add a proposal to the Lead, or record
      * that one was presented at another appointment (slice 7 step 7b): a
      * manager where the Lead is, or the salesperson the Lead is with while it
-     * is with Sales.
+     * is with Sales or shows Sold. The same people give a proposal its result,
+     * change one that is still pending, and mark the Lead lost (step 7c).
      */
     public function manageProposals(User $user, Lead $lead): bool
     {
@@ -263,7 +264,7 @@ class LeadPolicy
         }
 
         return $user->hasPermissionAt(Permission::ManageAppointments, $lead->location)
-            || ($lead->isWithSales()
+            || (($lead->isWithSales() || $lead->status === LeadStatus::Sold)
                 && $lead->isAssignedTo($user)
                 && $user->holdsRoleAt(Role::SalesConsultant, $lead->location));
     }

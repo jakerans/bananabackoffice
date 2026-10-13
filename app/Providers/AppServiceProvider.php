@@ -15,6 +15,7 @@ use App\Models\LeadDisqualificationReason;
 use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
+use App\Models\Objection;
 use App\Models\ProjectSize;
 use App\Models\Property;
 use App\Models\SalesLossReason;
@@ -105,6 +106,7 @@ class AppServiceProvider extends ServiceProvider
             'lead_disqualification_reason' => LeadDisqualificationReason::class,
             'sales_loss_reason' => SalesLossReason::class,
             'appointment_cancellation_reason' => AppointmentCancellationReason::class,
+            'objection' => Objection::class,
             'lead' => Lead::class,
             'service' => Service::class,
             'project_size' => ProjectSize::class,

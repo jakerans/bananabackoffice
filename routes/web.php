@@ -41,6 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('leads/new', 'pages::leads.create')->can('create', Lead::class)->name('leads.create');
     Route::livewire('leads/{lead}', 'pages::leads.show')->can('view', 'lead')->name('leads.show');
     Route::livewire('leads/{lead}/customer', 'pages::leads.customer')->can('resolveCustomer', 'lead')->name('leads.customer');
+    Route::livewire('leads/{lead}/appointments/{appointment}/report', 'pages::leads.report')->can('view', 'lead')->name('leads.report');
 
     // The Call Queue is a Marketing > Contact Center page. It is opened by the queue permission,
     // like Leads; every action on it checks the permission again and each Lead by its own location.

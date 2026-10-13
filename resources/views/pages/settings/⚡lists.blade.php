@@ -8,6 +8,7 @@ use App\Enums\DisqualificationCategory;
 use App\Enums\ManagedList;
 use App\Enums\Permission;
 use App\Models\LeadDisqualificationReason;
+use App\Models\Objection;
 use App\Models\ManagedListOption;
 use App\Models\AppointmentCancellationReason;
 use App\Models\SalesLossReason;
@@ -385,7 +386,7 @@ new #[Title('Lead & Sales Lists')] class extends Component {
                         <flux:table.cell variant="strong">
                             <span @class(['text-zinc-500' => ! $option->is_active])>{{ $option->name }}</span>
 
-                            @if (($option instanceof LeadDisqualificationReason || $option instanceof SalesLossReason || $option instanceof AppointmentCancellationReason) && $option->requires_note)
+                            @if (($option instanceof LeadDisqualificationReason || $option instanceof SalesLossReason || $option instanceof AppointmentCancellationReason || $option instanceof Objection) && $option->requires_note)
                                 <flux:badge size="sm" color="zinc" class="ms-2">{{ __('Note required') }}</flux:badge>
                             @endif
 

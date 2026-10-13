@@ -14,7 +14,8 @@ use Livewire\Component;
  *
  * It is on every page until they are answered, because the habit wanted is to
  * close an appointment out straight after it. It names no customer; the link
- * opens the oldest one's Lead, which is the one to answer first.
+ * opens the after-action report of the oldest one, which is the one to answer
+ * first.
  */
 new class extends Component {
     /**
@@ -34,10 +35,13 @@ new class extends Component {
         return $this->waiting()->count();
     }
 
+    /**
+     * The one to answer first: the oldest.
+     */
     #[Computed]
-    public function oldestLeadId(): ?int
+    public function oldest(): ?Appointment
     {
-        return $this->waiting()->orderBy('starts_at')->orderBy('id')->value('lead_id');
+        return $this->waiting()->orderBy('starts_at')->orderBy('id')->first();
     }
 
     /**
@@ -46,18 +50,18 @@ new class extends Component {
     #[On('lead-appointment-changed')]
     public function appointmentChanged(): void
     {
-        unset($this->count, $this->oldestLeadId);
+        unset($this->count, $this->oldest);
     }
 }; ?>
 
 <div>
-    @if ($this->count > 0)
+    @if ($this->count > 0 && $this->oldest !== null)
         <div role="status" class="border-b border-amber-300 bg-amber-100 px-4 py-2 text-sm text-ink lg:px-8" data-test="close-out-prompt">
             <span class="font-semibold">
                 {{ trans_choice('{1} You have 1 appointment to close out.|[2,*] You have :count appointments to close out.', $this->count, ['count' => $this->count]) }}
             </span>
             {{ __('Say whether it was run or was a no-show before anything else.') }}
-            <a href="{{ route('leads.show', $this->oldestLeadId) }}" wire:navigate class="font-semibold underline" data-test="close-out-prompt-link">{{ __('Close out now') }}</a>
+            <a href="{{ route('leads.report', [$this->oldest->lead_id, $this->oldest->id]) }}" wire:navigate class="font-semibold underline" data-test="close-out-prompt-link">{{ __('Close out now') }}</a>
         </div>
     @endif
 </div>

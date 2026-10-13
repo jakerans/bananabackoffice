@@ -33,6 +33,7 @@ dataset('lists', [
     'disqualification reasons' => [ManagedList::DisqualificationReasons],
     'sales loss reasons' => [ManagedList::SalesLossReasons],
     'cancellation reasons' => [ManagedList::CancellationReasons],
+    'objections' => [ManagedList::Objections],
 ]);
 
 /*
@@ -191,6 +192,10 @@ test('each list starts with the approved values in the approved order', function
     ]],
     'cancellation reasons' => [ManagedList::CancellationReasons, [
         'Holding off project', 'Went with someone else', 'No longer needed', 'Other',
+    ]],
+    'objections' => [ManagedList::Objections, [
+        'Price', 'Wants to think it over', 'Needs to talk to spouse or partner', 'Getting other bids', 'Timing', 'Financing',
+        'Other (see note)',
     ]],
 ]);
 

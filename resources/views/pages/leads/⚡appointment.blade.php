@@ -894,9 +894,12 @@ new class extends Component {
 
             @can('closeOutAppointment', [$lead, $waiting])
                 <div class="flex flex-wrap gap-2">
-                    <flux:button size="sm" variant="primary" wire:click="openCloseOut('{{ AppointmentState::Run->value }}')" data-test="close-out-run">{{ __('Appointment was run') }}</flux:button>
+                    <flux:button size="sm" variant="primary" :href="route('leads.report', [$lead, $waiting])" wire:navigate data-test="after-action-report-link">{{ __('After-action report') }}</flux:button>
+                    <flux:button size="sm" wire:click="openCloseOut('{{ AppointmentState::Run->value }}')" data-test="close-out-run">{{ __('Appointment was run') }}</flux:button>
                     <flux:button size="sm" wire:click="openCloseOut('{{ AppointmentState::NoShow->value }}')" data-test="close-out-no-show">{{ __('No-show') }}</flux:button>
                 </div>
+
+                <flux:text class="text-sm">{{ __('The report does it in one go: what happened, what was pitched and what became of it.') }}</flux:text>
             @else
                 <flux:text class="text-sm" data-test="close-out-not-yours">{{ __('Its salesperson or a manager says whether it was run or was a no-show.') }}</flux:text>
             @endcan
@@ -923,7 +926,7 @@ new class extends Component {
     @endif
 
     {{-- Nothing else is offered while an appointment waits to be closed out (decision 126). --}}
-    @if (! $upcoming && $this->toCloseOut === null)
+    @if (! $upcoming && $this->toCloseOut === null && ! $lead->status->isFinishedBySales())
         @if ($this->gaps !== [])
             <ul class="flex flex-col gap-1 text-sm text-zinc-700" data-test="appointment-gaps">
                 <li class="text-zinc-500">{{ __('No appointment can be booked yet.') }}</li>

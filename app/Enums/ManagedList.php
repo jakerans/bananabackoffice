@@ -8,6 +8,7 @@ use App\Models\LeadDisqualificationReason;
 use App\Models\LeadSource;
 use App\Models\ManagedListOption;
 use App\Models\MarketingSource;
+use App\Models\Objection;
 use App\Models\SalesLossReason;
 use App\Models\Service;
 
@@ -26,6 +27,7 @@ enum ManagedList: string
     case DisqualificationReasons = 'disqualification_reasons';
     case SalesLossReasons = 'sales_loss_reasons';
     case CancellationReasons = 'cancellation_reasons';
+    case Objections = 'objections';
 
     public function label(): string
     {
@@ -37,6 +39,7 @@ enum ManagedList: string
             self::DisqualificationReasons => 'Disqualification Reasons',
             self::SalesLossReasons => 'Sales Loss Reasons',
             self::CancellationReasons => 'Cancellation Reasons',
+            self::Objections => 'Objections',
         };
     }
 
@@ -53,6 +56,7 @@ enum ManagedList: string
             self::DisqualificationReasons => 'disqualification reason',
             self::SalesLossReasons => 'sales loss reason',
             self::CancellationReasons => 'cancellation reason',
+            self::Objections => 'objection',
         };
     }
 
@@ -69,6 +73,7 @@ enum ManagedList: string
             self::DisqualificationReasons => 'Why a lead did not become a legitimate sales opportunity. Not for sales that were lost.',
             self::SalesLossReasons => 'Why a qualified opportunity was lost. Not for leads that were disqualified.',
             self::CancellationReasons => 'Why an appointment was cancelled. Not for leads that were disqualified or sales that were lost.',
+            self::Objections => 'What held a customer back from buying, for a proposal that is lost or still pending. Not why the sale was lost.',
         };
     }
 
@@ -85,6 +90,7 @@ enum ManagedList: string
             self::DisqualificationReasons => LeadDisqualificationReason::class,
             self::SalesLossReasons => SalesLossReason::class,
             self::CancellationReasons => AppointmentCancellationReason::class,
+            self::Objections => Objection::class,
         };
     }
 

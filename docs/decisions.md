@@ -2548,6 +2548,24 @@ were the recommendation in that step's handoff, which is now the rule:
 
 To be built with step 7c, as recommended.
 
+## 129. The objections list starts with seven (2026-10-13)
+
+**Decided by Jacob** when he approved the merge of step 7c ("go ahead and
+merge and use your suggestions"). Step 7c had built the Objections list with
+one entry, "Other (see note)", which needs a typed note, so every Lost and
+every Still pending needed typing. The list now starts with, in this order:
+
+1. Price
+2. Wants to think it over
+3. Needs to talk to spouse or partner
+4. Getting other bids
+5. Timing
+6. Financing
+7. Other (see note), the only one that needs a note
+
+This is a starting list until Sales Leadership gives theirs (plan, 24). Owner
+and Leadership change it on Lead & Sales Lists like any other list.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

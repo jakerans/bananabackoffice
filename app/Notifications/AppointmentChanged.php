@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Appointment;
+use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -54,6 +55,9 @@ class AppointmentChanged extends Notification
     /** Someone else recorded a proposal at the salesperson's appointment. */
     public const string PROPOSAL_RECORDED = 'appointment_proposal_recorded';
 
+    /** A manager changed a proposal, a result or the lost mark on a Lead the salesperson has. */
+    public const string SALES_RECORD_CHANGED = 'lead_sales_record_changed';
+
     /**
      * Tell a salesperson that an appointment of theirs changed, or that a Lead
      * they had went back to Contact Center.
@@ -62,12 +66,26 @@ class AppointmentChanged extends Notification
      * only what happened, when the appointment is, and a link the salesperson
      * must be signed in and allowed to open.
      *
-     * @param  self::RESCHEDULED|self::MOVED_TO_YOU|self::MOVED_AWAY|self::CANCELLED|self::LEAD_RETURNED|self::LEAD_RELEASED|self::RELEASE_WARNING|self::CLOSE_OUT_REMINDER|self::MARKED_RUN|self::MARKED_NO_SHOW|self::CLOSE_OUT_CORRECTED|self::BOOKED_IN_ERROR|self::PROPOSAL_RECORDED  $kind
+     * @param  self::RESCHEDULED|self::MOVED_TO_YOU|self::MOVED_AWAY|self::CANCELLED|self::LEAD_RETURNED|self::LEAD_RELEASED|self::RELEASE_WARNING|self::CLOSE_OUT_REMINDER|self::MARKED_RUN|self::MARKED_NO_SHOW|self::CLOSE_OUT_CORRECTED|self::BOOKED_IN_ERROR|self::PROPOSAL_RECORDED|self::SALES_RECORD_CHANGED  $kind
      * @param  self::IN_APP|self::EMAIL  $channel
      * @param  Appointment|null  $appointment  The appointment as it is after the change, when there is one.
      * @param  int|null  $days  For a release warning: how many days are left.
      */
     public function __construct(public int $leadId, public string $kind, public string $channel, public ?Appointment $appointment = null, public ?int $days = null) {}
+
+    /**
+     * Tell the salesperson a Lead is with, inside the app, that someone else
+     * changed its proposals, a result or its lost mark (decision 126). Nobody
+     * is told about what they did themselves.
+     */
+    public static function tellSalespersonOfSalesChange(Lead $lead, User $actor): void
+    {
+        if ($lead->assigned_user_id === null || $lead->assigned_user_id === $actor->id) {
+            return;
+        }
+
+        User::query()->find($lead->assigned_user_id)?->notify(new self($lead->id, self::SALES_RECORD_CHANGED, self::IN_APP));
+    }
 
     /**
      * Get the notification's delivery channels.
@@ -126,6 +144,7 @@ class AppointmentChanged extends Notification
             self::CLOSE_OUT_CORRECTED => __('A manager corrected what happened at your appointment on :when.', ['when' => $this->when()]),
             self::BOOKED_IN_ERROR => __('A manager marked your appointment on :when as booked in error, and the lead went back as it was.', ['when' => $this->when()]),
             self::PROPOSAL_RECORDED => __('A manager recorded a proposal at your appointment on :when.', ['when' => $this->when()]),
+            self::SALES_RECORD_CHANGED => __('A manager changed the proposals or the result on a lead of yours.'),
             self::LEAD_RELEASED => __('A cancelled lead of yours was not booked again in time and went back to the Contact Center. You can take it back from the lead.'),
             self::RELEASE_WARNING => trans_choice('{1} A cancelled lead of yours goes back to the Contact Center in 1 day unless it is booked again.|[2,*] A cancelled lead of yours goes back to the Contact Center in :count days unless it is booked again.', (int) $this->days, ['count' => (int) $this->days]),
         };

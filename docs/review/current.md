@@ -3,51 +3,67 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-12 · **Branch:** `main`
+**Updated:** 2026-10-13 · **Branch:** `main`
 
-**State:** nothing waits for review. Slice 7, steps 7a and 7b are merged and
-on staging. Step 7b was merged on 2026-10-12 with Jacob's word ("merge it").
+**State:** nothing waits for review. Slice 7, steps 7a, 7b and 7c are merged
+and on staging. Step 7c was merged on 2026-10-13 with Jacob's word ("go ahead
+and merge and use your suggestions").
 
 ## What is next, from the plan
 
-**Step 7c: a proposal's result, correcting a proposal, and the after-action
-report.** Plan:
+**Step 7d: the first Sales figures.** Plan:
 [../slice-7-appointment-results-plan.md](../slice-7-appointment-results-plan.md),
-"Step 7c". From the plan:
-[../product-architecture.md](../product-architecture.md), 5.6.
+"Step 7d". From the plan:
+[../product-architecture.md](../product-architecture.md), 5.2.
 
-Why it is next: only a proposal has a result (decision 124), and proposals
-now exist. The report in 5.6 is the short form that does run or no-show, the
-proposal and its result in one go, and it needs all three to be there first.
-Step 7d, the figures, reads what 7c records.
+Sales > Performance, today a placeholder, shows for a chosen month, for one
+salesperson or a Location: Leads Issued, appointments run, Demo Rate, Close
+Rate, Sold Revenue, NSLI and Cancellation Rate. A salesperson sees their own;
+a manager sees their Locations'. No targets, no ranking, no Leaderboard.
 
-It is approved in order (decision 125) and its questions are answered:
-decision 125, answers 6 to 9, and decision 128 for correcting a proposal.
-**It starts when Jacob says so.**
+Why it is next: it is the last step of slice 7, and everything it counts is
+now recorded: issues (slice 6), run and no-show (7a), proposals (7b), results
+and sold amounts (7c). NSLI is the plan's primary coaching figure (5.2).
+
+It is approved in order (decision 125); how Close Rate is counted was settled
+there (answer 10, for each Lead). **It starts when Jacob says so.**
 
 ## Decisions recorded at this merge
 
-- **128:** a proposal can be edited while Pending, by the salesperson the Lead
-  is with or a manager, with every change kept; a manager can mark one "added
-  in error" with a note, after which it counts for nothing; nothing is
-  deleted. Built with step 7c.
-- **127:** money is kept in whole cents (made by the implementation agent
-  while building 7b; Jacob can change it).
+- **129:** the Objections list starts with seven: Price, Wants to think it
+  over, Needs to talk to spouse or partner, Getting other bids, Timing,
+  Financing, and Other (see note). A starting list until Sales Leadership
+  gives theirs.
 
-## The plan check after step 7b
+## Still open from step 7c, for Jacob to change if wrong
 
-- **Built from the plan so far in slice 7:** run or no-show (5.6); close out
-  first, the prompt and the reminder (5.6, decision 126); proposals with a
-  name and a price (5.6, "primary option pitched + amount").
-- **In 5.6 and not built yet:** the result (Sold, Pending, Lost), the sold
-  amount, the objection, the loss reason, "system check whether rehash
-  booked", short notes: all step 7c. The voice note: left out by decision 125.
-- **Built and not in the plan:** nothing.
+These were readings made while building, listed in the plan under "Step 7c as
+built". Jacob has not objected to any:
+
+- A Sold or Lost Lead is finished and stays on its salesperson's record.
+- One lost proposal does not make the Lead lost; someone marks the Lead lost.
+- A sale is refused while the Lead still has an appointment booked.
+- The sold day is the day it is recorded.
+- The return-visit check is on the Lead, not in the report.
+
+## The plan check after step 7c
+
+- **Built from 5.6:** run or no-show; Won (called Sold), Pending, Lost; what
+  was pitched and its amount; the sold amount; the main objection; the Lost
+  Reason; the return-visit check; short notes; and "operationally incomplete
+  until the report is submitted" (decision 126).
+- **In 5.6 and not built:** the voice note and its transcript (decision 125).
+- **Built and not in the plan before its decision:** correcting a proposal
+  and "added in error" (128); the starting objections (129).
+- **Next after slice 7, not approved:** a Project when a sale is Sold
+  (rulebook rule 13); Pending ownership and Rehash (5.5); commission (5.7).
 - **Still set aside from earlier slices,** unchanged: the booking engine,
   confirmation, Google Calendar, the new-lead popup and snooze, Aged Leads,
-  the short-call report and Connection Rate, recordings, rehash.
+  the short-call report and Connection Rate, recordings.
 
 ## Known limitations carried forward
 
-- A proposal cannot be edited or marked "added in error" until step 7c.
-- A proposal has no result yet, and no figure is shown anywhere yet.
+- Sold does not create a Project, so nothing reaches Production yet.
+- Pending has no clock; a proposal can stay pending for good.
+- No figure is shown anywhere yet; that is step 7d.
+- "Added in error" cannot be undone.
