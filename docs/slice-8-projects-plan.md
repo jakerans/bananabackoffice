@@ -288,8 +288,8 @@ Readings made while building, for Jacob to change if wrong:
 
 ### Changed after slice 8 (2026-10-13, decision 134)
 
-Built on the branch `checkpoint-sales-figures-decision-134`. **Not merged;
-it waits for Jacob's review.**
+**Merged into `main` on 2026-10-13** with Jacob's word ("merge it", decision
+135).
 
 - **A Project is named for what was sold:** the proposal's name and the short
   street address of the proposal's property, "Lake house deck — 9 Lake Rd".

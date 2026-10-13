@@ -420,9 +420,11 @@ Readings made while building, for Jacob to change if wrong:
 
 ### Changed after slice 8 (2026-10-13, decisions 133 and 134)
 
-Built on the branch `checkpoint-sales-figures-decision-134`. **Not merged;
-it waits for Jacob's review.** Where this differs from "Step 7d as built"
-above, this is what the code does now.
+**Merged into `main` on 2026-10-13** with Jacob's word ("merge it", decision
+135). Where this differs from "Step 7d as built" above, this is what the code
+does now. Decision 135 also changes what Close Rate is divided by, from the
+Leads first run in the month to the Leads first demoed in it. That change
+is built separately.
 
 - **A record of sales.** Table `sale_entries`: one line when a proposal is
   marked Sold, and one more, for the same amount below zero, when a manager
