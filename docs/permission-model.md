@@ -526,6 +526,11 @@ Rules:
     error", and undoing a lost Lead. **The after-action report** is opened and
     saved by whoever may answer that appointment (rule 17). No permission was
     added.
+21. **Sales figures** (Sales > Performance, slice 7 step 7d). The page opens
+    with `sales.access`. A person sees figures only for a Location where they
+    manage appointments (`appointments.manage`: everyone there, or any one
+    salesperson) or are a Sales Consultant (their own figures only). No
+    permission was added.
 
 ## Slice 4: the call queue and its settings
 

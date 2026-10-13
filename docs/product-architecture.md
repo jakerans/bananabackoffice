@@ -289,6 +289,13 @@ Added 2026-10-11 (LOCKED by decision 124):
 - Demo Rate is counted from appointments marked run. One with no proposal created counts against the salesperson until a proposal exists, and for them from the day it is created.
 - Close Rate counts wins against appointments, not proposals. Several proposals from one appointment with one sold is one win, with nothing counted against the others. Two accepted from one appointment is one win.
 
+Added 2026-10-13 (slice 7 step 7d; build plan: slice-7-appointment-results-plan.md):
+- Built on Sales > Performance, for a chosen month at one Location, for everyone there or one salesperson: NSLI, Leads Issued, appointments run, Demo Rate, Close Rate, Sold Revenue, Cancellation Rate. A salesperson sees their own; a manager sees their Locations'.
+- Close Rate is counted for each Lead (decision 125), in the month of the Lead's first run appointment.
+- NSLI is the sold amounts recorded in the month over the Leads issued in the month. "Net" has nothing taken off it yet: there are no cancelled sales or refunds to net out.
+- Not built: Average Job Size, Close-on-the-Spot Rate, Pending Rate, % Pending with Rehash booked, Rehash conversion; targets; the Leaderboard (5.8); a figure across all Locations at once.
+- Provisional until Sales Leadership answers the open question in 5.1: a Lead issued counts for the salesperson it was issued to, an appointment for the salesperson it is with, a sale for the salesperson the Lead is with.
+
 5.3 Workspace
 iPad-first/tablet-responsive in-home selling flow:
 - appointment context

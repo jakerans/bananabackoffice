@@ -209,6 +209,13 @@ another location has dealt with. Staff are told so without being shown who.
   its own audit event. The browser cannot send any answer but run or no-show.
   An appointment has no result field at all: Sold, Pending and Lost will exist
   only on proposals (decision 124).
+- **Sales figures (slice 7 step 7d, 2026-10-13).** The Location, the
+  salesperson and the month in the address are requests, not instructions:
+  each is checked against what the signed-in person may see, and anything else
+  falls back to their own. A Sales Consultant cannot be shown a colleague's
+  figures or another Location's, and tests ask for both by hand. The figures
+  are totals; no customer is named on the page. Nothing is stored, so there is
+  no second copy to fall out of step with the records.
 - **Results and the report (slice 7 step 7c, 2026-10-13).** Each result,
   correction and lost mark is checked at the opener, the save and the action.
   A result is given once; changing one is manager-only, needs a note, and keeps
