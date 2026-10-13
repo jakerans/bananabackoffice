@@ -2,8 +2,8 @@
 
 Status: **approved on 2026-10-13 (decision 137) in three steps, each stopping
 for Jacob's review, with all nine questions answered as recommended. Step 9a
-is built and waits for his review; see "Step 9a as built". Steps 9b and 9c
-are not built.** It was written because Jacob said "yes merge and continue"
+was built and merged into `main` on 2026-10-13 (decision 138); see "Step 9a
+as built". Step 9b is being built. Step 9c is not built.** It was written because Jacob said "yes merge and continue"
 (decision 136) and this is what the plan has next.
 
 It follows [product-architecture.md](product-architecture.md), sections 4.2,
@@ -103,8 +103,8 @@ stored date of its own the day a rule needs it to differ.
 
 ### Step 9a as built (2026-10-13)
 
-Built on the branch `checkpoint-slice-9a-pending-clock`. **Not merged; it
-waits for Jacob's review.** Built as planned above. What a reader of the code
+**Merged into `main` on 2026-10-13** with Jacob's word ("Merge and start.",
+decision 138). Built as planned above. What a reader of the code
 should know:
 
 - **The rules are in one place,** `App\Support\Proposals\ProposalValidity`:

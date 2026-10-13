@@ -2828,6 +2828,16 @@ if wrong:
 - **A new number of days in the settings** applies to proposals presented from
   then on. One that is already pending keeps its day.
 
+## 138. Step 9a is merged; step 9b starts (2026-10-13)
+
+**Decided by Jacob,** in reply to step 9a's handoff: "Merge and start. Let's
+keep this train rolling."
+
+1. **Step 9a, the clock on a pending proposal, is merged.** The readings in
+   decision 137 stay as built; he did not change them.
+2. **Step 9b, Rehash, starts.** It is built as the plan and decision 137 have
+   it and stops for his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
