@@ -2838,6 +2838,20 @@ keep this train rolling."
 2. **Step 9b, Rehash, starts.** It is built as the plan and decision 137 have
    it and stops for his review.
 
+## 139. Step 9b is merged; step 9c starts (2026-10-13)
+
+**Decided by Jacob,** in reply to step 9b's handoff: "Merge and start."
+
+1. **Step 9b, Rehash, is merged.** The readings listed in its handoff and in
+   the plan under "Step 9b as built" stay as built; he did not change them.
+   Among them: a Lead is never released sooner than seven days after it last
+   became Appointment run; with nothing presented the days count from when
+   the appointment was marked run; the call center and a manager, not the
+   salesperson it was released from, mark a Lead lost from Rehash; and only
+   the timer sends a Lead to Rehash.
+2. **Step 9c, the Pending figures, starts.** It is built as the plan's table
+   and decision 137 (answer 8) have it and stops for his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

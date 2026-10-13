@@ -118,8 +118,8 @@ why it is next, is
 [slice-9-pending-rehash-plan.md](slice-9-pending-rehash-plan.md). **Step 9a
 (the clock on a pending proposal) was built and merged on 2026-10-13
 (decision 138).** **Step 9b (Rehash: the release, the Rehash call queue,
-marking lost from it and taking a Lead back) is built and waits for Jacob's
-review; it is not merged.** Step 9c (the Pending figures) is not built.
+marking lost from it and taking a Lead back) was built and merged on
+2026-10-13 (decision 139).** Step 9c (the Pending figures) is being built.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
