@@ -54,6 +54,10 @@ use LogicException;
  * @property string|null $cancellation_reason_name
  * @property int|null $follows_appointment_id The appointment this one follows, when it was booked while the Lead was still with Sales.
  * @property Carbon|null $close_out_reminded_at When its salesperson was reminded to say what happened at it.
+ * @property string|null $no_demo_reason Why nothing was presented when it was run, in the salesperson's words (decision 133).
+ * @property int|null $no_demo_reason_by
+ * @property string|null $no_demo_reason_by_name
+ * @property Carbon|null $no_demo_reason_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Lead $lead
@@ -105,6 +109,7 @@ class Appointment extends Model
             'previous_in_queue' => 'boolean',
             'state_changed_at' => 'datetime',
             'close_out_reminded_at' => 'datetime',
+            'no_demo_reason_at' => 'datetime',
             'cancelled_by_party' => CancellationParty::class,
         ];
     }

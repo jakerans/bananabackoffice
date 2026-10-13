@@ -26,6 +26,7 @@ class CorrectProposalResult
         private RecordLeadStatusChange $recordLeadStatusChange,
         private RecordAuditEvent $recordAuditEvent,
         private CancelProjectForCorrectedSale $cancelProjectForCorrectedSale,
+        private RecordSaleEntry $recordSaleEntry,
     ) {}
 
     /**
@@ -37,8 +38,9 @@ class CorrectProposalResult
      * What it was is kept in the audit record. If it was the Lead's only sold
      * proposal, the Lead goes back from Sold to Appointment run, still with
      * its salesperson. A sold proposal's Project is cancelled with the same
-     * note and kept. A Lead that was marked lost is put right with
-     * UndoLeadLost first.
+     * note and kept, and the Sales figures take the sale off the month it is
+     * corrected in, not the month it was made (decision 133). A Lead that was
+     * marked lost is put right with UndoLeadLost first.
      *
      * @throws ValidationException
      * @throws AuthorizationException
@@ -66,6 +68,7 @@ class CorrectProposalResult
             }
 
             $was = $proposal->result;
+            $soldCents = (int) $proposal->sold_cents;
             $from = $lead->status;
             $before = [
                 'status' => $from->value,
@@ -96,10 +99,17 @@ class CorrectProposalResult
             }
 
             // A Lead is Sold only while one of its proposals is.
-            if ($lead->status === LeadStatus::Sold && ! $lead->proposals()->counted()->where('result', ProposalResult::Sold)->exists()) {
+            $leavesLeadUnsold = $lead->status === LeadStatus::Sold && ! $lead->proposals()->counted()->where('result', ProposalResult::Sold)->exists();
+
+            if ($leavesLeadUnsold) {
                 $lead->forceFill(['status' => LeadStatus::AppointmentRun, 'status_changed_at' => now()])->save();
 
                 $this->recordLeadStatusChange->handle($lead, LeadStatusEvent::SaleCorrected, $from, $actor, $lead->assigned_user_id, note: $note);
+            }
+
+            // The sale stays in the month it was made; this takes it off the month it is corrected in (decision 133).
+            if ($was === ProposalResult::Sold) {
+                $this->recordSaleEntry->correction($lead, $proposal, $soldCents, $leavesLeadUnsold, $note, $actor);
             }
 
             $this->recordAuditEvent->handle(

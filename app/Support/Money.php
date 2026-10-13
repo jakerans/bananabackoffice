@@ -30,10 +30,11 @@ class Money
 
     /**
      * Show an amount kept in cents, in dollars: "$8,450", or "$8,450.50" when
-     * it has cents.
+     * it has cents. An amount below zero, as a month's figures can be after a
+     * correction, reads "-$8,450".
      */
     public static function format(int $cents): string
     {
-        return '$'.number_format($cents / 100, $cents % 100 === 0 ? 0 : 2);
+        return ($cents < 0 ? '-' : '').'$'.number_format(abs($cents) / 100, $cents % 100 === 0 ? 0 : 2);
     }
 }

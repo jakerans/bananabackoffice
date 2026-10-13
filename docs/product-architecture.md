@@ -291,8 +291,9 @@ Added 2026-10-11 (LOCKED by decision 124):
 
 Added 2026-10-13 (slice 7 step 7d; build plan: slice-7-appointment-results-plan.md):
 - Built on Sales > Performance, for a chosen month at one Location, for everyone there or one salesperson: NSLI, Leads Issued, appointments run, Demo Rate, Close Rate, Sold Revenue, Cancellation Rate. A salesperson sees their own; a manager sees their Locations'.
-- Close Rate is counted for each Lead (decision 125), in the month of the Lead's first run appointment.
-- NSLI is the sold amounts recorded in the month over the Leads issued in the month. "Net" has nothing taken off it yet: there are no cancelled sales or refunds to net out.
+- Close Rate is counted for each Lead (decision 125): the Leads won in the month over the Leads whose first appointment was run in the month. A Lead is won in the month its proposal was accepted, for the salesperson who had the Lead then (decision 134).
+- NSLI is the sold amounts of the month over the Leads issued in the month, each after that month's corrections. There are no refunds to net out yet.
+- A month that has passed is not rewritten (decision 133). A sale corrected later, or a Lead Issued taken back later, stays in its month and comes off the month it was corrected in. Sales and their corrections are kept as lines that are never changed (`sale_entries`).
 - Not built: Average Job Size, Close-on-the-Spot Rate, Pending Rate, % Pending with Rehash booked, Rehash conversion; targets; the Leaderboard (5.8); a figure across all Locations at once.
 - Attribution is LOCKED by decision 133: Lead Issued stays with the first
   salesperson who received that issued Lead; appointment figures follow the
@@ -331,7 +332,9 @@ Added 2026-10-13 from stakeholder discovery:
   option generator.
 - A customer controlling the conversation is a coaching signal, not yet an
   approved no-demo exclusion. Decision 133 confirms there is no additional
-  exclusion: it remains a no-demo and records the coaching reason.
+  exclusion: it remains a no-demo and records the coaching reason. Built
+  2026-10-13: the after-action report asks why nothing was presented, in the
+  salesperson's own words, and it counts as a no-demo whatever is written.
 
 5.4 Calendar
 Salespeople manage their own confirmation, rescheduling, cancellations, rehashes, and schedule.

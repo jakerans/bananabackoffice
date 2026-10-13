@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Proposals\RecordNoDemoReason;
 use App\Actions\Proposals\SubmitAfterActionReport;
 use App\Enums\AppointmentState;
 use App\Enums\LeadStatus;
@@ -43,6 +44,9 @@ new #[Title('After-action report')] class extends Component {
 
     /** "yes" or "no", once answered: whether anything was presented. */
     public string $presented = '';
+
+    /** Why nothing was presented, when the answer is "no" (decision 133). */
+    public string $noDemoReason = '';
 
     /** @var list<array<string, mixed>> What was presented for the first time at this appointment. */
     public array $proposals = [];
@@ -199,6 +203,7 @@ new #[Title('After-action report')] class extends Component {
             'outcome' => $this->outcome,
             'note' => $this->note,
             'presented' => $this->presented,
+            'noDemoReason' => $this->noDemoReason,
             'proposals' => $new,
             'existing' => $this->existing,
         ], Auth::user(), $this->knownLifecycleVersion);
@@ -262,7 +267,9 @@ new #[Title('After-action report')] class extends Component {
                 <flux:error name="presented" />
 
                 @if ($presented === 'no')
-                    <flux:text class="text-sm">{{ __('The appointment will count as run with nothing presented. A proposal can still be added later from the lead.') }}</flux:text>
+                    <flux:textarea wire:model="noDemoReason" rows="3" maxlength="{{ RecordNoDemoReason::LENGTH }}" :label="__('Why was nothing presented? (required)')" :description="__('In your own words, for coaching.')" data-test="report-no-demo-reason" />
+
+                    <flux:text class="text-sm">{{ __('The appointment will count as run with nothing presented, whatever the reason. A proposal can still be added later from the lead.') }}</flux:text>
                 @endif
             </div>
         @endif

@@ -229,22 +229,43 @@ new #[Title('Performance')] class extends Component {
             @endif
         </div>
 
+        @php
+            // Each line under a figure is built whole here, so it reads as one sentence on the page.
+            $issued = $figures->netLeadsIssued();
+            $wins = $figures->netWins();
+
+            $nsliDetail = match (true) {
+                $figures->leadsIssued === 0 => __('No leads were issued this month.'),
+                $issued <= 0 => __('No issued lead is left to count this month.'),
+                default => trans_choice('{1} :revenue sold, over 1 lead issued|[2,*] :revenue sold, over :count leads issued', $issued, ['revenue' => Money::format($figures->netSoldCents()), 'count' => $issued]),
+            };
+
+            $issuedDetail = $figures->issuesVoided === 0
+                ? __('Handed to Sales this month.')
+                : trans_choice('{1} :issued handed to Sales this month, less 1 taken back this month.|[2,*] :issued handed to Sales this month, less :count taken back this month.', $figures->issuesVoided, ['issued' => $figures->leadsIssued, 'count' => $figures->issuesVoided]);
+
+            $won = trans_choice('{0} No lead won this month|{1} 1 lead won this month|[2,*] :count leads won this month', max($wins, 0), ['count' => $wins]);
+            $closeDetail = ($figures->leadsRun === 0
+                ? ($wins > 0 ? $won.'. '.__('No lead had its first appointment run this month, so there is no rate.') : __('No lead had its first appointment run this month.'))
+                : $won.trans_choice('{1} , against 1 lead first run this month.|[2,*] , against :count leads first run this month.', $figures->leadsRun, ['count' => $figures->leadsRun]))
+                .($figures->winsCorrected === 0 ? '' : ' '.trans_choice('{1} 1 win was taken back by a correction this month.|[2,*] :count wins were taken back by corrections this month.', $figures->winsCorrected, ['count' => $figures->winsCorrected]));
+
+            $soldDetail = trans_choice('{0} Nothing was sold this month.|{1} From 1 sale this month.|[2,*] From :count sales this month.', $figures->salesMade, ['count' => $figures->salesMade])
+                .($figures->salesCorrected === 0 ? '' : ' '.trans_choice('{1} :amount was taken back by 1 correction this month.|[2,*] :amount was taken back by :count corrections this month.', $figures->salesCorrected, ['amount' => Money::format($figures->correctedCents), 'count' => $figures->salesCorrected]));
+        @endphp
+
         {{-- The plan's primary coaching figure comes first and largest (5.2). --}}
         <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="figure-nsli">
             <div class="text-sm font-medium text-zinc-500">{{ __('NSLI: net sales per lead issued') }}</div>
             <div class="mt-1 font-nav text-4xl font-bold tabular-nums text-ink" data-test="figure-value">{{ $figures->nsliCents() === null ? '—' : Money::format($figures->nsliCents()) }}</div>
-            <div class="mt-1 text-sm text-zinc-700" data-test="figure-detail">
-                {{ $figures->leadsIssued === 0
-                    ? __('No leads were issued this month.')
-                    : trans_choice('{1} :revenue sold, over 1 lead issued|[2,*] :revenue sold, over :count leads issued', $figures->leadsIssued, ['revenue' => Money::format($figures->soldCents), 'count' => $figures->leadsIssued]) }}
-            </div>
+            <div class="mt-1 text-sm text-zinc-700" data-test="figure-detail">{{ $nsliDetail }}</div>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="figure-leads-issued">
                 <div class="text-sm font-medium text-zinc-500">{{ __('Leads issued') }}</div>
-                <div class="mt-1 font-nav text-3xl font-bold tabular-nums text-ink" data-test="figure-value">{{ $figures->leadsIssued }}</div>
-                <div class="mt-1 text-sm text-zinc-700" data-test="figure-detail">{{ __('Handed to Sales this month and still counted.') }}</div>
+                <div class="mt-1 font-nav text-3xl font-bold tabular-nums text-ink" data-test="figure-value">{{ $issued }}</div>
+                <div class="mt-1 text-sm text-zinc-700" data-test="figure-detail">{{ $issuedDetail }}</div>
             </div>
 
             <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="figure-appointments-run">
@@ -266,17 +287,13 @@ new #[Title('Performance')] class extends Component {
             <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="figure-close-rate">
                 <div class="text-sm font-medium text-zinc-500">{{ __('Close rate') }}</div>
                 <div class="mt-1 font-nav text-3xl font-bold tabular-nums text-ink" data-test="figure-value">{{ $percent($figures->closeRate()) }}</div>
-                <div class="mt-1 text-sm text-zinc-700" data-test="figure-detail">
-                    {{ $figures->leadsRun === 0
-                        ? __('No lead had its first appointment run this month.')
-                        : trans_choice('{1} :won of 1 lead first run this month is sold|[2,*] :won of :count leads first run this month are sold', $figures->leadsRun, ['won' => $figures->leadsWon, 'count' => $figures->leadsRun]) }}
-                </div>
+                <div class="mt-1 text-sm text-zinc-700" data-test="figure-detail">{{ $closeDetail }}</div>
             </div>
 
             <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="figure-sold-revenue">
                 <div class="text-sm font-medium text-zinc-500">{{ __('Sold revenue') }}</div>
-                <div class="mt-1 font-nav text-3xl font-bold tabular-nums text-ink" data-test="figure-value">{{ Money::format($figures->soldCents) }}</div>
-                <div class="mt-1 text-sm text-zinc-700" data-test="figure-detail">{{ trans_choice('{0} Nothing was sold this month.|{1} From 1 lead sold this month.|[2,*] From :count leads sold this month.', $figures->leadsSold, ['count' => $figures->leadsSold]) }}</div>
+                <div class="mt-1 font-nav text-3xl font-bold tabular-nums text-ink" data-test="figure-value">{{ Money::format($figures->netSoldCents()) }}</div>
+                <div class="mt-1 text-sm text-zinc-700" data-test="figure-detail">{{ $soldDetail }}</div>
             </div>
 
             <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="figure-cancellation-rate">
@@ -296,14 +313,15 @@ new #[Title('Performance')] class extends Component {
 
             <ul class="mt-3 flex list-disc flex-col gap-2 ps-5 text-sm text-zinc-700">
                 <li>{{ __('The month is the calendar month in :location time.', ['location' => $location->name]) }}</li>
-                <li>{{ __('Leads issued: each lead handed to Sales in the month. One that was booked in error, or that a manager said should never have been booked, is not counted.') }}</li>
+                <li>{{ __('Leads issued: each lead handed to Sales in the month.') }}</li>
                 <li>{{ __('Appointments run: appointments on a day in the month that were marked run.') }}</li>
-                <li>{{ __('Demo rate: of those, the ones with a proposal. An appointment run with nothing presented counts against it until a proposal is added.') }}</li>
-                <li>{{ __('Close rate: counted for each lead, in the month of its first run appointment. A return visit that closes the sale does not lower it, and two proposals sold to one lead are one win. A past month goes up when one of its leads is sold later.') }}</li>
-                <li>{{ __('Sold revenue: the sold amounts recorded in the month.') }}</li>
+                <li>{{ __('Demo rate: of those, the ones with a proposal. An appointment run with nothing presented counts against it until a proposal is added, whatever the reason given.') }}</li>
+                <li>{{ __('Close rate: the leads won in the month, against the leads whose first appointment was run in the month. A lead is won in the month its proposal was accepted, so a sale closed from an earlier month\'s visit counts here, and a month can read above 100%. Two proposals sold to one lead are one win.') }}</li>
+                <li>{{ __('Sold revenue: the sold amounts of the proposals accepted in the month.') }}</li>
                 <li>{{ __('NSLI: sold revenue in the month, divided by leads issued in the month.') }}</li>
                 <li>{{ __('Cancellation rate: of the appointments booked for a day in the month, the ones that were cancelled. No-shows are shown beside it.') }}</li>
-                <li>{{ __('Whose figure it is: a lead issued counts for the salesperson it was issued to, an appointment for the salesperson it is with, and a sale for the salesperson the lead is with.') }}</li>
+                <li>{{ __('Whose figure it is: a lead issued counts for the salesperson it was issued to, an appointment for the salesperson it is with, and a sale and its win for the salesperson who had the lead when the proposal was accepted.') }}</li>
+                <li>{{ __('Corrections: a month that has passed is not rewritten. A sale a manager corrects, or a lead issued that is taken back, stays in the month it was made and comes off the month it was corrected in.') }}</li>
             </ul>
         </div>
     @endif

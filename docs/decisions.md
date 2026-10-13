@@ -2730,6 +2730,52 @@ Read by the implementation agent, for Jacob to change if wrong:
 - **A no-demo's reason** is the salesperson's own words, asked when an
   appointment is reported as run with nothing presented. It still counts as a
   no-demo whatever the reason (decision 133).
+
+## 135. The fixes are merged; Close Rate is demo to close (2026-10-13)
+
+**Decided by Jacob,** in reply to the fixes' handoff, which asked what Close
+Rate is divided by: "merge it - close rate is how many proposals were accepted
+by how many were created - the only adjustment we're making from there is one
+project is only caluclated. so if 3 proposals were created for some reason for
+one project and all 3 were accepted, then it counts once. if only 1 of the 3
+was accepted, then it still counts as a single win. otherwise sales reps can
+game it by creating multiple proposals for one project and raising their
+average close rate artificially. we sometimes do make multiple proposals for a
+project. closed projects based on the lead would crate a lead to close rate,
+we're looking for a demo to close rate. so if we demo'd at all by if demo had
+any sales at all. if that makes sense. then we have appmt to demo rate, then
+we have lead to appmt booking rate."
+
+1. **The fixes after slice 8 are merged.**
+2. **Close Rate is demo to close.** Of the jobs that were demoed at all, the
+   ones that had any sale at all. A job that was run with nothing presented is
+   not in it; that is what Demo Rate measures. This replaces what decision 134
+   recorded the wins as divided by, the Leads first run in the month.
+3. **Several proposals for one job count once,** in what was demoed and in
+   what was won, so that making more proposals cannot raise the rate. Three
+   proposals with all three accepted is one win; one of three accepted is one
+   win.
+4. **The funnel is three rates:** lead to appointment (booking), appointment
+   to demo (Demo Rate), demo to close (Close Rate).
+
+Read by the implementation agent, for Jacob to change if wrong:
+
+- **"One project" is one Lead.** Backoffice has nothing between a Lead and its
+  proposals that groups proposals into a job, and decision 125 (answer 10)
+  says a second job for the same customer is its own Lead. So proposals for
+  two houses under one Lead count as one demo and at most one win.
+- **A Lead is demoed in the month of its first run appointment that has a
+  proposal,** for the salesperson that appointment is with. Each Lead once,
+  ever: a return visit does not count it again.
+- **The win did not change** (decision 134): it counts in the month the
+  proposal was accepted, for the salesperson who had the Lead then, and a
+  correction comes off the month it is made in. So a month's Close Rate is
+  the Leads won that month over the Leads first demoed that month, and a
+  month of sales closed from earlier demos can read above 100%.
+- **Lead to appointment booking rate is not on Sales > Performance.** The
+  plan keeps booking rates with Marketing and Contact Center, by channel (4.1,
+  4.6), and they are not built. Nothing is built for it in this step.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

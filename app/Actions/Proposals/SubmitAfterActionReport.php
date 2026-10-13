@@ -19,6 +19,7 @@ class SubmitAfterActionReport
         private AddProposal $addProposal,
         private PresentProposalAgain $presentProposalAgain,
         private RecordProposalResult $recordProposalResult,
+        private RecordNoDemoReason $recordNoDemoReason,
     ) {}
 
     /**
@@ -27,8 +28,9 @@ class SubmitAfterActionReport
      * filled in straight after an appointment, that says what happened.
      *
      * 1. The appointment was run, or the customer was a no-show.
-     * 2. If run: whether anything was presented. If nothing was, the report is
-     *    done and the appointment counts as run with nothing presented.
+     * 2. If run: whether anything was presented. If nothing was, the
+     *    salesperson says why in their own words (decision 133), the report is
+     *    done, and the appointment counts as run with nothing presented.
      * 3. Each proposal presented, new or one from an earlier visit, with its
      *    result: sold, lost or still pending, and what each needs.
      * 4. Short notes, kept on the appointment.
@@ -38,7 +40,7 @@ class SubmitAfterActionReport
      * It is saved whole or not at all: if any part is refused, nothing is
      * saved and the refusal names the part.
      *
-     * @param  array<string, mixed>  $report  outcome ("run" or "no_show"), note, presented ("yes" or "no"),
+     * @param  array<string, mixed>  $report  outcome ("run" or "no_show"), note, presented ("yes" or "no"), noDemoReason,
      *                                        proposals (a list of: name, price, propertyId, result, soldAmount, lossReasonId, lostTo, objectionId, note),
      *                                        existing (by proposal ID: presented, result, soldAmount, lossReasonId, lostTo, objectionId, note).
      *
@@ -64,6 +66,8 @@ class SubmitAfterActionReport
             }
 
             if ($presented === 'no') {
+                $this->recordNoDemoReason->apply($lead, $appointment, is_string($report['noDemoReason'] ?? null) ? $report['noDemoReason'] : null, $actor);
+
                 return true;
             }
 

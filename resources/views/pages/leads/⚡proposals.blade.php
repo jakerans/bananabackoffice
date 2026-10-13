@@ -6,6 +6,7 @@ use App\Actions\Proposals\EditProposal;
 use App\Actions\Proposals\MarkLeadLost;
 use App\Actions\Proposals\MarkProposalAddedInError;
 use App\Actions\Proposals\PresentProposalAgain;
+use App\Actions\Proposals\RecordNoDemoReason;
 use App\Actions\Proposals\RecordProposalResult;
 use App\Actions\Proposals\UndoLeadLost;
 use App\Enums\LeadStatus;
@@ -32,8 +33,9 @@ use Livewire\Component;
  *
  * Anyone who may see the Lead sees it. The salesperson the Lead is with, or a
  * manager, adds proposals, changes one that is still pending, gives each its
- * result and marks the Lead lost. A manager alone corrects a result, marks a
- * proposal "added in error" and undoes a lost Lead.
+ * result, says why nothing was presented at a run appointment, and marks the
+ * Lead lost. A manager alone corrects a result, marks a proposal "added in
+ * error" and undoes a lost Lead.
  */
 new class extends Component {
     /** What a result dialog starts with. */
@@ -70,6 +72,12 @@ new class extends Component {
     public string $correctionNote = '';
 
     public string $undoLostNote = '';
+
+    /** The run appointment whose "why nothing was presented" the open dialog is about. */
+    #[Locked]
+    public ?int $noDemoAppointmentId = null;
+
+    public string $noDemoReason = '';
 
     /** The Lead's lifecycle revision when a dialog was opened, so a save refuses a Lead that has changed since. */
     #[Locked]
@@ -434,6 +442,41 @@ new class extends Component {
     }
 
     /**
+     * Open the dialog that says why nothing was presented at a run
+     * appointment (decision 133). It starts with what was said before.
+     */
+    public function openNoDemoReason(int $appointmentId): void
+    {
+        $this->authorize('manageProposals', $this->lead);
+
+        $appointment = $this->runAppointments->where('proposals_count', 0)->firstWhere('id', $appointmentId)
+            ?? abort(409, __('This appointment now has a proposal. Reload the page.'));
+
+        $this->noDemoAppointmentId = $appointment->id;
+        $this->noDemoReason = (string) $appointment->no_demo_reason;
+        $this->resetValidation();
+        $this->knownLifecycleVersion = (int) $this->lead->lifecycle_version;
+
+        Flux::modal('no-demo-reason')->show();
+    }
+
+    /**
+     * Save why nothing was presented. The appointment counts the same.
+     */
+    public function saveNoDemoReason(RecordNoDemoReason $recordNoDemoReason): void
+    {
+        $this->authorize('manageProposals', $this->lead);
+        $this->resetValidation();
+
+        $appointment = $this->runAppointments->firstWhere('id', $this->noDemoAppointmentId)
+            ?? abort(409, __('This appointment is no longer here. Reload the page.'));
+
+        $recordNoDemoReason->handle($this->lead, $appointment, $this->noDemoReason, Auth::user(), $this->knownLifecycleVersion);
+
+        $this->saved('no-demo-reason', __('Saved. It still counts as run with nothing presented.'));
+    }
+
+    /**
      * The Lead page changed the Lead (moved it, gave it to someone): read it
      * again here.
      */
@@ -530,9 +573,27 @@ new class extends Component {
         @endif
 
         @foreach ($this->runAppointments->where('proposals_count', 0) as $appointment)
-            <flux:text wire:key="no-proposal-{{ $appointment->id }}" data-test="no-proposal-yet">
-                {{ __('The appointment on :when was run and has no proposal yet. Until one is added it counts as run with nothing presented.', ['when' => $when($appointment)]) }}
-            </flux:text>
+            <div wire:key="no-proposal-{{ $appointment->id }}" class="flex flex-col gap-1" data-test="no-proposal-yet">
+                <flux:text>
+                    {{ __('The appointment on :when was run and has no proposal yet. Until one is added it counts as run with nothing presented.', ['when' => $when($appointment)]) }}
+                </flux:text>
+
+                {{-- Why nothing was presented, for coaching (decision 133). It counts the same whatever is written. --}}
+                @if ($appointment->no_demo_reason !== null)
+                    <span class="text-sm text-zinc-700" data-test="no-demo-reason">
+                        {{ __('Why nothing was presented:') }} <span class="whitespace-pre-line">&ldquo;{{ $appointment->no_demo_reason }}&rdquo;</span>
+                        &middot; {{ $appointment->no_demo_reason_by_name ?? __('Unknown') }}
+                    </span>
+                @endif
+
+                @can('manageProposals', $lead)
+                    <div>
+                        <flux:button size="sm" :variant="$appointment->no_demo_reason === null ? 'filled' : 'ghost'" wire:click="openNoDemoReason({{ $appointment->id }})" data-test="say-no-demo-reason">
+                            {{ $appointment->no_demo_reason === null ? __('Say why nothing was presented') : __('Change the reason') }}
+                        </flux:button>
+                    </div>
+                @endcan
+            </div>
         @endforeach
 
         @if ($this->proposals->isNotEmpty())
@@ -697,6 +758,27 @@ new class extends Component {
                         </flux:modal.close>
 
                         <flux:button type="submit" variant="primary" data-test="save-proposal">{{ __('Add proposal') }}</flux:button>
+                    </div>
+                </form>
+            </flux:modal>
+
+            <flux:modal name="no-demo-reason" class="w-full max-w-lg">
+                <form wire:submit="saveNoDemoReason" class="flex flex-col gap-5">
+                    <flux:error name="stale" />
+
+                    <div>
+                        <flux:heading size="lg">{{ __('Why was nothing presented?') }}</flux:heading>
+                        <flux:subheading>{{ __('In your own words, for coaching. The appointment still counts as run with nothing presented until a proposal is added.') }}</flux:subheading>
+                    </div>
+
+                    <flux:textarea wire:model="noDemoReason" rows="3" maxlength="{{ RecordNoDemoReason::LENGTH }}" :label="__('What happened (required)')" data-test="no-demo-reason-field" />
+
+                    <div class="flex justify-end gap-2">
+                        <flux:modal.close>
+                            <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                        </flux:modal.close>
+
+                        <flux:button type="submit" variant="primary" data-test="save-no-demo-reason">{{ __('Save') }}</flux:button>
                     </div>
                 </form>
             </flux:modal>
