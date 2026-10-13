@@ -2566,6 +2566,170 @@ every Still pending needed typing. The list now starts with, in this order:
 This is a starting list until Sales Leadership gives theirs (plan, 24). Owner
 and Leadership change it on Lead & Sales Lists like any other list.
 
+## 130. Slice 8 is approved, with three answers that change its plan (2026-10-13)
+
+**Approved by Jacob** ("Everything else looks great. Go ahead."). Slice 8 is
+built from [slice-8-projects-plan.md](slice-8-projects-plan.md) in its two
+steps, each stopping for his review: 8a the Project, 8b the handoff. **Step 8a
+is approved to build.** The new permissions in the plan are approved with it.
+
+His answers to the plan's ten questions. Three differ from the recommendation:
+
+1. **One Project for each sold proposal, not one for the Lead.** "One lead can
+   definitely have multiple projects going on. That could even be separate
+   houses, things like that. Each proposal is connected to a project, not the
+   other way around."
+2. The Project is made automatically the moment a proposal is Sold. As
+   recommended.
+3. The title is "Main service — street address", filled in and editable. As
+   recommended.
+4. **When a manager corrects the sale, the Project is marked "Cancelled: sale
+   corrected"** and kept, and brought back if the proposal is sold again. As
+   recommended, "for now, but we may be adjusting it in the future".
+5. **The handoff is questions the salesperson has to complete, not a notes
+   box.** "We have had issues in the past with salespeople not having enough
+   detail in the handover, and it creates issues for the project manager." The
+   questions themselves are to be proposed with step 8a's handoff and agreed
+   before step 8b is built.
+6. No Project Coordinator role in this slice. As recommended.
+7. A manager at the Location assigns the Production Manager, and a Production
+   Manager there can take a waiting job. As recommended.
+8. The new permissions, as proposed: `projects.view` for Owner, Leadership,
+   Location Manager, Sales Consultant, Production Manager and Finance;
+   `projects.manage` for Owner, Leadership and Location Manager.
+9. Finance can see Projects. As recommended.
+10. No message to the customer in this slice. As recommended.
+
+Read by the implementation agent, for Jacob to change if wrong:
+
+- **"Separate houses."** A proposal today takes its Lead's property, so a
+  Project does too. Selling work on another of the customer's houses from the
+  same Lead needs a choice of property on the proposal, which is not built.
+  It is raised with step 8a's handoff.
+- **The Lead still shows Sold once any of its proposals is sold** (decision
+  125, answer 9). That is unchanged; each sold proposal now has a Project of
+  its own beside it.
+
+## 131. Stakeholder questionnaire reconciled into the plan (2026-10-13)
+
+Jacob supplied *Banana Backoffice Stakeholder Discovery Questions.docx* and
+asked that answered items adjust the plan and every remaining question be
+listed with a recommendation. The document was treated as source material, not
+as implementation instructions.
+
+The answers now constrain the target architecture in
+[product-architecture.md](product-architecture.md), including:
+
+- employee-facing “gross margin” language; the current PM Production Bonus and
+  Sales commission plans; payment timing and future-period cost adjustments;
+- Project closeout, permanent color records, the final walkthrough, PM-owned AR
+  timing and the deposit-paid handoff call;
+- subcontractor compliance, scorecard visibility, VIP thresholds and current
+  bonus rules;
+- PFAD hours, scope/equipment limits, deposit, materials, pay and recovery;
+- Sales confirmation/discovery, proposal validity and Pending ownership,
+  Brand Ambassador tiers and the three current Sales compensation plans;
+- invoice/change-order/tax/COGS/bad-debt rules that Finance already answered.
+
+Nothing in this reconciliation authorizes implementation. Exact unanswered
+items are deduplicated in
+[stakeholder-discovery-open-questions.md](stakeholder-discovery-open-questions.md).
+Questions are grouped by the work they can block so deferred Finance,
+Commercial or W-2 work does not stop slice 8b. Commercial Sales remains
+deliberately deferred.
+
+## 132. Slice 8b handoff questions and property-per-proposal rule (2026-10-13)
+
+**Decided by Jacob:** “I like your recommendations for both of those answers.”
+
+1. The Sales-to-Production handoff requires structured answers for included
+   scope, exclusions, promises beyond the proposal, requested timing, site
+   access, colors, condition/prep risks, and customer priorities/expectations
+   learned during WNBET discovery. It also has an optional final note.
+2. Required fields may be answered explicitly with “None”. Production sees a
+   waiting Project but cannot take it until the handoff is complete. The
+   salesperson sees a persistent prompt and gets one bell/email reminder the
+   next morning. The questions are fixed for the first version.
+3. Every proposal selects one customer property, defaulting to the Lead's
+   property. Its Project uses that property. One proposal cannot span multiple
+   properties; each other property needs another proposal and Project.
+
+This settles the product questions that were holding step 8b. It records the
+requirements but does not by itself start implementation or merge step 8a.
+
+## 133. Every remaining stakeholder-discovery recommendation is approved (2026-10-13)
+
+**Decided by Jacob:** “Use all of your recommendations to answer the remaining
+questions.” The 29 recommendations in
+[stakeholder-discovery-open-questions.md](stakeholder-discovery-open-questions.md),
+questions 3 through 31, are the answers exactly as written.
+
+This settles, among other things:
+
+- attribution after reassignment; no new no-demo exception; effective-dated
+  Sales compensation, with no undefined “disqualifier” behavior;
+- the PM job-cost materiality rule and rolling review window; the six-week
+  Production-utilization calculation; subcontractor insurance deduction and
+  configurable compliance; PFAD pickup/deposit authority;
+- W-2 and warranty Performance Pay architecture without inventing a formula;
+- the Backoffice/QuickBooks boundary, origin of accounting records, payment and
+  AP sync, late-cost materiality, one operational completion month, accruals,
+  refund/credit/write-off treatment, variable-compensation handoff, entity and
+  dimension starting point, monthly close, controls and reporting; and
+- Gross Receipts Tax as a liability, excluded from revenue and gross margin.
+
+Some answers intentionally defer an exact value until Banana supplies evidence
+or a technical integration check is performed. In particular: the W-2 P4P
+formula is not invented; a QuickBooks product tier follows an integration
+spike; actual legal-entity structure requires accountant confirmation; and
+Commercial Sales remains deferred. Those are decided safeguards, not open
+product questions.
+
+This records policy only. It does not authorize implementation outside an
+approved slice, merge step 8a, or start step 8b.
+
+## 134. Slice 8 is merged; the fixes after it; Close Rate follows lead ownership (2026-10-13)
+
+**Decided by Jacob,** in reply to step 8b's handoff: "merge it. make the fixes
+- especially close rate - we work off lead ownership - so close rate is based
+on who created the proposal and when it was accepted".
+
+1. **Steps 8a and 8b are merged.** Slice 8 is complete.
+2. **The fixes that handoff proposed are approved to build, as one step:**
+   - a Project is named for what was sold, "Lake house deck — 9 Lake Rd", not
+     for the Lead's main service. It stays editable. This changes answer 3 of
+     decision 130.
+   - the three places where Sales > Performance differed from decision 133:
+     whose win it is in Close Rate, corrections, and a no-demo's reason.
+3. **Close Rate works off lead ownership.** A win belongs to the salesperson
+   who has the Lead and made the proposal, and it is counted in the month the
+   proposal was accepted, which is the month it was marked Sold. This replaces
+   step 7d's reading, which placed a Lead in the month of its first run
+   appointment and gave the win to that appointment's salesperson.
+
+Read by the implementation agent, for Jacob to change if wrong:
+
+- **"Who created the proposal"** is read as the salesperson the Lead was with
+  at the sale, because he says "we work off lead ownership" and decision 133
+  says the win follows "the salesperson who owned the Lead when the proposal
+  was sold". If a manager types a proposal in for a salesperson, the win is
+  still the salesperson's.
+- **What the wins are divided by** is unchanged: the Leads whose first run
+  appointment was in the month (decision 125, answer 10). So a month's Close
+  Rate is the Leads won that month over the Leads first seen that month. A
+  sale that closes the month after its first visit is a win in the later
+  month, and a strong month of late closes can read above 100%.
+- **One Lead is one win** (decisions 124 and 125): it counts in the month its
+  first proposal was accepted, and a second proposal sold later adds revenue,
+  not a second win.
+- **Corrections** (decision 133: "auditable metric adjustments rather than
+  silently rewriting history") are built for money and wins and for Leads
+  Issued: a sale corrected in a later month stays in the month it was made,
+  and the correction is taken off the month it was corrected in, shown as
+  such. The same for a Lead Issued that is later voided.
+- **A no-demo's reason** is the salesperson's own words, asked when an
+  appointment is reported as run with nothing presented. It still counts as a
+  no-demo whatever the reason (decision 133).
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

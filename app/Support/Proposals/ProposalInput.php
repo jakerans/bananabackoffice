@@ -2,6 +2,8 @@
 
 namespace App\Support\Proposals;
 
+use App\Models\Lead;
+use App\Models\Property;
 use App\Models\Proposal;
 use App\Support\Money;
 use Illuminate\Validation\ValidationException;
@@ -28,6 +30,24 @@ class ProposalInput
         }
 
         return $name;
+    }
+
+    /**
+     * The one property a proposal is for (decision 132): the one chosen if it
+     * is a property of the Lead's customer and not archived, otherwise the
+     * Lead's own when nothing was chosen.
+     *
+     * @throws ValidationException
+     */
+    public static function property(Lead $lead, ?int $propertyId, string $field = 'proposalPropertyId'): Property
+    {
+        $property = $propertyId === null
+            ? $lead->property
+            : Property::query()->where('account_id', $lead->account_id)->notArchived()->find($propertyId);
+
+        return $property ?? throw ValidationException::withMessages([
+            $field => __('Choose one of this customer\'s properties.'),
+        ]);
     }
 
     /**

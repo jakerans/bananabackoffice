@@ -126,6 +126,8 @@ always limited to what the person's grants allow, in every view.
 | `settings.locations.manage` | Company | Manage locations |
 | `settings.users.manage` | Company | Manage staff and access grants |
 | `settings.lists.manage` | Company | Manage the Lead & Sales Lists page (added in step B2; held by Owner and Leadership) |
+| `projects.view` | Location | See the Projects at the location (added in slice 8 step 8a, decision 130; held by Owner, Leadership, Location Manager, Sales Consultant, Production Manager and Finance) |
+| `projects.manage` | Location | Edit a Project's title and description; in step 8b, assign its Production Manager (added in slice 8 step 8a, decision 130; held by Owner, Leadership and Location Manager) |
 | `settings.contact_center.manage` | Company | Manage the Contact Center settings page: call cadence, calling hours and days, hold length (added in step 4a; held by Owner and Leadership) |
 | `leads.work_queue` | Location | Work the Call Queue. **Held by Owner, Leadership, Location Manager and Call Center Agent since step 4a (decision 74), but guards nothing: no route, navigation item, policy or action reads it until step 4b.** |
 
@@ -329,6 +331,13 @@ through B7. `leads.convert`, every `projects.*` row, `attachments.manage` and
 `history.view` are preserved historical proposals from the old B8–B12 sequence;
 they are not implemented grants and do not authorize that sequence.
 
+**Since slice 8 step 8a (decision 130)** two Project permissions are real:
+`projects.view` and `projects.manage`, as the table above this section
+describes them. `projects.view` is the historical row of that name. The other
+historical `projects.*` rows below are still not built, and
+`projects.sales_outcome` never will be as written: a sale is recorded on a
+proposal, not on a Project (decision 124).
+
 | Permission | Scope | Allows |
 | --- | --- | --- |
 | `accounts.view` | Location | See Accounts, Contacts and Properties, under rule 3 |
@@ -531,6 +540,27 @@ Rules:
     manage appointments (`appointments.manage`: everyone there, or any one
     salesperson) or are a Sales Consultant (their own figures only). No
     permission was added.
+22. **Projects** (`ProjectPolicy`, slice 8 step 8a, decision 130). A Project is
+    seen by anyone with `projects.view` at the Project's own Location: Owner,
+    Leadership, the Location Manager, every Sales Consultant and Production
+    Manager there, and Finance. Whose Project it is grants nothing (rule
+    "Responsibility is not permission"). Its title and description are edited
+    with `projects.manage`. Nobody makes or cancels a Project directly: the
+    sale and its correction do (rule 20). A Call Center Agent cannot open a
+    Project; on the customer page they see its title and sold amount when they
+    may see the Lead it came from.
+23. **The handoff and the Production Manager** (slice 8 step 8b, decisions 130
+    and 132). **Answering or correcting the handoff questions**
+    (`ProjectPolicy::completeHandoff`): the salesperson who sold the Project,
+    or anyone with `projects.manage` there. A Production Manager reads the
+    answers and cannot write them. **Assigning or changing the Production
+    Manager** (`assignProductionManager`): `projects.manage`. **Taking a
+    waiting job** (`take`): someone with the Production Manager role at the
+    Project's own Location, for themselves, once the handoff is complete and
+    nobody has it. Only a person with that role there can hold a Project.
+    Holding one grants nothing. **Production > Workspace** opens with
+    `production.access` and lists only the Locations where the person has
+    `projects.view`. No permission was added.
 
 ## Slice 4: the call queue and its settings
 

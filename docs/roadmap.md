@@ -96,6 +96,20 @@ after-action report) was built and merged on 2026-10-13.** **Step 7d (the
 first Sales figures, on Sales > Performance) was built and merged on
 2026-10-13.** **Slice 7 is complete as planned.**
 
+**Slice 8, a Project when a sale is Sold and the handoff to Production, is
+approved in two steps (2026-10-13, decision 130).** Its plan, with the
+reasoning from the plan for why it is next, is
+[slice-8-projects-plan.md](slice-8-projects-plan.md). **Step 8a (the Project,
+one for each sold proposal) and step 8b (the property of a proposal, the
+handoff questions and Production > Workspace) were built and merged on
+2026-10-13. Slice 8 is complete as planned.**
+
+**The fixes after slice 8 are approved (2026-10-13, decision 134)** and are
+being built as one step: a Project named for what was sold, and Sales >
+Performance brought in line with decisions 133 and 134 (Close Rate by lead
+ownership and the month a proposal was accepted, corrections as adjustments,
+and a no-demo's reason).
+
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
 Production Workspace instead of separate stage/project modules. Customers and

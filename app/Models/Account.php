@@ -93,6 +93,17 @@ class Account extends Model
     }
 
     /**
+     * Every Project for this customer, at every location. Always narrow this
+     * to what a person may see before showing any.
+     *
+     * @return HasMany<Project, $this>
+     */
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
+
+    /**
      * Every appointment booked for this customer, at every location. Always
      * narrow this to the Leads a person may see before showing any.
      *

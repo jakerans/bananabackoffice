@@ -16,6 +16,7 @@ use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
 use App\Models\Objection;
+use App\Models\Project;
 use App\Models\ProjectSize;
 use App\Models\Property;
 use App\Models\SalesLossReason;
@@ -108,6 +109,7 @@ class AppServiceProvider extends ServiceProvider
             'appointment_cancellation_reason' => AppointmentCancellationReason::class,
             'objection' => Objection::class,
             'lead' => Lead::class,
+            'project' => Project::class,
             'service' => Service::class,
             'project_size' => ProjectSize::class,
             'account' => Account::class,

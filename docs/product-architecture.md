@@ -294,7 +294,11 @@ Added 2026-10-13 (slice 7 step 7d; build plan: slice-7-appointment-results-plan.
 - Close Rate is counted for each Lead (decision 125), in the month of the Lead's first run appointment.
 - NSLI is the sold amounts recorded in the month over the Leads issued in the month. "Net" has nothing taken off it yet: there are no cancelled sales or refunds to net out.
 - Not built: Average Job Size, Close-on-the-Spot Rate, Pending Rate, % Pending with Rehash booked, Rehash conversion; targets; the Leaderboard (5.8); a figure across all Locations at once.
-- Provisional until Sales Leadership answers the open question in 5.1: a Lead issued counts for the salesperson it was issued to, an appointment for the salesperson it is with, a sale for the salesperson the Lead is with.
+- Attribution is LOCKED by decision 133: Lead Issued stays with the first
+  salesperson who received that issued Lead; appointment figures follow the
+  salesperson assigned when it ran; Sold Revenue and the win follow the
+  salesperson who owned the Lead when the proposal was sold. Corrections create
+  auditable metric adjustments rather than silently rewriting history.
 
 5.3 Workspace
 iPad-first/tablet-responsive in-home selling flow:
@@ -316,6 +320,19 @@ Concepts remain distinct internally:
 - proposal/presentation
 - accepted agreement
 
+Added 2026-10-13 from stakeholder discovery:
+- Sales confirmation happens 1–4 days before the appointment using the
+  confirmation-call script. If no phone connection, the salesperson sends a
+  short selfie video covering readiness and inviting a response.
+- Discovery captures WNBET: Wants, Needs, Budget, Expectations and Timeline,
+  including why the timing matters and whether expectations are realistic.
+  Sales produces several consultative options and may freely adjust scope and
+  material quality as the conversation develops; there is no rigid 3/9/12
+  option generator.
+- A customer controlling the conversation is a coaching signal, not yet an
+  approved no-demo exclusion. Decision 133 confirms there is no additional
+  exclusion: it remains a no-demo and records the coaching reason.
+
 5.4 Calendar
 Salespeople manage their own confirmation, rescheduling, cancellations, rehashes, and schedule.
 Google Calendar is the external conflict source; personal scheduling stays there.
@@ -332,7 +349,13 @@ Salesperson owns Pending for a CONFIGURABLE period.
 After ownership expires, it releases to Contact Center Rehash.
 Offer Valid Until and Salesperson Ownership Until are separate concepts.
 
-Exact ownership/validity rules = PENDING Sales Leadership.
+Current ownership/validity rule = LOCKED by stakeholder discovery; future
+changes remain configurable.
+
+Added 2026-10-13 from stakeholder discovery:
+- Proposal validity defaults to seven days and a salesperson may change it.
+- Sales ownership normally ends with that same expiry. On expiry, the Pending
+  opportunity releases to Contact Center Rehash.
 
 5.6 After-action report
 Goal: 1–2 minutes from the car.
@@ -369,10 +392,21 @@ Commission is based on GP dollars.
 Effective-dated plan.
 
 Three current plan families:
-- higher base + ~3% GP
-- medium base + ~7% GP
-- no base + ~15% GP
-Exact rates/base values = PENDING.
+- $45,000 base + 2% of gross-margin dollars
+- $35,000 base + 6% of gross-margin dollars
+- no base + 15% of gross-margin dollars
+Current rates/base values are confirmed below; plans must be effective-dated.
+
+Added 2026-10-13 from stakeholder discovery:
+- Current plans are $45,000 base plus 2% of gross-margin dollars; $35,000 base
+  plus 6%; and straight commission at 15%.
+- Only straight commission receives the advance. It is 50% of projected
+  commission, projected at 50% gross margin (3.75% of revenue), after customer
+  acceptance, a full 50% deposit and a completed Sales-to-Production handoff.
+- Final commission belongs to the pay period in which the Project is complete,
+  paid in full and job costed. Exact meaning of the noted “disqualifier” on the
+  $45,000 plan was not defined. Decision 133 gives it no product behavior unless
+  Jacob later explicitly defines one.
 
 Advance:
 - only if full required 50% deposit actually collected
@@ -433,7 +467,20 @@ Core:
 
 Future:
 - projected PM commission / Eligible / At Risk / Ineligible
-Exact formula = PENDING Ops.
+Current formula is confirmed below; future plans must be effective-dated.
+
+Added 2026-10-13 from stakeholder discovery:
+- Employee-facing wording is **gross margin**, **gross-margin dollars** and
+  **Production Bonus**, not gross profit or commission for Production.
+- Current PM plan: $45,000 base; monthly bonus is
+  `(actual gross-margin dollars - $37,500) × 10%`, earned only at a monthly
+  gross margin of at least 55%.
+- It is paid at the end of the following month only if that following month
+  also finishes at or above 55%. Later costs become future-period adjustments.
+- The Project completes for this purpose when work is closed and final payment
+  is collected. Warranty cost belongs to the current production month rather
+  than reopening the original Project; incomplete punch/callback work remains
+  part of the original Project before close.
 
 6.2 Workspace
 Main PM operating surface:
@@ -464,6 +511,18 @@ Sold normal project:
 - manages Sales→Production handoff, colors, customer onboarding, readiness
 - rough timeframe before exact schedule
 - exact dates typically solidified ~3–6 weeks before start
+
+Added 2026-10-13 (slice 8 step 8a; rulebook rule 13; decision 130; build plan: slice-8-projects-plan.md):
+- Built: a Project is made the moment a proposal is Sold, one for each sold proposal, with what was sold, for how much, for whom and where. It has its own page, and shows on the Lead and the customer. Its states are separate fields; so far only Production: New from Sales.
+- A corrected sale cancels its Project and keeps it; sold again, the same Project comes back. Jacob accepted this "for now".
+- Not built: the handoff questions and Production's Workspace (step 8b), the confirmation email or text, the Coordinator, colors, readiness, the schedule.
+- Decision 132 settles the step 8b handoff: structured scope, exclusions,
+  promises, timing, access, colors, condition/prep and WNBET priorities are
+  required before Production can take the Project; an optional final note is
+  allowed. A proposal selects exactly one customer property and its Project
+  uses that property.
+- Built in slice 8 step 8b (2026-10-13): the property choice on a proposal; the handoff questions, the gate, the salesperson's prompt and next-morning reminder; Production > Workspace with three lists (waiting for handoff, new from Sales, pre-production); a Production Manager taking a job or a manager assigning one, each telling the new owner and the salesperson (20).
+- Still not built from 6.2 and 6.3: the confirmation email or text, the Coordinator, the deposit-paid handoff call, customer onboarding, Color Readiness, rough scheduling, work orders and everything after.
 
 6.4 Color Specification
 Every normal sold job ultimately has an authoritative Color Specification.
@@ -501,6 +560,15 @@ States:
 - rescheduled with reason/history
 
 Production utilization target currently ~80%, CONFIGURABLE, to preserve weather/overrun flexibility.
+Decision 133 defines it as scheduled productive crew-days divided by available
+crew-days for the next six weeks, by Location. Weekends, holidays, approved
+time off and unavailable crews are excluded; show the raw percentage and the
+planned 20% buffer.
+
+PMs plan same-day starts manually. Established, capable subcontractors may run
+their own initial walkthrough; new/unproven crews require staggered starts so
+the PM can attend. Active-job contact is daily or twice daily depending on the
+subcontractor's experience, communication and rating.
 
 6.6 Work Packages
 A Project can contain one or more Work Packages.
@@ -557,6 +625,14 @@ Internal/financial close:
 
 PM cannot financially close before job costing is complete.
 
+Added 2026-10-13: closeout also requires an authoritative, durable color record
+by area/surface: manufacturer/paint, color and sheen. It must remain easy to
+retrieve years later. The final walkthrough uses the PCA checklist, internal
+inspection first, then customer walkthrough and 100%-satisfied signature; the
+PM follows up and gives final-payment instructions. A qualified subcontractor
+may conduct it at the PM's discretion after at least five completed Projects
+and a 4.5+ rating; responsibility remains with the PM.
+
 6.9 Job-cost governance
 PM prepares.
 Finance validates.
@@ -572,7 +648,15 @@ Finance handles:
 
 PM compensation uses final approved GP.
 
+Employee-facing screens use gross margin / gross-margin dollars. Finance may
+retain accounting terms where required.
+
 Job-cost accuracy is a PM performance signal. Repeated material corrections should surface to GM/Ops.
+
+Decision 133: a PM accuracy strike is a missing PO or a post-submission
+correction above the larger of $250 or 2% of Project revenue. Normal timing and
+Finance reclassification are excluded. Notify GM/Ops on the third strike in a
+rolling 90-day period; preserve every correction even below the threshold.
 
 6.10 Brand Ambassador closeout
 Separate from Project closure.
@@ -593,7 +677,18 @@ States:
 Project may close financially while BA obligations remain open.
 PM owns ensuring completion; another staff member may physically complete.
 Review requests should not blindly auto-send after a bad project.
-Exact tiers/obligations = PENDING Sales Leader.
+Current tiers/obligations are confirmed below; future changes remain
+configurable.
+
+Added 2026-10-13 from stakeholder discovery, the current tiers:
+- Bronze, 10%: 30-day yard sign, permission for project content, paper survey.
+- Silver, 15%: Bronze plus Facebook and Google reviews with before/after photos,
+  and permission to serve as a named/phone reference.
+- Gold, 25%: Silver plus video testimonial and a personal social post.
+Sales may customize only when the package itself is the sole barrier to closing.
+
+Operationally, the PM must complete, schedule or explicitly waive these items
+before Project close, normally the same day or within days.
 
 7. SUBCONTRACTOR MANAGEMENT
 
@@ -614,7 +709,16 @@ Portal gathers:
 - master subcontract agreement
 - location/state requirements
 
-Exact compliance = PENDING Ops.
+Base compliance is LOCKED below; Location/state additions are CONFIGURABLE.
+
+Added 2026-10-13 from stakeholder discovery, the base checklist: W-9, general
+liability, workers' compensation with waiver of subrogation, signed
+subcontractor agreement, and an annually renewed New Mexico gross-receipts-tax
+waiver certificate. A subcontractor without required insurance may use Banana's
+coverage and receive a documented deduction. Decision 133 starts that deduction
+at 10% of subcontractor payout, effective-dated and overridable by Location or
+state. Show its dollars on the work order and payable; do not keep a second
+competing revenue-based formula.
 
 7.3 Roster
 Statuses:
@@ -704,6 +808,9 @@ PM may:
 
 Distinguish contractor-caused overrun from weather/customer/legitimate causes.
 
+Current partial-payout rule: original subcontractor payout minus the amount
+required to pay the replacement subcontractor to complete the work.
+
 7.10 Performance scorecard
 PM completes scorecard at closeout.
 Draft:
@@ -717,7 +824,11 @@ Draft:
 - overall rating
 - notes
 
-Visibility to subcontractor = PENDING Ops.
+Visibility to the subcontractor is confirmed below.
+
+Added 2026-10-13: add yard signs and progress photos to the scorecard. The
+subcontractor sees the full scorecard and a dedicated “Feedback for the
+subcontractor” field, but never the separate internal-notes field.
 
 7.11 VIP
 Measurable + management override.
@@ -739,7 +850,14 @@ System may show:
 - Not Eligible
 
 Actual status remains management-controlled with reason.
-Thresholds/evaluation period = PENDING Ops.
+Current thresholds/evaluation period are confirmed below.
+
+Added 2026-10-13: current VIP eligibility is under 10% decline, under 10%
+price negotiation, at least five completed Projects, 4.5+ rating, no failed
+Project in the past 12 months, and under 5% warranty-call rate over 12 months.
+Eligibility never grants VIP automatically; the PM decides. Review-bonus and
+$100,000 monthly-production bonus rules belong in the subcontractor-compensation
+plan, not the VIP status calculation.
 
 8. PAINTER FOR A DAY (PFAD)
 
@@ -844,6 +962,10 @@ Post-completion satisfaction:
 - very satisfied → review/referral path
 - below threshold → recovery callback
 
+Current PFAD recovery owner: Contact Center works with the painter and may offer
+up to two additional work hours or a partial refund; escalation goes to the
+Contact Center Manager.
+
 8.8 Completion / Payment
 Happy path:
 worker completes → final charge → receipt/invoice → worker earnings released according to policy.
@@ -854,7 +976,14 @@ Failed payment:
 - collections
 - eventual write-off/external collection as needed
 
-Exact worker pay timing = PENDING Ops.
+Current subcontractor pay timing is confirmed below. W-2 P4P remains an
+intentional deferred formula under decision 133.
+
+Added 2026-10-13: a PFAD day is 8 a.m.–5 p.m.; a subcontractor is currently
+budgeted/paid $300 per day on the normal next-Friday subcontractor schedule.
+A W-2 painter uses the same approximate budget through Performance Pay. The
+exact W-2 formula is deliberately not inferred: its eventual plan is
+effective-dated and preserves every pay-period input and result.
 
 8.9 PFAD Rules
 Sells time, not guaranteed project completion.
@@ -867,7 +996,19 @@ Materials:
 - normally homeowner-provided
 - optional pickup/add-on may exist
 - shopping/travel counts against purchased day
-Exact pricing/equipment limits = PENDING Ops.
+Current pricing/equipment limits, pickup treatment and deposit approval are
+confirmed below.
+
+Added 2026-10-13: no ladder above 14 feet, no limewash, cabinets, specialty
+staining or spraying; brushes only; standard prep materials included, excessive
+prep extra, no primer. Paint is customer-provided or billed at retail; pickup
+and shopping consume the day. Up to two after-hours hours may be offered at
+$150/hour with approval before 4 p.m. Deposit defaults to 75% and may be
+negotiated to 50%; decision 133 sets the approval authority below.
+
+Decision 133: version one has no separate paint-pickup fee. A Location Manager
+or Leadership may approve reducing the deposit to 50%; going below 50% requires
+Owner approval, a reason and an audit event.
 
 9. FINANCE CENTER
 
@@ -945,7 +1086,10 @@ Supports:
 - projected/finalized
 - payroll export/sync
 
-Exact PM/P4P formulas = PENDING.
+PM formula is confirmed in 6.1. W-2 painter P4P is intentionally DEFERRED until
+Banana supplies the real formula; its data model remains effective-dated.
+Warranty work uses a separately approved budget and the worker's normal
+effective-dated P4P plan, not an invented reduced rate.
 
 9.5 People & Access
 Finance/Admin function:
@@ -981,11 +1125,16 @@ Additional:
 - Monthly Close
 
 9.8 QuickBooks
-Recommended V1:
+LOCKED V1 boundary (decision 133):
 Backoffice = operational workflows/management visibility.
 QuickBooks = formal accounting ledger/system of record.
 Approved data syncs to QuickBooks; accounting/payment statuses sync back.
-Exact boundary = PENDING Accountant.
+Backoffice never becomes a second independent ledger. Chart of accounts,
+journal entries, bank/card reconciliation, tax filing and formal period close
+originate in QuickBooks. Backoffice may originate approved operational invoices,
+bills, credits and compensation entries and receives posted identity/status.
+The QuickBooks subscription is chosen only after an integration spike verifies
+invoice, payment, class/location, attachment and API needs.
 
 10. PROJECT ECONOMICS / GP
 
@@ -1002,6 +1151,12 @@ Known direct COGS:
 - other direct fulfillment cost
 
 Sales and PM commissions are not COGS.
+
+Added 2026-10-13: direct COGS also includes frontline payroll tax/PTO/training
+and recruiting, frontline vehicles/fuel/maintenance, shop/storage rent, company
+GL/workers' compensation/auto insurance allocated to fulfillment, equipment and
+tools, value-building fulfillment services, warranty and damage costs. Office
+rent and Sales/PM vehicles are not COGS. Employee-facing wording is gross margin.
 
 10.2 Brand Ambassador Floor
 Projects priced pre-BA so maximum BA discount still supports target economics.
@@ -1050,13 +1205,78 @@ Differentiate refund, credit against balance, and bad-debt write-off.
 PM owns initial collection.
 Project stays financially open.
 Sub/final commissions blocked until collection.
-Escalation timing CONFIGURABLE; exact policy PENDING Ops.
+Escalation timing is confirmed below and remains CONFIGURABLE.
+
+Added 2026-10-13: customer payment is due in seven days. PM contacts daily for
+the first three days; notices precede and apply the day-7 late fee, repeat for
+the day-14 escalation, then continue weekly. At 30 days it transfers to internal
+Collections. PM receives a deposit-paid notice and must call a new customer
+within 24 hours to complete handoff.
 
 10.7 Bad Debt
 Provisional recommendation:
 - separate from production COGS/GP
 - still attributable to originating project for lifetime economics
-Exact accounting = PENDING Accountant.
+Current bad-debt treatment is confirmed below; transaction implementation still
+follows the Finance boundary in 9.8.
+
+Added 2026-10-13: bad debt stays below production gross margin and remains
+linked to the originating Project. A write-off requires GM and Accounting after
+Collections gives up. Project gross margin is not final before payment is
+collected and the job is closed.
+
+Finance answers already settled for later planning:
+- normal work uses separate deposit and final invoices; the final invoice
+  carries tax on the full revenue balance;
+- approved “Add work” creates a customer-signed change order and adds it to the
+  Project invoice;
+- card and financing surcharges are passed to the customer;
+- QuickBooks calculates tax from the service address, placed in both bill-to
+  and ship-to; estimates/invoices label it “Approximate State & Local Tax
+  (subject to change)”;
+- late warranty/direct costs after close belong to the current month;
+- Backoffice calculates finalized variable compensation for payroll, which may
+  independently verify it; clawbacks remain linked to each Project.
+
+Decision 133 adds the Finance operating rules:
+- Backoffice records operational payment expectations and immutable external
+  references; QuickBooks owns posting, settlement and reconciliation. Cash/check
+  entries require receipt evidence and Finance approval; retries are idempotent.
+- Keep gross subcontractor payout, insurance deduction and Banana insurance
+  expense/allocation as distinct entries.
+- Record every late-cost correction; Finance review and visibly flag one above
+  the larger of $250 or 2% of Project revenue.
+- One operational completion month begins when work is accepted, final payment
+  is collected and job costing is complete. Actual posting dates remain evidence,
+  not a second performance month. Later warranty costs use their current month.
+- Close accruals include signed subcontractor payouts, received-but-unposted
+  materials, earned W-2 labor, rentals, permits, known warranty work and other
+  approved direct costs; Finance approves and reverses them.
+- Refunds reverse cash, credits reduce A/R, cancellation fees are revenue,
+  unrecoverable direct costs remain current-month COGS, and bad debt stays below
+  gross margin while linked to its Project.
+- Backoffice owns operational AP capture/coding/approval and Project assignment;
+  QuickBooks owns vendor accounting, payment execution, reconciliation, tax and
+  formal journals. Gusto remains the subcontractor direct-deposit executor.
+- Backoffice calculates an auditable variable-compensation ledger; an authorized
+  person finalizes and sends it to payroll, which may verify without recalculating.
+- Starting QuickBooks structure, subject to accountant/legal-entity confirmation:
+  one company file where permitted, one chart of accounts, Location for operating
+  Location, Class for department/service line, and Corporate for shared costs.
+- Monthly close: operations cutoff; PM job-cost submission; AP/payroll accruals;
+  cash/A/R reconciliation; unassigned-cost cleanup; Finance review; GM exception
+  approval; compensation finalization; P&L review by the seventh. Each step has
+  an owner, due date and evidence. Preliminary becomes final after reconciliation,
+  accruals, job costs and approvals; later discoveries are linked current-period
+  adjustments.
+- Controls: immutable external IDs, idempotent sync, daily exceptions, control
+  totals by transaction type/Location, monthly A/R/AP/cash/compensation
+  reconciliation, and no silent overwrite of posted accounting records.
+- First additional reports: sync exceptions, unassigned transactions,
+  compensation changes/clawbacks, deposit liability, tax liability, warranty
+  cost and close-checklist status.
+- Gross Receipts Tax is a liability, excluded from revenue, COGS and gross
+  margin; retain QuickBooks' jurisdiction and rate.
 
 11. CUSTOMER / CONTACT WORKSPACE
 
@@ -1430,8 +1650,8 @@ If a person is assigned:
 W-2:
 - clock in/out against Warranty Case
 - hours are COGS
-- no P4P
-- exact warranty rate PENDING Ops
+- warranty work is P4P-eligible, with a separately approved budget
+- use the worker's normal effective-dated P4P plan; do not invent a special rate
 
 Subcontractor:
 - payout case-by-case
@@ -1743,7 +1963,9 @@ Backoffice distinguishes:
 
 Invoice created ≠ cash received.
 
-Exact invoicing/accounting = PENDING Accountant.
+Invoicing/accounting follows the LOCKED V1 boundary in 9.8 and the approved
+Finance rules in 10.7. Provider-specific mapping waits for the integration
+spike; it is not guessed.
 
 23. PEOPLE / WORKFORCE
 
@@ -1757,66 +1979,22 @@ W-2 Field Portal reserved in architecture:
 - upcoming pay
 - time categories
 
-P4P formula = PENDING Ops.
+P4P formula = deliberately DEFERRED until Banana supplies the real formula.
+The architecture is effective-dated and evidence-preserving (decision 133).
 
 Subcontractor portal and PFAD portal remain distinct.
 
 24. OPEN STAKEHOLDER DEPENDENCIES
 
-Director of Operations:
-- PM comp formula/gate/timing
-- later-cost/warranty comp treatment
-- margin-variance adjudication
-- final closeout checklist
-- job-cost accuracy thresholds
-- Sherwin-Williams purchasing/integration
-- production utilization definition
-- multiple same-day pre-job walks
-- progress cadence
-- sub compliance
-- insurance deduction
-- sub pay timing
-- partial payout
-- sub scorecard/visibility
-- final walkthrough rules
-- VIP thresholds
-- PFAD day/equipment/deposit/material/pay
-- PFAD recovery owner
-- W-2/P4P
-- warranty rate
-- AR escalation
-- PM change-order commission
-- BA operational closeout
+The 2026-10-13 stakeholder questionnaire and decisions 131–133 answer this
+former list. All questions and exact approved answers are maintained in
+[stakeholder-discovery-open-questions.md](stakeholder-discovery-open-questions.md).
+There are no unanswered discovery questions. Intentional deferrals—W-2 P4P,
+QuickBooks product-tier selection, legal-entity confirmation and Commercial
+Sales discovery—tell future builders not to guess.
 
-Sales Leadership:
-- confirmation process
-- discovery questions
-- option-generation system
-- no-demo exceptions
-- objection list
-- Lost Reason list
-- Pending ownership period
-- proposal validity
-- BA tiers/obligations
-- exact sales comp
-- Commercial workflow/KPIs/comp
-
-Accountant / Finance:
-- QuickBooks boundary
-- invoice structure
-- change-order invoicing
-- payment recording
-- finance/card fee treatment
-- GRT/tax
-- late-cost/prior-period
-- accruals
-- bad debt
-- refunds/cancellation accounting
-- AP boundary
-- payroll/commission accounting
-- entity/location structure
-- close controls
-- reconciliations
+Commercial Sales remains deliberately deferred and is not forced into the
+residential workflow. Its discovery section is therefore not a blocker.
 
 25. CURRENT IMPLEMENTATION IMPLICATIONS
 

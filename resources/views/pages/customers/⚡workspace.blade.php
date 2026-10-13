@@ -7,6 +7,7 @@ use App\Models\Account;
 use App\Models\AuditEvent;
 use App\Models\Lead;
 use App\Models\Note;
+use App\Models\Project;
 use App\Support\Customers\CustomerActivity;
 use Flux\Flux;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -124,12 +125,16 @@ new #[Title('Customer activity & notes')] class extends Component {
         $leadIds = $this->visibleLeadIds();
         $leadLocationIds = $user->locationsWhere(Permission::ViewLeads)->modelKeys();
         $seesCentralEvents = $user->hasPermissionAcrossAllLocations(Permission::ViewUnroutedLeads);
+        $projectType = (new Project)->getMorphClass();
+        $projectIds = $this->visibleProjectIds();
 
         $events = AuditEvent::query()
             ->whereIn('action', CustomerActivity::actions())
-            ->where(function (Builder $query) use ($accountType, $leadType, $leadIds, $leadLocationIds, $seesCentralEvents): void {
+            ->where(function (Builder $query) use ($accountType, $leadType, $leadIds, $leadLocationIds, $seesCentralEvents, $projectType, $projectIds): void {
                 $query->where(function (Builder $account) use ($accountType): void {
                     $account->where('subject_type', $accountType)->where('subject_id', $this->account->id);
+                })->orWhere(function (Builder $projects) use ($projectType, $projectIds): void {
+                    $projects->where('subject_type', $projectType)->whereIn('subject_id', $projectIds);
                 })->orWhere(function (Builder $leads) use ($leadType, $leadIds, $leadLocationIds, $seesCentralEvents): void {
                     $leads
                         ->where('subject_type', $leadType)
@@ -148,7 +153,7 @@ new #[Title('Customer activity & notes')] class extends Component {
             ->orderByDesc('id')
             ->paginate(perPage: 10, pageName: 'activityPage');
 
-        $events->getCollection()->loadMorph('subject', [Lead::class => ['services']]);
+        $events->getCollection()->loadMorph('subject', [Lead::class => ['services'], Project::class => ['location']]);
 
         return $events;
     }
@@ -236,6 +241,26 @@ new #[Title('Customer activity & notes')] class extends Component {
     private function visibleLeadIds(): array
     {
         return $this->account->leads()->visibleTo(Auth::user())->pluck('id')->all();
+    }
+
+    /**
+     * The customer's Projects this person may see: at a location where they
+     * see Projects, or from a Lead they may see.
+     *
+     * @return list<int>
+     */
+    private function visibleProjectIds(): array
+    {
+        $user = Auth::user();
+
+        return $this->account->projects()
+            ->where(function (Builder $visible) use ($user): void {
+                $visible
+                    ->whereIn('location_id', $user->locationsWhere(Permission::ViewProjects)->modelKeys())
+                    ->orWhereIn('lead_id', $this->account->leads()->visibleTo($user)->select('leads.id'));
+            })
+            ->pluck('id')
+            ->all();
     }
 
     private function visibleLead(int $leadId): Lead
@@ -372,6 +397,12 @@ new #[Title('Customer activity & notes')] class extends Component {
                                     <a href="{{ route('leads.show', $event->subject) }}" wire:navigate class="font-medium text-wall-teal underline decoration-zinc-300 underline-offset-2">
                                         {{ $this->leadLabel($event->subject) }}
                                     </a>
+                                @elseif ($event->subject instanceof Project)
+                                    @can('view', $event->subject)
+                                        <a href="{{ route('projects.show', $event->subject) }}" wire:navigate class="font-medium text-wall-teal underline decoration-zinc-300 underline-offset-2">{{ $event->subject->title }}</a>
+                                    @else
+                                        {{ $event->subject->title }}
+                                    @endcan
                                 @else
                                     {{ __('Customer') }}
                                 @endif

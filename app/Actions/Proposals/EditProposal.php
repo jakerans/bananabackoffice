@@ -24,8 +24,8 @@ class EditProposal
     ) {}
 
     /**
-     * Change a proposal's name or price while it is still Pending (decision
-     * 128). The salesperson the Lead is with, or a manager.
+     * Change a proposal's name, price or property while it is still Pending
+     * (decisions 128 and 132). The salesperson the Lead is with, or a manager.
      *
      * What it was before is kept in the audit record. Once a proposal is Sold
      * or Lost it is no longer edited; a manager corrects its result first.
@@ -36,9 +36,9 @@ class EditProposal
      * @throws ValidationException
      * @throws AuthorizationException
      */
-    public function handle(Lead $lead, Proposal $proposal, ?string $name, ?string $price, User $actor, ?int $expectedVersion = null): void
+    public function handle(Lead $lead, Proposal $proposal, ?string $name, ?string $price, User $actor, ?int $expectedVersion = null, ?int $propertyId = null): void
     {
-        $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $proposal, $name, $price, $actor): bool {
+        $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $proposal, $name, $price, $actor, $propertyId): bool {
             Gate::forUser($actor)->authorize('manageProposals', $lead);
 
             // Read as it is now; the Lead's row is already claimed, so it cannot change underneath.
@@ -51,20 +51,24 @@ class EditProposal
             $name = ProposalInput::name($name);
             $cents = ProposalInput::cents($price);
 
-            if ($name === $proposal->name && $cents === $proposal->price_cents) {
+            // Nothing given leaves the property as it is.
+            $property = $propertyId === null ? null : ProposalInput::property($lead, $propertyId);
+            $propertyId = $property === null ? $proposal->property_id : $property->id;
+
+            if ($name === $proposal->name && $cents === $proposal->price_cents && $propertyId === $proposal->property_id) {
                 return false;
             }
 
-            $before = ['proposal' => $proposal->name, 'price' => $proposal->price()];
+            $before = ['proposal' => $proposal->name, 'price' => $proposal->price(), 'property_id' => $proposal->property_id];
 
-            $proposal->forceFill(['name' => $name, 'price_cents' => $cents])->save();
+            $proposal->forceFill(['name' => $name, 'price_cents' => $cents, 'property_id' => $propertyId])->save();
 
             $this->recordAuditEvent->handle(
                 AuditAction::LeadProposalEdited,
                 $lead,
                 actor: $actor,
                 before: $before,
-                after: ['proposal' => $name, 'price' => Money::format($cents)],
+                after: ['proposal' => $name, 'price' => Money::format($cents), 'property_id' => $propertyId],
                 location: $lead->location,
             );
 

@@ -19,6 +19,7 @@ use App\Models\Appointment;
 use App\Models\AccountContact;
 use App\Models\Contact;
 use App\Models\Lead;
+use App\Models\Project;
 use App\Models\Property;
 use App\Support\Addresses\AddressCapturePage;
 use App\Support\Addresses\StructuredAddress;
@@ -693,6 +694,33 @@ new #[Title('Customer')] class extends AddressCapturePage {
     }
 
     /**
+     * The customer's Projects, newest sale first (slice 8 step 8a).
+     *
+     * A Project is listed when the viewer may see Projects at its location,
+     * or may see the Lead it came from: the Contact Center sees a sale and its
+     * amount this way (product-architecture.md, 11.4). One at a location they
+     * can do neither in is not listed and not hinted at.
+     *
+     * @return Collection<int, Project>
+     */
+    #[Computed]
+    public function projects(): Collection
+    {
+        $user = Auth::user();
+
+        return $this->account->projects()
+            ->where(function (Builder $visible) use ($user): void {
+                $visible
+                    ->whereIn('location_id', $user->locationsWhere(Permission::ViewProjects)->modelKeys())
+                    ->orWhereIn('lead_id', $this->account->leads()->visibleTo($user)->select('leads.id'));
+            })
+            ->with(['location', 'property', 'proposal'])
+            ->orderByDesc('sold_at')
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    /**
      * Asking about the same address applies to the address it was asked about.
      */
     protected function propertyAddressChanged(): void
@@ -1185,6 +1213,42 @@ new #[Title('Customer')] class extends AddressCapturePage {
                                         $appointment->state->isClosedOut() => $appointment->state->label(),
                                         default => $appointment->state->label(),
                                     } }}
+                                </flux:badge>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </div>
+
+        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="customer-projects">
+            <div>
+                <flux:heading size="lg" level="2">{{ __('Projects') }}</flux:heading>
+                <flux:subheading>{{ __('Sold jobs for this customer that you can see, newest first. Each sold proposal is a project of its own.') }}</flux:subheading>
+            </div>
+
+            @if ($this->projects->isEmpty())
+                <flux:text data-test="no-projects">{{ __('No projects to show.') }}</flux:text>
+            @else
+                <ul class="flex flex-col divide-y divide-zinc-200">
+                    @foreach ($this->projects as $project)
+                        <li wire:key="project-{{ $project->id }}" class="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 py-3 first:pt-0 last:pb-0" data-test="customer-project">
+                            <div class="flex flex-col">
+                                @can('view', $project)
+                                    <a href="{{ route('projects.show', $project) }}" wire:navigate class="font-semibold text-ink underline decoration-zinc-300 underline-offset-2 hover:decoration-ink">{{ $project->title }}</a>
+                                @else
+                                    <span class="font-semibold text-ink">{{ $project->title }}</span>
+                                @endcan
+                                <span class="text-sm text-zinc-600">{{ $project->proposal->name }} &middot; {{ $project->property->summary() }}</span>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-600">
+                                <span>{{ $project->location->name }}</span>
+                                <span>{{ $project->salesperson_name }}</span>
+                                <span class="tabular-nums text-ink" data-test="customer-project-sold-for">{{ $project->soldFor() }}</span>
+                                {{-- The word carries the meaning; the color only reinforces it. --}}
+                                <flux:badge size="sm" :color="$project->isCancelled() ? 'zinc' : 'emerald'" data-test="customer-project-state">
+                                    {{ $project->isCancelled() ? __('Cancelled: sale corrected') : __('Sold') }}
                                 </flux:badge>
                             </div>
                         </li>

@@ -5,6 +5,7 @@ namespace App\Actions\Proposals;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Leads\ChangeLeadLifecycle;
 use App\Actions\Leads\RecordLeadStatusChange;
+use App\Actions\Projects\CreateProjectForSoldProposal;
 use App\Enums\AuditAction;
 use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
@@ -26,6 +27,7 @@ class RecordProposalResult
         private ChangeLeadLifecycle $changeLeadLifecycle,
         private RecordLeadStatusChange $recordLeadStatusChange,
         private RecordAuditEvent $recordAuditEvent,
+        private CreateProjectForSoldProposal $createProjectForSoldProposal,
     ) {}
 
     /**
@@ -35,7 +37,8 @@ class RecordProposalResult
      *
      * - Sold: with the sold amount, which starts at the proposal's price and
      *   can differ. The Lead then shows Sold (answer 6 and 9). Its other
-     *   proposals stay as they are.
+     *   proposals stay as they are. A Project is made for the proposal in the
+     *   same save (decision 130).
      * - Lost: with a reason from Sales Loss Reasons and the primary objection.
      *   The Lead does not change; marking the Lead lost is MarkLeadLost.
      * - Still pending: with the main objection, so the reason it is open is
@@ -118,6 +121,9 @@ class RecordProposalResult
             $with = ResultDetails::forSold($details);
 
             $proposal->forceFill([...$recorded, 'result' => ProposalResult::Sold, 'sold_cents' => $cents, 'result_note' => $with->note])->save();
+
+            // A sold proposal has a Project of its own from this moment (rulebook, rule 13; decision 130).
+            $this->createProjectForSoldProposal->apply($lead, $proposal, $actor);
 
             if ($lead->status !== LeadStatus::Sold) {
                 $lead->forceFill(['status' => LeadStatus::Sold, 'status_changed_at' => $moment])->save();

@@ -7,6 +7,7 @@ use App\Enums\ProposalResult;
 use App\Models\Appointment;
 use App\Models\Lead;
 use App\Models\Objection;
+use App\Models\Property;
 use App\Models\Proposal;
 use App\Models\SalesLossReason;
 use Flux\Flux;
@@ -29,7 +30,7 @@ use Livewire\Component;
  */
 new #[Title('After-action report')] class extends Component {
     /** What a proposal in the report starts with. */
-    private const array BLANK = ['name' => '', 'price' => '', 'result' => '', 'soldAmount' => '', 'lossReasonId' => '', 'lostTo' => '', 'objectionId' => '', 'note' => ''];
+    private const array BLANK = ['name' => '', 'price' => '', 'propertyId' => null, 'result' => '', 'soldAmount' => '', 'lossReasonId' => '', 'lostTo' => '', 'objectionId' => '', 'note' => ''];
 
     #[Locked]
     public int $leadId;
@@ -72,7 +73,7 @@ new #[Title('After-action report')] class extends Component {
             return;
         }
 
-        $this->proposals = [self::BLANK];
+        $this->proposals = [$this->blank()];
 
         foreach ($this->earlierProposals as $proposal) {
             $this->existing[$proposal->id] = ['presented' => false, ...self::BLANK];
@@ -138,10 +139,31 @@ new #[Title('After-action report')] class extends Component {
         return Objection::query()->active()->ordered()->get();
     }
 
+    /**
+     * The customer's properties a proposal can be for (decision 132).
+     *
+     * @return Collection<int, Property>
+     */
+    #[Computed]
+    public function properties(): Collection
+    {
+        return $this->lead->account?->properties()->notArchived()->orderBy('id')->get() ?? new Collection;
+    }
+
     public function addProposal(): void
     {
-        $this->proposals[] = self::BLANK;
+        $this->proposals[] = $this->blank();
         $this->resetValidation();
+    }
+
+    /**
+     * A new proposal to fill in, on the Lead's property until another is chosen.
+     *
+     * @return array<string, mixed>
+     */
+    private function blank(): array
+    {
+        return [...self::BLANK, 'propertyId' => $this->lead->property_id];
     }
 
     public function removeProposal(int $index): void
@@ -167,7 +189,7 @@ new #[Title('After-action report')] class extends Component {
             fn (array $row): bool => trim((string) ($row['name'] ?? '')) !== '' || trim((string) ($row['price'] ?? '')) !== '' || ($row['result'] ?? '') !== '',
         ));
 
-        $this->proposals = $filled === [] ? [self::BLANK] : $filled;
+        $this->proposals = $filled === [] ? [$this->blank()] : $filled;
 
         // With one from an earlier visit presented again, the empty new proposal is not missing anything.
         $again = array_filter($this->existing, fn (array $row): bool => (bool) ($row['presented'] ?? false));
@@ -300,6 +322,18 @@ new #[Title('After-action report')] class extends Component {
                             <flux:input wire:model="proposals.{{ $index }}.price" inputmode="decimal" :label="__('Price, in dollars')" placeholder="8,450" data-test="report-proposal-price" />
                             <flux:error name="proposals.{{ $index }}.proposalPrice" />
                         </div>
+
+                        {{-- One proposal is for one of the customer's properties (decision 132). Asked only when there is a choice. --}}
+                        @if ($this->properties->count() > 1)
+                            <div class="flex flex-col gap-1">
+                                <flux:select wire:model="proposals.{{ $index }}.propertyId" :label="__('Property')" data-test="report-proposal-property">
+                                    @foreach ($this->properties as $property)
+                                        <flux:select.option :value="$property->id" wire:key="report-proposal-{{ $index }}-property-{{ $property->id }}">{{ $property->summary() }}</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                                <flux:error name="proposals.{{ $index }}.proposalPropertyId" />
+                            </div>
+                        @endif
 
                         <div class="flex flex-col gap-1">
                             <flux:radio.group wire:model.live="proposals.{{ $index }}.result" :label="__('What became of it?')">

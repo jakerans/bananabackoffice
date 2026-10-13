@@ -45,6 +45,7 @@
         @endif
 
         <livewire:pages::sales.close-out-prompt />
+        <livewire:pages::sales.handoff-prompt />
 
         <main class="px-4 py-6 lg:px-8 lg:py-8">
             {{ $slot }}

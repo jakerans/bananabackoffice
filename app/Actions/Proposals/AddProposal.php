@@ -42,18 +42,22 @@ class AddProposal
      * salesperson whose appointment it is tied to is told inside the app
      * (decision 126).
      *
+     * It is for one of the customer's properties, the Lead's unless another
+     * is chosen, and its Project will be for that property (decision 132).
+     *
      * @param  string|null  $price  In dollars, as typed: "8450", "8,450.50".
      * @param  array<int, mixed>  $appointmentIds  The run appointments it was presented at.
+     * @param  int|null  $propertyId  One of the customer's properties, or nothing for the Lead's.
      *
      * @throws ValidationException
      * @throws AuthorizationException
      */
-    public function handle(Lead $lead, ?string $name, ?string $price, array $appointmentIds, User $actor, ?int $expectedVersion = null): Proposal
+    public function handle(Lead $lead, ?string $name, ?string $price, array $appointmentIds, User $actor, ?int $expectedVersion = null, ?int $propertyId = null): Proposal
     {
         $proposal = null;
 
-        $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $name, $price, $appointmentIds, $actor, &$proposal): bool {
-            $proposal = $this->apply($lead, $name, $price, $appointmentIds, $actor);
+        $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $name, $price, $appointmentIds, $actor, $propertyId, &$proposal): bool {
+            $proposal = $this->apply($lead, $name, $price, $appointmentIds, $actor, propertyId: $propertyId);
 
             // The Lead's own lifecycle did not change.
             return false;
@@ -72,7 +76,7 @@ class AddProposal
      * @throws ValidationException
      * @throws AuthorizationException
      */
-    public function apply(Lead $lead, ?string $name, ?string $price, array $appointmentIds, User $actor, string $prefix = ''): Proposal
+    public function apply(Lead $lead, ?string $name, ?string $price, array $appointmentIds, User $actor, string $prefix = '', ?int $propertyId = null): Proposal
     {
         Gate::forUser($actor)->authorize('manageProposals', $lead);
 
@@ -106,12 +110,14 @@ class AddProposal
             ]);
         }
 
+        $property = ProposalInput::property($lead, $propertyId, $prefix.'proposalPropertyId');
+
         $proposal = new Proposal;
         $proposal->forceFill([
             'lead_id' => $lead->id,
             'location_id' => $lead->location_id,
             'account_id' => $lead->account_id,
-            'property_id' => $lead->property_id,
+            'property_id' => $property->id,
             'name' => $name,
             'price_cents' => $cents,
             'created_by' => $actor->id,
