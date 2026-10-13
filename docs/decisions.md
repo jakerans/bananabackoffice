@@ -2566,6 +2566,50 @@ every Still pending needed typing. The list now starts with, in this order:
 This is a starting list until Sales Leadership gives theirs (plan, 24). Owner
 and Leadership change it on Lead & Sales Lists like any other list.
 
+## 130. Slice 8 is approved, with three answers that change its plan (2026-10-13)
+
+**Approved by Jacob** ("Everything else looks great. Go ahead."). Slice 8 is
+built from [slice-8-projects-plan.md](slice-8-projects-plan.md) in its two
+steps, each stopping for his review: 8a the Project, 8b the handoff. **Step 8a
+is approved to build.** The new permissions in the plan are approved with it.
+
+His answers to the plan's ten questions. Three differ from the recommendation:
+
+1. **One Project for each sold proposal, not one for the Lead.** "One lead can
+   definitely have multiple projects going on. That could even be separate
+   houses, things like that. Each proposal is connected to a project, not the
+   other way around."
+2. The Project is made automatically the moment a proposal is Sold. As
+   recommended.
+3. The title is "Main service — street address", filled in and editable. As
+   recommended.
+4. **When a manager corrects the sale, the Project is marked "Cancelled: sale
+   corrected"** and kept, and brought back if the proposal is sold again. As
+   recommended, "for now, but we may be adjusting it in the future".
+5. **The handoff is questions the salesperson has to complete, not a notes
+   box.** "We have had issues in the past with salespeople not having enough
+   detail in the handover, and it creates issues for the project manager." The
+   questions themselves are to be proposed with step 8a's handoff and agreed
+   before step 8b is built.
+6. No Project Coordinator role in this slice. As recommended.
+7. A manager at the Location assigns the Production Manager, and a Production
+   Manager there can take a waiting job. As recommended.
+8. The new permissions, as proposed: `projects.view` for Owner, Leadership,
+   Location Manager, Sales Consultant, Production Manager and Finance;
+   `projects.manage` for Owner, Leadership and Location Manager.
+9. Finance can see Projects. As recommended.
+10. No message to the customer in this slice. As recommended.
+
+Read by the implementation agent, for Jacob to change if wrong:
+
+- **"Separate houses."** A proposal today takes its Lead's property, so a
+  Project does too. Selling work on another of the customer's houses from the
+  same Lead needs a choice of property on the proposal, which is not built.
+  It is raised with step 8a's handoff.
+- **The Lead still shows Sold once any of its proposals is sold** (decision
+  125, answer 9). That is unchanged; each sold proposal now has a Project of
+  its own beside it.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

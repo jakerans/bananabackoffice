@@ -1,9 +1,11 @@
 # Slice 8 — A Project When a Sale Is Sold, and the Handoff to Production: Proposed Plan
 
-Status: **proposed on 2026-10-13. Nothing is approved and nothing is built.**
-Jacob asked to continue based on the plan when he approved the merge of slice
-7. This is the plan for what the plan puts next, with the decisions it needs
-from him.
+Status: **approved on 2026-10-13 (decision 130) in two steps, each stopping
+for Jacob's review. Three of his answers changed the plan below: one Project
+for each sold proposal (not one for the Lead), the cancellation rule accepted
+"for now", and a handoff made of questions the salesperson has to complete.
+Step 8a is approved to build. Step 8b waits for the handoff questions to be
+agreed.**
 
 It follows [product-architecture.md](product-architecture.md), sections 2, 6.2,
 6.3 and 20, the slice 5 rulebook
@@ -50,8 +52,8 @@ Two reviewed steps. Each stops for Jacob's review.
 
 | Step | Delivers | From |
 | --- | --- | --- |
-| 8a | **The Project.** It is made the moment a sale is Sold, with what was sold and for how much. A Project page. It shows on the Lead and on the customer. | Rule 13; plan 2 and 20; decision 36 |
-| 8b | **The handoff.** Production > Workspace becomes a real page: sold jobs waiting for a Production Manager, and the ones each has. Assigning the Production Manager. Production is told when a job arrives. | Plan 6.2, 6.3 and 20 |
+| 8a | **The Project.** One is made the moment a proposal is Sold, with what was sold and for how much. A Project page. It shows on the Lead and on the customer. | Rule 13; plan 2 and 20; decisions 36 and 130 |
+| 8b | **The handoff.** The questions the salesperson has to complete for Production. Production > Workspace becomes a real page: sold jobs waiting for a Production Manager, and the ones each has. Assigning the Production Manager. Production is told when a job arrives. | Plan 6.2, 6.3 and 20; decision 130 |
 
 Not in slice 8, each needing its own plan and approval:
 
@@ -80,24 +82,28 @@ a Project is made at once, with nothing more to fill in:
 - the **Location** the Lead is at;
 - the Lead's **services and project size**, copied so that changing the Lead
   later does not change the Project;
-- **what was sold:** each sold proposal, with its name and sold amount, and
-  the **sold amount** of the Project, which is their total and is never typed;
+- **what was sold:** the proposal, with its name, its price and its **sold
+  amount**, which is the Project's sold amount and is never typed again;
 - **who sold it and when.**
 
-**The Lead page** shows "Sold: Project ..." with a link. **The customer page**
-gets a Projects section. **The Project page** shows all of the above, the
-appointments and proposals behind it, and its Activity.
+**One Project for each sold proposal** (decision 130). A Lead with two
+proposals sold, "Whole exterior" and "Deck", has two Projects, each handed to
+Production by itself.
 
-**If the sale is corrected** (a manager puts the only sold proposal back to
-pending, step 7c), the Project is not deleted. See question 4.
+**The Lead page** shows each sold proposal's Project with a link. **The
+customer page** gets a Projects section. **The Project page** shows all of the
+above, the appointments the proposal was presented at, and its Activity.
+
+**If the sale is corrected** (a manager puts a sold proposal back to pending,
+step 7c), its Project is not deleted. It is marked "Cancelled: sale
+corrected" and brought back if the proposal is sold again (question 4).
 
 ### What it stores
 
 | Table | Holds |
 | --- | --- |
-| `projects` (new) | One row per Project: the Lead it came from, Location, customer, contact, property, title, description, project size as it was, who sold it and when, and its states (below). Never deleted. |
+| `projects` (new) | One row per Project: the proposal it was made for, the Lead that came from, Location, customer, contact, property, title, description, project size as it was, the sold amount, who sold it and when, and its states (below). Never deleted. One proposal can have only one. |
 | `project_service` (new) | The Project's services, one marked as the main one, copied from the Lead. |
-| `proposals` | Each sold proposal points at its Project. |
 
 **States.** The plan forbids "one giant Project status" (section 2). This step
 adds only what it uses, each its own field:
@@ -124,9 +130,10 @@ choosing from the people with the Production Manager role there. A Production
 Manager can also take a waiting job at their own Location. It can be changed,
 with a note.
 
-**The handoff notes.** What the salesperson wants Production to know: what was
-promised, when the customer hopes for, access, pets, anything odd. See
-question 5.
+**The handoff.** Questions the salesperson has to complete for each Project,
+so the Production Manager is not left guessing (decision 130). Which
+questions, and what waits on them, is agreed with Jacob before this step is
+built; the proposal is in the handoff for step 8a.
 
 **Telling people** (plan, 20: "every ownership transfer creates an Activity
 event and a notification to the new owner"): the Production Managers at the
@@ -178,6 +185,13 @@ processes); the lists showing only what a person may see; the sold amount
 always equal to the sold proposals; and the migrations on MySQL 8.4.
 
 ## Decisions needed
+
+**Answered by Jacob on 2026-10-13 (decision 130).** Questions 1 and 5 were
+answered differently from the recommendation, and question 4 was accepted
+"for now": one Project for each sold proposal; the handoff is questions the
+salesperson has to complete; the cancellation rule may be adjusted later. The
+other seven are as recommended. The questions are kept below as they were
+asked.
 
 Each has a recommendation. "Follow your recommendations" is a complete answer.
 
