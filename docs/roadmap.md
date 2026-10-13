@@ -93,8 +93,8 @@ touches their appointment. **It was merged on 2026-10-12** and is on staging.
 **Step 7b (proposals) was built and merged on 2026-10-12.** **Step 7c
 (results, correcting a proposal, a Lead that is Sold or Lost, and the
 after-action report) was built and merged on 2026-10-13.** **Step 7d (the
-first Sales figures, on Sales > Performance) is built (2026-10-13)** and waits
-for Jacob's review and his word to merge. It is the last step of slice 7.
+first Sales figures, on Sales > Performance) was built and merged on
+2026-10-13.** **Slice 7 is complete as planned.**
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

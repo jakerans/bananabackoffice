@@ -373,6 +373,10 @@ ranking, no Leaderboard.
 
 ### Step 7d as built (2026-10-13)
 
+**Merged into `main` on 2026-10-13** with Jacob's word ("Merge it, and let's
+continue based on the plan."). Slice 7 is complete. He did not change any of
+the readings below.
+
 Built as planned above. What a reader of the code should know:
 
 - **Nothing is stored.** `App\Support\Sales\SalesFigures::for($location,
