@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CallQueue;
 use App\Enums\DisqualificationCategory;
 use App\Enums\LeadStatus;
 use App\Enums\Permission;
@@ -465,6 +466,19 @@ class Lead extends Model
     public function releasedFrom(): BelongsTo
     {
         return $this->belongsTo(User::class, 'released_from_user_id');
+    }
+
+    /**
+     * Whether the Lead is with the Contact Center for rehash: the timer
+     * released it from a salesperson because what was pending on it expired,
+     * or nothing was presented (slice 9, step 9b). It stays one after its
+     * calls are used up, until it is booked, lost or disqualified.
+     */
+    public function isInRehash(): bool
+    {
+        return $this->status === LeadStatus::Qualified
+            && $this->returned_from_sales_at !== null
+            && LeadCadence::query()->where('lead_id', $this->id)->where('queue', CallQueue::Rehash)->exists();
     }
 
     /**

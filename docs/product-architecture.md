@@ -112,6 +112,14 @@ Cancelled Appointments queue (added 2026-10-11; LOCKED by decisions 98 and 117, 
 - same cadence and calling hours as other Leads
 - rules: slice-5-appointment-rulebook.md, rule 8
 
+Rehash queue (added 2026-10-13; LOCKED by decision 137, built in slice 9 step 9b):
+- a third queue with its own button and count
+- holds every Lead the timer released from a salesperson because what was pending on it expired, or because its appointment was run with nothing presented
+- the setter is told on the card that it is a rehash, what was pitched, for how much, the main objection and the salesperson's note, or why nothing was presented
+- the call ends in a return visit booked with any eligible salesperson, or in the Lead marked lost with a Sales loss reason when the customer says no
+- same cadence and calling hours as other Leads
+- rules: slice-9-pending-rehash-plan.md, step 9b
+
 Every call attempt is a real record:
 - Lead/Contact
 - rep
@@ -364,7 +372,9 @@ Added 2026-10-13 from stakeholder discovery:
 Added 2026-10-13 (slice 9; build plan: slice-9-pending-rehash-plan.md; LOCKED by decision 137):
 - The days start the day the proposal was last presented. A Lead with several pending proposals stays with its salesperson until the last expires. A salesperson may move a proposal's day up to 30 days ahead; a manager to any day. A booked return visit keeps the Lead with the salesperson.
 - Built in step 9a: every pending proposal has a "valid until" day, shown with the days left on the Lead and in "Pending bids" on Sales > Calendar; the day can be changed; the salesperson is warned in the bell two days before the last day; the number of days is a Contact Center setting, starting at 7.
-- Not built yet: the release to Rehash and its call queue (step 9b), and the Pending figures (step 9c).
+- Built in step 9b: the day after a Lead's last day with its salesperson the timer releases it to the Contact Center's Rehash queue; the call center books a return visit (a new Lead Issued, as a cancelled Lead that is rebooked) or marks the Lead lost with a Sales loss reason; the salesperson it was released from can take it back. A Lead run with nothing presented has the same number of days and then goes to Rehash too.
+- A proposal's "valid until" and the salesperson's ownership stay separate, as above: a Lead is never released sooner than that number of days after it last became Appointment run.
+- Not built yet: the Pending figures (step 9c).
 
 5.6 After-action report
 Goal: 1–2 minutes from the car.

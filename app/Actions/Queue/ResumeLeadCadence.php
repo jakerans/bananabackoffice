@@ -72,14 +72,16 @@ class ResumeLeadCadence
      * A Lead whose last appointment was cancelled or was a no-show goes into the Cancelled
      * Appointments queue, which has a button of its own, so the call center
      * knows it is a cancelled booking before dialling (decision 117). Any
-     * other returned Lead goes into the ordinary queue.
+     * other returned Lead goes into the ordinary queue, unless the caller
+     * names one: a Lead released because what was pending on it expired goes
+     * into Rehash (decision 137).
      *
      * The caller must be inside a transaction, having written or locked the
      * Lead row first.
      *
      * @return bool Whether the Lead went into the queue. False when it was already there.
      */
-    public function afterReturnFromSales(Lead $lead, ?User $actor, ?string $note): bool
+    public function afterReturnFromSales(Lead $lead, ?User $actor, ?string $note, ?CallQueue $queue = null): bool
     {
         $cadence = LeadCadence::query()->where('lead_id', $lead->id)->lockForUpdate()->first();
 
@@ -90,7 +92,7 @@ class ResumeLeadCadence
         $moment = now();
         $schedule = CadenceSchedule::fromSettings(ContactCenterSettings::current());
 
-        $queue = $lead->appointments()->first()?->fellThrough() ? CallQueue::CancelledAppointments : CallQueue::Main;
+        $queue ??= $lead->appointments()->first()?->fellThrough() ? CallQueue::CancelledAppointments : CallQueue::Main;
 
         $changes = [
             'state' => CadenceState::InQueue,

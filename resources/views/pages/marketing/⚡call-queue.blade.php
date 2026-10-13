@@ -320,6 +320,24 @@ new #[Title('Call Queue')] class extends Component {
         return app(DueQueue::class)->dueNowCount(Auth::user(), now(), CallQueue::CancelledAppointments);
     }
 
+    /**
+     * The third button: the next Lead the timer released for rehash, because
+     * what was pending on it expired or nothing was presented (slice 9, step
+     * 9b).
+     */
+    public function nextRehash(ClaimNextLead $claimNextLead): void
+    {
+        $this->claimFrom($claimNextLead, CallQueue::Rehash);
+    }
+
+    /**
+     * How many rehash Leads the third button could give this person right now.
+     */
+    public function rehashDueNow(): int
+    {
+        return app(DueQueue::class)->dueNowCount(Auth::user(), now(), CallQueue::Rehash);
+    }
+
     private function claimFrom(ClaimNextLead $claimNextLead, CallQueue $queue): void
     {
         $this->authorize(Permission::WorkLeadQueue);
@@ -806,6 +824,18 @@ new #[Title('Call Queue')] class extends Component {
 
                 <flux:button :variant="$cancelledDue > 0 ? 'primary' : 'filled'" wire:click="nextCancelledAppointment" wire:loading.attr="disabled" data-test="next-cancelled-appointment">{{ __('Next cancelled appointment') }}</flux:button>
             </div>
+
+            {{-- Rehash is a queue of its own too: a bid to follow up, with what was pitched on the card (slice 9, step 9b). --}}
+            @php($rehashDue = $this->rehashDueNow())
+
+            <div class="flex flex-wrap items-center justify-between gap-4 border-t border-zinc-200 pt-4" data-test="rehash-queue">
+                <div>
+                    <flux:heading size="lg" level="2" data-test="rehash-due-now">{{ trans_choice(':count rehash due now|:count rehashes due now', $rehashDue) }}</flux:heading>
+                    <flux:text>{{ __('Leads that had an appointment and were not sold, lost or booked again in time, to call and try to book a return visit.') }}</flux:text>
+                </div>
+
+                <flux:button :variant="$rehashDue > 0 ? 'primary' : 'filled'" wire:click="nextRehash" wire:loading.attr="disabled" data-test="next-rehash">{{ __('Next rehash') }}</flux:button>
+            </div>
         </div>
     @endif
 
@@ -814,6 +844,8 @@ new #[Title('Call Queue')] class extends Component {
             {{ trans_choice(':count other lead due now|:count other leads due now', $this->dueNow) }}
             &middot;
             <span data-test="cancelled-due-now">{{ trans_choice(':count cancelled appointment due now|:count cancelled appointments due now', $this->cancelledDueNow()) }}</span>
+            &middot;
+            <span data-test="rehash-due-now">{{ trans_choice(':count rehash due now|:count rehashes due now', $this->rehashDueNow()) }}</span>
         </flux:text>
     @endif
 
@@ -841,6 +873,7 @@ new #[Title('Call Queue')] class extends Component {
                     <flux:text>{{ __('Due now') }}</flux:text>
                     <div class="text-2xl font-semibold tabular-nums text-ink" data-test="summary-due">{{ $summary['dueNow'] }}</div>
                     <flux:text class="text-sm" data-test="summary-cancelled-due">{{ trans_choice(':count cancelled appointment|:count cancelled appointments', $summary['cancelledDueNow']) }}</flux:text>
+                    <flux:text class="text-sm" data-test="summary-rehash-due">{{ trans_choice(':count rehash|:count rehashes', $summary['rehashDueNow']) }}</flux:text>
                 </div>
                 <div class="rounded-xl border border-zinc-200 bg-card p-4">
                     <flux:text>{{ __('Longest wait') }}</flux:text>

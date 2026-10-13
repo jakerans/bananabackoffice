@@ -561,6 +561,17 @@ Rules:
     Holding one grants nothing. **Production > Workspace** opens with
     `production.access` and lists only the Locations where the person has
     `projects.view`. No permission was added.
+24. **Pending and Rehash** (slice 9, decision 137). **Moving a proposal's
+    "valid until" day** is rule 20's change of a pending proposal: the
+    salesperson up to 30 days ahead, a manager (`appointments.manage`) to any
+    day. **The Rehash queue** is worked by whoever works the call queue
+    (`leads.work_queue`). **Marking a Lead lost from Rehash**
+    (`LeadPolicy::markLostFromRehash`): whoever may book that Lead an
+    appointment (`LeadPolicy::bookAppointment`), so a Call Center Agent and a
+    manager there, and not the salesperson it was released from. **Taking it
+    back** is rule 12 of the rulebook, unchanged: only that salesperson. The
+    number of days a proposal is valid is changed with
+    `settings.contact_center.manage`. No permission was added.
 
 ## Slice 4: the call queue and its settings
 

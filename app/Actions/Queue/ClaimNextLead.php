@@ -59,8 +59,8 @@ class ClaimNextLead
      * A hold is not assignment: the Lead's assignee is neither read nor changed.
      *
      * Each button hands out its own queue only (decision 117). In Cancelled
-     * Appointments the Lead that came back from Sales most recently goes
-     * first. A person still holds one Lead at a time, whichever queue it came
+     * Appointments and in Rehash the Lead that came back from Sales most
+     * recently goes first. A person still holds one Lead at a time, whichever queue it came
      * from: the one they hold is returned whatever button they press.
      *
      * @throws AuthorizationException When the caller may not work the queue anywhere.
@@ -198,7 +198,8 @@ class ClaimNextLead
             ->whereNotExists(DueQueue::runningCooldown($caller->id, $moment, 'c.id'))
             ->whereNotIn('c.id', $tried);
 
-        if ($queue === CallQueue::CancelledAppointments) {
+        // Leads that came back from Sales, cancelled or for rehash: the most recent first.
+        if ($queue !== CallQueue::Main) {
             /** @var Collection<int, object{id: int, lead_id: int}> */
             return $due
                 ->orderByDesc('l.returned_from_sales_at')

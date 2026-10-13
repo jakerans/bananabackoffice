@@ -5,7 +5,9 @@ namespace App\Actions\Proposals;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Leads\ChangeLeadLifecycle;
 use App\Actions\Leads\RecordLeadStatusChange;
+use App\Actions\Queue\ResumeLeadCadence;
 use App\Enums\AuditAction;
+use App\Enums\CallQueue;
 use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
 use App\Enums\ProposalResult;
@@ -23,6 +25,7 @@ class UndoLeadLost
         private ChangeLeadLifecycle $changeLeadLifecycle,
         private RecordLeadStatusChange $recordLeadStatusChange,
         private RecordAuditEvent $recordAuditEvent,
+        private ResumeLeadCadence $resumeLeadCadence,
     ) {}
 
     /**
@@ -31,6 +34,8 @@ class UndoLeadLost
      * manager only, with a note.
      *
      * The Lead goes back to Appointment run with the salesperson it was with.
+     * One the call center marked lost from the Rehash queue has no salesperson:
+     * it goes back into that queue as it was (slice 9, step 9b).
      * The proposals that marking it lost turned Lost go back to Pending; one
      * that was already lost before that stays lost. What was recorded is kept
      * in the Lead's history and the audit record.
@@ -82,8 +87,11 @@ class UndoLeadLost
                 ])->save();
             }
 
+            // With nobody to go back to, it is the call center's again, where it was marked lost.
+            $status = $lead->assigned_user_id === null ? LeadStatus::Qualified : LeadStatus::AppointmentRun;
+
             $lead->forceFill([
-                'status' => LeadStatus::AppointmentRun,
+                'status' => $status,
                 'status_changed_at' => now(),
                 'lost_at' => null,
                 'lost_by' => null,
@@ -98,12 +106,16 @@ class UndoLeadLost
 
             $this->recordLeadStatusChange->handle($lead, LeadStatusEvent::LostUndone, LeadStatus::Lost, $actor, $lead->assigned_user_id, note: $note);
 
+            if ($status === LeadStatus::Qualified) {
+                $this->resumeLeadCadence->afterReturnFromSales($lead, $actor, $note, CallQueue::Rehash);
+            }
+
             $this->recordAuditEvent->handle(
                 AuditAction::LeadLostUndone,
                 $lead,
                 actor: $actor,
                 before: $before,
-                after: ['status' => LeadStatus::AppointmentRun->value, 'proposals_pending_again' => $reopened->pluck('name')->all()],
+                after: ['status' => $status->value, 'proposals_pending_again' => $reopened->pluck('name')->all()],
                 location: $lead->location,
                 reason: $note,
             );

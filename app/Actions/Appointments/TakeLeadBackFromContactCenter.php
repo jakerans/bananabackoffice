@@ -7,6 +7,7 @@ use App\Actions\Leads\AssignLead;
 use App\Actions\Leads\ChangeLeadLifecycle;
 use App\Actions\Leads\RecordLeadStatusChange;
 use App\Actions\Queue\EndLeadCadence;
+use App\Enums\AppointmentState;
 use App\Enums\AuditAction;
 use App\Enums\CadenceEndReason;
 use App\Enums\LeadStatus;
@@ -32,10 +33,12 @@ class TakeLeadBackFromContactCenter
      * note (rulebook, rule 12; decision 120), for example when the homeowner
      * calls them months after cancelling.
      *
-     * The Lead is theirs again as Appointment cancelled, to be booked: the
-     * same history, no new issue and nothing added to Leads Issued. It leaves
-     * the call queue, and anyone holding it there is told why. The waiting
-     * period before a release starts again from now.
+     * The Lead is theirs again as it was when it left them: Appointment
+     * cancelled, to be booked, or Appointment run with its proposals when it
+     * went to Rehash (slice 9, step 9b). The same history, no new issue and
+     * nothing added to Leads Issued. It leaves the call queue, and anyone
+     * holding it there is told why. The time before a release starts again
+     * from now.
      *
      * Only that salesperson may do this, only while the Lead is still with the
      * Contact Center where they have Sales Consultant access, and only for a
@@ -66,11 +69,14 @@ class TakeLeadBackFromContactCenter
             $previous = $lead->assignee?->name;
             $moment = now();
 
+            // A Lead whose last appointment was run left for Rehash; any other left with a cancelled appointment.
+            $status = $lead->appointments()->first()?->state === AppointmentState::Run ? LeadStatus::AppointmentRun : LeadStatus::AppointmentCancelled;
+
             $this->endLeadCadence->forLead($lead, CadenceEndReason::TakenBackBySales, $actor);
             $this->assignLead->handle($lead, $actor, $actor);
 
             $lead->forceFill([
-                'status' => LeadStatus::AppointmentCancelled,
+                'status' => $status,
                 'status_changed_at' => $moment,
                 'returned_from_sales_at' => null,
                 'released_from_user_id' => null,
@@ -84,7 +90,7 @@ class TakeLeadBackFromContactCenter
                 $lead,
                 actor: $actor,
                 before: ['status' => $from->value, 'assignee' => $previous],
-                after: ['status' => LeadStatus::AppointmentCancelled->value, 'salesperson' => $actor->name],
+                after: ['status' => $status->value, 'salesperson' => $actor->name],
                 location: $lead->location,
                 reason: $note,
             );

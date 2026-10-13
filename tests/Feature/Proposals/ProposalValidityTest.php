@@ -29,8 +29,8 @@ use Illuminate\Validation\ValidationException;
  * The clock on a pending proposal (docs/slice-9-pending-rehash-plan.md, step
  * 9a; product-architecture.md, 5.5; decision 137): a proposal is valid for
  * seven days from the day it was last presented, a salesperson may move the
- * day, and the Lead stays with them until the last pending one expires.
- * Nothing is released in this step.
+ * day, and the Lead stays with them until the last pending one expires. What
+ * happens when it does is step 9b, in RehashReleaseTest.
  *
  * The appointment is on Thursday 8 October 2026 at 3:00 pm Eastern with Sam
  * Sales. Tests start at 4:35 pm that day, with the appointment marked run.
@@ -153,10 +153,12 @@ test('a lead stays with its salesperson until the last of its pending proposals 
 
     expect(ProposalValidity::ownershipUntil($this->lead)->toDateString())->toBe('2026-10-15');
 
-    // One marked "added in error" counts for nothing here either.
+    // One marked "added in error" counts for nothing here either. With nothing pending the Lead still has
+    // the same seven days, from when its last proposal was answered (decision 137, answer 5).
     app(MarkProposalAddedInError::class)->handle($this->lead->fresh(), $exterior, 'Wrong lead.', $this->manager);
 
-    expect(ProposalValidity::ownershipUntil($this->lead))->toBeNull();
+    expect(ProposalValidity::latestPending($this->lead))->toBeNull();
+    expect(ProposalValidity::ownershipUntil($this->lead)->toDateString())->toBe('2026-10-15');
 });
 
 /*
@@ -284,7 +286,7 @@ test('the salesperson is warned in the bell two days before the last day, once',
     $notice = $this->sam->notifications()->sole();
 
     expect($notice->data['kind'])->toBe(AppointmentChanged::PENDING_RELEASE_WARNING);
-    expect($notice->data['message'])->toBe('A pending bid of yours expires in 2 days. The lead then goes to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.');
+    expect($notice->data['message'])->toBe('A lead of yours stays with you for 2 more days. It then goes to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.');
     expect($notice->data['url'])->toBe(route('leads.show', $this->lead));
     // Nothing about the customer.
     expect($notice->data['message'])->not->toContain('Pat Customer');
@@ -295,13 +297,9 @@ test('the salesperson is warned in the bell two days before the last day, once',
 
     $this->travelTo('2026-10-15 15:00:00');
 
-    expect(app(RunQueueTick::class)->handle()['warned'])->toBe(0);
-    expect($this->sam->notifications()->count())->toBe(1);
-
-    // Nothing is released in this step: the Lead is still Sam's after its last day.
-    $this->travelTo('2026-10-25 15:00:00');
-
     expect(app(RunQueueTick::class)->handle())->toMatchArray(['warned' => 0, 'released' => 0, 'failed' => 0]);
+    expect($this->sam->notifications()->count())->toBe(1);
+    // On its last day the Lead is still Sam's. What happens the day after is in RehashReleaseTest.
     expect($this->lead->fresh()->only(['status', 'assigned_user_id']))->toBe(['status' => LeadStatus::AppointmentRun, 'assigned_user_id' => $this->sam->id]);
 });
 
@@ -312,7 +310,7 @@ test('when the day is moved on, the salesperson is warned again as the new one c
     $this->travelTo('2026-10-14 15:00:00');
 
     expect(app(RunQueueTick::class)->handle()['warned'])->toBe(1);
-    expect($this->sam->notifications()->sole()->data['message'])->toStartWith('A pending bid of yours expires tomorrow.');
+    expect($this->sam->notifications()->sole()->data['message'])->toStartWith('Tomorrow is the last day a lead of yours stays with you.');
 
     moveValidUntil($proposal, '2026-10-24', $this->sam);
 
@@ -321,7 +319,7 @@ test('when the day is moved on, the salesperson is warned again as the new one c
     $this->travelTo('2026-10-24 15:00:00');
 
     expect(app(RunQueueTick::class)->handle()['warned'])->toBe(1);
-    expect($this->sam->notifications()->latest('created_at')->first()->data['message'])->toStartWith('A pending bid of yours expires today.');
+    expect($this->sam->notifications()->latest('created_at')->first()->data['message'])->toStartWith('Today is the last day a lead of yours stays with you.');
 });
 
 test('nobody is warned about a lead that is not about to leave them', function (Closure $arrange) {
@@ -337,7 +335,6 @@ test('nobody is warned about a lead that is not about to leave them', function (
 })->with([
     'a return visit is booked' => [fn ($test, $proposal) => bookAppointment($test->lead->fresh(), $test->sam, $test->sam, '2026-10-20', '10:00')],
     'it is sold' => [fn ($test, $proposal) => app(RecordProposalResult::class)->handle($test->lead->fresh(), $proposal, 'sold', [], $test->sam)],
-    'the proposal was added in error' => [fn ($test, $proposal) => app(MarkProposalAddedInError::class)->handle($test->lead->fresh(), $proposal, 'Wrong lead.', $test->manager)],
     'another pending proposal runs later' => [fn ($test, $proposal) => moveValidUntil(addProposal($test->lead->fresh(), $test->sam, ['name' => 'Deck', 'price' => '1800']), '2026-10-30', $test->sam)],
 ]);
 

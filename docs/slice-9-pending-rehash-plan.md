@@ -3,7 +3,8 @@
 Status: **approved on 2026-10-13 (decision 137) in three steps, each stopping
 for Jacob's review, with all nine questions answered as recommended. Step 9a
 was built and merged into `main` on 2026-10-13 (decision 138); see "Step 9a
-as built". Step 9b is being built. Step 9c is not built.** It was written because Jacob said "yes merge and continue"
+as built". Step 9b was built and merged on 2026-10-13 (decision 139); see
+"Step 9b as built". Step 9c is being built.** It was written because Jacob said "yes merge and continue"
 (decision 136) and this is what the plan has next.
 
 It follows [product-architecture.md](product-architecture.md), sections 4.2,
@@ -176,6 +177,69 @@ Readings made while building, for Jacob to change if wrong (also in decision
 | --- | --- |
 | `lead_cadences` | A third value for `queue`, `rehash`. |
 | `leads` | Nothing new: `released_from_user_id` and `released_from_sales_at` already exist for rule 12. |
+
+### Step 9b as built (2026-10-13)
+
+**Merged into `main` on 2026-10-13** with Jacob's word ("Merge and start.",
+decision 139). Built as planned above, with no database change. What a
+reader of the code should know:
+
+- **When a Lead leaves its salesperson** is one rule,
+  `ProposalValidity::ownershipUntil()`. With something pending: the day the
+  last pending proposal expires. With nothing pending: the number of days a
+  proposal is valid, counted from when the Lead came to be as it is. Only a
+  Lead that shows Appointment run has such a day.
+- **The release** is `App\Actions\Proposals\ReleasePendingLead`, run by the
+  every-minute timer the day after that day, by the Location's own calendar,
+  and counted with the timer's other releases. It hands the Lead back exactly
+  as a cancelled Lead is released (`ReturnLeadFromSales`, a new way
+  `released_pending`): Qualified, nobody assigned, still counted as issued,
+  its proposals untouched, and remembering who it was released from.
+- **Rehash is a third call queue,** `CallQueue::Rehash`, with its own button
+  and count on the Call Queue and in the manager summary. The most recently
+  released Lead goes first. The cadence and calling hours are everyone's.
+- **What the call center is told** is `SalesReturn`, on the queue card and on
+  the Lead: "Rehash: this lead has a bid that is still pending", each proposal
+  with its price, its objection, how long ago it expired and the
+  salesperson's note; or that nothing was presented, with the reason given.
+- **The customer said no** is `MarkLeadLost::fromRehash`, offered on the
+  Lead's Proposals card to whoever may book that Lead an appointment
+  (`LeadPolicy::markLostFromRehash`). It marks the Lead and its pending
+  proposals lost with a Sales loss reason, takes the Lead out of the queue
+  and tells the salesperson it came from. A manager's undo puts it back in
+  the Rehash queue.
+- **Taking it back** is the existing `TakeLeadBackFromContactCenter`. A Lead
+  that left for Rehash comes back as Appointment run with its proposals; one
+  that left with a cancelled appointment comes back as before.
+- **Booking it again from Rehash** is the existing booking: a new Lead Issued
+  for whoever gets it (answer 7), the proposals still pending.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **A Lead is never released sooner than seven days after it last became
+  Appointment run.** A proposal's "valid until" and the salesperson's
+  ownership are separate, as the plan says (5.5). Without this, a Lead whose
+  proposal expired would be released the minute a return visit was marked
+  run, or the minute its salesperson took it back.
+- **With nothing presented, the seven days count from when the appointment
+  was marked run,** not from the appointment's own day. Marked the same day,
+  they are the same.
+- **Marking a Lead's only proposal lost, without marking the Lead lost,**
+  leaves it with its salesperson for seven days from then, and then it goes
+  to Rehash as "nothing is pending".
+- **The salesperson it was released from cannot mark it lost** while it is in
+  Rehash. They take it back first.
+- **In Rehash, nobody gives a proposal a result.** Sold, Lost and Still
+  pending are not offered there. A sale comes from a return visit, or from
+  the salesperson taking the Lead back.
+- **A Lead a manager sends back by hand goes to the ordinary queue,** as
+  before, even with a bid pending. Only the timer sends a Lead to Rehash.
+- **A taken-back proposal keeps the day it expired.** The salesperson has
+  seven days with the Lead from the day they took it back, and can move the
+  proposal's day themselves.
+- **The warning's words changed** to cover a Lead with nothing presented: "A
+  lead of yours stays with you for 2 more days. It then goes to the Contact
+  Center for rehash, unless a return visit is booked or it is sold or lost."
 
 ## Step 9c — The Pending figures
 

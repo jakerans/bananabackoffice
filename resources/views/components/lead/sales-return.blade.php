@@ -21,6 +21,18 @@
                 {{ __('Came back') }} <x-local-time :at="$return->at" />@if ($return->returnedBy !== null) &middot; {{ $return->returnedBy }}@endif
             </span>
 
+            {{-- Rehash: what was pitched, so the setter knows the bid before dialling (slice 9, step 9b). --}}
+            @if ($return->pitched !== [])
+                <span class="mt-1 block font-medium" data-test="sales-return-pitched-heading">{{ __('What was pitched:') }}</span>
+                @foreach ($return->pitched as $pitch)
+                    <span class="block" data-test="sales-return-pitched">{{ $pitch }}</span>
+                @endforeach
+            @endif
+
+            @if ($return->noDemoReason !== null)
+                <span class="mt-1 block" data-test="sales-return-no-demo">{{ __('Why nothing was presented:') }} &ldquo;{{ $return->noDemoReason }}&rdquo;</span>
+            @endif
+
             @if ($return->note !== null)
                 <span class="mt-1 block whitespace-pre-line" data-test="sales-return-note">&ldquo;{{ $return->note }}&rdquo;</span>
             @endif

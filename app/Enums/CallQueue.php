@@ -17,11 +17,19 @@ enum CallQueue: string
      */
     case CancelledAppointments = 'cancelled_appointments';
 
+    /**
+     * Leads the timer released from a salesperson because what was pending on
+     * them expired, or nothing was presented: a bid to follow up (slice 9,
+     * step 9b; decision 137).
+     */
+    case Rehash = 'rehash';
+
     public function label(): string
     {
         return match ($this) {
             self::Main => 'Call queue',
             self::CancelledAppointments => 'Cancelled appointments',
+            self::Rehash => 'Rehash',
         };
     }
 }

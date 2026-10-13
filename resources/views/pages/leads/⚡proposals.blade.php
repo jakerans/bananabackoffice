@@ -182,6 +182,17 @@ new class extends Component {
     }
 
     /**
+     * Whether this person can mark the Lead lost from the Contact Center's
+     * Rehash queue: the customer told the call center no (decision 137,
+     * answer 6).
+     */
+    #[Computed]
+    public function canBeLostFromRehash(): bool
+    {
+        return $this->lead->isInRehash() && Auth::user()->can('markLostFromRehash', $this->lead);
+    }
+
+    /**
      * @return Collection<int, SalesLossReason>
      */
     #[Computed]
@@ -395,10 +406,12 @@ new class extends Component {
 
     public function openLost(): void
     {
-        $this->authorize('manageProposals', $this->lead);
+        if (! $this->canBeLostFromRehash) {
+            $this->authorize('manageProposals', $this->lead);
 
-        if (! $this->canBeLost) {
-            abort(409, __('This lead cannot be marked lost now. Reload the page.'));
+            if (! $this->canBeLost) {
+                abort(409, __('This lead cannot be marked lost now. Reload the page.'));
+            }
         }
 
         $this->result = self::NO_RESULT;
@@ -413,8 +426,20 @@ new class extends Component {
      */
     public function markLost(MarkLeadLost $markLeadLost): void
     {
-        $this->authorize('manageProposals', $this->lead);
         $this->resetValidation();
+
+        // From the Rehash queue it is the call center's to say; anywhere else, the salesperson's or a manager's.
+        if ($this->lead->isInRehash()) {
+            $this->authorize('markLostFromRehash', $this->lead);
+
+            $markLeadLost->fromRehash($this->lead, $this->result, Auth::user(), $this->knownLifecycleVersion);
+
+            $this->saved('lead-lost', __('Lead marked lost. It has left the rehash queue.'));
+
+            return;
+        }
+
+        $this->authorize('manageProposals', $this->lead);
 
         $markLeadLost->handle($this->lead, $this->result, Auth::user(), $this->knownLifecycleVersion);
 
@@ -541,7 +566,7 @@ new class extends Component {
 
     private function changed(): void
     {
-        unset($this->lead, $this->runAppointments, $this->proposals, $this->properties, $this->shown, $this->manages, $this->returnVisit, $this->canBeLost);
+        unset($this->lead, $this->runAppointments, $this->proposals, $this->properties, $this->shown, $this->manages, $this->returnVisit, $this->canBeLost, $this->canBeLostFromRehash);
     }
 }; ?>
 
@@ -607,11 +632,26 @@ new class extends Component {
         {{-- When the Lead leaves its salesperson: the day after the last pending proposal expires (slice 9, step 9a). --}}
         @php($ownedUntil = $lead->status === LeadStatus::AppointmentRun ? ProposalValidity::ownershipUntil($lead) : null)
         @if ($ownedUntil !== null)
+            @php($somethingPending = $this->proposals->contains(fn (Proposal $proposal): bool => $proposal->isOpen()))
             <flux:text data-test="pending-ownership">
-                {{ $ownedUntil->lessThan(ProposalValidity::today($lead->location))
-                    ? __('Everything pending on this lead has expired. It is due to go to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.')
-                    : __('After :day this lead goes to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.', ['day' => $ownedUntil->format('D, M j')]) }}
+                {{ match (true) {
+                    $somethingPending && $ownedUntil->lessThan(ProposalValidity::today($lead->location)) => __('Everything pending on this lead has expired. It is due to go to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.'),
+                    $somethingPending => __('After :day this lead goes to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.', ['day' => $ownedUntil->format('D, M j')]),
+                    $ownedUntil->lessThan(ProposalValidity::today($lead->location)) => __('Nothing is pending on this lead. It is due to go to the Contact Center for rehash, unless a proposal is added, a return visit is booked or it is marked lost.'),
+                    default => __('Nothing is pending on this lead. After :day it goes to the Contact Center for rehash, unless a proposal is added, a return visit is booked or it is marked lost.', ['day' => $ownedUntil->format('D, M j')]),
+                } }}
             </flux:text>
+        @endif
+
+        {{-- In the Rehash queue the call center can record that the customer said no (decision 137, answer 6). --}}
+        @if ($this->canBeLostFromRehash)
+            <div class="flex flex-col gap-2" data-test="rehash-lost">
+                <flux:text>{{ __('This lead is with the Contact Center for rehash. Book a return visit from the appointment card, or record that the customer said no.') }}</flux:text>
+
+                <div>
+                    <flux:button variant="ghost" wire:click="openLost" data-test="mark-rehash-lead-lost">{{ __('The customer said no: mark lead lost') }}</flux:button>
+                </div>
+            </div>
         @endif
 
         @if ($this->proposals->isNotEmpty())
@@ -696,10 +736,14 @@ new class extends Component {
 
                         <div class="mt-1 flex flex-wrap gap-2" data-test="proposal-actions">
                             @can('manageProposals', $lead)
-                                @if ($proposal->isOpen() && $lead->status !== LeadStatus::Lost)
+                                {{-- A result is given while the Lead is with Sales. In the Rehash queue it is booked again or marked lost. --}}
+                                @if ($proposal->isOpen() && ($lead->isWithSales() || $lead->status === LeadStatus::Sold))
                                     <flux:button size="sm" variant="primary" wire:click="openResult({{ $proposal->id }}, 'sold')" data-test="proposal-sold">{{ __('Sold') }}</flux:button>
                                     <flux:button size="sm" wire:click="openResult({{ $proposal->id }}, 'lost')" data-test="proposal-lost">{{ __('Lost') }}</flux:button>
                                     <flux:button size="sm" wire:click="openResult({{ $proposal->id }}, 'pending')" data-test="proposal-pending">{{ __('Still pending') }}</flux:button>
+                                @endif
+
+                                @if ($proposal->isOpen() && $lead->status !== LeadStatus::Lost)
                                     <flux:button size="sm" variant="ghost" wire:click="openEdit({{ $proposal->id }})" data-test="edit-proposal">{{ __('Change') }}</flux:button>
                                 @endif
 
@@ -915,6 +959,10 @@ new class extends Component {
                 </form>
             </flux:modal>
 
+        @endcan
+
+        {{-- For whoever may mark the Lead lost: with Sales, or from the Rehash queue. Kept on the page by what the person may do, not by where the Lead is, so it can close properly. --}}
+        @if (auth()->user()->can('manageProposals', $lead) || auth()->user()->can('markLostFromRehash', $lead))
             <flux:modal name="lead-lost" class="w-full max-w-lg">
                 <form wire:submit="markLost" class="flex flex-col gap-5">
                     <flux:error name="stale" />
@@ -935,7 +983,7 @@ new class extends Component {
                     </div>
                 </form>
             </flux:modal>
-        @endcan
+        @endif
 
         {{-- A manager's corrections. Kept on the page after each is used, so its dialog can close properly. --}}
         @if ($this->manages)

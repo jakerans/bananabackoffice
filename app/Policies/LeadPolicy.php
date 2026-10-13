@@ -279,6 +279,17 @@ class LeadPolicy
     }
 
     /**
+     * Determine whether the user can mark the Lead lost from the Contact
+     * Center's Rehash queue, because the customer told them no (slice 9, step
+     * 9b; decision 137, answer 6): whoever may book that Lead an appointment,
+     * which is the other thing a rehash call ends in.
+     */
+    public function markLostFromRehash(User $user, Lead $lead): bool
+    {
+        return $this->bookAppointment($user, $lead);
+    }
+
+    /**
      * Determine whether the user can take the Lead back from the Contact
      * Center (rulebook, rule 12; decision 120): only the salesperson the timer
      * released it from, while it is still with the Contact Center at a

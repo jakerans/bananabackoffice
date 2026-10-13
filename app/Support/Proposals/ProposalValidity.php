@@ -2,6 +2,7 @@
 
 namespace App\Support\Proposals;
 
+use App\Enums\LeadStatus;
 use App\Enums\Permission;
 use App\Enums\ProposalResult;
 use App\Models\ContactCenterSettings;
@@ -80,15 +81,53 @@ final class ProposalValidity
     }
 
     /**
-     * The last day a Lead stays with its salesperson because of what is
-     * pending: the latest "valid until" of its pending proposals (decision
-     * 137, answer 2). Nothing when it has nothing pending.
+     * The latest "valid until" of a Lead's pending proposals. Nothing when it
+     * has nothing pending.
      */
-    public static function ownershipUntil(Lead $lead): ?CarbonImmutable
+    public static function latestPending(Lead $lead): ?CarbonImmutable
     {
         $latest = $lead->proposals()->counted()->where('result', ProposalResult::Pending)->max('valid_until');
 
         return $latest === null ? null : self::day(substr((string) $latest, 0, 10));
+    }
+
+    /**
+     * The last day a Lead that shows Appointment run stays with its
+     * salesperson. After it, the Lead goes to the Contact Center for rehash
+     * (decision 137, answers 2 and 5). Nothing for a Lead in any other
+     * status: one that is booked, sold or lost is not leaving.
+     *
+     * - With something pending: until the last pending proposal expires.
+     * - With nothing pending: the number of days a proposal is valid, counted
+     *   from the day the Lead came to be as it is: its appointment was marked
+     *   run, or its last proposal was given its result.
+     * - Never sooner than that number of days after it last became
+     *   Appointment run. A Lead that has just come back to a salesperson, from
+     *   a return visit or because they took it back, is not released at once
+     *   because its proposals expired while it was away. An offer's "valid
+     *   until" and the salesperson's ownership are separate (plan, 5.5).
+     */
+    public static function ownershipUntil(Lead $lead): ?CarbonImmutable
+    {
+        if ($lead->status !== LeadStatus::AppointmentRun) {
+            return null;
+        }
+
+        $pending = self::latestPending($lead);
+        $since = CarbonImmutable::instance($lead->status_changed_at ?? now());
+
+        if ($pending === null) {
+            $answered = $lead->proposals()->counted()->max('result_at');
+
+            if ($answered !== null) {
+                $since = $since->max(CarbonImmutable::parse((string) $answered, 'UTC'));
+            }
+        }
+
+        $floor = self::day($since->timezone(CallingHours::timezoneFor($lead->location))->toDateString())
+            ->addDays(ContactCenterSettings::current()->proposal_valid_days);
+
+        return $pending === null ? $floor : $pending->max($floor);
     }
 
     /**

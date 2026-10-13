@@ -15,6 +15,9 @@ enum QueueHoldEndReason: string
     /** The salesperson it was released from took it back. */
     case TakenBackBySales = 'taken_back_by_sales';
 
+    /** The customer said no and the Lead was marked lost from the Rehash queue. */
+    case MarkedLost = 'marked_lost';
+
     /** Routed, transferred or returned to central. */
     case Moved = 'moved';
 
@@ -42,6 +45,7 @@ enum QueueHoldEndReason: string
             self::DeferredFollowUp => 'A follow-up was scheduled',
             self::AppointmentBooked => 'An appointment was booked',
             self::TakenBackBySales => 'Its salesperson took the lead back',
+            self::MarkedLost => 'The lead was marked lost',
             self::Moved => 'The lead was moved to another location',
             self::AccessLost => 'The setter may no longer work this lead',
             self::AttemptLogged => 'The setter logged a call',
@@ -62,6 +66,7 @@ enum QueueHoldEndReason: string
             self::DeferredFollowUp => 'A follow-up was scheduled for this lead, so it left the queue.',
             self::AppointmentBooked => 'An appointment was booked for this lead, so it left the queue.',
             self::TakenBackBySales => 'The salesperson this lead came from took it back, so it left the queue.',
+            self::MarkedLost => 'This lead was marked lost, so it left the queue.',
             self::Moved => 'This lead was moved to another location.',
             self::AccessLost => 'Your access to this lead changed.',
             self::AttemptLogged => 'Your call was logged.',
