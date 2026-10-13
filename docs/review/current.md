@@ -126,6 +126,24 @@ None from decision 137.
    needed now; it is listed in the security notes to be settled before
    production holds real customer data.
 
+## A plan for what could come next
+
+**A proposed plan for slice 10, pre-production, is written and waits for
+Jacob's approval:**
+[../slice-10-pre-production-plan.md](../slice-10-pre-production-plan.md).
+It is on its own branch, `checkpoint-slice-10-plan`. Nothing in it is built,
+and he has not chosen it; it is the first of the three options below.
+
+| Step | Delivers |
+| --- | --- |
+| 10a | **Onboarding and the rough timeframe.** The Production Manager records the welcome call and when the work is roughly expected. The Workspace shows what each job still needs. |
+| 10b | **The Color Specification.** Colors by area and surface, the customer's approval, and a new version when they change. |
+| 10c | **Readiness.** Whether a job is ready to be scheduled, and what is holding it. |
+
+It has nine questions, each with a recommendation. To start 10a he needs to
+approve it and answer the first three: what the welcome call is, how a rough
+timeframe is written, and whether the Workspace flags a job nobody has called.
+
 ## The plan check after slice 9
 
 Decision 122 asks for this after each slice.

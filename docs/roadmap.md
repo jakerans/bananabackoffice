@@ -123,6 +123,11 @@ marking lost from it and taking a Lead back) was built and merged on
 Performance) is built and waits for Jacob's review; it is not merged.** It is
 the last step of slice 9.
 
+**Slice 10, pre-production, is proposed (2026-10-13). Jacob has not chosen it
+or approved it.** Its plan is
+[slice-10-pre-production-plan.md](slice-10-pre-production-plan.md). Nothing in
+it is built.
+
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
 Production Workspace instead of separate stage/project modules. Customers and
