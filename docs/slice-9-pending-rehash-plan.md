@@ -4,8 +4,8 @@ Status: **approved on 2026-10-13 (decision 137) in three steps, each stopping
 for Jacob's review, with all nine questions answered as recommended. Step 9a
 was built and merged into `main` on 2026-10-13 (decision 138); see "Step 9a
 as built". Step 9b was built and merged on 2026-10-13 (decision 139); see
-"Step 9b as built". Step 9c is built and waits for his review; see "Step 9c
-as built". It is the last step.** It was written because Jacob said "yes merge and continue"
+"Step 9b as built". Step 9c was built and merged on 2026-10-13 (decision
+141); see "Step 9c as built". Slice 9 is complete.** It was written because Jacob said "yes merge and continue"
 (decision 136) and this is what the plan has next.
 
 It follows [product-architecture.md](product-architecture.md), sections 4.2,
@@ -258,9 +258,9 @@ built.
 
 ### Step 9c as built (2026-10-13)
 
-Built on the branch `checkpoint-slice-9c-pending-figures`. **Not merged; it
-waits for Jacob's review.** Built as the table above, approved by decision
-137 (answer 8). Nothing new is stored. What a reader of the code should know:
+**Merged into `main` on 2026-10-13** with Jacob's word ("Merge and approve.",
+decision 141). Slice 9 is complete. Built as the table above, approved by
+decision 137 (answer 8). Nothing new is stored. What a reader of the code should know:
 
 - **The three figures are counted in `SalesFigures`,** live from the records,
   and shown as a third row of cards on Sales > Performance with a line under

@@ -1,9 +1,12 @@
 # Slice 10 — Pre-Production: Onboarding, the Rough Timeframe and Colors: Proposed Plan
 
-Status: **proposed on 2026-10-13, for Jacob's approval. Nothing in it is
-built, and Jacob has not chosen it as what comes next.** It was written so
-that it is ready: it is what the implementation agent recommended after
-slice 9, from the plan.
+Status: **approved on 2026-10-13 (decision 141) in three steps, each stopping
+for Jacob's review. He answered two questions in his own words: the welcome
+call is a checklist item, with the procedure for it kept outside Backoffice;
+and a job nobody has called is flagged as falling behind after two business
+days. The other seven are as recommended. Step 10a is being built.** It was
+written as what the implementation agent recommended after slice 9, from the
+plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 2,
 6.2, 6.3, 6.4, 6.5, 6.8 and 20, and builds on slice 8
@@ -72,8 +75,11 @@ Not in slice 10, each needing its own plan and approval:
 ### What a person sees
 
 - **On a Project in pre-production,** its Production Manager, or a manager,
-  records the **welcome call**: the day they spoke, with whom, and what was
-  agreed. Until it is recorded the Project shows "Customer not yet called".
+  ticks **"Welcome call made"**, with the day it was made and an optional
+  note (decision 141: it is a checklist item; how the call is made is a
+  procedure kept outside Backoffice). Until it is ticked the Project shows
+  "Customer not yet called", and after two business days it is flagged as
+  falling behind.
 - **The rough timeframe:** the earliest and the latest the work is expected
   to start, as two dates, with a note ("after the roof is done"). It is shown
   as "Late November to mid December", and says plainly that it is not a
@@ -89,7 +95,7 @@ Not in slice 10, each needing its own plan and approval:
 
 | Table | What |
 | --- | --- |
-| `projects` | The welcome call: when, with whom, the note, and who recorded it. The rough timeframe: earliest start, latest start, note. |
+| `projects` | The welcome call: the day it was made, an optional note, and who ticked it and when. The rough timeframe: earliest start, latest start, note. |
 | `project_timeframes` (new) | Each timeframe a Project has had, with who set it, when and why, so a change keeps what it was. |
 
 ## Step 10b — The Color Specification
@@ -160,6 +166,12 @@ the right list; readiness against worked examples; and the migrations on
 MySQL 8.4, with every new stored name checked against its column.
 
 ## Decisions needed
+
+**Answered by Jacob on 2026-10-13 (decision 141): "Merge and approve."**
+Question 1 was answered in his own words, more simply than recommended: the
+welcome call is "mainly just a checklist item". Question 3 was confirmed:
+flagged "for falling behind" after two business days. The other seven are as
+recommended. The questions are kept below as they were asked.
 
 Each has a recommendation. "Follow your recommendations" is a complete answer.
 
