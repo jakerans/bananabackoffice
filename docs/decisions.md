@@ -3011,6 +3011,20 @@ slice 11 as proposed, with the recommendation on all ten questions.
    built as the plan and decision 144 (questions 8 and 9) have it and stops
    for his review. It is the last step of slice 11.
 
+## 147. Step 11c is merged and slice 11 is complete; a plan for subcontractors comes next (2026-10-14)
+
+**Decided by Jacob,** in reply to step 11c's handoff, which recommended
+subcontractors as next: "merge and continue".
+
+1. **Step 11c, Production > Schedule and "needs dates soon", is merged, and
+   slice 11 is complete.** The readings in its handoff and in the plan under
+   "Step 11c as built" stay as built; he did not change them: confirmed parts
+   of a split job show on the Schedule before the whole job is Scheduled;
+   "needs dates soon" is a mark, and nobody is notified.
+2. **Next is a proposed plan for subcontractors** (product-architecture.md,
+   section 7), starting with the roster and onboarding, as the handoff said.
+   It is written for his approval before anything is built.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

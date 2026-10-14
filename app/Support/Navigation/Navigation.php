@@ -286,7 +286,7 @@ class Navigation
             children: [
                 new NavigationItem('production.performance', 'Performance', $permissions, route: 'production.performance'),
                 new NavigationItem('production.workspace', 'Workspace', $permissions, NavigationState::Live, route: 'production.workspace'),
-                new NavigationItem('production.schedule', 'Schedule', $permissions),
+                new NavigationItem('production.schedule', 'Schedule', $permissions, NavigationState::Live, route: 'production.schedule'),
                 new NavigationItem('production.crews', 'Subcontractors', $permissions),
                 new NavigationItem('production.warranty', 'Warranty', $permissions),
                 $this->customers(),
