@@ -1,13 +1,17 @@
 <?php
 
 use App\Actions\Subcontractors\ChangeSubcontractor;
+use App\Actions\Subcontractors\RecordCompliance;
 use App\Enums\AuditAction;
 use App\Enums\Permission;
 use App\Enums\SubcontractorStanding;
 use App\Models\AuditEvent;
+use App\Models\ComplianceRequirement;
 use App\Models\Location;
 use App\Models\Service;
 use App\Models\Subcontractor;
+use App\Support\Projects\RoughTimeframe;
+use App\Support\Subcontractors\Compliance;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +27,8 @@ use Livewire\Component;
  *
  * Anyone who may see subcontractors at one of their Locations reads it. The
  * Production Manager or a manager there changes it; benching, offboarding,
- * not hiring and VIP need a reason every time.
+ * not hiring and VIP need a reason every time. Their compliance is worked out
+ * from what was recorded (step 12b).
  */
 new #[Title('Subcontractor')] class extends Component {
     #[Locked]
@@ -37,6 +42,19 @@ new #[Title('Subcontractor')] class extends Component {
     public string $standingReason = '';
 
     public string $vipReason = '';
+
+    /** The compliance item being recorded. */
+    #[Locked]
+    public ?int $requirementId = null;
+
+    /** The day it was received and the day it expires, each as "2026-10-14". */
+    public string $complianceReceivedOn = '';
+
+    public string $complianceExpiresOn = '';
+
+    public bool $complianceCoverage = false;
+
+    public string $complianceNote = '';
 
     public function mount(Subcontractor $subcontractor): void
     {
@@ -57,7 +75,16 @@ new #[Title('Subcontractor')] class extends Component {
     #[Computed]
     public function subcontractor(): Subcontractor
     {
-        return Subcontractor::query()->with(['locations', 'services'])->findOrFail($this->subcontractorId);
+        return Subcontractor::query()->with(['locations', 'services', 'complianceRecords'])->findOrFail($this->subcontractorId);
+    }
+
+    /**
+     * Where their compliance stands, from what was recorded.
+     */
+    #[Computed]
+    public function compliance(): Compliance
+    {
+        return Compliance::for($this->subcontractor);
     }
 
     #[Computed]
@@ -121,6 +148,9 @@ new #[Title('Subcontractor')] class extends Component {
                 .(($event->values_after['vip'] ?? null) === false ? ' '.__('(VIP taken off)') : ''),
             AuditAction::SubcontractorVipSet => __('Made VIP'),
             AuditAction::SubcontractorVipRemoved => __('VIP taken off'),
+            AuditAction::SubcontractorComplianceRecorded => ($event->values_after['uses_banana_coverage'] ?? false) === true
+                ? __(':requirement: uses Banana\'s coverage', ['requirement' => (string) ($event->values_after['requirement'] ?? '')])
+                : __(':requirement recorded', ['requirement' => (string) ($event->values_after['requirement'] ?? '')]),
             default => __('Changed'),
         };
     }
@@ -200,9 +230,44 @@ new #[Title('Subcontractor')] class extends Component {
         $this->saved('subcontractor-vip', $vip ? __('Made VIP.') : __('VIP taken off.'));
     }
 
+    public function openCompliance(int $requirementId): void
+    {
+        $this->authorize('update', $this->subcontractor);
+
+        $item = collect($this->compliance->items)->first(fn (array $item): bool => $item['requirement']->id === $requirementId) ?? abort(409, __('This is not one of their requirements. Reload the page.'));
+
+        $this->requirementId = $item['requirement']->id;
+        $this->complianceReceivedOn = RoughTimeframe::today($this->subcontractor->locations->first())->toDateString();
+        $this->complianceExpiresOn = '';
+        $this->complianceCoverage = false;
+        $this->complianceNote = '';
+        $this->resetValidation();
+
+        Flux::modal('subcontractor-compliance')->show();
+    }
+
+    public function saveCompliance(RecordCompliance $recordCompliance): void
+    {
+        $this->authorize('update', $this->subcontractor);
+        $this->resetValidation();
+
+        $recordCompliance->handle(
+            $this->subcontractor,
+            $this->requirementId ?? abort(409, __('Choose the item again. Reload the page.')),
+            $this->complianceReceivedOn,
+            $this->complianceExpiresOn,
+            $this->complianceCoverage,
+            $this->complianceNote,
+            Auth::user(),
+        );
+
+        $this->requirementId = null;
+        $this->saved('subcontractor-compliance', __('Recorded.'));
+    }
+
     private function saved(string $modal, string $message): void
     {
-        unset($this->subcontractor, $this->mayChange, $this->services, $this->history);
+        unset($this->subcontractor, $this->mayChange, $this->services, $this->history, $this->compliance);
 
         Flux::modal($modal)->close();
         Flux::toast(variant: 'success', text: $message);
@@ -215,6 +280,8 @@ new #[Title('Subcontractor')] class extends Component {
         $standingNow = $subcontractor->standing;
         $chosenStanding = SubcontractorStanding::tryFrom($standing);
         $reasonNeeded = $standingNow->needsReason() || ($chosenStanding?->needsReason() ?? false);
+        $compliance = $this->compliance;
+        $recording = $requirementId === null ? null : ComplianceRequirement::query()->find($requirementId);
     @endphp
 
     <div>
@@ -229,6 +296,14 @@ new #[Title('Subcontractor')] class extends Component {
                 @if ($subcontractor->is_vip)
                     <flux:badge size="sm" color="yellow" data-test="subcontractor-vip">{{ __('VIP') }}</flux:badge>
                 @endif
+                {{-- Worked out from the checklist, never set (decision 148, questions 2 and 5). --}}
+                @if ($standingNow->group() === 'roster')
+                    @if ($compliance->isCompliant())
+                        <flux:badge size="sm" color="emerald" data-test="subcontractor-compliant">{{ __('Compliant') }}</flux:badge>
+                    @else
+                        <flux:badge size="sm" color="rose" data-test="subcontractor-pending-compliance">{{ __('Pending compliance') }}</flux:badge>
+                    @endif
+                @endif
                 <span class="text-sm text-zinc-600">{{ $subcontractor->locations->pluck('name')->join(', ') }}</span>
             </div>
         </div>
@@ -242,6 +317,71 @@ new #[Title('Subcontractor')] class extends Component {
                 <flux:button icon="pencil-square" wire:click="openEdit" data-test="edit-subcontractor">{{ __('Edit details') }}</flux:button>
             </div>
         @endif
+    </div>
+
+    {{-- Compliance (slice 12, step 12b): each item ticked by what was recorded. The documents themselves are not kept here. --}}
+    <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="subcontractor-compliance">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <flux:heading size="lg" level="2">{{ __('Compliance') }}</flux:heading>
+                <flux:subheading>{{ __('What they must have before they get work. Recorded as received; the documents themselves are not kept in Backoffice yet.') }}</flux:subheading>
+            </div>
+
+            @if ($compliance->isCompliant())
+                <flux:badge color="emerald" data-test="compliance-state">{{ __('Compliant') }}</flux:badge>
+            @else
+                <flux:badge color="rose" data-test="compliance-state">{{ __('Pending compliance') }}</flux:badge>
+            @endif
+        </div>
+
+        @unless ($compliance->isCompliant())
+            <flux:text data-test="compliance-missing">{{ __('Still needs: :things.', ['things' => implode(', ', $compliance->missing())]) }}</flux:text>
+        @endunless
+
+        <ul class="flex flex-col divide-y divide-zinc-200">
+            @foreach ($compliance->items as $item)
+                @php
+                    $requirement = $item['requirement'];
+                    $record = $item['record'];
+                    [$label, $color] = match ($item['state']) {
+                        Compliance::MISSING => [__('Missing'), 'zinc'],
+                        Compliance::EXPIRED => [__('Expired'), 'rose'],
+                        Compliance::EXPIRING => [__('Expires soon'), 'amber'],
+                        Compliance::COVERED => [__('Uses Banana\'s coverage'), 'sky'],
+                        default => [__('Received'), 'emerald'],
+                    };
+                @endphp
+
+                <li wire:key="compliance-{{ $requirement->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="compliance-item" data-state="{{ $item['state'] }}">
+                    <div class="flex min-w-0 flex-1 flex-col gap-1">
+                        <span class="flex flex-wrap items-center gap-2">
+                            <span class="font-semibold text-ink">{{ $requirement->name }}</span>
+                            <flux:badge size="sm" :color="$color">{{ $label }}</flux:badge>
+                            @if ($requirement->location !== null)
+                                <span class="text-sm text-zinc-500">{{ __('Required at :location', ['location' => $requirement->location->name]) }}</span>
+                            @endif
+                        </span>
+
+                        @if ($record !== null)
+                            <span class="text-sm text-zinc-700">
+                                @if ($record->uses_banana_coverage)
+                                    {{ __('Uses Banana\'s coverage, with the deduction from payout.') }}
+                                @else
+                                    {{ __('Received on :day', ['day' => $record->received_on?->format('M j, Y')]) }}@if ($record->expires_on !== null) &middot; {{ $item['state'] === Compliance::EXPIRED ? __('expired on :day', ['day' => $record->expires_on->format('M j, Y')]) : __('expires on :day', ['day' => $record->expires_on->format('M j, Y')]) }}@endif
+                                @endif
+                            </span>
+                            <span class="text-sm text-zinc-500">{{ __('Recorded by :name', ['name' => $record->recorded_by_name ?? __('Unknown')]) }} &middot; <x-local-time :at="$record->created_at" />@if ($record->note !== null) &middot; &ldquo;{{ $record->note }}&rdquo;@endif</span>
+                        @endif
+                    </div>
+
+                    @if ($this->mayChange)
+                        <flux:button size="sm" :variant="$record === null ? 'primary' : 'ghost'" class="shrink-0" wire:click="openCompliance({{ $requirement->id }})" data-test="record-compliance">
+                            {{ $record === null ? __('Record') : __('Renew or correct') }}
+                        </flux:button>
+                    @endif
+                </li>
+            @endforeach
+        </ul>
     </div>
 
     <div class="grid gap-6 lg:grid-cols-2">
@@ -343,6 +483,40 @@ new #[Title('Subcontractor')] class extends Component {
                     </flux:modal.close>
 
                     <flux:button type="submit" variant="primary" data-test="save-standing">{{ __('Save') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        <flux:modal name="subcontractor-compliance" class="w-full max-w-lg">
+            <form wire:submit="saveCompliance" class="flex flex-col gap-5">
+                <flux:error name="compliance" />
+
+                <div>
+                    <flux:heading size="lg">{{ $recording?->name ?? __('Compliance') }}</flux:heading>
+                    <flux:subheading>{{ __('Record that you have it. The document itself is kept where you keep it today. What was recorded before is kept.') }}</flux:subheading>
+                </div>
+
+                @if ($recording?->allows_banana_coverage)
+                    <flux:checkbox wire:model.live="complianceCoverage" :label="__('They use Banana\'s coverage instead, with the deduction from payout')" data-test="compliance-coverage" />
+                @endif
+
+                @unless ($complianceCoverage)
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <flux:input wire:model="complianceReceivedOn" type="date" :label="__('Day received')" data-test="compliance-received-on" />
+                        @if ($recording?->expires)
+                            <flux:input wire:model="complianceExpiresOn" type="date" :label="__('Day it expires')" data-test="compliance-expires-on" />
+                        @endif
+                    </div>
+                @endunless
+
+                <flux:textarea wire:model="complianceNote" rows="2" :label="__('Note (optional)')" :placeholder="__('Insurer, policy number, who sent it')" data-test="compliance-note" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-compliance">{{ __('Record') }}</flux:button>
                 </div>
             </form>
         </flux:modal>

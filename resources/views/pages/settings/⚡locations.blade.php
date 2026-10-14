@@ -4,12 +4,15 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Locations\ChangeLocationTimezone;
 use App\Actions\Locations\DeactivateLocation;
 use App\Actions\Locations\UpdateServiceAreaPostalCodes;
+use App\Actions\Subcontractors\ChangeComplianceRequirements;
 use App\Enums\AuditAction;
+use App\Models\ComplianceRequirement;
 use App\Models\Location;
 use App\Models\ServiceAreaPostalCode;
 use App\Support\Queue\LocationTimezones;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
@@ -41,6 +44,18 @@ new #[Title('Locations')] class extends Component {
 
     /** The location's ZIP codes as typed: one per line, or separated by commas or spaces. */
     public string $postalCodes = '';
+
+    /** The location whose subcontractor requirements are open (slice 12, step 12b). */
+    #[Locked]
+    public ?int $requirementsLocationId = null;
+
+    public string $requirementName = '';
+
+    public bool $requirementExpires = false;
+
+    /** The requirement whose "Take away" is waiting to be confirmed. */
+    #[Locked]
+    public ?int $confirmingRequirementId = null;
 
     /**
      * Mount the component.
@@ -218,6 +233,98 @@ new #[Title('Locations')] class extends Component {
 
         Flux::modal('service-area')->close();
         Flux::toast(variant: 'success', text: __('Service area saved.'));
+    }
+
+    /**
+     * Open a location's own subcontractor requirements, beyond the base
+     * checklist (slice 12, step 12b; decision 148, question 7).
+     */
+    public function editRequirements(int $locationId): void
+    {
+        $location = Location::query()->findOrFail($locationId);
+
+        $this->authorize('update', $location);
+
+        $this->requirementsLocationId = $location->id;
+        $this->confirmingRequirementId = null;
+        $this->requirementName = '';
+        $this->requirementExpires = false;
+        $this->resetValidation();
+        unset($this->requirementsLocation, $this->locationRequirements);
+
+        Flux::modal('subcontractor-requirements')->show();
+    }
+
+    /**
+     * Fill in the New Mexico waiver certificate, which renews every year.
+     */
+    public function useNewMexicoWaiver(): void
+    {
+        $this->requirementName = ComplianceRequirement::NEW_MEXICO_WAIVER;
+        $this->requirementExpires = true;
+    }
+
+    public function addRequirement(ChangeComplianceRequirements $changeComplianceRequirements): void
+    {
+        $location = $this->requirementsLocation ?? abort(409, __('Choose the location again.'));
+
+        $this->authorize('update', $location);
+        $this->resetValidation();
+
+        $changeComplianceRequirements->add($location, $this->requirementName, $this->requirementExpires, Auth::user());
+
+        $this->requirementName = '';
+        $this->requirementExpires = false;
+        unset($this->locationRequirements);
+
+        Flux::toast(variant: 'success', text: __('Requirement added.'));
+    }
+
+    /**
+     * Ask, in place, whether to take a requirement away.
+     */
+    public function confirmRemoveRequirement(?int $requirementId): void
+    {
+        $this->confirmingRequirementId = $requirementId;
+    }
+
+    public function removeRequirement(ChangeComplianceRequirements $changeComplianceRequirements): void
+    {
+        $location = $this->requirementsLocation ?? abort(409, __('Choose the location again.'));
+
+        $this->authorize('update', $location);
+        $this->resetValidation();
+
+        $changeComplianceRequirements->remove($location, $this->confirmingRequirementId ?? abort(409, __('Choose the requirement again.')), Auth::user());
+
+        $this->confirmingRequirementId = null;
+        unset($this->locationRequirements);
+
+        Flux::toast(variant: 'success', text: __('Requirement taken away.'));
+    }
+
+    /**
+     * The location whose subcontractor requirements are open.
+     */
+    #[Computed]
+    public function requirementsLocation(): ?Location
+    {
+        return $this->requirementsLocationId === null ? null : Location::query()->find($this->requirementsLocationId);
+    }
+
+    /**
+     * The base checklist, then the open location's own requirements.
+     *
+     * @return Collection<int, ComplianceRequirement>
+     */
+    #[Computed]
+    public function locationRequirements(): Collection
+    {
+        return ComplianceRequirement::query()
+            ->active()
+            ->where(fn ($query) => $query->whereNull('location_id')->orWhere('location_id', $this->requirementsLocationId ?? 0))
+            ->ordered()
+            ->get();
     }
 
     /**
@@ -401,6 +508,7 @@ new #[Title('Locations')] class extends Component {
                             <flux:table.cell align="end">
                                 <div class="flex justify-end gap-2">
                                     <flux:button size="sm" wire:click="editServiceArea({{ $location->id }})">{{ __('Service area') }}</flux:button>
+                                    <flux:button size="sm" wire:click="editRequirements({{ $location->id }})" data-test="subcontractor-requirements-{{ $location->id }}">{{ __('Subcontractor requirements') }}</flux:button>
                                     <flux:button size="sm" wire:click="editTimezone({{ $location->id }})">{{ __('Timezone') }}</flux:button>
                                     <flux:button size="sm" wire:click="edit({{ $location->id }})">{{ __('Rename') }}</flux:button>
 
@@ -520,6 +628,54 @@ new #[Title('Locations')] class extends Component {
                 <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
             </div>
         </form>
+    </flux:modal>
+
+    {{-- A location's own subcontractor requirements (slice 12, step 12b). --}}
+    <flux:modal name="subcontractor-requirements" class="w-full max-w-lg">
+        <div class="flex flex-col gap-5" data-test="subcontractor-requirements">
+            <div>
+                <flux:heading size="lg">{{ __('Subcontractor requirements: :location', ['location' => $this->requirementsLocation?->name]) }}</flux:heading>
+                <flux:subheading>{{ __('What every subcontractor working here must have. The base checklist applies everywhere; add what this location needs beyond it.') }}</flux:subheading>
+            </div>
+
+            <ul class="flex flex-col divide-y divide-zinc-200">
+                @foreach ($this->locationRequirements as $requirement)
+                    <li wire:key="requirement-{{ $requirement->id }}" class="flex items-center justify-between gap-3 py-2" data-test="location-requirement">
+                        <span class="text-ink">
+                            {{ $requirement->name }}
+                            <span class="text-sm text-zinc-500">&middot; {{ $requirement->location_id === null ? __('everywhere') : __('this location') }}@if ($requirement->expires) &middot; {{ __('expires') }}@endif</span>
+                        </span>
+                        @if ($requirement->location_id !== null)
+                            @if ($confirmingRequirementId === $requirement->id)
+                                <span class="flex flex-wrap items-center justify-end gap-2" data-test="confirm-remove-location-requirement">
+                                    <span class="text-sm text-zinc-700">{{ __('Take it away? What was recorded is kept.') }}</span>
+                                    <flux:button size="sm" variant="danger" wire:click="removeRequirement" data-test="remove-location-requirement-confirmed">{{ __('Take away') }}</flux:button>
+                                    <flux:button size="sm" variant="ghost" wire:click="confirmRemoveRequirement(null)">{{ __('Keep') }}</flux:button>
+                                </span>
+                            @else
+                                <flux:button size="sm" variant="ghost" wire:click="confirmRemoveRequirement({{ $requirement->id }})" data-test="remove-location-requirement">{{ __('Take away') }}</flux:button>
+                            @endif
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+
+            <form wire:submit="addRequirement" class="flex flex-col gap-3 border-t border-zinc-200 pt-4">
+                <flux:input wire:model="requirementName" :label="__('Add a requirement')" maxlength="{{ ComplianceRequirement::NAME_LENGTH }}" data-test="requirement-name" />
+                <flux:checkbox wire:model="requirementExpires" :label="__('It expires and has to be renewed')" data-test="requirement-expires" />
+
+                <div class="flex flex-wrap justify-between gap-2">
+                    <flux:button type="button" size="sm" variant="ghost" wire:click="useNewMexicoWaiver" data-test="use-new-mexico-waiver">{{ __('Fill in the New Mexico waiver certificate') }}</flux:button>
+
+                    <div class="flex gap-2">
+                        <flux:modal.close>
+                            <flux:button type="button" variant="ghost">{{ __('Done') }}</flux:button>
+                        </flux:modal.close>
+                        <flux:button type="submit" variant="primary" data-test="add-location-requirement">{{ __('Add') }}</flux:button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </flux:modal>
 
     <x-confirmation-modal

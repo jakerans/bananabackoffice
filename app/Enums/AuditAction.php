@@ -98,6 +98,9 @@ enum AuditAction: string
     case SubcontractorStandingChanged = 'subcontractor.standing_changed';
     case SubcontractorVipSet = 'subcontractor.vip_set';
     case SubcontractorVipRemoved = 'subcontractor.vip_removed';
+    case SubcontractorComplianceRecorded = 'subcontractor.compliance_recorded';
+    case LocationComplianceRequirementAdded = 'location.compliance_requirement_added';
+    case LocationComplianceRequirementRemoved = 'location.compliance_requirement_removed';
     case LeadReceivedTimeCorrected = 'lead.received_time_corrected';
     case LeadQualified = 'lead.qualified';
     case LeadReturnedToWorking = 'lead.returned_to_working';

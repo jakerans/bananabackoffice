@@ -3,7 +3,8 @@
 Status: **approved on 2026-10-14 (decision 148) in two steps, each stopping
 for Jacob's review, with the recommendation on all ten questions. Step 12a was
 built and merged on 2026-10-14 (decision 149); see "Step 12a as built". Step
-12b is being built.** It was written as what the implementation agent recommended
+12b, the last, is built and waits for Jacob's review; see "Step 12b as
+built".** It was written as what the implementation agent recommended
 after slice 11, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), section 7
@@ -158,6 +159,49 @@ Each compliance item received, with its days and who recorded it, kept when
 it is renewed; and each Location's extra requirements. No tax ID number and
 no document is stored.
 
+### Step 12b as built (2026-10-14)
+
+**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+What a reader of the code should know:
+
+- **Stored:** `compliance_requirements`, with the four of the base checklist
+  written in by the migration (W-9; general liability insurance and workers'
+  compensation with waiver of subrogation, which expire and may be covered
+  by Banana; the signed subcontractor agreement), and each Location's own;
+  and `subcontractor_compliance_records`, one for each time an item was
+  received, never changed or deleted. A requirement taken away is kept, not
+  active.
+- **One class works compliance out:** `App\Support\Subcontractors\Compliance`.
+  Each item is missing, received, expiring soon (within 30 days), expired,
+  or covered by Banana. A subcontractor is compliant when nothing is missing
+  or expired. Nothing is stored for it.
+- **Recording** (`App\Actions\Subcontractors\RecordCompliance`): the day
+  received, which cannot be in the future; for an item that expires, the
+  day it expires, which cannot have passed; or Banana's coverage, where the
+  item allows it; and an optional note. Recording again renews it, and the
+  earlier record stays. The Production Manager or a manager at one of the
+  subcontractor's Locations.
+- **On the subcontractor's page,** a Compliance card lists each item with
+  its state and what was recorded, says what is still needed, and offers
+  "Record" or "Renew or correct". A subcontractor on the roster shows
+  "Compliant" or "Pending compliance" beside where they stand.
+- **On the roster list,** "Pending compliance" or "Expires soon".
+- **Settings > Locations** has "Subcontractor requirements" for each
+  Location: the base checklist, the Location's own, adding one (with
+  whether it expires) and taking one away. "Fill in the New Mexico waiver
+  certificate" fills in its name and that it expires. Whoever manages
+  Locations (`settings.locations.manage`) changes them.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **No Location has the New Mexico waiver until someone adds it,** because
+  Backoffice does not know which Locations are in New Mexico. It takes one
+  click in Settings.
+- **"Pending compliance" shows only for subcontractors on the roster,** not
+  for those still being recruited, who are not expected to have everything
+  yet. Their checklist still shows on their page.
+- **A correction is a new record,** like a renewal; the wrong one stays in
+  the history.
 ## Who may do what
 
 Two new permissions, so that subcontractor details are seen only by the

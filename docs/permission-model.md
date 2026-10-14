@@ -128,7 +128,7 @@ always limited to what the person's grants allow, in every view.
 | `settings.lists.manage` | Company | Manage the Lead & Sales Lists page (added in step B2; held by Owner and Leadership) |
 | `projects.view` | Location | See the Projects at the location (added in slice 8 step 8a, decision 130; held by Owner, Leadership, Location Manager, Sales Consultant, Production Manager and Finance) |
 | `subcontractors.view` | Location | See the subcontractors who work at the location, their page and their history (added in slice 12 step 12a, decision 148; held by Owner, Leadership, Location Manager and Production Manager) |
-| `subcontractors.manage` | Location | Add subcontractors there; change their details, where they stand and the VIP mark (added in slice 12 step 12a, decision 148; held by the same roles) |
+| `subcontractors.manage` | Location | Add subcontractors there; change their details, where they stand and the VIP mark; record their compliance items (step 12b) (added in slice 12 step 12a, decision 148; held by the same roles) |
 | `projects.manage` | Location | Edit a Project's title and description; in step 8b, assign its Production Manager (added in slice 8 step 8a, decision 130; held by Owner, Leadership and Location Manager) |
 | `settings.contact_center.manage` | Company | Manage the Contact Center settings page: call cadence, calling hours and days, hold length (added in step 4a; held by Owner and Leadership) |
 | `leads.work_queue` | Location | Work the Call Queue. **Held by Owner, Leadership, Location Manager and Call Center Agent since step 4a (decision 74), but guards nothing: no route, navigation item, policy or action reads it until step 4b.** |
