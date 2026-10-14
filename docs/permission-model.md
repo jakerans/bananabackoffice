@@ -583,7 +583,9 @@ Rules:
     customer and record the customer's approval; everyone else who may see
     the Project reads them. **Readiness** (step 10c) is read by everyone who
     may see the Project and is written by nobody: it is worked out from the
-    record.
+    record. **Work Packages and the dates offered** (slice 11 step 11a,
+    decision 144) follow the same rule as the colors, and only while the job
+    is ready to schedule; everyone else who may see the Project reads them.
 
 ## Slice 4: the call queue and its settings
 

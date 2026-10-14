@@ -86,6 +86,11 @@ enum AuditAction: string
     case ProjectColorLineRemoved = 'project.color_line_removed';
     case ProjectColorsSentForApproval = 'project.colors_sent_for_approval';
     case ProjectColorsApproved = 'project.colors_approved';
+    case ProjectWorkPackageAdded = 'project.work_package_added';
+    case ProjectWorkPackageChanged = 'project.work_package_changed';
+    case ProjectWorkPackageRemoved = 'project.work_package_removed';
+    case ProjectWindowProposed = 'project.window_proposed';
+    case ProjectWindowWithdrawn = 'project.window_withdrawn';
     case LeadReceivedTimeCorrected = 'lead.received_time_corrected';
     case LeadQualified = 'lead.qualified';
     case LeadReturnedToWorking = 'lead.returned_to_working';

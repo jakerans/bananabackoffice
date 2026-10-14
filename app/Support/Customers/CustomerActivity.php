@@ -71,6 +71,8 @@ class CustomerActivity
             AuditAction::ProjectColorsNewVersion,
             AuditAction::ProjectColorsSentForApproval,
             AuditAction::ProjectColorsApproved,
+            AuditAction::ProjectWindowProposed,
+            AuditAction::ProjectWindowWithdrawn,
             AuditAction::LeadCustomerLinked,
             AuditAction::LeadCustomerLinkChanged,
         ];
@@ -133,6 +135,8 @@ class CustomerActivity
             AuditAction::ProjectColorsNewVersion => __('Approved colors changed: a new version'),
             AuditAction::ProjectColorsSentForApproval => __('Colors with the customer for approval'),
             AuditAction::ProjectColorsApproved => __('Colors approved by the customer'),
+            AuditAction::ProjectWindowProposed => __('Dates offered to the customer'),
+            AuditAction::ProjectWindowWithdrawn => __('Offered dates withdrawn'),
             AuditAction::LeadCustomerLinked => __('Lead linked to customer'),
             AuditAction::LeadCustomerLinkChanged => __('Lead customer link changed'),
             default => throw new \LogicException('This audit action is not customer activity.'),

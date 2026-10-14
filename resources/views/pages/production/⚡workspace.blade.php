@@ -150,6 +150,7 @@ new #[Title('Workspace')] class extends Component {
     {
         return Readiness::whereReady($this->standing())
             ->with('handoff')
+            ->withCount('workPackageWindows')
             ->orderByRaw('case when production_manager_id = ? then 0 else 1 end', [Auth::id()])
             ->orderBy('timeframe_earliest')
             ->orderBy('production_manager_assigned_at')
@@ -431,6 +432,11 @@ new #[Title('Workspace')] class extends Component {
                                         <span data-test="workspace-timeframe">{{ RoughTimeframe::of($project) ?? __('No rough timeframe') }}</span>
                                         <span>&middot;</span>
                                         <span data-test="workspace-colors">{{ __('Colors: :state', ['state' => mb_strtolower(__($project->color_readiness->label()))]) }}</span>
+                                        @if ($list['key'] === 'ready')
+                                            {{-- Whether dates have been offered to the customer yet (slice 11, step 11a). --}}
+                                            <span>&middot;</span>
+                                            <span data-test="workspace-dates-offered">{{ $project->work_package_windows_count === 0 ? __('No dates offered yet') : trans_choice('Dates offered: :count window|Dates offered: :count windows', $project->work_package_windows_count) }}</span>
+                                        @endif
                                     </span>
                                 </div>
 

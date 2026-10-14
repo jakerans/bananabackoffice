@@ -2,7 +2,7 @@
 
 Status: **approved on 2026-10-14 (decision 144) in three steps, each stopping
 for Jacob's review, with the recommendation on all ten questions. Step 11a is
-being built.** It was written as what the implementation agent recommended
+built and waits for Jacob's review; see "Step 11a as built".** It was written as what the implementation agent recommended
 after slice 10, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 6.2,
@@ -86,6 +86,50 @@ Not in slice 11, each needing its own plan and approval:
 
 Work Packages, each belonging to a Project; and each package's proposed
 windows. Payout, photos, release and award are not stored yet.
+
+### Step 11a as built (2026-10-14)
+
+**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+What a reader of the code should know:
+
+- **Two new tables:** `work_packages` (name, scope, working days, smallest
+  crew, its place in the list) and `work_package_windows` (first and last
+  day, who offered them). One action writes both:
+  `App\Actions\Projects\ChangeWorkPackages`.
+- **"Work and schedule"** is a part of its own on the Project page
+  (`pages::projects.work`). It shows on a job that is ready to schedule, and
+  stays in view, read only, on a job that has work and stops being ready.
+- **The first package starts from the sale:** its name is the proposal's name
+  and its scope is the handoff's "What is included". Both can be changed.
+  Working days and the smallest crew are typed. "Split off another package"
+  adds more, which start empty.
+- **A window** is a first and a last day. It is refused in the past (by the
+  Location's calendar), more than two years ahead, the wrong way round,
+  longer than 180 days, with no weekday in it, or the same as one already
+  offered. Up to ten per package. It says how many working days it holds
+  (Monday to Friday) and points out one shorter than the work needs; it does
+  not refuse it.
+- **Removing a package** removes the dates offered for it. Nothing is booked
+  yet, so nothing booked is lost.
+- **Who may:** `ProjectPolicy::managePreProduction`, as for the rest of
+  pre-production, and only while the job is ready to schedule (question 4).
+  Unticking the welcome call stops any change to the work until it is ticked
+  again.
+- **In the customer's Activity:** dates offered, and dates withdrawn, each
+  with the package and the days. Adding, changing or removing a package is in
+  the audit record only.
+- **Production > Workspace:** each job under "Ready to schedule" says "No dates
+  offered yet" or how many windows are offered.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **Withdrawn dates are in the customer's Activity too,** not only offered
+  ones, so the Activity never shows an offer that was taken back without
+  saying so.
+- **A window shorter than the work's days is allowed,** with a warning: the
+  customer may agree to a crew working a weekend.
+- **Nothing is written on a job that is not ready,** packages included, not
+  only windows.
 
 ## Step 11b — The confirmed schedule
 

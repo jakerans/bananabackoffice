@@ -134,7 +134,8 @@ is complete as planned.**
 **Slice 11, Work Packages and the exact schedule, is approved in three steps
 (2026-10-14, decision 144).** Its plan, with the reasoning from the plan for
 why it is next, is [slice-11-schedule-plan.md](slice-11-schedule-plan.md).
-Step 11a (Work Packages and proposed windows) is being built.
+Step 11a (Work Packages and proposed windows) is built and waits for Jacob's
+review; it is not merged.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
