@@ -141,9 +141,9 @@ why it is next, is [slice-11-schedule-plan.md](slice-11-schedule-plan.md).
 
 **Slice 12, subcontractors (the roster and compliance), is approved in two
 steps (2026-10-14, decision 148).** Its plan is
-[slice-12-subcontractors-plan.md](slice-12-subcontractors-plan.md). Step 12a
-(the roster and recruiting) is built and waits for Jacob's review; it is not
-merged.
+[slice-12-subcontractors-plan.md](slice-12-subcontractors-plan.md). **Step 12a
+(the roster and recruiting) was built and merged on 2026-10-14 (decision
+149).** Step 12b (compliance) is being built.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

@@ -3055,6 +3055,20 @@ recommendations: "I like them all. Let's run."
    10. No message to subcontractors.
 2. **Step 12a, the roster and recruiting, starts.** It stops for his review.
 
+## 149. Step 12a is merged; step 12b starts (2026-10-14)
+
+**Decided by Jacob,** in reply to step 12a's handoff, which asked whether to
+merge it and start step 12b: "continue".
+
+1. **Step 12a, the roster and recruiting, is merged,** with the approved
+   slice 12 plan. The readings in its handoff and in the plan under "Step
+   12a as built" stay as built; he did not change them: any standing can
+   follow any other; the ordinary recruiting steps take an optional note; a
+   service taken off Sales' list stays on a subcontractor who has it.
+2. **Step 12b, compliance, starts.** It is built as the plan and decision
+   148 (questions 5 to 8) have it and stops for his review. It is the last
+   step of slice 12.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

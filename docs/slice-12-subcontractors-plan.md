@@ -1,8 +1,9 @@
 # Slice 12 — Subcontractors: the Roster and Compliance: Plan
 
 Status: **approved on 2026-10-14 (decision 148) in two steps, each stopping
-for Jacob's review, with the recommendation on all ten questions. Step 12a is
-built and waits for Jacob's review; see "Step 12a as built".** It was written as what the implementation agent recommended
+for Jacob's review, with the recommendation on all ten questions. Step 12a was
+built and merged on 2026-10-14 (decision 149); see "Step 12a as built". Step
+12b is being built.** It was written as what the implementation agent recommended
 after slice 11, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), section 7
@@ -91,7 +92,8 @@ change of where they stand, with the reason when one is needed.
 
 ### Step 12a as built (2026-10-14)
 
-**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+**Merged into `main` on 2026-10-14** with Jacob's word ("continue", decision
+149). Built as planned above.
 What a reader of the code should know:
 
 - **Stored:** `subcontractors` (business name, contact person, phone, email,
