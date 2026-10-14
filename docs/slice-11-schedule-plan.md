@@ -1,8 +1,9 @@
 # Slice 11 — Work Packages and the Exact Schedule: Plan
 
 Status: **approved on 2026-10-14 (decision 144) in three steps, each stopping
-for Jacob's review, with the recommendation on all ten questions. Step 11a is
-built and waits for Jacob's review; see "Step 11a as built".** It was written as what the implementation agent recommended
+for Jacob's review, with the recommendation on all ten questions. Step 11a was
+built and merged on 2026-10-14 (decision 145); see "Step 11a as built". Step
+11b is being built.** It was written as what the implementation agent recommended
 after slice 10, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 6.2,
@@ -89,7 +90,8 @@ windows. Payout, photos, release and award are not stored yet.
 
 ### Step 11a as built (2026-10-14)
 
-**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+**Merged into `main` on 2026-10-14** with Jacob's word ("go", decision 145).
+Built as planned above.
 What a reader of the code should know:
 
 - **Two new tables:** `work_packages` (name, scope, working days, smallest
