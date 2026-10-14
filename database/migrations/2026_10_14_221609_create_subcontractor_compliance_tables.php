@@ -75,12 +75,13 @@ return new class extends Migration
                 $table->string('recorded_by_name')->nullable();
                 $table->timestamps();
 
+                // Named here: the names Laravel would make from this long table name pass MySQL's 64-character limit.
                 $table->index(['subcontractor_id', 'compliance_requirement_id'], 'compliance_records_subcontractor_requirement');
-                $table->index('compliance_requirement_id');
-                $table->index('recorded_by');
-                $table->foreign('subcontractor_id')->references('id')->on('subcontractors')->restrictOnDelete();
-                $table->foreign('compliance_requirement_id')->references('id')->on('compliance_requirements')->restrictOnDelete();
-                $table->foreign('recorded_by')->references('id')->on('users')->nullOnDelete();
+                $table->index('compliance_requirement_id', 'compliance_records_requirement_index');
+                $table->index('recorded_by', 'compliance_records_recorded_by_index');
+                $table->foreign('subcontractor_id', 'compliance_records_subcontractor_foreign')->references('id')->on('subcontractors')->restrictOnDelete();
+                $table->foreign('compliance_requirement_id', 'compliance_records_requirement_foreign')->references('id')->on('compliance_requirements')->restrictOnDelete();
+                $table->foreign('recorded_by', 'compliance_records_recorded_by_foreign')->references('id')->on('users')->nullOnDelete();
             });
         }
     }

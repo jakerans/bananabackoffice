@@ -40,7 +40,12 @@ Plan: [../slice-12-subcontractors-plan.md](../slice-12-subcontractors-plan.md),
   recording; who may record; who may change a Location's requirements; the
   page and the roster.
 - Both GitHub jobs, including the migration on MySQL 8.4: see the chat
-  report.
+  report. The first push failed on MySQL: a key name made from the long
+  table name passed MySQL's 64-character limit, which SQLite does not
+  check. The keys now have short names of their own, and it was pushed
+  again.
+- The full suite also caught a browser pop-up used to confirm "Take away"
+  in Settings, which the application never uses; it now asks on the page.
 
 ## Browser review (done by the agent, on the local site, fictitious data)
 
