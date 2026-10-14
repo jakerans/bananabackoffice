@@ -146,6 +146,11 @@ steps (2026-10-14, decision 148).** Its plan is
 149).** **Step 12b (compliance) was built and merged on 2026-10-14 (decision 150).**
 **Slice 12 is complete as planned.**
 
+**Slice 13, giving work to a subcontractor (payout, the award and the work
+order), is proposed and not approved.** Its plan is
+[slice-13-giving-work-plan.md](slice-13-giving-work-plan.md). Nothing in it is
+built.
+
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
 Production Workspace instead of separate stage/project modules. Customers and
