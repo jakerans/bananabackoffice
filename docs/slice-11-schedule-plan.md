@@ -1,9 +1,9 @@
-# Slice 11 — Work Packages and the Exact Schedule: Proposed Plan
+# Slice 11 — Work Packages and the Exact Schedule: Plan
 
-Status: **proposed on 2026-10-13, with step 10c's review. Not approved.
-Nothing in it is built.** It is what the implementation agent recommends
-after slice 10, from the plan. Jacob approves it, changes it, or chooses
-something else.
+Status: **approved on 2026-10-14 (decision 144) in three steps, each stopping
+for Jacob's review, with the recommendation on all ten questions. Step 11a is
+being built.** It was written as what the implementation agent recommended
+after slice 10, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 6.2,
 6.5, 6.6, 7.8 and 20, and builds on slice 10
@@ -151,6 +151,9 @@ the migrations on MySQL 8.4, with every new stored name checked against its
 column.
 
 ## Decisions needed
+
+**Answered by Jacob on 2026-10-14 (decision 144): "Yes, all
+recommendations."** The questions are kept below as they were asked.
 
 Each has a recommendation. "Follow your recommendations" is a complete answer.
 

@@ -7,8 +7,8 @@ and a job nobody has called is flagged as falling behind after two business
 days. The other seven are as recommended. Step 10a was built and merged into
 `main` on 2026-10-13 (decision 142); see "Step 10a as built". Step 10b was
 built and merged on 2026-10-13 (decision 143); see "Step 10b as built". Step
-10c is built and waits for Jacob's review; see "Step 10c as built". It is the
-last step.** It was written as what the implementation agent recommended after
+10c was built and merged on 2026-10-14 (decision 144); see "Step 10c as
+built". Slice 10 is complete.** It was written as what the implementation agent recommended after
 slice 9, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 2,
@@ -240,7 +240,8 @@ cannot disagree with them.
 
 ### Step 10c as built (2026-10-13)
 
-**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+**Merged into `main` on 2026-10-14** with Jacob's word ("merge and continue",
+decision 144). Built as planned above.
 What a reader of the code should know:
 
 - **One place decides** whether a job is ready to schedule:

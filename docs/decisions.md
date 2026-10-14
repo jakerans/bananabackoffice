@@ -2949,6 +2949,40 @@ Read by the implementation agent, for Jacob to change if wrong:
    (question 8) have it and stops for his review. It is the last step of
    slice 10.
 
+## 144. Step 10c is merged and slice 10 is complete; slice 11 is approved (2026-10-14)
+
+**Decided by Jacob,** in reply to step 10c's handoff: "merge and continue".
+Asked what "continue" meant, he chose "Yes, all recommendations": start
+slice 11 as proposed, with the recommendation on all ten questions.
+
+1. **Step 10c, readiness, is merged, and slice 10 is complete.** The readings
+   in its handoff and in the plan under "Step 10c as built" stay as built; he
+   did not change them: the checklist shows from the sale on; time in
+   pre-production is shown to everyone who sees the list; nobody is notified
+   when a job becomes ready.
+2. **Slice 11, Work Packages and the exact schedule, is approved** in three
+   steps ([slice-11-schedule-plan.md](slice-11-schedule-plan.md)), each
+   stopping for his review. The ten answers are the recommendations:
+   1. Dates belong to a Work Package. Every job starts with one package for
+      the whole job; a large job can be split.
+   2. A Work Package holds a name, the scope in words, expected working days
+      and the smallest crew. Payout waits for subcontractors.
+   3. A window is a first and a last working day, both chosen.
+   4. Windows are proposed only on a job that is ready to schedule.
+   5. Colors need not be approved before dates are confirmed. They will be
+      required before a work order goes to a crew.
+   6. Nothing about crews in this slice. The "crew-selected window" state
+      waits for subcontractors; the Production Manager confirms with the
+      customer directly.
+   7. Rescheduling: the Production Manager or a manager, with a reason every
+      time; the old dates kept; the salesperson told in Backoffice.
+   8. A ready job with no confirmed dates is flagged "needs dates soon" when
+      its rough timeframe starts in less than three weeks.
+   9. The Schedule page is a plain list by week.
+   10. No message to the customer.
+3. **Step 11a, Work Packages and proposed windows, starts.** It stops for his
+   review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
