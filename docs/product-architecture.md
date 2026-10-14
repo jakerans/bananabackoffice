@@ -549,7 +549,8 @@ Added 2026-10-13 (slice 10; build plan: slice-10-pre-production-plan.md; LOCKED 
 - The rough timeframe is an earliest and a latest start, shown in words and never as a booked date; changing it needs a reason and what it was is kept.
 - Built in step 10a: both of those, on the Project and in Production > Workspace, and the timeframe on the Lead for Sales.
 - Built in step 10b: the Color Specification (6.4) on the Project, by area and surface; the customer's approval, recorded by the Production Manager or a manager with how it was given; a new version, with the approved one kept, whenever approved colors change; and Color Readiness as a state of its own (2).
-- Not built yet: readiness (step 10c).
+- Built in step 10c (merged 2026-10-14, decision 144): readiness. A job is ready to schedule when its handoff is complete, it has a Production Manager, the welcome call is ticked and a rough timeframe is set; approved colors are shown beside those and are not needed (decision 141). It is worked out from the record and never ticked. The Project has the checklist; Production > Workspace lists "Getting ready" and "Ready to schedule".
+- Still not built from 6.2 and 6.3 after slice 10: the confirmation email or text, the Coordinator, the deposit-paid handoff call, the exact schedule (6.5), work orders (6.6) and everything after.
 
 6.4 Color Specification
 Every normal sold job ultimately has an authoritative Color Specification.
@@ -597,6 +598,13 @@ Decision 133 defines it as scheduled productive crew-days divided by available
 crew-days for the next six weeks, by Location. Weekends, holidays, approved
 time off and unavailable crews are excluded; show the raw percentage and the
 planned 20% buffer.
+
+Added 2026-10-14 (slice 11; build plan: slice-11-schedule-plan.md; LOCKED by decision 144):
+- Dates belong to a Work Package (6.6). Every job starts with one package for the whole job; a large job can be split. A package holds a name, its scope, expected working days and the smallest crew; payout waits for subcontractors.
+- A window is a first and a last working day. Windows are proposed only on a job that is ready to schedule. The Production Manager records the customer's confirmation of one; the "crew-selected window" state waits for subcontractors.
+- Confirmed dates do not need approved colors; approved colors will be needed before a work order goes to a crew. A reschedule needs a reason, keeps the old dates and tells the salesperson in Backoffice. No message goes to the customer.
+- A ready job with no confirmed dates is flagged "needs dates soon" when its rough timeframe starts in less than three weeks. Production > Schedule is a plain list by week.
+- Not built yet: all of it (steps 11a to 11c).
 
 PMs plan same-day starts manually. Established, capable subcontractors may run
 their own initial walkthrough; new/unproven crews require staggered starts so

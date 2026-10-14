@@ -211,11 +211,13 @@ test('the workspace says what each job still needs, the ones with no timeframe f
 
     Livewire::actingAs($this->pat)->test('pages::production.workspace')
         ->assertSeeInOrder([
-            'Pre-production',
+            'Getting ready',
             // No timeframe yet: on top.
             'Whole exterior — 1 Oak St', 'Customer not yet called', 'No rough timeframe',
-            'Interior — 3 Pine St', 'Early to mid November',
             'Deck — 2 Elm St', 'Customer not yet called', 'Early to mid December',
+            // Called, and with a timeframe: it needs nothing more (step 10c).
+            'Ready to schedule',
+            'Interior — 3 Pine St', 'Early to mid November',
         ]);
 });
 

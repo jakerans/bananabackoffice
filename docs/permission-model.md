@@ -581,7 +581,9 @@ Rules:
     permission was added. **The Color Specification** (step 10b) follows the
     same rule: the same people write the colors, mark them as with the
     customer and record the customer's approval; everyone else who may see
-    the Project reads them.
+    the Project reads them. **Readiness** (step 10c) is read by everyone who
+    may see the Project and is written by nobody: it is worked out from the
+    record.
 
 ## Slice 4: the call queue and its settings
 

@@ -11,6 +11,7 @@ use App\Models\Appointment;
 use App\Models\AuditEvent;
 use App\Models\Project;
 use App\Support\Customers\CustomerActivity;
+use App\Support\Projects\Readiness;
 use App\Support\Projects\RoughTimeframe;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
@@ -314,6 +315,56 @@ new #[Title('Project')] class extends Component {
     @endif
 
     @unless ($project->isCancelled())
+        {{-- Ready to schedule? Worked out from what is recorded; nobody ticks it (slice 10, step 10c). --}}
+        @php
+            $readiness = Readiness::for($project);
+        @endphp
+
+        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-readiness">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <flux:heading size="lg" level="2">{{ __('Ready to schedule?') }}</flux:heading>
+                    <flux:subheading>{{ __('Each line is ticked by what is recorded on this job, never by hand.') }}</flux:subheading>
+                </div>
+
+                @if ($readiness->isReadyToSchedule())
+                    <flux:badge color="emerald" data-test="readiness-state">{{ __('Ready to schedule') }}</flux:badge>
+                @else
+                    <flux:badge color="amber" data-test="readiness-state">{{ __('Getting ready: :done of :all', ['done' => $readiness->done(), 'all' => count($readiness->items)]) }}</flux:badge>
+                @endif
+            </div>
+
+            <ul class="flex flex-col gap-2">
+                @foreach ($readiness->items as $item)
+                    <li wire:key="readiness-{{ $item['key'] }}" class="flex items-start gap-2 {{ $item['done'] ? 'text-ink' : 'text-zinc-600' }}" data-test="readiness-item" data-done="{{ $item['done'] ? 'yes' : 'no' }}">
+                        @if ($item['done'])
+                            <flux:icon.check-circle variant="mini" class="mt-0.5 shrink-0 text-emerald-600" aria-hidden="true" />
+                        @else
+                            <span class="mt-0.5 flex size-5 shrink-0 items-center justify-center" aria-hidden="true"><span class="size-4 rounded-full border-2 border-zinc-300"></span></span>
+                        @endif
+                        <span><span class="sr-only">{{ $item['done'] ? __('Done:') : __('Still needed:') }}</span> {{ $item['label'] }}</span>
+                    </li>
+                @endforeach
+            </ul>
+
+            @unless ($readiness->isReadyToSchedule())
+                <flux:text data-test="readiness-missing">{{ __('Still needs: :things.', ['things' => implode(', ', $readiness->missing())]) }}</flux:text>
+            @endunless
+
+            {{-- The colors are shown beside the four and are not one of them (decision 141, question 8). --}}
+            <div class="flex items-start gap-2 border-t border-zinc-200 pt-4 {{ $readiness->colorsApproved() ? 'text-ink' : 'text-zinc-600' }}" data-test="readiness-colors" data-done="{{ $readiness->colorsApproved() ? 'yes' : 'no' }}">
+                @if ($readiness->colorsApproved())
+                    <flux:icon.check-circle variant="mini" class="mt-0.5 shrink-0 text-emerald-600" aria-hidden="true" />
+                @else
+                    <span class="mt-0.5 flex size-5 shrink-0 items-center justify-center" aria-hidden="true"><span class="size-4 rounded-full border-2 border-zinc-300"></span></span>
+                @endif
+                <span class="flex flex-col">
+                    <span>{{ $readiness->colorsApproved() ? __('Colors approved by the customer') : __('Colors not approved yet: :state', ['state' => mb_strtolower(__($readiness->colors->label()))]) }}</span>
+                    <span class="text-sm text-zinc-500">{{ __('Not needed to schedule the job.') }}</span>
+                </span>
+            </div>
+        </div>
+
         <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-handoff">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
