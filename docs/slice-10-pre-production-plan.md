@@ -7,9 +7,9 @@ and a job nobody has called is flagged as falling behind after two business
 days. The other seven are as recommended. Step 10a was built and merged into
 `main` on 2026-10-13 (decision 142); see "Step 10a as built". Step 10b was
 built and merged on 2026-10-13 (decision 143); see "Step 10b as built". Step
-10c is being built.** It was
-written as what the implementation agent recommended after slice 9, from the
-plan.
+10c is built and waits for Jacob's review; see "Step 10c as built". It is the
+last step.** It was written as what the implementation agent recommended after
+slice 9, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 2,
 6.2, 6.3, 6.4, 6.5, 6.8 and 20, and builds on slice 8
@@ -237,6 +237,48 @@ Readings made while building, for Jacob to change if wrong:
 
 Nothing new. Readiness is worked out from what steps 10a and 10b record, so it
 cannot disagree with them.
+
+### Step 10c as built (2026-10-13)
+
+**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+What a reader of the code should know:
+
+- **One place decides** whether a job is ready to schedule:
+  `App\Support\Projects\Readiness`. Four things are needed: the handoff from
+  Sales is complete, a Production Manager is assigned, the welcome call is
+  ticked, and a rough timeframe is set. Nothing is stored for it and no
+  migration was added.
+- **The colors are shown beside the four and are not one of them** (decision
+  141, question 8). A job is ready to schedule before its colors are approved.
+- **On the Project,** a card "Ready to schedule?" sits above the handoff, from
+  the sale on. It says "Getting ready: 2 of 4" or "Ready to schedule", lists
+  the four with what is recorded for each, says what is still needed, and
+  shows the colors on a line of their own with "Not needed to schedule the
+  job." Nothing in it is a button. A cancelled Project has no checklist.
+- **Production > Workspace** has two lists where "Pre-production" was:
+  **Getting ready**, ordered as step 10a ordered it, and **Ready to
+  schedule**, the person's own first and then the soonest expected start.
+  Both ask the database the same four questions the checklist asks, and a
+  test holds the two together.
+- **Each job in those lists says how long it has been in pre-production,**
+  counted from the first time it had a Production Manager. Changing the
+  Production Manager does not start it again.
+- **Everyone who may open the Workspace sees both lists for the whole
+  Location.** A manager is not shown more than a Production Manager is; a
+  manager is offered "Change" on each job, as before.
+- **The production state stays "Pre-production"** for both lists. A state for
+  a scheduled job comes with the schedule.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **The checklist is shown from the sale on,** not only once a Production
+  Manager has the job, so the first two lines mean something.
+- **"How long in pre-production" is shown to everyone** who sees the list, not
+  to managers only.
+- **Nothing happens when a job becomes ready.** Nobody is notified and nothing
+  is added to Activity, because nothing was done to the job at that moment:
+  the call and the timeframe are already there.
+- **Unticking the welcome call takes a job back to "Getting ready".**
 
 ## Who may do what
 

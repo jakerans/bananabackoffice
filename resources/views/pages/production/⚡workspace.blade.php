@@ -8,7 +8,9 @@ use App\Models\Location;
 use App\Models\Project;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
+use App\Support\Projects\Readiness;
 use App\Support\Projects\RoughTimeframe;
+use Carbon\CarbonImmutable;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -22,12 +24,14 @@ use Livewire\Component;
 /**
  * Production > Workspace (docs/slice-8-projects-plan.md, step 8b;
  * product-architecture.md, 6.2): the sold jobs at one Location, from the
- * moment they are sold until a Production Manager has them.
+ * moment they are sold until they are ready to schedule.
  *
- * Three lists: waiting for the salesperson's handoff, which Production can
- * see coming and cannot take yet (decision 132); new from Sales, ready to be
- * taken; and pre-production, by Production Manager. A manager assigns the
- * Production Manager; a Production Manager can take a ready job themselves.
+ * Four lists: new from Sales, ready to be taken; waiting for the
+ * salesperson's handoff, which Production can see coming and cannot take yet
+ * (decision 132); and pre-production in two parts, getting ready, each job
+ * with what it still needs, and ready to schedule (slice 10, step 10c). A
+ * manager assigns the Production Manager; a Production Manager can take a
+ * ready job themselves.
  *
  * A person sees the Locations where they may see Projects. What the browser
  * asks for is checked against that, and each action checks again.
@@ -113,17 +117,18 @@ new #[Title('Workspace')] class extends Component {
     }
 
     /**
-     * With a Production Manager: the signed-in person's own first; then the
-     * jobs with no rough timeframe, which still need one; then the soonest
-     * expected start (slice 10, step 10a).
+     * With a Production Manager, and still needing something before it can
+     * be scheduled: the signed-in person's own first; then the jobs with no
+     * rough timeframe, which still need one; then the soonest expected start
+     * (slice 10, steps 10a and 10c).
      *
      * @return Collection<int, Project>
      */
     #[Computed]
-    public function preProduction(): Collection
+    public function gettingReady(): Collection
     {
-        return $this->standing()
-            ->whereNotNull('production_manager_id')
+        return Readiness::whereGettingReady($this->standing())
+            ->with('handoff')
             ->orderByRaw('case when production_manager_id = ? then 0 else 1 end', [Auth::id()])
             ->orderByRaw('case when timeframe_earliest is null then 0 else 1 end')
             ->orderBy('timeframe_earliest')
@@ -131,6 +136,38 @@ new #[Title('Workspace')] class extends Component {
             ->orderBy('id')
             ->limit(self::LIMIT)
             ->get();
+    }
+
+    /**
+     * Ready to schedule: handed over, with a Production Manager, the customer
+     * called and a rough timeframe set. The signed-in person's own first,
+     * then the soonest expected start (slice 10, step 10c).
+     *
+     * @return Collection<int, Project>
+     */
+    #[Computed]
+    public function readyToSchedule(): Collection
+    {
+        return Readiness::whereReady($this->standing())
+            ->with('handoff')
+            ->orderByRaw('case when production_manager_id = ? then 0 else 1 end', [Auth::id()])
+            ->orderBy('timeframe_earliest')
+            ->orderBy('production_manager_assigned_at')
+            ->orderBy('id')
+            ->limit(self::LIMIT)
+            ->get();
+    }
+
+    /**
+     * When each job in the two pre-production lists first had a Production
+     * Manager, by Project.
+     *
+     * @return array<int, CarbonImmutable>
+     */
+    #[Computed]
+    public function inPreProductionSince(): array
+    {
+        return Readiness::inPreProductionSince([...$this->gettingReady->modelKeys(), ...$this->readyToSchedule->modelKeys()]);
     }
 
     /**
@@ -239,7 +276,7 @@ new #[Title('Workspace')] class extends Component {
 
     private function changed(): void
     {
-        unset($this->location, $this->awaitingHandoff, $this->newFromSales, $this->preProduction, $this->productionManagers, $this->manages, $this->takes);
+        unset($this->location, $this->awaitingHandoff, $this->newFromSales, $this->gettingReady, $this->readyToSchedule, $this->inPreProductionSince, $this->productionManagers, $this->manages, $this->takes);
     }
 }; ?>
 
@@ -248,12 +285,31 @@ new #[Title('Workspace')] class extends Component {
         $location = $this->location;
         $chosen = $this->projectId === null ? null : Project::query()->find($this->projectId);
         $waited = fn (Project $project): string => $project->sold_at->diffForHumans(now(), ['syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE, 'parts' => 1]);
+        $inPreProductionSince = $this->inPreProductionSince;
+
+        // Pre-production, in two parts (slice 10, step 10c).
+        $preProductionLists = [
+            [
+                'key' => 'getting-ready',
+                'heading' => __('Getting ready'),
+                'about' => __('Jobs that have a Production Manager, with what each still needs before it can be scheduled. Yours come first, then the jobs with no rough timeframe, then the soonest expected start.'),
+                'none' => __('No job is getting ready.'),
+                'projects' => $this->gettingReady,
+            ],
+            [
+                'key' => 'ready',
+                'heading' => __('Ready to schedule'),
+                'about' => __('Handed over, with a Production Manager, the customer called and a rough timeframe set. Yours come first, then the soonest expected start.'),
+                'none' => __('No job is ready to schedule yet.'),
+                'projects' => $this->readyToSchedule,
+            ],
+        ];
     @endphp
 
     <div>
         <flux:heading size="xl" level="1">{{ __('Workspace') }}</flux:heading>
         <flux:subheading data-test="workspace-scope">
-            {{ $location === null ? __('Sold jobs coming to Production.') : __('Sold jobs at :location, from the sale until a Production Manager has them.', ['location' => $location->name]) }}
+            {{ $location === null ? __('Sold jobs coming to Production.') : __('Sold jobs at :location, from the sale until they are ready to schedule.', ['location' => $location->name]) }}
         </flux:subheading>
     </div>
 
@@ -331,49 +387,62 @@ new #[Title('Workspace')] class extends Component {
             @endif
         </div>
 
-        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="workspace-pre-production">
-            <div>
-                <flux:heading size="lg" level="2">{{ __('Pre-production') }}</flux:heading>
-                <flux:subheading>{{ __('Jobs that have a Production Manager, with what each still needs. Yours come first, then the jobs with no rough timeframe, then the soonest expected start.') }}</flux:subheading>
-            </div>
+        @foreach ($preProductionLists as $list)
+            <div wire:key="workspace-list-{{ $list['key'] }}" class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="workspace-{{ $list['key'] }}">
+                <div>
+                    <flux:heading size="lg" level="2">{{ $list['heading'] }}</flux:heading>
+                    <flux:subheading>{{ $list['about'] }}</flux:subheading>
+                </div>
 
-            @if ($this->preProduction->isEmpty())
-                <flux:text data-test="workspace-pre-none">{{ __('No job has a Production Manager yet.') }}</flux:text>
-            @else
-                <ul class="flex flex-col divide-y divide-zinc-200">
-                    @foreach ($this->preProduction as $project)
-                        <li wire:key="workspace-pre-{{ $project->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="workspace-pre-project">
-                            <div class="flex min-w-0 flex-col">
-                                <a href="{{ route('projects.show', $project) }}" wire:navigate class="font-semibold text-ink underline decoration-zinc-300 underline-offset-2 hover:decoration-ink">{{ $project->title }}</a>
-                                <span class="text-sm text-zinc-700">{{ $project->account->display_name }} &middot; {{ $project->proposal->name }} &middot; <span class="tabular-nums">{{ $project->soldFor() }}</span></span>
-                                <span class="text-sm text-zinc-500" data-test="workspace-production-manager">
-                                    {{ $project->production_manager_id === Auth::id() ? __('Yours') : $project->production_manager_name }}
-                                    @if ($project->production_manager_assigned_at !== null) &middot; {{ __('since') }} <x-local-time :at="$project->production_manager_assigned_at" />@endif
-                                </span>
+                @if ($list['projects']->isEmpty())
+                    <flux:text data-test="workspace-{{ $list['key'] }}-none">{{ $list['none'] }}</flux:text>
+                @else
+                    <ul class="flex flex-col divide-y divide-zinc-200">
+                        @foreach ($list['projects'] as $project)
+                            @php
+                                $since = $inPreProductionSince[$project->id] ?? $project->production_manager_assigned_at;
+                            @endphp
 
-                                {{-- What it still needs (slice 10, step 10a). --}}
-                                <span class="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-700" data-test="workspace-needs">
-                                    @if ($project->welcome_call_on === null)
-                                        @if (RoughTimeframe::welcomeCallIsBehind($project))
-                                            <flux:badge size="sm" color="rose" data-test="workspace-behind">{{ __('Falling behind') }}</flux:badge>
-                                        @endif
-                                        <span data-test="workspace-not-called">{{ __('Customer not yet called') }}</span>
-                                        <span>&middot;</span>
+                            <li wire:key="workspace-pre-{{ $project->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="workspace-pre-project">
+                                <div class="flex min-w-0 flex-col">
+                                    <a href="{{ route('projects.show', $project) }}" wire:navigate class="font-semibold text-ink underline decoration-zinc-300 underline-offset-2 hover:decoration-ink">{{ $project->title }}</a>
+                                    <span class="text-sm text-zinc-700">{{ $project->account->display_name }} &middot; {{ $project->proposal->name }} &middot; <span class="tabular-nums">{{ $project->soldFor() }}</span></span>
+                                    <span class="text-sm text-zinc-500" data-test="workspace-production-manager">
+                                        {{ $project->production_manager_id === Auth::id() ? __('Yours') : $project->production_manager_name }}
+                                        @if ($project->production_manager_assigned_at !== null) &middot; {{ __('since') }} <x-local-time :at="$project->production_manager_assigned_at" />@endif
+                                    </span>
+                                    @if ($since !== null)
+                                        <span class="text-sm text-zinc-500" data-test="workspace-in-pre-production">{{ __('In pre-production for :time', ['time' => $since->diffForHumans(now(), ['syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE, 'parts' => 1])]) }}</span>
                                     @endif
-                                    <span data-test="workspace-timeframe">{{ RoughTimeframe::of($project) ?? __('No rough timeframe') }}</span>
-                                    <span>&middot;</span>
-                                    <span data-test="workspace-colors">{{ __('Colors: :state', ['state' => mb_strtolower(__($project->color_readiness->label()))]) }}</span>
-                                </span>
-                            </div>
 
-                            @if ($this->manages)
-                                <flux:button size="sm" variant="ghost" wire:click="openAssign({{ $project->id }})" data-test="change-production-manager">{{ __('Change') }}</flux:button>
-                            @endif
-                        </li>
-                    @endforeach
-                </ul>
-            @endif
-        </div>
+                                    {{-- What it has and still needs (slice 10, steps 10a to 10c). --}}
+                                    <span class="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-700" data-test="workspace-needs">
+                                        @if ($project->handoff === null)
+                                            <span data-test="workspace-no-handoff">{{ __('No handoff from Sales') }}</span>
+                                            <span>&middot;</span>
+                                        @endif
+                                        @if ($project->welcome_call_on === null)
+                                            @if (RoughTimeframe::welcomeCallIsBehind($project))
+                                                <flux:badge size="sm" color="rose" data-test="workspace-behind">{{ __('Falling behind') }}</flux:badge>
+                                            @endif
+                                            <span data-test="workspace-not-called">{{ __('Customer not yet called') }}</span>
+                                            <span>&middot;</span>
+                                        @endif
+                                        <span data-test="workspace-timeframe">{{ RoughTimeframe::of($project) ?? __('No rough timeframe') }}</span>
+                                        <span>&middot;</span>
+                                        <span data-test="workspace-colors">{{ __('Colors: :state', ['state' => mb_strtolower(__($project->color_readiness->label()))]) }}</span>
+                                    </span>
+                                </div>
+
+                                @if ($this->manages)
+                                    <flux:button size="sm" variant="ghost" wire:click="openAssign({{ $project->id }})" data-test="change-production-manager">{{ __('Change') }}</flux:button>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        @endforeach
 
         @if ($this->manages)
             <flux:modal name="assign-production-manager" class="w-full max-w-lg">

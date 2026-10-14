@@ -80,17 +80,17 @@ test('workspace is refused to people without production access, and a guest is s
 })->with([Role::SalesConsultant, Role::CallCenterAgent, Role::Finance]);
 
 test('each sold job is in the list for where it stands', function () {
-    $page = workspacePage($this->pat)->assertSee('Sold jobs at Lakeview, from the sale until a Production Manager has them.');
+    $page = workspacePage($this->pat)->assertSee('Sold jobs at Lakeview, from the sale until they are ready to schedule.');
 
     expect(workspaceList($page, 'new'))->toContain('2 Elm St')->not->toContain('1 Oak St')->not->toContain('3 Pine St');
     expect(workspaceList($page, 'awaiting-handoff'))->toContain('1 Oak St')->toContain('No handoff yet')->not->toContain('2 Elm St');
-    expect(workspaceList($page, 'pre-production'))->toContain('3 Pine St')->toContain('Yours &middot; since')->not->toContain('2 Elm St');
+    expect(workspaceList($page, 'getting-ready'))->toContain('3 Pine St')->toContain('Yours &middot; since')->not->toContain('2 Elm St');
 
     // Each says what was sold, for how much, by whom and how long it has waited.
     expect(workspaceList($page, 'new'))->toContain('$8,450')->toContain('Sold by Sam Sales, 2 days ago');
 
     // Someone else sees whose it is by name.
-    expect(workspaceList(workspacePage($this->pam), 'pre-production'))->toContain('Pat Production &middot; since')->not->toContain('Yours &middot; since');
+    expect(workspaceList(workspacePage($this->pam), 'getting-ready'))->toContain('Pat Production &middot; since')->not->toContain('Yours &middot; since');
 });
 
 test('a production manager takes a ready job from the page, and it moves to their pre-production', function () {
@@ -105,7 +105,7 @@ test('a production manager takes a ready job from the page, and it moves to thei
     expect($this->elm->fresh()->production_manager_id)->toBe($this->pam->id);
     expect($this->elm->fresh()->production_state)->toBe(ProjectProductionState::PreProduction);
     expect(workspaceList($page, 'new'))->toContain('Nothing is waiting for a Production Manager.');
-    expect(workspaceList($page, 'pre-production'))->toContain('2 Elm St');
+    expect(workspaceList($page, 'getting-ready'))->toContain('2 Elm St');
 });
 
 test('a job still waiting for its handoff is seen and cannot be taken, whatever the browser sends', function () {
@@ -141,7 +141,7 @@ test('a manager assigns a production manager from the page, and changes one with
         ->assertHasNoErrors();
 
     expect($this->elm->fresh()->production_manager_name)->toBe('Pam Production');
-    expect(workspaceList($page, 'pre-production'))->toContain('2 Elm St')->toContain('Pam Production');
+    expect(workspaceList($page, 'getting-ready'))->toContain('2 Elm St')->toContain('Pam Production');
 
     $page->call('openAssign', $this->pine->id)
         ->assertSee('Change the Production Manager')

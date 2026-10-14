@@ -549,7 +549,8 @@ Added 2026-10-13 (slice 10; build plan: slice-10-pre-production-plan.md; LOCKED 
 - The rough timeframe is an earliest and a latest start, shown in words and never as a booked date; changing it needs a reason and what it was is kept.
 - Built in step 10a: both of those, on the Project and in Production > Workspace, and the timeframe on the Lead for Sales.
 - Built in step 10b: the Color Specification (6.4) on the Project, by area and surface; the customer's approval, recorded by the Production Manager or a manager with how it was given; a new version, with the approved one kept, whenever approved colors change; and Color Readiness as a state of its own (2).
-- Not built yet: readiness (step 10c).
+- Built in step 10c (waiting for review, not merged): readiness. A job is ready to schedule when its handoff is complete, it has a Production Manager, the welcome call is ticked and a rough timeframe is set; approved colors are shown beside those and are not needed (decision 141). It is worked out from the record and never ticked. The Project has the checklist; Production > Workspace lists "Getting ready" and "Ready to schedule".
+- Still not built from 6.2 and 6.3 after slice 10: the confirmation email or text, the Coordinator, the deposit-paid handoff call, the exact schedule (6.5), work orders (6.6) and everything after.
 
 6.4 Color Specification
 Every normal sold job ultimately has an authoritative Color Specification.
