@@ -606,7 +606,7 @@ Added 2026-10-14 (slice 11; build plan: slice-11-schedule-plan.md; LOCKED by dec
 - A ready job with no confirmed dates is flagged "needs dates soon" when its rough timeframe starts in less than three weeks. Production > Schedule is a plain list by week.
 - Built in step 11a (merged 2026-10-14, decision 145): Work Packages on a ready job, the first starting from the sale and the handoff; and the windows of dates offered to the customer for each, which are in the customer's Activity.
 - Built in step 11b (merged 2026-10-14, decision 146): the customer's confirmation of one offered window for each package, with who, how and when; the production state Scheduled once every package has its dates; rescheduling with a reason, the earlier dates kept; the salesperson told in Backoffice and shown the dates on the Lead.
-- Built in step 11c (waiting for review, not merged): Production > Schedule, six weeks at a time by Location, listing the work with confirmed dates; and "needs dates soon" on that page and in the Workspace.
+- Built in step 11c (merged 2026-10-14, decision 147): Production > Schedule, six weeks at a time by Location, listing the work with confirmed dates; and "needs dates soon" on that page and in the Workspace.
 - Still not built from 6.5 after slice 11: the crew-selected window (it needs subcontractors) and utilization (it needs crews and their available days).
 
 PMs plan same-day starts manually. Established, capable subcontractors may run

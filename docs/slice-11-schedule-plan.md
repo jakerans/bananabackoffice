@@ -4,8 +4,8 @@ Status: **approved on 2026-10-14 (decision 144) in three steps, each stopping
 for Jacob's review, with the recommendation on all ten questions. Step 11a was
 built and merged on 2026-10-14 (decision 145); see "Step 11a as built". Step
 11b was built and merged on 2026-10-14 (decision 146); see "Step 11b as
-built". Step 11c, the last, is built and waits for Jacob's review; see "Step
-11c as built".** It was written as what the implementation agent recommended
+built". Step 11c was built and merged on 2026-10-14 (decision 147); see "Step
+11c as built". Slice 11 is complete.** It was written as what the implementation agent recommended
 after slice 10, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 6.2,
@@ -218,7 +218,8 @@ Nothing new.
 
 ### Step 11c as built (2026-10-14)
 
-**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+**Merged into `main` on 2026-10-14** with Jacob's word ("merge and continue",
+decision 147). Built as planned above.
 What a reader of the code should know:
 
 - **Production > Schedule is live** (`pages::production.schedule`, route
