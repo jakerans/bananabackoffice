@@ -8,6 +8,7 @@ use App\Models\Location;
 use App\Models\Project;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
+use App\Support\Projects\RoughTimeframe;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -112,7 +113,9 @@ new #[Title('Workspace')] class extends Component {
     }
 
     /**
-     * With a Production Manager: the signed-in person's own first, then by name.
+     * With a Production Manager: the signed-in person's own first; then the
+     * jobs with no rough timeframe, which still need one; then the soonest
+     * expected start (slice 10, step 10a).
      *
      * @return Collection<int, Project>
      */
@@ -122,7 +125,8 @@ new #[Title('Workspace')] class extends Component {
         return $this->standing()
             ->whereNotNull('production_manager_id')
             ->orderByRaw('case when production_manager_id = ? then 0 else 1 end', [Auth::id()])
-            ->orderBy('production_manager_name')
+            ->orderByRaw('case when timeframe_earliest is null then 0 else 1 end')
+            ->orderBy('timeframe_earliest')
             ->orderBy('production_manager_assigned_at')
             ->orderBy('id')
             ->limit(self::LIMIT)
@@ -330,7 +334,7 @@ new #[Title('Workspace')] class extends Component {
         <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="workspace-pre-production">
             <div>
                 <flux:heading size="lg" level="2">{{ __('Pre-production') }}</flux:heading>
-                <flux:subheading>{{ __('Jobs that have a Production Manager. Yours come first.') }}</flux:subheading>
+                <flux:subheading>{{ __('Jobs that have a Production Manager, with what each still needs. Yours come first, then the jobs with no rough timeframe, then the soonest expected start.') }}</flux:subheading>
             </div>
 
             @if ($this->preProduction->isEmpty())
@@ -345,6 +349,18 @@ new #[Title('Workspace')] class extends Component {
                                 <span class="text-sm text-zinc-500" data-test="workspace-production-manager">
                                     {{ $project->production_manager_id === Auth::id() ? __('Yours') : $project->production_manager_name }}
                                     @if ($project->production_manager_assigned_at !== null) &middot; {{ __('since') }} <x-local-time :at="$project->production_manager_assigned_at" />@endif
+                                </span>
+
+                                {{-- What it still needs (slice 10, step 10a). --}}
+                                <span class="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-700" data-test="workspace-needs">
+                                    @if ($project->welcome_call_on === null)
+                                        @if (RoughTimeframe::welcomeCallIsBehind($project))
+                                            <flux:badge size="sm" color="rose" data-test="workspace-behind">{{ __('Falling behind') }}</flux:badge>
+                                        @endif
+                                        <span data-test="workspace-not-called">{{ __('Customer not yet called') }}</span>
+                                        <span>&middot;</span>
+                                    @endif
+                                    <span data-test="workspace-timeframe">{{ RoughTimeframe::of($project) ?? __('No rough timeframe') }}</span>
                                 </span>
                             </div>
 

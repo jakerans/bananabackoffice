@@ -55,6 +55,20 @@ class ProjectPolicy
     }
 
     /**
+     * Determine whether the user can do the pre-production work on the
+     * Project (slice 10, decision 141): tick the welcome call and set the
+     * rough timeframe. Its Production Manager, or a manager where it is, once
+     * it has a Production Manager.
+     */
+    public function managePreProduction(User $user, Project $project): bool
+    {
+        return $this->view($user, $project)
+            && ! $project->isCancelled()
+            && $project->production_manager_id !== null
+            && ($project->production_manager_id === $user->id || $user->hasPermissionAt(Permission::ManageProjects, $project->location));
+    }
+
+    /**
      * Determine whether the user can take the Project as its Production
      * Manager: someone with that role at the Project's own Location, when the
      * handoff is complete and nobody has it yet.

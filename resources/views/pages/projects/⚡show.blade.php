@@ -1,6 +1,8 @@
 <?php
 
 use App\Actions\Projects\EditProject;
+use App\Actions\Projects\RecordWelcomeCall;
+use App\Actions\Projects\SetProjectTimeframe;
 use App\Actions\Projects\TakeProject;
 use App\Enums\Permission;
 use App\Models\ProjectHandoff;
@@ -9,6 +11,7 @@ use App\Models\Appointment;
 use App\Models\AuditEvent;
 use App\Models\Project;
 use App\Support\Customers\CustomerActivity;
+use App\Support\Projects\RoughTimeframe;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -33,6 +36,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectCreated, AuditAction::ProjectBroughtBack, AuditAction::ProjectCancelled, AuditAction::ProjectEdited,
         AuditAction::ProjectHandoffCompleted, AuditAction::ProjectHandoffChanged,
         AuditAction::ProjectProductionManagerAssigned, AuditAction::ProjectProductionManagerChanged, AuditAction::ProjectTaken,
+        AuditAction::ProjectWelcomeCallRecorded, AuditAction::ProjectWelcomeCallUndone, AuditAction::ProjectTimeframeSet, AuditAction::ProjectTimeframeChanged,
     ];
 
     #[Locked]
@@ -41,6 +45,22 @@ new #[Title('Project')] class extends Component {
     public string $projectTitle = '';
 
     public string $projectDescription = '';
+
+    /** The day the welcome call was made, as "2026-10-14". */
+    public string $welcomeCallOn = '';
+
+    public string $welcomeCallNote = '';
+
+    public string $welcomeCallUndoNote = '';
+
+    /** The rough timeframe being set, each a day as "2026-11-24". */
+    public string $timeframeEarliest = '';
+
+    public string $timeframeLatest = '';
+
+    public string $timeframeNote = '';
+
+    public string $timeframeReason = '';
 
     public function mount(Project $project): void
     {
@@ -52,7 +72,7 @@ new #[Title('Project')] class extends Component {
     #[Computed]
     public function project(): Project
     {
-        return Project::query()->with(['location', 'account', 'contact', 'property', 'services', 'proposal', 'lead', 'handoff'])->findOrFail($this->projectId);
+        return Project::query()->with(['location', 'account', 'contact', 'property', 'services', 'proposal', 'lead', 'handoff', 'timeframes'])->findOrFail($this->projectId);
     }
 
     /**
@@ -105,6 +125,92 @@ new #[Title('Project')] class extends Component {
         unset($this->project, $this->activity);
 
         Flux::toast(variant: 'success', text: __('It is yours. This project is now in pre-production.'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pre-production (slice 10, step 10a)
+    |--------------------------------------------------------------------------
+    */
+
+    public function openWelcomeCall(): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+
+        // Today, in the Project's own Location, unless it is already ticked.
+        $this->welcomeCallOn = $this->project->welcome_call_on?->toDateString() ?? RoughTimeframe::today($this->project->location)->toDateString();
+        $this->welcomeCallNote = (string) $this->project->welcome_call_note;
+        $this->resetValidation();
+
+        Flux::modal('welcome-call')->show();
+    }
+
+    /**
+     * Tick "Welcome call made". It is a checklist item (decision 141).
+     */
+    public function saveWelcomeCall(RecordWelcomeCall $recordWelcomeCall): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+        $this->resetValidation();
+
+        $recordWelcomeCall->handle($this->project, $this->welcomeCallOn, $this->welcomeCallNote, Auth::user());
+
+        unset($this->project, $this->activity);
+
+        Flux::modal('welcome-call')->close();
+        Flux::toast(variant: 'success', text: __('Welcome call ticked.'));
+    }
+
+    public function openUndoWelcomeCall(): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+
+        $this->welcomeCallUndoNote = '';
+        $this->resetValidation();
+
+        Flux::modal('undo-welcome-call')->show();
+    }
+
+    public function undoWelcomeCall(RecordWelcomeCall $recordWelcomeCall): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+        $this->resetValidation();
+
+        $recordWelcomeCall->undo($this->project, $this->welcomeCallUndoNote, Auth::user());
+
+        unset($this->project, $this->activity);
+
+        Flux::modal('undo-welcome-call')->close();
+        Flux::toast(variant: 'success', text: __('Unticked. This project is waiting for its welcome call again.'));
+    }
+
+    public function openTimeframe(): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+
+        $this->timeframeEarliest = (string) $this->project->timeframe_earliest?->toDateString();
+        $this->timeframeLatest = (string) $this->project->timeframe_latest?->toDateString();
+        $this->timeframeNote = (string) $this->project->timeframe_note;
+        $this->timeframeReason = '';
+        $this->resetValidation();
+
+        Flux::modal('project-timeframe')->show();
+    }
+
+    /**
+     * Set or change the rough timeframe. The action keeps what it was.
+     */
+    public function saveTimeframe(SetProjectTimeframe $setProjectTimeframe): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+        $this->resetValidation();
+
+        $setProjectTimeframe->handle($this->project, $this->timeframeEarliest, $this->timeframeLatest, $this->timeframeNote, $this->timeframeReason, Auth::user());
+
+        unset($this->project, $this->activity);
+
+        Flux::modal('project-timeframe')->close();
+        Flux::toast(variant: 'success', text: __('Rough timeframe saved.'));
     }
 
     public function openEdit(): void
@@ -248,6 +354,94 @@ new #[Title('Project')] class extends Component {
                 </flux:text>
             @endif
         </div>
+
+        {{-- Pre-production: what the job still needs once a Production Manager has it (slice 10, step 10a). --}}
+        @if ($project->production_manager_id !== null)
+            @php
+                $timeframe = RoughTimeframe::of($project);
+                $callDueAt = RoughTimeframe::welcomeCallDueAt($project);
+                $callIsBehind = RoughTimeframe::welcomeCallIsBehind($project);
+            @endphp
+
+            <div class="flex flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-pre-production">
+                <div>
+                    <flux:heading size="lg" level="2">{{ __('Pre-production') }}</flux:heading>
+                    <flux:subheading>{{ __('What this job has and still needs before it is scheduled.') }}</flux:subheading>
+                </div>
+
+                <div class="flex items-start justify-between gap-3" data-test="project-welcome-call">
+                    <div class="flex min-w-0 flex-1 flex-col gap-1">
+                        <div class="text-sm font-medium text-zinc-500">{{ __('Welcome call') }}</div>
+
+                        @if ($project->welcome_call_on !== null)
+                            <div class="text-ink" data-test="welcome-call-made">{{ __('Made on :day', ['day' => $project->welcome_call_on->format('D, M j, Y')]) }}</div>
+                            @if ($project->welcome_call_note !== null)
+                                <div class="whitespace-pre-line text-sm text-zinc-700">&ldquo;{{ $project->welcome_call_note }}&rdquo;</div>
+                            @endif
+                            <div class="text-sm text-zinc-500">
+                                {{ __('Ticked by') }} {{ $project->welcome_call_by_name ?? __('Unknown') }}@if ($project->welcome_call_recorded_at !== null) &middot; <x-local-time :at="$project->welcome_call_recorded_at" />@endif
+                            </div>
+                        @else
+                            <div class="flex flex-wrap items-center gap-2 text-ink" data-test="welcome-call-waiting">
+                                {{ __('Customer not yet called.') }}
+                                @if ($callIsBehind)
+                                    <flux:badge size="sm" color="rose" data-test="welcome-call-behind">{{ __('Falling behind') }}</flux:badge>
+                                @endif
+                            </div>
+                            @if ($callDueAt !== null)
+                                <div class="text-sm text-zinc-500" data-test="welcome-call-due">
+                                    {{ $callIsBehind ? __('It was due within two business days of the job being taken, by') : __('Due within two business days of the job being taken, by') }} <x-local-time :at="$callDueAt" />
+                                </div>
+                            @endif
+                        @endif
+                    </div>
+
+                    @can('managePreProduction', $project)
+                        @if ($project->welcome_call_on === null)
+                            <flux:button variant="primary" class="shrink-0" wire:click="openWelcomeCall" data-test="tick-welcome-call">{{ __('Welcome call made') }}</flux:button>
+                        @else
+                            <flux:button size="sm" variant="ghost" class="shrink-0" wire:click="openUndoWelcomeCall" data-test="untick-welcome-call">{{ __('Untick') }}</flux:button>
+                        @endif
+                    @endcan
+                </div>
+
+                <div class="flex items-start justify-between gap-3 border-t border-zinc-200 pt-5" data-test="project-timeframe">
+                    <div class="flex min-w-0 flex-1 flex-col gap-1">
+                        <div class="text-sm font-medium text-zinc-500">{{ __('Rough timeframe') }}</div>
+
+                        @if ($timeframe !== null)
+                            <div class="font-nav text-xl font-bold text-ink" data-test="timeframe-words">{{ $timeframe }}</div>
+                            <div class="text-sm text-zinc-700" data-test="timeframe-days">
+                                {{ __('Work expected to start between :from and :to. Not a booked date.', ['from' => $project->timeframe_earliest->format('M j, Y'), 'to' => $project->timeframe_latest->format('M j, Y')]) }}
+                            </div>
+                            @if ($project->timeframe_note !== null)
+                                <div class="whitespace-pre-line text-sm text-zinc-700">&ldquo;{{ $project->timeframe_note }}&rdquo;</div>
+                            @endif
+                        @else
+                            <div class="text-ink" data-test="timeframe-none">{{ __('No rough timeframe yet.') }}</div>
+                        @endif
+
+                        {{-- What it was before each change is kept. --}}
+                        @if ($project->timeframes->count() > 1)
+                            <ul class="mt-1 flex flex-col gap-1 text-sm text-zinc-500" data-test="timeframe-history">
+                                @foreach ($project->timeframes as $index => $kept)
+                                    <li wire:key="timeframe-{{ $kept->id }}">
+                                        {{ $index === 0 ? __('Now') : __('Was') }}: {{ RoughTimeframe::words($kept->earliest, $kept->latest, $project->location) }}
+                                        &middot; {{ $kept->set_by_name ?? __('Unknown') }} &middot; <x-local-time :at="$kept->created_at" />@if ($kept->reason !== null) &middot; &ldquo;{{ $kept->reason }}&rdquo;@endif
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
+
+                    @can('managePreProduction', $project)
+                        <flux:button :variant="$timeframe === null ? 'primary' : 'ghost'" :size="$timeframe === null ? 'base' : 'sm'" class="shrink-0" wire:click="openTimeframe" data-test="set-timeframe">
+                            {{ $timeframe === null ? __('Set rough timeframe') : __('Change') }}
+                        </flux:button>
+                    @endcan
+                </div>
+            </div>
+        @endif
     @endunless
 
     <div class="grid gap-6 lg:grid-cols-2">
@@ -379,6 +573,69 @@ new #[Title('Project')] class extends Component {
             </ol>
         </div>
     </div>
+
+    {{-- Pre-production dialogs. Kept on the page by what the person may do, so each can close properly. --}}
+    @can('managePreProduction', $project)
+        <flux:modal name="welcome-call" class="w-full max-w-lg">
+            <form wire:submit="saveWelcomeCall" class="flex flex-col gap-5">
+                <div>
+                    <flux:heading size="lg">{{ __('Welcome call made') }}</flux:heading>
+                    <flux:subheading>{{ __('Tick this once the customer has had their welcome call. Nothing is sent to the customer.') }}</flux:subheading>
+                </div>
+
+                <flux:input wire:model="welcomeCallOn" type="date" :label="__('Day of the call')" class="max-w-52" data-test="welcome-call-on" />
+
+                <flux:textarea wire:model="welcomeCallNote" rows="2" :label="__('Note (optional)')" data-test="welcome-call-note" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-welcome-call">{{ __('Tick it') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        <x-confirmation-modal
+            name="undo-welcome-call"
+            :title="__('Untick the welcome call?')"
+            :description="__('For one ticked by mistake. This project will wait for its welcome call again.')"
+            action="undoWelcomeCall"
+            :confirm-label="__('Untick')"
+            confirm-variant="primary"
+        >
+            <flux:textarea wire:model="welcomeCallUndoNote" rows="2" :label="__('Why it is being unticked (required)')" data-test="welcome-call-undo-note" />
+        </x-confirmation-modal>
+
+        <flux:modal name="project-timeframe" class="w-full max-w-lg">
+            <form wire:submit="saveTimeframe" class="flex flex-col gap-5">
+                <div>
+                    <flux:heading size="lg">{{ $project->timeframe_earliest === null ? __('Set the rough timeframe') : __('Change the rough timeframe') }}</flux:heading>
+                    <flux:subheading>{{ __('When the work is roughly expected to start. It is not a booked date and reserves nothing.') }}</flux:subheading>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <flux:input wire:model="timeframeEarliest" type="date" :label="__('Earliest start')" data-test="timeframe-earliest" />
+                    <flux:input wire:model="timeframeLatest" type="date" :label="__('Latest start')" data-test="timeframe-latest" />
+                </div>
+
+                <flux:textarea wire:model="timeframeNote" rows="2" :label="__('Note (optional)')" :placeholder="__('After the roof is done')" data-test="timeframe-note" />
+
+                @if ($project->timeframe_earliest !== null)
+                    <flux:textarea wire:model="timeframeReason" rows="2" :label="__('Why it is being changed (required)')" data-test="timeframe-reason" />
+                @endif
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-timeframe">{{ __('Save') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+    @endcan
 
     @can('update', $project)
         <flux:modal name="edit-project" class="w-full max-w-lg">

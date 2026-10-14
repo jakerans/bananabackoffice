@@ -2922,6 +2922,19 @@ Read by the implementation agent, for Jacob to change if wrong:
   for its Production Manager and for a manager. No bell notice and no email,
   as the plan's question 3 proposed.
 
+## 142. Step 10a is merged; step 10b starts (2026-10-13)
+
+**Decided by Jacob,** in reply to step 10a's handoff: "Merge and start."
+
+1. **Step 10a, the welcome call and the rough timeframe, is merged.** The
+   readings in decision 141 and in the plan under "Step 10a as built" stay as
+   built; he did not change them. Among them: the tick asks for the day and an
+   optional note; business days are Monday to Friday and a public holiday
+   counts as one; the two days run from when the present Production Manager
+   got the job; and "falling behind" is a mark, not a message.
+2. **Step 10b, the Color Specification, starts.** It is built as the plan and
+   decision 141 have it and stops for his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

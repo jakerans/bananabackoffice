@@ -5,27 +5,26 @@ No secrets or customer information belong here.
 
 **Updated:** 2026-10-13 · **Branch:** `main`
 
-**State:** nothing waits for review. **Slice 9 is complete:** step 9c, the
-Pending figures, is merged on 2026-10-13 with Jacob's word ("Merge and
-approve.", decision 141). The repository is public since the same day
-(decision 140), and both GitHub jobs run again.
+**State:** nothing waits for review. **Slice 10, step 10a is merged** on
+2026-10-13 with Jacob's word ("Merge and start.", decision 142): the welcome
+call as a checklist item, the "Falling behind" mark after two business days,
+and the rough timeframe.
 
 ## What is being built now
 
-**Slice 10, pre-production, is approved** (decision 141; plan:
-[../slice-10-pre-production-plan.md](../slice-10-pre-production-plan.md)).
+**Step 10b, the Color Specification** (plan:
+[../slice-10-pre-production-plan.md](../slice-10-pre-production-plan.md),
+"Step 10b"; decision 141):
 
-**Step 10a, onboarding and the rough timeframe,** is being built:
-
-- on a Project in pre-production, its Production Manager or a manager ticks
-  "Welcome call made". It is a checklist item; how the call is made is a
-  procedure the business keeps outside Backoffice;
-- a job nobody has called is flagged as falling behind after two business
-  days, in Production > Workspace;
-- a rough timeframe: the earliest and the latest the work is expected to
-  start, with a note, changed with a reason and what it was kept;
-- the Workspace shows what each job in pre-production still needs.
+- a "Colors" part of the Project page: one line for each area and surface,
+  with the manufacturer, the color's name and code, the sheen, the product and
+  a note;
+- the customer's approval, recorded by the Production Manager or a manager
+  with how it was given;
+- a new version when approved colors are changed, with the old one kept and
+  approval needed again;
+- Color Readiness as a state of its own: Not started, In progress, Waiting for
+  the customer's approval, or Approved.
 
 It will be pushed for review and will replace this page. It is not merged
-without Jacob's word. Steps 10b, the Color Specification, and 10c, readiness,
-follow it.
+without Jacob's word. Step 10c, readiness, follows it.

@@ -572,6 +572,13 @@ Rules:
     back** is rule 12 of the rulebook, unchanged: only that salesperson. The
     number of days a proposal is valid is changed with
     `settings.contact_center.manage`. No permission was added.
+25. **Pre-production** (`ProjectPolicy::managePreProduction`, slice 10 step
+    10a, decision 141). Ticking or unticking the welcome call and setting or
+    changing the rough timeframe: the Project's Production Manager, or anyone
+    with `projects.manage` at the Project's Location, once the Project has a
+    Production Manager and while its sale stands. Another Production Manager
+    there, and the salesperson who sold it, read both and write neither. No
+    permission was added.
 
 ## Slice 4: the call queue and its settings
 
