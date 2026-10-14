@@ -5,9 +5,9 @@ for Jacob's review. He answered two questions in his own words: the welcome
 call is a checklist item, with the procedure for it kept outside Backoffice;
 and a job nobody has called is flagged as falling behind after two business
 days. The other seven are as recommended. Step 10a was built and merged into
-`main` on 2026-10-13 (decision 142); see "Step 10a as built". Step 10b is
-built and waits for his review; see "Step 10b as built". Step 10c is not
-built.** It was
+`main` on 2026-10-13 (decision 142); see "Step 10a as built". Step 10b was
+built and merged on 2026-10-13 (decision 143); see "Step 10b as built". Step
+10c is being built.** It was
 written as what the implementation agent recommended after slice 9, from the
 plan.
 
@@ -171,8 +171,8 @@ Readings made while building, for Jacob to change if wrong (also in decision
 
 ### Step 10b as built (2026-10-13)
 
-Built on the branch `checkpoint-slice-10b-colors`. **Not merged; it waits for
-Jacob's review.** Built as planned above. What a reader of the code should
+**Merged into `main` on 2026-10-13** with Jacob's word ("merge and start",
+decision 143). Built as planned above. What a reader of the code should
 know:
 
 - **The Colors part is a component of its own** on the Project page
