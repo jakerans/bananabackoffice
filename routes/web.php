@@ -48,6 +48,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('projects/{project}', 'pages::projects.show')->can('view', 'project')->name('projects.show');
     Route::livewire('projects/{project}/handoff', 'pages::projects.handoff')->can('completeHandoff', 'project')->name('projects.handoff');
     Route::livewire('production/workspace', 'pages::production.workspace')->can(Permission::ProductionAccess)->name('production.workspace');
+    Route::livewire('production/schedule', 'pages::production.schedule')->can(Permission::ProductionAccess)->name('production.schedule');
 
     // The Call Queue is a Marketing > Contact Center page. It is opened by the queue permission,
     // like Leads; every action on it checks the permission again and each Lead by its own location.

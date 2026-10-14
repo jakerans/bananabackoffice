@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\WorkPackage;
 use App\Models\WorkPackageWindow;
 use App\Support\Access\CurrentLocation;
+use App\Support\Projects\NeedsDatesSoon;
 use App\Support\Projects\Readiness;
 use App\Support\Projects\RoughTimeframe;
 use Carbon\CarbonImmutable;
@@ -455,6 +456,10 @@ new #[Title('Workspace')] class extends Component {
                                         <span class="mt-1 font-semibold text-ink" data-test="workspace-scheduled-days">{{ __('Scheduled: :days', ['days' => WorkPackageWindow::describe($days[0], $days[1])]) }}</span>
                                     @endif
                                     <span class="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-700" data-test="workspace-needs">
+                                        {{-- Its rough start is close and it has no dates yet (slice 11, step 11c). --}}
+                                        @if ($list['key'] === 'ready' && NeedsDatesSoon::applies($project))
+                                            <flux:badge size="sm" color="amber" data-test="workspace-needs-dates-soon">{{ __('Needs dates soon') }}</flux:badge>
+                                        @endif
                                         @if ($project->handoff === null)
                                             <span data-test="workspace-no-handoff">{{ __('No handoff from Sales') }}</span>
                                             <span>&middot;</span>

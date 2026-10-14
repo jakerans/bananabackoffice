@@ -136,7 +136,8 @@ is complete as planned.**
 why it is next, is [slice-11-schedule-plan.md](slice-11-schedule-plan.md).
 **Step 11a (Work Packages and proposed windows) was built and merged on
 2026-10-14 (decision 145).** **Step 11b (the confirmed schedule) was built and merged on 2026-10-14
-(decision 146).** Step 11c (Production > Schedule) is being built.
+(decision 146).** Step 11c (Production > Schedule), the last step, is built and waits for
+Jacob's review; it is not merged.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

@@ -4,7 +4,8 @@ Status: **approved on 2026-10-14 (decision 144) in three steps, each stopping
 for Jacob's review, with the recommendation on all ten questions. Step 11a was
 built and merged on 2026-10-14 (decision 145); see "Step 11a as built". Step
 11b was built and merged on 2026-10-14 (decision 146); see "Step 11b as
-built". Step 11c is being built.** It was written as what the implementation agent recommended
+built". Step 11c, the last, is built and waits for Jacob's review; see "Step
+11c as built".** It was written as what the implementation agent recommended
 after slice 10, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 6.2,
@@ -214,6 +215,38 @@ Readings made while building, for Jacob to change if wrong:
 ### What it stores
 
 Nothing new.
+
+### Step 11c as built (2026-10-14)
+
+**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+What a reader of the code should know:
+
+- **Production > Schedule is live** (`pages::production.schedule`, route
+  `production.schedule`), for anyone with Production access, showing the
+  Locations where they may see Projects.
+- **Six weeks at a time,** from this week's Monday in the Location's
+  calendar: the six weeks of the utilization measure (decision 133).
+  "Earlier" and "Later" move six weeks; "This week" goes back. The first
+  Monday shown is kept in the address, so a view can be shared.
+- **Each week lists the work with confirmed dates** that falls in it: the
+  dates, the job, the part's name when the job is split, working days and
+  smallest crew, the customer, the Production Manager and where the colors
+  stand. Work that spans weeks is listed in each. Two jobs on the same days
+  are both listed. Nothing on the page changes anything.
+- **"Needs dates soon"** (`App\Support\Projects\NeedsDatesSoon`): a job ready
+  to schedule, not Scheduled, whose rough timeframe starts less than three
+  weeks from today in its Location, or has already started. It is listed at
+  the top of the Schedule page and marked on its row under "Ready to
+  schedule" in the Workspace. A split job with only some parts confirmed is
+  not Scheduled, so it can still be flagged.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **Parts of a split job that are confirmed show on the Schedule** even
+  before the whole job is Scheduled, because those days are booked with the
+  customer.
+- **"Needs dates soon" is a mark, not a message,** like "falling behind".
+  Nobody is notified.
 
 ## Who may do what
 
