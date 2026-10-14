@@ -25,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property int $minimum_crew The smallest crew it needs.
  * @property Carbon|null $scheduled_first_day The first day the customer confirmed (step 11b). Empty until they confirm.
  * @property Carbon|null $scheduled_last_day
+ * @property int|null $payout_cents What Banana will pay for it now (step 13a). Finance-sensitive.
  * @property int|null $created_by
  * @property string|null $created_by_name
  * @property Carbon|null $created_at
@@ -32,6 +33,7 @@ use Illuminate\Support\Carbon;
  * @property-read Project $project
  * @property-read Collection<int, WorkPackageWindow> $windows
  * @property-read Collection<int, WorkPackageSchedule> $schedules
+ * @property-read Collection<int, WorkPackagePayout> $payouts
  */
 class WorkPackage extends Model
 {
@@ -66,6 +68,7 @@ class WorkPackage extends Model
             'minimum_crew' => 'integer',
             'scheduled_first_day' => 'date',
             'scheduled_last_day' => 'date',
+            'payout_cents' => 'integer',
         ];
     }
 
@@ -95,6 +98,16 @@ class WorkPackage extends Model
     public function schedules(): HasMany
     {
         return $this->hasMany(WorkPackageSchedule::class)->orderByDesc('id');
+    }
+
+    /**
+     * Every amount its payout has had, the one in force first.
+     *
+     * @return HasMany<WorkPackagePayout, $this>
+     */
+    public function payouts(): HasMany
+    {
+        return $this->hasMany(WorkPackagePayout::class)->orderByDesc('id');
     }
 
     /**

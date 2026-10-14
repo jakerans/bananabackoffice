@@ -3084,6 +3084,36 @@ merging and writing it: "continue".
    (product-architecture.md, 6.6 and 7.4 to 7.8), inside Backoffice and
    without a portal, written for his approval before anything is built.
 
+## 151. Slice 13, giving work to a subcontractor, is approved; step 13a starts (2026-10-14)
+
+**Decided by Jacob,** in reply to the proposed plan and its ten questions
+with recommendations: "approved - continue".
+
+1. **The plan is approved** in three steps
+   ([slice-13-giving-work-plan.md](slice-13-giving-work-plan.md)), each
+   stopping for his review, with the recommendation on all ten questions:
+   1. A new permission, held by Production Managers, Location Managers,
+      Leadership, the Owner and Finance, shows payouts. Sales and the
+      Contact Center never see them.
+   2. A payout changes freely until the work is awarded; after that, with a
+      reason, and the subcontractor's acceptance is recorded again. Every
+      amount is kept.
+   3. Work is given only to Active, compliant subcontractors at the job's
+      Location; a crew smaller than needed is a warning.
+   4. The subcontractor picks one of the windows offered to the customer;
+      the Production Manager then confirms with the customer; if the dates
+      are already confirmed, the award is for them.
+   5. Acceptance is recorded with who, how and the day.
+   6. Taking back an award needs a reason and whose doing it was; only "the
+      subcontractor withdrew" counts against them later.
+   7. One company insurance-deduction rate, 10% to start, changed in
+      Settings with the day it takes effect; Location rates when needed.
+   8. The work order is a page that prints; "sent" is recorded; approved
+      colors are needed first.
+   9. The job's address is on the work order once awarded, never before.
+   10. No message to subcontractors or customers.
+2. **Step 13a, payout, starts.** It stops for his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

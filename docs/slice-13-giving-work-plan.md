@@ -1,9 +1,9 @@
-# Slice 13 — Giving Work to a Subcontractor: Payout, Award and the Work Order: Proposed Plan
+# Slice 13 — Giving Work to a Subcontractor: Payout, Award and the Work Order: Plan
 
-Status: **proposed on 2026-10-14, after slice 12 (decision 150). Not
-approved. Nothing in it is built.** It is what the implementation agent
-recommends next, from the plan. Jacob approves it, changes it, or chooses
-something else.
+Status: **approved on 2026-10-14 (decision 151) in three steps, each
+stopping for Jacob's review, with the recommendation on all ten questions.
+Step 13a is built and waits for Jacob's review; see "Step 13a as built".** It was written as what the implementation agent
+recommended after slice 12, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 6.6,
 7.4 to 7.8 and 10.1, the stakeholder answers on the insurance deduction
@@ -82,6 +82,36 @@ Not in slice 13, each needing its own plan and approval:
 
 Each payout amount a package has had, with who set it, when and why.
 
+### Step 13a as built (2026-10-14)
+
+**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+What a reader of the code should know:
+
+- **Stored:** `work_packages.payout_cents`, the payout now, and
+  `work_package_payouts`, every amount with who set it, when and the
+  optional reason; never changed or deleted.
+- **A new permission, `payouts.view`,** held at a Location by the Production
+  Manager, Location Manager, Leadership and Finance roles, and by the Owner.
+  `ProjectPolicy::viewPayouts` needs it at the Project's Location;
+  `ProjectPolicy::managePayouts` also needs the pre-production rule (the
+  Project's Production Manager, or `projects.manage` there).
+- **Setting it** is `ChangeWorkPackages::setPayout`, under the same rules as
+  the rest of the Work Packages: the job must be ready to schedule. The
+  amount is typed in dollars ("4,250", "$4,250.50"). Saving the same amount
+  records nothing.
+- **On the page,** each package shows "Payout" with the amount or "Not set
+  yet", "Set" or "Change" for those who may, the earlier amounts, and the
+  reason for the latest. Someone without `payouts.view` sees the package
+  with no payout, and the dialog is not on their page.
+- **Audit record only.** "Payout set" is never in a customer's Activity or
+  the Project's Activity.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **A reason is optional for now,** because no work can be awarded yet
+  (question 2). Step 13b makes it required once the work is awarded.
+- **Another Production Manager at the Location sees the payout** (they hold
+  the permission) but cannot change it, as for the rest of the job.
 ## Step 13b — The award
 
 ### What a person sees
@@ -154,6 +184,9 @@ migrations on MySQL 8.4, with every stored name and key name checked against
 its limit.
 
 ## Decisions needed
+
+**Answered by Jacob on 2026-10-14 (decision 151): "approved - continue".**
+The questions are kept below as they were asked.
 
 Each has a recommendation. "Follow your recommendations" is a complete answer.
 

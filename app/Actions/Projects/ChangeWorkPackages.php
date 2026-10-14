@@ -9,9 +9,11 @@ use App\Enums\ProjectProductionState;
 use App\Models\Project;
 use App\Models\User;
 use App\Models\WorkPackage;
+use App\Models\WorkPackagePayout;
 use App\Models\WorkPackageSchedule;
 use App\Models\WorkPackageWindow;
 use App\Notifications\ProjectNotice;
+use App\Support\Money;
 use App\Support\Projects\Readiness;
 use App\Support\Projects\RoughTimeframe;
 use Carbon\CarbonImmutable;
@@ -255,6 +257,61 @@ class ChangeWorkPackages
             }
 
             return $schedule;
+        });
+    }
+
+    /**
+     * Set what Banana will pay for a package (docs/slice-13-giving-work-plan.md,
+     * step 13a; decision 151, questions 1 and 2). Only someone who may see
+     * payouts. Every amount is kept; saving the same amount records nothing.
+     * Until the work is awarded, a reason is optional.
+     *
+     * @throws ValidationException
+     * @throws AuthorizationException
+     */
+    public function setPayout(Project $project, int $packageId, ?string $amount, ?string $reason, User $actor): WorkPackage
+    {
+        return $this->change($project, $actor, function (Project $project) use ($packageId, $amount, $reason, $actor): WorkPackage {
+            Gate::forUser($actor)->authorize('managePayouts', $project);
+
+            $package = self::packageOf($project, $packageId);
+            $cents = Money::toCents($amount)
+                ?? throw ValidationException::withMessages(['payoutAmount' => __('Give the payout in dollars, like 4,250 or 4,250.50.')]);
+            $reason = trim((string) $reason);
+
+            if (mb_strlen($reason) > WorkPackagePayout::REASON_LENGTH) {
+                throw ValidationException::withMessages(['payoutReason' => __('Keep this to :max characters or fewer.', ['max' => WorkPackagePayout::REASON_LENGTH])]);
+            }
+
+            if ($package->payout_cents === $cents) {
+                return $package;
+            }
+
+            $before = $package->payout_cents;
+
+            $payout = new WorkPackagePayout;
+            $payout->forceFill([
+                'work_package_id' => $package->id,
+                'amount_cents' => $cents,
+                'reason' => $reason === '' ? null : $reason,
+                'set_by' => $actor->id,
+                'set_by_name' => $actor->name,
+            ])->save();
+
+            $package->forceFill(['payout_cents' => $cents])->save();
+
+            // Audit only: a payout is never in the customer's Activity.
+            $this->recordAuditEvent->handle(
+                AuditAction::ProjectPayoutSet,
+                $project,
+                actor: $actor,
+                before: $before === null ? [] : ['package' => $package->name, 'payout_cents' => $before],
+                after: ['package' => $package->name, 'payout_cents' => $cents],
+                location: $project->location,
+                reason: $payout->reason,
+            );
+
+            return $package;
         });
     }
 

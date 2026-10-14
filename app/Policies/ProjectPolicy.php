@@ -69,6 +69,25 @@ class ProjectPolicy
     }
 
     /**
+     * Determine whether the user can see what Banana will pay for the
+     * Project's work: finance-sensitive, so it needs `payouts.view` at the
+     * Project's Location (slice 13; decision 151, question 1).
+     */
+    public function viewPayouts(User $user, Project $project): bool
+    {
+        return $this->view($user, $project) && $user->hasPermissionAt(Permission::ViewPayouts, $project->location);
+    }
+
+    /**
+     * Determine whether the user can set the payouts of the Project's work:
+     * someone who may run its pre-production and may see payouts.
+     */
+    public function managePayouts(User $user, Project $project): bool
+    {
+        return $this->managePreProduction($user, $project) && $this->viewPayouts($user, $project);
+    }
+
+    /**
      * Determine whether the user can take the Project as its Production
      * Manager: someone with that role at the Project's own Location, when the
      * handoff is complete and nobody has it yet.

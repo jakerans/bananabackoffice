@@ -3,55 +3,73 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-14 · **Branch:** `checkpoint-slice-13-plan`
+**Updated:** 2026-10-14 · **Branch:** `checkpoint-slice-13a-payout`
 
-**State:** **a proposed plan for slice 13, giving work to a subcontractor,
-waits for Jacob's approval. Nothing in it is built.** Slice 12 was completed
-and merged before it (decision 150).
+**State:** **slice 13, step 13a (payout) is built and waits for Jacob's
+review. It is not merged.** The slice 13 plan, approved as decision 151, is
+on this branch too and goes into `main` with it.
 
-## The plan
+## What changed
 
-[../slice-13-giving-work-plan.md](../slice-13-giving-work-plan.md), from
-product-architecture.md 6.6, 7.4 to 7.8 and 10.1. Three steps, each stopping
-for review, all inside Backoffice with no portal:
+Plan: [../slice-13-giving-work-plan.md](../slice-13-giving-work-plan.md),
+"Step 13a" and "Step 13a as built".
 
-- **13a, payout:** each Work Package's payout in dollars, changed with a
-  reason and every amount kept; seen only by those allowed.
-- **13b, the award:** the Production Manager gives a package to one Active,
-  compliant subcontractor at the job's Location, who picks one of the
-  windows offered; how they accepted is recorded; changing or taking back an
-  award says why and whose doing it was.
-- **13c, the work order:** a page that prints, with the address, access
-  notes, scope, dates, crew, approved colors, payout and any insurance
-  deduction; "sent" recorded by the Production Manager; approved colors
-  needed first.
+- **Each Work Package has a payout:** what Banana will pay a subcontractor
+  for it, typed in dollars, on the Project's Work and schedule part.
+- **Every amount is kept,** with who set it, when, and an optional reason;
+  the earlier amounts are listed under the current one.
+- **Who sees it:** Production Managers, Location Managers, Leadership, the
+  Owner and Finance, through a new permission, `payouts.view`. The job's
+  Production Manager or a manager there sets it. Sales and the Contact
+  Center never see a payout, anywhere.
+- **Audit record only:** a payout is never in a customer's or a Project's
+  Activity.
+- **Stored:** one column on `work_packages` and a new table,
+  `work_package_payouts`.
 
-Left out, for later: the marketplace and portal, electronic signature, the
-budget view and gross margin, paying subcontractors, overruns and the
-scorecard, utilization, and any message.
+## Tests and checks
+
+- `composer test`: formatting, PHPStan and every test; the count is in the
+  chat report for this push. The new ones are in
+  `tests/Feature/Projects/PayoutTest.php`; the role test lists the new
+  permission.
+- They cover: setting and changing, every amount kept; the same amount again
+  recording nothing; six amounts that are not amounts; who may see and who
+  may set, for eight kinds of person; a job that is not ready; and the page
+  for the Production Manager, Finance and the salesperson, including that
+  the salesperson's page carries no payout at all.
+- Both GitHub jobs, including the migration on MySQL 8.4: see the chat
+  report.
+
+## Browser review (done by the agent, on the local site, fictitious data)
+
+On the sample job scheduled in slice 11, as the sample Production Manager:
+
+1. Both packages showed "Payout: Not set yet".
+2. "a lot" was refused. Then $3,200 and $450 were set, and the first changed
+   to $3,450.50 with a reason; "Was $3,200" was listed under it.
+3. As the sample salesperson, the same job showed both packages with no
+   payout, and the word "payout" appeared nowhere on the page.
+
+## Architectural decisions made
+
+- **Payouts have their own permission,** separate from seeing the Project,
+  as the permission model's guardrail on finance-sensitive data asks.
+
+## Deviations from the approved plan
+
+None. Two readings, in "Step 13a as built", for Jacob to change if wrong:
+
+- A reason is optional until the work can be awarded (step 13b).
+- Another Production Manager at the Location sees a payout but cannot change
+  it.
+
+## Known limitations
+
+- No award, work order or deduction yet (steps 13b and 13c).
+- No gross margin is shown.
 
 ## Decisions needed
 
-Each has a recommendation; "follow your recommendations" is a complete
-answer.
-
-1. **Who sees payouts:** a new permission for Production Managers, Location
-   Managers, Leadership, the Owner and Finance. Never Sales or the Contact
-   Center.
-2. **Changing a payout:** free until awarded; after that, with a reason, and
-   the subcontractor's acceptance recorded again. Every amount kept.
-3. **Who can be given the work:** Active, compliant, at the job's Location.
-   A crew smaller than needed is a warning, not a refusal.
-4. **The order:** the subcontractor picks one of the windows offered to the
-   customer, then the Production Manager confirms with the customer as now;
-   if already confirmed, the award is for those dates.
-5. **Acceptance:** who, how (in person, phone, text, email) and the day,
-   recorded by the Production Manager.
-6. **Taking back an award:** a reason every time, and whose doing it was;
-   only "the subcontractor withdrew" will count against them later.
-7. **The insurance deduction:** one company rate, 10% to start, changed in
-   Settings with the day it takes effect; Location rates when needed.
-8. **The work order:** a printable page; "sent" recorded; approved colors
-   needed first.
-9. **The job's address on the work order:** yes, once awarded; never before.
-10. **No message** to subcontractors or customers.
+1. **Merge step 13a (and the approved slice 13 plan) into `main`, and start
+   step 13b, the award?** Its questions were answered in decision 151.
