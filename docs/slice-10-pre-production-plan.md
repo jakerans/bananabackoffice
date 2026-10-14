@@ -4,8 +4,9 @@ Status: **approved on 2026-10-13 (decision 141) in three steps, each stopping
 for Jacob's review. He answered two questions in his own words: the welcome
 call is a checklist item, with the procedure for it kept outside Backoffice;
 and a job nobody has called is flagged as falling behind after two business
-days. The other seven are as recommended. Step 10a is built and waits for his
-review; see "Step 10a as built". Steps 10b and 10c are not built.** It was
+days. The other seven are as recommended. Step 10a was built and merged into
+`main` on 2026-10-13 (decision 142); see "Step 10a as built". Step 10b is
+being built. Step 10c is not built.** It was
 written as what the implementation agent recommended after slice 9, from the
 plan.
 
@@ -101,9 +102,9 @@ Not in slice 10, each needing its own plan and approval:
 
 ### Step 10a as built (2026-10-13)
 
-Built on the branch `checkpoint-slice-10a-onboarding-timeframe`. **Not merged;
-it waits for Jacob's review.** Built as planned above, with the welcome call
-as decision 141 has it. What a reader of the code should know:
+**Merged into `main` on 2026-10-13** with Jacob's word ("Merge and start.",
+decision 142). Built as planned above, with the welcome call as decision 141
+has it. What a reader of the code should know:
 
 - **The welcome call is one tick** (`App\Actions\Projects\RecordWelcomeCall`):
   the day the call was made, which cannot be a day still to come, and an
