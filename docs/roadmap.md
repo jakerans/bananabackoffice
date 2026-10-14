@@ -139,6 +139,11 @@ why it is next, is [slice-11-schedule-plan.md](slice-11-schedule-plan.md).
 (decision 146).** **Step 11c (Production > Schedule) was built and merged on 2026-10-14
 (decision 147).** **Slice 11 is complete as planned.**
 
+**Slice 12, subcontractors (the roster and compliance), is proposed and not
+approved.** Its plan is
+[slice-12-subcontractors-plan.md](slice-12-subcontractors-plan.md). Nothing in
+it is built.
+
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
 Production Workspace instead of separate stage/project modules. Customers and
