@@ -242,6 +242,29 @@ class Project extends Model
     }
 
     /**
+     * The days its work is booked for, from the first package's first day to
+     * the last one's last day, once every package has dates the customer
+     * confirmed. Read from its packages, which should be loaded.
+     *
+     * @return array{0: Carbon, 1: Carbon}|null
+     */
+    public function scheduledDays(): ?array
+    {
+        $packages = $this->workPackages;
+
+        if ($packages->isEmpty() || $packages->contains(fn (WorkPackage $package): bool => ! $package->isScheduled())) {
+            return null;
+        }
+
+        /** @var Carbon $first */
+        $first = $packages->min('scheduled_first_day');
+        /** @var Carbon $last */
+        $last = $packages->max('scheduled_last_day');
+
+        return [$first, $last];
+    }
+
+    /**
      * Whether the salesperson's handoff is complete. Production cannot take a
      * Project until it is.
      */

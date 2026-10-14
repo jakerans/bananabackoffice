@@ -85,11 +85,14 @@ class AssignProductionManager
         $earlier = $project->production_manager_id === null ? null : User::query()->find($project->production_manager_id);
         $before = ['production_manager' => $project->production_manager_name, 'production' => $project->production_state->value];
 
+        // A job just sold comes into pre-production. One already further on, scheduled say, stays where it is.
+        $state = $project->production_state === ProjectProductionState::NewFromSales ? ProjectProductionState::PreProduction : $project->production_state;
+
         $project->forceFill([
             'production_manager_id' => $manager->id,
             'production_manager_name' => $manager->name,
             'production_manager_assigned_at' => now(),
-            'production_state' => ProjectProductionState::PreProduction,
+            'production_state' => $state,
         ])->save();
 
         DB::table('project_production_managers')->insert([
@@ -112,7 +115,7 @@ class AssignProductionManager
             $project,
             actor: $actor,
             before: $before,
-            after: ['production_manager' => $manager->name, 'production' => ProjectProductionState::PreProduction->value],
+            after: ['production_manager' => $manager->name, 'production' => $state->value],
             location: $project->location,
             reason: $note,
         );

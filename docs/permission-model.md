@@ -586,6 +586,7 @@ Rules:
     record. **Work Packages and the dates offered** (slice 11 step 11a,
     decision 144) follow the same rule as the colors, and only while the job
     is ready to schedule; everyone else who may see the Project reads them.
+    **Confirming dates and rescheduling** (step 11b) follow the same rule.
 
 ## Slice 4: the call queue and its settings
 

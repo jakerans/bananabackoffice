@@ -80,7 +80,7 @@ test('workspace is refused to people without production access, and a guest is s
 })->with([Role::SalesConsultant, Role::CallCenterAgent, Role::Finance]);
 
 test('each sold job is in the list for where it stands', function () {
-    $page = workspacePage($this->pat)->assertSee('Sold jobs at Lakeview, from the sale until they are ready to schedule.');
+    $page = workspacePage($this->pat)->assertSee('Sold jobs at Lakeview, from the sale until they are scheduled.');
 
     expect(workspaceList($page, 'new'))->toContain('2 Elm St')->not->toContain('1 Oak St')->not->toContain('3 Pine St');
     expect(workspaceList($page, 'awaiting-handoff'))->toContain('1 Oak St')->toContain('No handoff yet')->not->toContain('2 Elm St');

@@ -3,8 +3,9 @@
 namespace App\Enums;
 
 /**
- * How the customer said yes to the colors. Recorded by staff until the
- * customer can approve for themselves (decision 141, question 4).
+ * How the customer said yes: to the colors (decision 141, question 4) and to
+ * the dates of the work (decision 144). Recorded by staff until the customer
+ * can say it for themselves.
  */
 enum ColorApprovalMethod: string
 {

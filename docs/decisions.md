@@ -2998,6 +2998,19 @@ slice 11 as proposed, with the recommendation on all ten questions.
    and its history. It is built as the plan and decision 144 (questions 5 to
    7) have it and stops for his review.
 
+## 146. Step 11b is merged; step 11c starts (2026-10-14)
+
+**Decided by Jacob,** in reply to step 11b's handoff: "Merge and continue."
+
+1. **Step 11b, the confirmed schedule, is merged.** The readings in its
+   handoff and in the plan under "Step 11b as built" stay as built; he did
+   not change them: a reschedule records who agreed to the new dates; the
+   salesperson is told only when the whole job is scheduled; confirmed dates
+   cannot be taken away without new ones.
+2. **Step 11c, Production > Schedule and "needs dates soon", starts.** It is
+   built as the plan and decision 144 (questions 8 and 9) have it and stops
+   for his review. It is the last step of slice 11.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

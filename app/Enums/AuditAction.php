@@ -91,6 +91,8 @@ enum AuditAction: string
     case ProjectWorkPackageRemoved = 'project.work_package_removed';
     case ProjectWindowProposed = 'project.window_proposed';
     case ProjectWindowWithdrawn = 'project.window_withdrawn';
+    case ProjectScheduleConfirmed = 'project.schedule_confirmed';
+    case ProjectRescheduled = 'project.rescheduled';
     case LeadReceivedTimeCorrected = 'lead.received_time_corrected';
     case LeadQualified = 'lead.qualified';
     case LeadReturnedToWorking = 'lead.returned_to_working';
