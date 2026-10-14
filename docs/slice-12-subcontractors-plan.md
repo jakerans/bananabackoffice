@@ -1,9 +1,9 @@
-# Slice 12 — Subcontractors: the Roster and Compliance: Proposed Plan
+# Slice 12 — Subcontractors: the Roster and Compliance: Plan
 
-Status: **proposed on 2026-10-14, after slice 11 (decision 147). Not
-approved. Nothing in it is built.** It is what the implementation agent
-recommends next, from the plan. Jacob approves it, changes it, or chooses
-something else.
+Status: **approved on 2026-10-14 (decision 148) in two steps, each stopping
+for Jacob's review, with the recommendation on all ten questions. Step 12a is
+built and waits for Jacob's review; see "Step 12a as built".** It was written as what the implementation agent recommended
+after slice 11, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), section 7
 (7.1 to 7.3 and 7.11), and the stakeholder answers on subcontractor
@@ -89,6 +89,48 @@ Not in slice 12, each needing its own plan and approval:
 Subcontractors, the Locations they work at, their services, and every
 change of where they stand, with the reason when one is needed.
 
+### Step 12a as built (2026-10-14)
+
+**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+What a reader of the code should know:
+
+- **Stored:** `subcontractors` (business name, contact person, phone, email,
+  crew size, home town and ZIP, where they stand, VIP), with
+  `location_subcontractor` and `service_subcontractor`. A subcontractor is
+  never deleted. No tax ID number is kept.
+- **History is the audit record** (decision 34): added, details changed,
+  each change of where they stand, VIP set or taken off, each with who, when
+  and the reason. It is shown on the subcontractor's page, and is in no
+  customer's Activity.
+- **Two new permissions,** `subcontractors.view` and
+  `subcontractors.manage`, held at a Location by the Production Manager,
+  Location Manager and Leadership roles, and by the Owner. Sales, the Contact
+  Center and Finance have neither. `App\Policies\SubcontractorPolicy`: a
+  person may see or change a subcontractor who works at one of the Locations
+  where they hold the permission.
+- **One action writes it all:** `App\Actions\Subcontractors\ChangeSubcontractor`
+  (add, change, moveTo, setVip), with the record held and the permission
+  checked each time.
+- **Production > Subcontractors** is live: one Location's subcontractors in
+  three parts, "On the roster" (Active and Benched), "Recruiting" (Prospect
+  to Onboarding sent) and "Past" (Offboarded and Not hired), with a search
+  by business or contact name. "Add a subcontractor" opens on their new
+  page.
+- **Locations:** a person chooses only Locations where they look after
+  subcontractors; when they change one, its other Locations stay as they
+  are. At least one is needed.
+- **Where they stand** can be changed to any other standing, one change at a
+  time. Benched, Offboarded and Not hired need a reason, and so does moving
+  out of them. Leaving Active takes VIP off.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **Any standing can follow any other,** not only the next in recruiting,
+  so a step can be skipped or undone. Each change is kept.
+- **A reason is optional for the ordinary recruiting steps** and asked for
+  as a note.
+- **A service taken off Sales' list stays on a subcontractor who has it,**
+  but cannot be chosen again.
 ## Step 12b — Compliance
 
 ### What a person sees
@@ -143,6 +185,9 @@ showing only the Location's own; and the migrations on MySQL 8.4, with every
 new stored name checked against its column.
 
 ## Decisions needed
+
+**Answered by Jacob on 2026-10-14 (decision 148): "I like them all. Let's
+run."** The questions are kept below as they were asked.
 
 Each has a recommendation. "Follow your recommendations" is a complete answer.
 

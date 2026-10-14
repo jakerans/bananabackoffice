@@ -21,6 +21,7 @@ use App\Models\ProjectSize;
 use App\Models\Property;
 use App\Models\SalesLossReason;
 use App\Models\Service;
+use App\Models\Subcontractor;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
 use App\Support\Access\Impersonation;
@@ -116,6 +117,7 @@ class AppServiceProvider extends ServiceProvider
             'contact' => Contact::class,
             'property' => Property::class,
             'contact_center_settings' => ContactCenterSettings::class,
+            'subcontractor' => Subcontractor::class,
         ]);
     }
 

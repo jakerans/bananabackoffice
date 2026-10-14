@@ -3025,6 +3025,36 @@ subcontractors as next: "merge and continue".
    section 7), starting with the roster and onboarding, as the handoff said.
    It is written for his approval before anything is built.
 
+## 148. Slice 12, subcontractors, is approved; step 12a starts (2026-10-14)
+
+**Decided by Jacob,** after reading the ten questions and their
+recommendations: "I like them all. Let's run."
+
+1. **The plan is approved** in two steps
+   ([slice-12-subcontractors-plan.md](slice-12-subcontractors-plan.md)), each
+   stopping for his review. The ten answers are the recommendations:
+   1. A subcontractor works at one or more Locations, chosen when they are
+      added.
+   2. One "where they stand" list: Prospect, Screened, Interview scheduled,
+      Interviewed, Approved, Onboarding sent, Active, Benched, Offboarded, and
+      Not hired. VIP is a separate mark. "Pending compliance" is worked out
+      from the checklist, never set.
+   3. Business name and contact person are required, with a phone or an
+      email; crew size and services can come later; home base is a town and
+      ZIP code, not a full address.
+   4. The Production Manager or a manager benches, unbenches and offboards,
+      with a reason every time, as for VIP.
+   5. Someone not yet compliant can be Active, shown as "Pending compliance",
+      until work can be given out.
+   6. No document files in this slice: the days only.
+   7. The New Mexico waiver certificate is an extra requirement on the
+      Locations in New Mexico.
+   8. "Expiring soon" is marked 30 days before; no email.
+   9. Only Production and managers see subcontractors, through two new
+      permissions.
+   10. No message to subcontractors.
+2. **Step 12a, the roster and recruiting, starts.** It stops for his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
