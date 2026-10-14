@@ -61,6 +61,9 @@ enum Role: string
                 Permission::ManageAppointments,
                 Permission::ViewProjects,
                 Permission::ManageProjects,
+                // Subcontractors are seen by Production and managers only (decision 148, question 9).
+                Permission::ViewSubcontractors,
+                Permission::ManageSubcontractors,
                 Permission::WriteNotes,
                 Permission::RemoveNotes,
                 Permission::ViewAccounts,
@@ -95,6 +98,8 @@ enum Role: string
                 // A manager sees the Projects at their Location and may edit one (decision 130).
                 Permission::ViewProjects,
                 Permission::ManageProjects,
+                Permission::ViewSubcontractors,
+                Permission::ManageSubcontractors,
                 Permission::WriteNotes,
                 // A manager may remove anyone's note from view. Everyone else only their own.
                 Permission::RemoveNotes,
@@ -131,6 +136,9 @@ enum Role: string
                 Permission::ProductionAccess,
                 // A Production Manager sees Projects, and still cannot see Leads.
                 Permission::ViewProjects,
+                // They recruit, onboard and keep the roster (product-architecture.md, 7).
+                Permission::ViewSubcontractors,
+                Permission::ManageSubcontractors,
                 Permission::WriteNotes,
                 Permission::ViewAccounts,
             ],

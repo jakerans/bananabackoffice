@@ -50,6 +50,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('production/workspace', 'pages::production.workspace')->can(Permission::ProductionAccess)->name('production.workspace');
     Route::livewire('production/schedule', 'pages::production.schedule')->can(Permission::ProductionAccess)->name('production.schedule');
 
+    // Subcontractors are seen by Production and managers only (slice 12; decision 148, question 9).
+    Route::livewire('production/subcontractors', 'pages::production.subcontractors')->can(Permission::ViewSubcontractors)->name('production.subcontractors');
+    Route::livewire('production/subcontractors/{subcontractor}', 'pages::production.subcontractor')->can('view', 'subcontractor')->name('production.subcontractors.show');
+
     // The Call Queue is a Marketing > Contact Center page. It is opened by the queue permission,
     // like Leads; every action on it checks the permission again and each Lead by its own location.
     Route::livewire('marketing/contact-center/queue', 'pages::marketing.call-queue')->can(Permission::WorkLeadQueue)->name('marketing.call_center.queue');

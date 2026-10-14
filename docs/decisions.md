@@ -3025,6 +3025,50 @@ subcontractors as next: "merge and continue".
    section 7), starting with the roster and onboarding, as the handoff said.
    It is written for his approval before anything is built.
 
+## 148. Slice 12, subcontractors, is approved; step 12a starts (2026-10-14)
+
+**Decided by Jacob,** after reading the ten questions and their
+recommendations: "I like them all. Let's run."
+
+1. **The plan is approved** in two steps
+   ([slice-12-subcontractors-plan.md](slice-12-subcontractors-plan.md)), each
+   stopping for his review. The ten answers are the recommendations:
+   1. A subcontractor works at one or more Locations, chosen when they are
+      added.
+   2. One "where they stand" list: Prospect, Screened, Interview scheduled,
+      Interviewed, Approved, Onboarding sent, Active, Benched, Offboarded, and
+      Not hired. VIP is a separate mark. "Pending compliance" is worked out
+      from the checklist, never set.
+   3. Business name and contact person are required, with a phone or an
+      email; crew size and services can come later; home base is a town and
+      ZIP code, not a full address.
+   4. The Production Manager or a manager benches, unbenches and offboards,
+      with a reason every time, as for VIP.
+   5. Someone not yet compliant can be Active, shown as "Pending compliance",
+      until work can be given out.
+   6. No document files in this slice: the days only.
+   7. The New Mexico waiver certificate is an extra requirement on the
+      Locations in New Mexico.
+   8. "Expiring soon" is marked 30 days before; no email.
+   9. Only Production and managers see subcontractors, through two new
+      permissions.
+   10. No message to subcontractors.
+2. **Step 12a, the roster and recruiting, starts.** It stops for his review.
+
+## 149. Step 12a is merged; step 12b starts (2026-10-14)
+
+**Decided by Jacob,** in reply to step 12a's handoff, which asked whether to
+merge it and start step 12b: "continue".
+
+1. **Step 12a, the roster and recruiting, is merged,** with the approved
+   slice 12 plan. The readings in its handoff and in the plan under "Step
+   12a as built" stay as built; he did not change them: any standing can
+   follow any other; the ordinary recruiting steps take an optional note; a
+   service taken off Sales' list stays on a subcontractor who has it.
+2. **Step 12b, compliance, starts.** It is built as the plan and decision
+   148 (questions 5 to 8) have it and stops for his review. It is the last
+   step of slice 12.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

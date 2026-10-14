@@ -35,6 +35,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ViewAccounts,
         Permission::ManageAccounts,
         Permission::ArchiveAccounts,
+        Permission::ViewSubcontractors,
+        Permission::ManageSubcontractors,
     ]],
     'leadership' => [Role::Leadership, [
         Permission::ViewProjects,
@@ -62,6 +64,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ViewAccounts,
         Permission::ManageAccounts,
         Permission::ArchiveAccounts,
+        Permission::ViewSubcontractors,
+        Permission::ManageSubcontractors,
     ]],
     'finance' => [Role::Finance, [
         Permission::ViewProjects,
@@ -88,6 +92,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::WaiveContactWait,
         Permission::ViewAccounts,
         Permission::ManageAccounts,
+        Permission::ViewSubcontractors,
+        Permission::ManageSubcontractors,
     ]],
     'call center agent' => [Role::CallCenterAgent, [
         Permission::MarketingAccess,
@@ -118,6 +124,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ProductionAccess,
         Permission::WriteNotes,
         Permission::ViewAccounts,
+        Permission::ViewSubcontractors,
+        Permission::ManageSubcontractors,
     ]],
 ]);
 
