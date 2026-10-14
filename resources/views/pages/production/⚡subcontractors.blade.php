@@ -3,10 +3,12 @@
 use App\Actions\Subcontractors\ChangeSubcontractor;
 use App\Enums\Permission;
 use App\Enums\SubcontractorStanding;
+use App\Models\ComplianceRequirement;
 use App\Models\Location;
 use App\Models\Service;
 use App\Models\Subcontractor;
 use App\Support\Access\CurrentLocation;
+use App\Support\Subcontractors\Compliance;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -122,11 +124,23 @@ new #[Title('Subcontractors')] class extends Component {
             ->when($search !== '', fn ($query) => $query->where(fn ($match) => $match
                 ->where('business_name', 'like', '%'.$search.'%')
                 ->orWhere('contact_name', 'like', '%'.$search.'%')))
-            ->with('services')
+            ->with(['services', 'locations', 'complianceRecords'])
             ->orderBy('business_name')
             ->orderBy('id')
             ->limit(self::LIMIT)
             ->get();
+    }
+
+    /**
+     * Every compliance requirement in force, read once for the whole list
+     * (slice 12, step 12b).
+     *
+     * @return Collection<int, ComplianceRequirement>
+     */
+    #[Computed]
+    public function requirements(): Collection
+    {
+        return ComplianceRequirement::query()->active()->ordered()->get();
     }
 
     public function updatedLocationId(): void
@@ -250,6 +264,17 @@ new #[Title('Subcontractors')] class extends Component {
                                 </div>
 
                                 <div class="flex shrink-0 flex-wrap gap-1">
+                                    {{-- On the roster, whether they are compliant: worked out, never set (slice 12, step 12b). --}}
+                                    @if ($key === 'roster')
+                                        @php
+                                            $compliance = Compliance::for($subcontractor, $this->requirements);
+                                        @endphp
+                                        @if (! $compliance->isCompliant())
+                                            <flux:badge size="sm" color="rose" data-test="subcontractor-pending-compliance">{{ __('Pending compliance') }}</flux:badge>
+                                        @elseif ($compliance->expiringSoon() !== [])
+                                            <flux:badge size="sm" color="amber" data-test="subcontractor-expiring">{{ __('Expires soon') }}</flux:badge>
+                                        @endif
+                                    @endif
                                     @if ($subcontractor->is_vip)
                                         <flux:badge size="sm" color="yellow" data-test="subcontractor-vip">{{ __('VIP') }}</flux:badge>
                                     @endif

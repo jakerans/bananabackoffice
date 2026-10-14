@@ -743,7 +743,8 @@ Added 2026-10-14 (slice 12; build plan: slice-12-subcontractors-plan.md; LOCKED 
 - One "where they stand" list runs Prospect, Screened, Interview scheduled, Interviewed, Approved, Onboarding sent, Active, Benched, Offboarded and Not hired. VIP is a separate mark set by the Production Manager or a manager with a reason. Benching, offboarding and not hiring need a reason.
 - "Pending compliance" is worked out from the compliance checklist, never set; a subcontractor who is not compliant can still be Active until work can be given out. No document files and no tax ID numbers are kept in slice 12.
 - Built in step 12a (merged 2026-10-14, decision 149): Production > Subcontractors, each subcontractor's page and history.
-- Not built yet: compliance (12b); documents; the subcontractor portal; giving work.
+- Built in step 12b (merged 2026-10-14, decision 150): the compliance checklist on each subcontractor, worked out into Compliant or Pending compliance, with expiring soon at 30 days; Banana's coverage for the two insurance items; each Location's own requirements in Settings.
+- Not built yet after slice 12: the documents themselves; the subcontractor portal; giving work (7.4 to 7.9); the scorecard and VIP eligibility (7.10, 7.11).
 
 7.1 Recruiting
 Prospect → Screened → Interview Scheduled → Interviewed → Approved/Hired → Onboarding Sent → Active Roster.

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use LogicException;
 
@@ -108,6 +109,16 @@ class Subcontractor extends Model
     public function services(): BelongsToMany
     {
         return $this->belongsToMany(Service::class)->withTimestamps()->orderBy('services.position')->orderBy('services.id');
+    }
+
+    /**
+     * Every compliance item received, the latest first (slice 12, step 12b).
+     *
+     * @return HasMany<SubcontractorComplianceRecord, $this>
+     */
+    public function complianceRecords(): HasMany
+    {
+        return $this->hasMany(SubcontractorComplianceRecord::class)->orderByDesc('id');
     }
 
     /**

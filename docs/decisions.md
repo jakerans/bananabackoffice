@@ -3069,6 +3069,21 @@ merge it and start step 12b: "continue".
    148 (questions 5 to 8) have it and stops for his review. It is the last
    step of slice 12.
 
+## 150. Step 12b is merged and slice 12 is complete; a plan for giving work comes next (2026-10-14)
+
+**Decided by Jacob,** in reply to step 12b's handoff, which recommended a
+plan for giving work to subcontractors and said that "continue" would mean
+merging and writing it: "continue".
+
+1. **Step 12b, compliance, is merged, and slice 12 is complete.** The
+   readings in its handoff and in the plan under "Step 12b as built" stay as
+   built; he did not change them: no Location has the New Mexico waiver
+   until someone adds it; "Pending compliance" shows only for subcontractors
+   on the roster; a correction is a new record.
+2. **Next is a proposed plan for giving work to subcontractors**
+   (product-architecture.md, 6.6 and 7.4 to 7.8), inside Backoffice and
+   without a portal, written for his approval before anything is built.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
