@@ -361,6 +361,8 @@ new #[Title('Workspace')] class extends Component {
                                         <span>&middot;</span>
                                     @endif
                                     <span data-test="workspace-timeframe">{{ RoughTimeframe::of($project) ?? __('No rough timeframe') }}</span>
+                                    <span>&middot;</span>
+                                    <span data-test="workspace-colors">{{ __('Colors: :state', ['state' => mb_strtolower(__($project->color_readiness->label()))]) }}</span>
                                 </span>
                             </div>
 

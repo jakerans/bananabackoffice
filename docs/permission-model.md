@@ -578,7 +578,10 @@ Rules:
     with `projects.manage` at the Project's Location, once the Project has a
     Production Manager and while its sale stands. Another Production Manager
     there, and the salesperson who sold it, read both and write neither. No
-    permission was added.
+    permission was added. **The Color Specification** (step 10b) follows the
+    same rule: the same people write the colors, mark them as with the
+    customer and record the customer's approval; everyone else who may see
+    the Project reads them.
 
 ## Slice 4: the call queue and its settings
 

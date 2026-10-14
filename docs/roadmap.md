@@ -127,8 +127,8 @@ is complete as planned.**
 141).** Its plan, with the reasoning from the plan for why it is next, is
 [slice-10-pre-production-plan.md](slice-10-pre-production-plan.md). **Step 10a
 (the welcome call and the rough timeframe) was built and merged on 2026-10-13
-(decision 142).** Step 10b (the Color Specification) is being built. Step 10c
-(readiness) is not built.
+(decision 142).** **Step 10b (the Color Specification) was built and merged on
+2026-10-13 (decision 143).** Step 10c (readiness) is being built.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

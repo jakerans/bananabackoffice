@@ -2935,6 +2935,20 @@ Read by the implementation agent, for Jacob to change if wrong:
 2. **Step 10b, the Color Specification, starts.** It is built as the plan and
    decision 141 have it and stops for his review.
 
+## 143. Step 10b is merged; step 10c starts (2026-10-13)
+
+**Decided by Jacob,** in reply to step 10b's handoff: "merge and start".
+
+1. **Step 10b, the Color Specification, is merged.** The readings in its
+   handoff and in the plan under "Step 10b as built" stay as built; he did
+   not change them. Among them: manufacturer and sheen are needed on every
+   line; any change to approved colors needs approval again; an approval
+   recorded by mistake is put right by a new version; and "with the customer
+   for approval" is optional.
+2. **Step 10c, readiness, starts.** It is built as the plan and decision 141
+   (question 8) have it and stops for his review. It is the last step of
+   slice 10.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

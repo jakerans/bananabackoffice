@@ -5,8 +5,9 @@ for Jacob's review. He answered two questions in his own words: the welcome
 call is a checklist item, with the procedure for it kept outside Backoffice;
 and a job nobody has called is flagged as falling behind after two business
 days. The other seven are as recommended. Step 10a was built and merged into
-`main` on 2026-10-13 (decision 142); see "Step 10a as built". Step 10b is
-being built. Step 10c is not built.** It was
+`main` on 2026-10-13 (decision 142); see "Step 10a as built". Step 10b was
+built and merged on 2026-10-13 (decision 143); see "Step 10b as built". Step
+10c is being built.** It was
 written as what the implementation agent recommended after slice 9, from the
 plan.
 
@@ -167,6 +168,58 @@ Readings made while building, for Jacob to change if wrong (also in decision
 | `color_specifications` (new) | One row for each version of a Project's colors: its number, who made it, and the approval (who, how, when, recorded by whom). Never deleted. |
 | `color_specification_lines` (new) | The lines of a version: area, surface, manufacturer, color name, color code, sheen, product, note, order. |
 | `projects` | `color_readiness`, a state of its own beside the production state. |
+
+### Step 10b as built (2026-10-13)
+
+**Merged into `main` on 2026-10-13** with Jacob's word ("merge and start",
+decision 143). Built as planned above. What a reader of the code should
+know:
+
+- **The Colors part is a component of its own** on the Project page
+  (`pages::projects.colors`), shown once the Project has a Production
+  Manager. Anyone who may see the Project reads it.
+- **A line** is an area, a surface, the manufacturer, the color's name and
+  the sheen, which are all needed, and the color's code, the product and a
+  note, which are not. The sheen is one of six
+  (`App\Enums\Sheen`); the rest is typed in (question 6).
+- **Lines are added, changed and removed one at a time**
+  (`App\Actions\Projects\ChangeColorSpecification`). The first line starts
+  version 1.
+- **"With the customer for approval"** records that the colors have gone to
+  the customer. Backoffice sends nothing. A change afterwards takes it back.
+- **The approval** (`App\Actions\Projects\RecordColorApproval`) records who
+  approved, how (in person, by phone, by text or by email) and on which day,
+  and who recorded it. It starts on the Project's contact and today.
+- **Changing, adding to or removing from approved colors starts the next
+  version** as a copy of the approved one with the change made, and it needs
+  approval again. The approved version is kept exactly as it was: its lines
+  refuse to be edited or deleted, and it stays readable under "Earlier
+  versions". Saving an approved line unchanged starts nothing.
+- **Color Readiness** is stored on the Project and kept in step by those
+  actions: Not started, In progress, Waiting for the customer's approval,
+  Approved. It shows as a badge on the Project and on each job in the
+  Workspace.
+- **Who may:** `ProjectPolicy::managePreProduction`, as step 10a (questions 4
+  and 7). The salesperson reads the colors and writes none.
+- **In the customer's Activity:** colors started, with the customer for
+  approval, approved, and a new version. Each line added, changed or removed
+  is in the audit record only.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **Manufacturer and sheen are needed on every line,** as well as the area,
+  the surface and the color's name, because closeout needs "manufacturer /
+  paint, color and sheen" (6.8).
+- **Any change to approved colors needs approval again,** a corrected spelling
+  included. There is no "small correction" that skips it.
+- **An approval recorded by mistake is not undone.** It is put right by
+  changing the colors, which starts the next version.
+- **"With the customer for approval" is optional.** An approval can be
+  recorded straight from "In progress".
+- **A first version with every line taken out again reads "Not started".** A
+  later version with every line taken out reads "In progress" and cannot be
+  approved.
+- **Lines stay in the order they were added.** They cannot be reordered.
 
 ## Step 10c — Readiness
 
