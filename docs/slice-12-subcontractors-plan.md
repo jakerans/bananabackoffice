@@ -3,8 +3,8 @@
 Status: **approved on 2026-10-14 (decision 148) in two steps, each stopping
 for Jacob's review, with the recommendation on all ten questions. Step 12a was
 built and merged on 2026-10-14 (decision 149); see "Step 12a as built". Step
-12b, the last, is built and waits for Jacob's review; see "Step 12b as
-built".** It was written as what the implementation agent recommended
+12b was built and merged on 2026-10-14 (decision 150); see "Step 12b as
+built". Slice 12 is complete.** It was written as what the implementation agent recommended
 after slice 11, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), section 7
@@ -161,7 +161,8 @@ no document is stored.
 
 ### Step 12b as built (2026-10-14)
 
-**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+**Merged into `main` on 2026-10-14** with Jacob's word ("continue", decision
+150). Built as planned above.
 What a reader of the code should know:
 
 - **Stored:** `compliance_requirements`, with the four of the base checklist
