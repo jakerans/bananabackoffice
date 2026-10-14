@@ -604,7 +604,8 @@ Added 2026-10-14 (slice 11; build plan: slice-11-schedule-plan.md; LOCKED by dec
 - A window is a first and a last working day. Windows are proposed only on a job that is ready to schedule. The Production Manager records the customer's confirmation of one; the "crew-selected window" state waits for subcontractors.
 - Confirmed dates do not need approved colors; approved colors will be needed before a work order goes to a crew. A reschedule needs a reason, keeps the old dates and tells the salesperson in Backoffice. No message goes to the customer.
 - A ready job with no confirmed dates is flagged "needs dates soon" when its rough timeframe starts in less than three weeks. Production > Schedule is a plain list by week.
-- Not built yet: all of it (steps 11a to 11c).
+- Built in step 11a (merged 2026-10-14, decision 145): Work Packages on a ready job, the first starting from the sale and the handoff; and the windows of dates offered to the customer for each, which are in the customer's Activity.
+- Not built yet: the customer's confirmation, Scheduled, rescheduling (11b); Production > Schedule and "needs dates soon" (11c).
 
 PMs plan same-day starts manually. Established, capable subcontractors may run
 their own initial walkthrough; new/unproven crews require staggered starts so

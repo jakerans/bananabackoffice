@@ -2983,6 +2983,21 @@ slice 11 as proposed, with the recommendation on all ten questions.
 3. **Step 11a, Work Packages and proposed windows, starts.** It stops for his
    review.
 
+## 145. Step 11a is merged; step 11b starts (2026-10-14)
+
+**Decided by Jacob,** in reply to step 11a's handoff: "go".
+
+1. **Step 11a, Work Packages and the dates offered to the customer, is
+   merged.** The readings in its handoff and in the plan under "Step 11a as
+   built" stay as built; he did not change them: withdrawn dates are in the
+   customer's Activity as well as offered ones; a window shorter than the
+   work's days is allowed with a warning; nothing is written on a job that is
+   not ready, packages included.
+2. **Step 11b, the confirmed schedule, starts:** the customer's confirmation
+   of one window, the job shown as Scheduled, and rescheduling with a reason
+   and its history. It is built as the plan and decision 144 (questions 5 to
+   7) have it and stops for his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

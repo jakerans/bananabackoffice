@@ -10,9 +10,11 @@ use App\Enums\AuditAction;
 use App\Models\Appointment;
 use App\Models\AuditEvent;
 use App\Models\Project;
+use App\Models\WorkPackageWindow;
 use App\Support\Customers\CustomerActivity;
 use App\Support\Projects\Readiness;
 use App\Support\Projects\RoughTimeframe;
+use Carbon\CarbonImmutable;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -40,6 +42,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectProductionManagerAssigned, AuditAction::ProjectProductionManagerChanged, AuditAction::ProjectTaken,
         AuditAction::ProjectWelcomeCallRecorded, AuditAction::ProjectWelcomeCallUndone, AuditAction::ProjectTimeframeSet, AuditAction::ProjectTimeframeChanged,
         AuditAction::ProjectColorsStarted, AuditAction::ProjectColorsNewVersion, AuditAction::ProjectColorsSentForApproval, AuditAction::ProjectColorsApproved,
+        AuditAction::ProjectWindowProposed, AuditAction::ProjectWindowWithdrawn,
     ];
 
     #[Locked]
@@ -111,8 +114,29 @@ new #[Title('Project')] class extends Component {
         return match ($event->action) {
             AuditAction::ProjectEdited => __('Title or description changed'),
             AuditAction::ProjectHandoffChanged => __('Handoff answers changed'),
+            AuditAction::ProjectWindowProposed, AuditAction::ProjectWindowWithdrawn => $this->windowLabel($event),
             default => CustomerActivity::label($event->action),
         };
+    }
+
+    /**
+     * Dates offered or withdrawn, with which work and which days.
+     */
+    private function windowLabel(AuditEvent $event): string
+    {
+        $window = $event->action === AuditAction::ProjectWindowProposed ? $event->values_after : $event->values_before;
+        $first = is_string($window['first_day'] ?? null) ? CarbonImmutable::createFromFormat('!Y-m-d', $window['first_day']) : null;
+        $last = is_string($window['last_day'] ?? null) ? CarbonImmutable::createFromFormat('!Y-m-d', $window['last_day']) : null;
+
+        if (! $first instanceof CarbonImmutable || ! $last instanceof CarbonImmutable) {
+            return CustomerActivity::label($event->action);
+        }
+
+        return __(':what: :package, :days', [
+            'what' => CustomerActivity::label($event->action),
+            'package' => is_string($window['package'] ?? null) ? $window['package'] : __('Unknown'),
+            'days' => WorkPackageWindow::describe($first, $last),
+        ]);
     }
 
     /**
@@ -135,6 +159,15 @@ new #[Title('Project')] class extends Component {
      */
     #[On('project-colors-changed')]
     public function colorsChanged(): void
+    {
+        unset($this->project, $this->activity);
+    }
+
+    /**
+     * The Work and schedule part changed the Project: read its Activity again.
+     */
+    #[On('project-work-changed')]
+    public function workChanged(): void
     {
         unset($this->project, $this->activity);
     }
@@ -168,6 +201,7 @@ new #[Title('Project')] class extends Component {
         $recordWelcomeCall->handle($this->project, $this->welcomeCallOn, $this->welcomeCallNote, Auth::user());
 
         unset($this->project, $this->activity);
+        $this->dispatch('project-readiness-changed');
 
         Flux::modal('welcome-call')->close();
         Flux::toast(variant: 'success', text: __('Welcome call ticked.'));
@@ -191,6 +225,7 @@ new #[Title('Project')] class extends Component {
         $recordWelcomeCall->undo($this->project, $this->welcomeCallUndoNote, Auth::user());
 
         unset($this->project, $this->activity);
+        $this->dispatch('project-readiness-changed');
 
         Flux::modal('undo-welcome-call')->close();
         Flux::toast(variant: 'success', text: __('Unticked. This project is waiting for its welcome call again.'));
@@ -220,6 +255,7 @@ new #[Title('Project')] class extends Component {
         $setProjectTimeframe->handle($this->project, $this->timeframeEarliest, $this->timeframeLatest, $this->timeframeNote, $this->timeframeReason, Auth::user());
 
         unset($this->project, $this->activity);
+        $this->dispatch('project-readiness-changed');
 
         Flux::modal('project-timeframe')->close();
         Flux::toast(variant: 'success', text: __('Rough timeframe saved.'));
@@ -510,6 +546,11 @@ new #[Title('Project')] class extends Component {
 
             {{-- The Color Specification (slice 10, step 10b). --}}
             <livewire:pages::projects.colors :project="$project" :key="'colors-'.$project->id" />
+
+            {{-- Work Packages and the dates offered to the customer (slice 11, step 11a): once the job is ready to schedule, and kept in view after. --}}
+            @if ($readiness->isReadyToSchedule() || $project->workPackages()->exists())
+                <livewire:pages::projects.work :project="$project" :key="'work-'.$project->id" />
+            @endif
         @endif
     @endunless
 

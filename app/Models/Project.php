@@ -8,11 +8,13 @@ use App\Support\Money;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use LogicException;
@@ -71,6 +73,7 @@ use LogicException;
  * @property-read Contact|null $contact
  * @property-read Property $property
  * @property-read ProjectHandoff|null $handoff
+ * @property-read Collection<int, WorkPackage> $workPackages
  */
 class Project extends Model
 {
@@ -216,6 +219,26 @@ class Project extends Model
     public function timeframes(): HasMany
     {
         return $this->hasMany(ProjectTimeframe::class)->orderByDesc('id');
+    }
+
+    /**
+     * The packages its work is split into, in their order (slice 11, step 11a).
+     *
+     * @return HasMany<WorkPackage, $this>
+     */
+    public function workPackages(): HasMany
+    {
+        return $this->hasMany(WorkPackage::class)->orderBy('position')->orderBy('id');
+    }
+
+    /**
+     * Every window of dates offered to the customer, across its packages.
+     *
+     * @return HasManyThrough<WorkPackageWindow, WorkPackage, $this>
+     */
+    public function workPackageWindows(): HasManyThrough
+    {
+        return $this->hasManyThrough(WorkPackageWindow::class, WorkPackage::class);
     }
 
     /**
