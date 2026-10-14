@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ColorReadiness;
 use App\Enums\ProjectProductionState;
 use App\Support\Money;
 use Database\Factories\ProjectFactory;
@@ -60,6 +61,7 @@ use LogicException;
  * @property Carbon|null $timeframe_earliest The earliest day the work is expected to start. Not a booked date.
  * @property Carbon|null $timeframe_latest
  * @property string|null $timeframe_note
+ * @property ColorReadiness $color_readiness Where its colors stand: a state of its own (slice 10, step 10b).
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Proposal $proposal
@@ -85,6 +87,7 @@ class Project extends Model
      */
     protected $attributes = [
         'production_state' => 'new_from_sales',
+        'color_readiness' => 'not_started',
     ];
 
     protected static function booted(): void
@@ -103,6 +106,7 @@ class Project extends Model
     {
         return [
             'production_state' => ProjectProductionState::class,
+            'color_readiness' => ColorReadiness::class,
             'sold_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'handoff_reminded_at' => 'datetime',
@@ -191,6 +195,17 @@ class Project extends Model
     public function handoff(): HasOne
     {
         return $this->hasOne(ProjectHandoff::class);
+    }
+
+    /**
+     * Every version of its Color Specification, the latest first. The latest
+     * is the one in force, or the one being written.
+     *
+     * @return HasMany<ColorSpecification, $this>
+     */
+    public function colorSpecifications(): HasMany
+    {
+        return $this->hasMany(ColorSpecification::class)->orderByDesc('version');
     }
 
     /**

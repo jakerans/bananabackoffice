@@ -548,7 +548,8 @@ Added 2026-10-13 (slice 10; build plan: slice-10-pre-production-plan.md; LOCKED 
 - Customer onboarding is a welcome call the Production Manager makes. In Backoffice it is a checklist item, ticked with the day it was made; how the call is made is a procedure the business keeps outside Backoffice. A job nobody has called is flagged as falling behind two business days after its Production Manager got it.
 - The rough timeframe is an earliest and a latest start, shown in words and never as a booked date; changing it needs a reason and what it was is kept.
 - Built in step 10a: both of those, on the Project and in Production > Workspace, and the timeframe on the Lead for Sales.
-- Not built yet: the Color Specification (step 10b) and readiness (step 10c).
+- Built in step 10b: the Color Specification (6.4) on the Project, by area and surface; the customer's approval, recorded by the Production Manager or a manager with how it was given; a new version, with the approved one kept, whenever approved colors change; and Color Readiness as a state of its own (2).
+- Not built yet: readiness (step 10c).
 
 6.4 Color Specification
 Every normal sold job ultimately has an authoritative Color Specification.
@@ -574,6 +575,12 @@ Fields:
 
 Color Plan is exploratory.
 Color Specification is production-authoritative.
+
+Added 2026-10-13 (slice 10 step 10b; LOCKED by decision 141):
+- Built: a line needs the area, surface, manufacturer, color name and sheen; the code, product and note are optional. Sheen is a short fixed list; the rest is typed in.
+- The Production Manager or a manager writes the colors and records the customer's approval until the portal (13) lets the customer approve. The salesperson reads them.
+- An approved version is never changed. Changing approved colors starts the next version, which needs approval again, and every version is kept.
+- Not built: origins other than staff typing the colors (Color Studio, the portal), photos, and managed lists of manufacturers and products.
 
 6.5 Production Schedule
 Dates are firm reservations once confirmed, but PMs may manually reschedule.

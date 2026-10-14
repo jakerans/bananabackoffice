@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -37,6 +38,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectHandoffCompleted, AuditAction::ProjectHandoffChanged,
         AuditAction::ProjectProductionManagerAssigned, AuditAction::ProjectProductionManagerChanged, AuditAction::ProjectTaken,
         AuditAction::ProjectWelcomeCallRecorded, AuditAction::ProjectWelcomeCallUndone, AuditAction::ProjectTimeframeSet, AuditAction::ProjectTimeframeChanged,
+        AuditAction::ProjectColorsStarted, AuditAction::ProjectColorsNewVersion, AuditAction::ProjectColorsSentForApproval, AuditAction::ProjectColorsApproved,
     ];
 
     #[Locked]
@@ -125,6 +127,15 @@ new #[Title('Project')] class extends Component {
         unset($this->project, $this->activity);
 
         Flux::toast(variant: 'success', text: __('It is yours. This project is now in pre-production.'));
+    }
+
+    /**
+     * The Colors part changed the Project: read it and its Activity again.
+     */
+    #[On('project-colors-changed')]
+    public function colorsChanged(): void
+    {
+        unset($this->project, $this->activity);
     }
 
     /*
@@ -266,6 +277,10 @@ new #[Title('Project')] class extends Component {
                 @else
                     <flux:badge size="sm" color="emerald" data-test="project-sales-state">{{ __('Sold') }}</flux:badge>
                     <flux:badge size="sm" color="amber" data-test="project-production-state">{{ __('Production: :state', ['state' => $project->production_state->label()]) }}</flux:badge>
+                    {{-- Colors are a state of their own, beside the production state (product-architecture.md, 2). --}}
+                    @if ($project->production_manager_id !== null)
+                        <flux:badge size="sm" :color="$project->color_readiness->color()" data-test="project-color-readiness">{{ __('Colors: :state', ['state' => mb_strtolower(__($project->color_readiness->label()))]) }}</flux:badge>
+                    @endif
                 @endif
 
                 <span class="text-sm text-zinc-600">{{ $project->location->name }}</span>
@@ -441,6 +456,9 @@ new #[Title('Project')] class extends Component {
                     @endcan
                 </div>
             </div>
+
+            {{-- The Color Specification (slice 10, step 10b). --}}
+            <livewire:pages::projects.colors :project="$project" :key="'colors-'.$project->id" />
         @endif
     @endunless
 
