@@ -5,6 +5,7 @@ use App\Enums\ColorApprovalMethod;
 use App\Enums\ProjectProductionState;
 use App\Models\Project;
 use App\Models\WorkPackage;
+use App\Models\WorkPackagePayout;
 use App\Models\WorkPackageSchedule;
 use App\Models\WorkPackageWindow;
 use App\Support\Projects\Readiness;
@@ -53,6 +54,11 @@ new class extends Component {
 
     public string $rescheduleReason = '';
 
+    /** The payout being set, in dollars as typed, and why it changes (step 13a). */
+    public string $payoutAmount = '';
+
+    public string $payoutReason = '';
+
     /** @var array<string, string> The package being added or changed. */
     public array $package = ['name' => '', 'scope' => '', 'workingDays' => '', 'minimumCrew' => ''];
 
@@ -80,7 +86,7 @@ new class extends Component {
     #[Computed]
     public function project(): Project
     {
-        return Project::query()->with(['location', 'handoff', 'proposal', 'contact', 'account', 'workPackages.windows', 'workPackages.schedules'])->findOrFail($this->projectId);
+        return Project::query()->with(['location', 'handoff', 'proposal', 'contact', 'account', 'workPackages.windows', 'workPackages.schedules', 'workPackages.payouts'])->findOrFail($this->projectId);
     }
 
     #[Computed]
@@ -97,6 +103,49 @@ new class extends Component {
     public function mayChange(): bool
     {
         return Auth::user()->can('managePreProduction', $this->project) && $this->readiness->isReadyToSchedule();
+    }
+
+    /**
+     * Whether the signed-in person may see payouts here: finance-sensitive
+     * (decision 151, question 1).
+     */
+    #[Computed]
+    public function seesPayouts(): bool
+    {
+        return Auth::user()->can('viewPayouts', $this->project);
+    }
+
+    /**
+     * Whether the signed-in person may set payouts here now.
+     */
+    #[Computed]
+    public function mayPay(): bool
+    {
+        return $this->mayChange && Auth::user()->can('managePayouts', $this->project);
+    }
+
+    public function openPayout(int $packageId): void
+    {
+        $this->authorize('managePayouts', $this->project);
+
+        $package = $this->shownPackage($packageId);
+
+        $this->packageId = $package->id;
+        $this->payoutAmount = $package->payout_cents === null ? '' : number_format($package->payout_cents / 100, $package->payout_cents % 100 === 0 ? 0 : 2, '.', '');
+        $this->payoutReason = '';
+        $this->resetValidation();
+
+        Flux::modal('work-payout')->show();
+    }
+
+    public function savePayout(ChangeWorkPackages $changeWorkPackages): void
+    {
+        $this->authorize('managePayouts', $this->project);
+        $this->resetValidation();
+
+        $changeWorkPackages->setPayout($this->project, $this->packageId ?? abort(409, __('Choose the work package again. Reload the page.')), $this->payoutAmount, $this->payoutReason, Auth::user());
+
+        $this->saved('work-payout', __('Payout saved.'));
     }
 
     /**
@@ -314,7 +363,7 @@ new class extends Component {
      */
     private function saved(string $modal, string $message): void
     {
-        unset($this->project, $this->readiness, $this->mayChange);
+        unset($this->project, $this->readiness, $this->mayChange, $this->mayPay);
 
         $this->packageId = null;
         $this->windowId = null;
@@ -368,6 +417,27 @@ new class extends Component {
                                 {{ trans_choice(':count working day|:count working days', $shown->working_days) }} &middot; {{ trans_choice('smallest crew: :count person|smallest crew: :count people', $shown->minimum_crew) }}
                             </span>
                             <span class="whitespace-pre-line text-sm text-zinc-700" data-test="work-package-scope">{{ $shown->scope }}</span>
+
+                            {{-- What Banana will pay for it, only for those who may see payouts (slice 13, step 13a). --}}
+                            @if ($this->seesPayouts)
+                                <div class="mt-1 flex flex-wrap items-center gap-2 text-sm" data-test="work-package-payout">
+                                    <span class="text-zinc-500">{{ __('Payout') }}</span>
+                                    <span class="font-semibold text-ink tabular-nums">{{ $shown->payout_cents === null ? __('Not set yet') : \App\Support\Money::format($shown->payout_cents) }}</span>
+                                    @if ($this->mayPay)
+                                        <flux:button size="xs" variant="ghost" wire:click="openPayout({{ $shown->id }})" data-test="set-work-payout">{{ $shown->payout_cents === null ? __('Set') : __('Change') }}</flux:button>
+                                    @endif
+                                </div>
+                                @if ($shown->payouts->count() > 1)
+                                    <ul class="flex flex-col gap-0.5 text-sm text-zinc-500" data-test="work-payout-history">
+                                        @foreach ($shown->payouts->slice(1) as $kept)
+                                            <li wire:key="work-payout-{{ $kept->id }}">{{ __('Was :amount', ['amount' => $kept->amount()]) }} &middot; {{ $kept->set_by_name ?? __('Unknown') }} &middot; <x-local-time :at="$kept->created_at" /></li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                                @if ($shown->payouts->first()?->reason !== null)
+                                    <span class="text-sm text-zinc-500">&ldquo;{{ $shown->payouts->first()->reason }}&rdquo;</span>
+                                @endif
+                            @endif
                         </div>
 
                         @if ($mayChange)
@@ -496,6 +566,31 @@ new class extends Component {
                 </div>
             </form>
         </flux:modal>
+
+        @if ($this->seesPayouts)
+            <flux:modal name="work-payout" class="w-full max-w-md">
+                <form wire:submit="savePayout" class="flex flex-col gap-5">
+                    <flux:error name="work" />
+
+                    <div>
+                        <flux:heading size="lg">{{ __('Payout') }}</flux:heading>
+                        <flux:subheading>{{ $chosen === null ? __('What Banana will pay for this work.') : __('What Banana will pay for :name. Every amount is kept.', ['name' => $chosen->name]) }}</flux:subheading>
+                    </div>
+
+                    <flux:input wire:model="payoutAmount" inputmode="decimal" icon="currency-dollar" :label="__('Amount')" placeholder="4,250" data-test="work-payout-amount" />
+
+                    <flux:textarea wire:model="payoutReason" rows="2" maxlength="{{ WorkPackagePayout::REASON_LENGTH }}" :label="__('Why (optional)')" data-test="work-payout-reason" />
+
+                    <div class="flex justify-end gap-2">
+                        <flux:modal.close>
+                            <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                        </flux:modal.close>
+
+                        <flux:button type="submit" variant="primary" data-test="save-work-payout">{{ __('Save') }}</flux:button>
+                    </div>
+                </form>
+            </flux:modal>
+        @endif
 
         <x-confirmation-modal
             name="remove-work-package"

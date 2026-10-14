@@ -38,6 +38,7 @@ enum Permission: string
     case ManageProjects = 'projects.manage';
     case ViewSubcontractors = 'subcontractors.view';
     case ManageSubcontractors = 'subcontractors.manage';
+    case ViewPayouts = 'payouts.view';
 
     /**
      * Company-level permissions only count when held through an all-locations grant.

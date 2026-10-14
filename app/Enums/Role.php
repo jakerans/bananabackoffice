@@ -64,6 +64,8 @@ enum Role: string
                 // Subcontractors are seen by Production and managers only (decision 148, question 9).
                 Permission::ViewSubcontractors,
                 Permission::ManageSubcontractors,
+                // Subcontractor payouts are finance-sensitive (decision 151, question 1).
+                Permission::ViewPayouts,
                 Permission::WriteNotes,
                 Permission::RemoveNotes,
                 Permission::ViewAccounts,
@@ -73,9 +75,10 @@ enum Role: string
             ],
             self::Finance => [
                 Permission::FinanceAccess,
-                // Finance sees what was sold and for how much (decision 130).
+                // Finance sees what was sold and for how much (decision 130), and what Banana will pay for it (decision 151).
                 Permission::ViewProjects,
                 Permission::ViewAccounts,
+                Permission::ViewPayouts,
             ],
             self::LocationManager => [
                 Permission::MarketingAccess,
@@ -100,6 +103,7 @@ enum Role: string
                 Permission::ManageProjects,
                 Permission::ViewSubcontractors,
                 Permission::ManageSubcontractors,
+                Permission::ViewPayouts,
                 Permission::WriteNotes,
                 // A manager may remove anyone's note from view. Everyone else only their own.
                 Permission::RemoveNotes,
@@ -139,6 +143,7 @@ enum Role: string
                 // They recruit, onboard and keep the roster (product-architecture.md, 7).
                 Permission::ViewSubcontractors,
                 Permission::ManageSubcontractors,
+                Permission::ViewPayouts,
                 Permission::WriteNotes,
                 Permission::ViewAccounts,
             ],
