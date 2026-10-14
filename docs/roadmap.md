@@ -148,8 +148,9 @@ steps (2026-10-14, decision 148).** Its plan is
 
 **Slice 13, giving work to a subcontractor (payout, the award and the work
 order), is approved in three steps (2026-10-14, decision 151).** Its plan is
-[slice-13-giving-work-plan.md](slice-13-giving-work-plan.md). Step 13a
-(payout) is built and waits for Jacob's review; it is not merged.
+[slice-13-giving-work-plan.md](slice-13-giving-work-plan.md). **Step 13a
+(payout) was built and merged on 2026-10-14 (decision 152).** Step 13b (the
+award) is being built.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

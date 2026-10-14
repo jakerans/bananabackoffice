@@ -3114,6 +3114,19 @@ with recommendations: "approved - continue".
    10. No message to subcontractors or customers.
 2. **Step 13a, payout, starts.** It stops for his review.
 
+## 152. Step 13a is merged; step 13b starts (2026-10-14)
+
+**Decided by Jacob,** in reply to step 13a's handoff, which asked whether to
+merge it and start step 13b: "continue".
+
+1. **Step 13a, payout, is merged,** with the approved slice 13 plan. The
+   readings in its handoff and in the plan under "Step 13a as built" stay as
+   built; he did not change them: a reason is optional until work can be
+   awarded; another Production Manager at the Location sees a payout but
+   cannot change it.
+2. **Step 13b, the award, starts.** It is built as the plan and decision 151
+   (questions 2 to 6) have it and stops for his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
