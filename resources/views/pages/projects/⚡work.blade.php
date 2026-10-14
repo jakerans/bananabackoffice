@@ -1,10 +1,14 @@
 <?php
 
 use App\Actions\Projects\ChangeWorkPackages;
+use App\Enums\ColorApprovalMethod;
+use App\Enums\ProjectProductionState;
 use App\Models\Project;
 use App\Models\WorkPackage;
+use App\Models\WorkPackageSchedule;
 use App\Models\WorkPackageWindow;
 use App\Support\Projects\Readiness;
+use App\Support\Projects\RoughTimeframe;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -20,7 +24,8 @@ use Livewire\Component;
  *
  * Anyone who may see the Project reads it. Its Production Manager, or a
  * manager where it is, writes it, once the job is ready to schedule
- * (decision 144). Offered dates are not booked.
+ * (decision 144). Offered dates are not booked until the customer confirms
+ * one window (step 11b); after that, changing them needs a reason.
  */
 new class extends Component {
     #[Locked]
@@ -30,9 +35,23 @@ new class extends Component {
     #[Locked]
     public ?int $packageId = null;
 
-    /** The window the withdraw dialog is about. */
+    /** The window the withdraw or confirm dialog is about. */
     #[Locked]
     public ?int $windowId = null;
+
+    /** Who confirmed the dates, how, and on which day as "2026-10-14". */
+    public string $confirmedBy = '';
+
+    public string $confirmationMethod = '';
+
+    public string $confirmedOn = '';
+
+    /** The new dates when rescheduling, each a day as "2026-11-16", and why. */
+    public string $scheduleFirstDay = '';
+
+    public string $scheduleLastDay = '';
+
+    public string $rescheduleReason = '';
 
     /** @var array<string, string> The package being added or changed. */
     public array $package = ['name' => '', 'scope' => '', 'workingDays' => '', 'minimumCrew' => ''];
@@ -61,7 +80,7 @@ new class extends Component {
     #[Computed]
     public function project(): Project
     {
-        return Project::query()->with(['location', 'handoff', 'proposal', 'workPackages.windows'])->findOrFail($this->projectId);
+        return Project::query()->with(['location', 'handoff', 'proposal', 'contact', 'account', 'workPackages.windows', 'workPackages.schedules'])->findOrFail($this->projectId);
     }
 
     #[Computed]
@@ -205,6 +224,82 @@ new class extends Component {
         $this->saved('withdraw-work-window', __('Offered dates withdrawn.'));
     }
 
+    public function openConfirm(int $windowId): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+
+        $window = $this->project->workPackages->flatMap->windows->firstWhere('id', $windowId) ?? abort(409, __('These dates are no longer offered. Reload the page.'));
+
+        $this->windowId = $window->id;
+        $this->startConfirmation();
+
+        Flux::modal('confirm-work-window')->show();
+    }
+
+    /**
+     * The customer said yes to one window: the package gets those dates.
+     */
+    public function confirmWindow(ChangeWorkPackages $changeWorkPackages): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+        $this->resetValidation();
+
+        $changeWorkPackages->confirmWindow($this->project, $this->windowId ?? abort(409, __('Choose the dates again. Reload the page.')), $this->confirmedBy, $this->confirmationMethod, $this->confirmedOn, Auth::user());
+
+        $this->saved('confirm-work-window', __('Dates confirmed with the customer.'));
+    }
+
+    public function openReschedule(int $packageId): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+
+        $package = $this->shownPackage($packageId);
+
+        $this->packageId = $package->id;
+        $this->scheduleFirstDay = (string) $package->scheduled_first_day?->toDateString();
+        $this->scheduleLastDay = (string) $package->scheduled_last_day?->toDateString();
+        $this->rescheduleReason = '';
+        $this->startConfirmation();
+
+        Flux::modal('reschedule-work')->show();
+    }
+
+    /**
+     * New dates for work the customer had confirmed, with the reason. The
+     * dates it had are kept.
+     */
+    public function reschedule(ChangeWorkPackages $changeWorkPackages): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+        $this->resetValidation();
+
+        $changeWorkPackages->reschedule(
+            $this->project,
+            $this->packageId ?? abort(409, __('Choose the work package again. Reload the page.')),
+            $this->scheduleFirstDay,
+            $this->scheduleLastDay,
+            $this->rescheduleReason,
+            $this->confirmedBy,
+            $this->confirmationMethod,
+            $this->confirmedOn,
+            Auth::user(),
+        );
+
+        $this->saved('reschedule-work', __('Rescheduled. The dates it had are kept.'));
+    }
+
+    /**
+     * Who confirmed starts as the Project's contact, by today in the
+     * Project's own Location.
+     */
+    private function startConfirmation(): void
+    {
+        $this->confirmedBy = (string) ($this->project->contact?->fullName() ?? $this->project->account->display_name);
+        $this->confirmationMethod = '';
+        $this->confirmedOn = RoughTimeframe::today($this->project->location)->toDateString();
+        $this->resetValidation();
+    }
+
     /**
      * A package of this job as shown, or a refusal for one the browser made up.
      */
@@ -239,9 +334,17 @@ new class extends Component {
         $chosen = $packageId === null ? null : $packages->firstWhere('id', $packageId);
     @endphp
 
-    <div>
-        <flux:heading size="lg" level="2">{{ __('Work and schedule') }}</flux:heading>
-        <flux:subheading>{{ __('The work in one or more packages, and the dates offered to the customer for each. Offered dates are not booked.') }}</flux:subheading>
+    <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+            <flux:heading size="lg" level="2">{{ __('Work and schedule') }}</flux:heading>
+            <flux:subheading>{{ __('The work in one or more packages, and the dates offered to the customer for each. Offered dates are not booked until the customer confirms them.') }}</flux:subheading>
+        </div>
+
+        @if ($project->production_state === ProjectProductionState::Scheduled)
+            <flux:badge color="emerald" data-test="work-scheduled">{{ __('Scheduled') }}</flux:badge>
+        @elseif ($packages->contains(fn (WorkPackage $package): bool => $package->isScheduled()))
+            <flux:badge color="amber" data-test="work-partly-scheduled">{{ __('Partly scheduled') }}</flux:badge>
+        @endif
     </div>
 
     <flux:error name="work" />
@@ -270,11 +373,52 @@ new class extends Component {
                         @if ($mayChange)
                             <div class="flex shrink-0 gap-1">
                                 <flux:button size="sm" variant="ghost" wire:click="openChange({{ $shown->id }})" data-test="change-work-package">{{ __('Change') }}</flux:button>
-                                <flux:button size="sm" variant="ghost" wire:click="openRemove({{ $shown->id }})" data-test="remove-work-package">{{ __('Remove') }}</flux:button>
+                                {{-- Work with confirmed dates is rescheduled, not removed. --}}
+                                @unless ($shown->isScheduled())
+                                    <flux:button size="sm" variant="ghost" wire:click="openRemove({{ $shown->id }})" data-test="remove-work-package">{{ __('Remove') }}</flux:button>
+                                @endunless
                             </div>
                         @endif
                     </div>
 
+                    @if ($shown->isScheduled())
+                        @php
+                            $current = $shown->schedules->first();
+                            $confirmedDays = WorkPackageWindow::workingDaysBetween($shown->scheduled_first_day, $shown->scheduled_last_day);
+                        @endphp
+
+                        {{-- Confirmed by the customer (slice 11, step 11b). --}}
+                        <div class="flex flex-col gap-2 rounded-lg bg-emerald-50 p-3" data-test="work-confirmed">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex min-w-0 flex-1 flex-col">
+                                    <span class="text-sm font-medium text-emerald-800">{{ __('Confirmed with the customer') }}</span>
+                                    <span class="font-semibold text-ink" data-test="work-confirmed-days">{{ WorkPackageWindow::describe($shown->scheduled_first_day, $shown->scheduled_last_day) }}</span>
+                                    <span class="text-sm text-zinc-700">
+                                        {{ trans_choice(':count working day|:count working days', $confirmedDays) }}@if ($current !== null) &middot; {{ __('confirmed by :name, :how, on :day', ['name' => $current->confirmed_by_customer, 'how' => mb_strtolower(__($current->confirmation_method->label())), 'day' => $current->confirmed_on->format('M j, Y')]) }}@endif
+                                    </span>
+                                    @if ($current !== null)
+                                        <span class="text-sm text-zinc-500">{{ __('Recorded by :name', ['name' => $current->recorded_by_name ?? __('Unknown')]) }} &middot; <x-local-time :at="$current->created_at" /></span>
+                                    @endif
+                                </div>
+
+                                @if ($mayChange)
+                                    <flux:button size="sm" class="shrink-0" wire:click="openReschedule({{ $shown->id }})" data-test="reschedule-work">{{ __('Reschedule') }}</flux:button>
+                                @endif
+                            </div>
+
+                            {{-- Every earlier set of dates is kept, with why it changed (product-architecture.md, 6.5). --}}
+                            @if ($shown->schedules->count() > 1)
+                                <ul class="flex flex-col gap-1 border-t border-emerald-200 pt-2 text-sm text-zinc-600" data-test="work-schedule-history">
+                                    @foreach ($shown->schedules as $index => $kept)
+                                        <li wire:key="work-schedule-{{ $kept->id }}">
+                                            {{ $index === 0 ? __('Now') : __('Was') }}: {{ $kept->words() }}
+                                            &middot; {{ $kept->recorded_by_name ?? __('Unknown') }} &middot; <x-local-time :at="$kept->created_at" />@if ($kept->reason !== null) &middot; &ldquo;{{ $kept->reason }}&rdquo;@endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </div>
+                    @else
                     <div class="flex flex-col gap-2 rounded-lg bg-zinc-50 p-3" data-test="work-windows">
                         <div class="text-sm font-medium text-zinc-500">{{ __('Dates offered to the customer') }}</div>
 
@@ -293,7 +437,10 @@ new class extends Component {
                                 </div>
 
                                 @if ($mayChange)
-                                    <flux:button size="sm" variant="ghost" class="shrink-0" wire:click="openWithdraw({{ $window->id }})" data-test="withdraw-work-window">{{ __('Withdraw') }}</flux:button>
+                                    <div class="flex shrink-0 flex-wrap justify-end gap-1">
+                                        <flux:button size="sm" variant="primary" wire:click="openConfirm({{ $window->id }})" data-test="confirm-work-window">{{ __('The customer confirmed') }}</flux:button>
+                                        <flux:button size="sm" variant="ghost" wire:click="openWithdraw({{ $window->id }})" data-test="withdraw-work-window">{{ __('Withdraw') }}</flux:button>
+                                    </div>
                                 @endif
                             </div>
                         @empty
@@ -306,6 +453,7 @@ new class extends Component {
                             </div>
                         @endif
                     </div>
+                    @endif
                 </li>
             @endforeach
         </ul>
@@ -382,6 +530,87 @@ new class extends Component {
                     </flux:modal.close>
 
                     <flux:button type="submit" variant="primary" data-test="save-work-window">{{ __('Offer these dates') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        @php
+            $confirming = $windowId === null ? null : $packages->flatMap->windows->firstWhere('id', $windowId);
+        @endphp
+
+        <flux:modal name="confirm-work-window" class="w-full max-w-lg">
+            <form wire:submit="confirmWindow" class="flex flex-col gap-5">
+                <flux:error name="work" />
+
+                <div>
+                    <flux:heading size="lg">{{ __('The customer confirmed these dates') }}</flux:heading>
+                    <flux:subheading>
+                        {{ $confirming === null
+                            ? __('Record who said yes, how and when.')
+                            : __(':days for :name. Record who said yes, how and when. After this, changing the dates needs a reason.', ['days' => $confirming->words(), 'name' => $confirming->package->name]) }}
+                    </flux:subheading>
+                </div>
+
+                <flux:input wire:model="confirmedBy" maxlength="{{ WorkPackageSchedule::NAME_LENGTH }}" :label="__('Who confirmed')" data-test="work-confirmed-by" />
+
+                <flux:select wire:model="confirmationMethod" :label="__('How')" data-test="work-confirmation-method">
+                    <flux:select.option value="">{{ __('Choose how they confirmed') }}</flux:select.option>
+                    @foreach (ColorApprovalMethod::cases() as $method)
+                        <flux:select.option :value="$method->value" wire:key="confirm-method-{{ $method->value }}">{{ __($method->label()) }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:input wire:model="confirmedOn" type="date" :label="__('Day they confirmed')" class="max-w-52" data-test="work-confirmed-on" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-work-confirmation">{{ __('Confirm these dates') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        <flux:modal name="reschedule-work" class="w-full max-w-lg">
+            <form wire:submit="reschedule" class="flex flex-col gap-5">
+                <flux:error name="work" />
+
+                <div>
+                    <flux:heading size="lg">{{ __('Reschedule') }}</flux:heading>
+                    <flux:subheading>
+                        {{ $chosen?->isScheduled()
+                            ? __(':name is confirmed for :days. Give the new dates, why they are changing, and who agreed to them. The dates it had are kept.', ['name' => $chosen->name, 'days' => WorkPackageWindow::describe($chosen->scheduled_first_day, $chosen->scheduled_last_day)])
+                            : __('Give the new dates, why they are changing, and who agreed to them.') }}
+                    </flux:subheading>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <flux:input wire:model="scheduleFirstDay" type="date" :label="__('First day')" data-test="reschedule-first" />
+                    <flux:input wire:model="scheduleLastDay" type="date" :label="__('Last day')" data-test="reschedule-last" />
+                </div>
+
+                <flux:textarea wire:model="rescheduleReason" rows="2" maxlength="{{ WorkPackageSchedule::REASON_LENGTH }}" :label="__('Why the dates are changing (required)')" data-test="reschedule-reason" />
+
+                <flux:input wire:model="confirmedBy" maxlength="{{ WorkPackageSchedule::NAME_LENGTH }}" :label="__('Who agreed to the new dates')" data-test="reschedule-confirmed-by" />
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <flux:select wire:model="confirmationMethod" :label="__('How')" data-test="reschedule-method">
+                        <flux:select.option value="">{{ __('Choose how they agreed') }}</flux:select.option>
+                        @foreach (ColorApprovalMethod::cases() as $method)
+                            <flux:select.option :value="$method->value" wire:key="reschedule-method-{{ $method->value }}">{{ __($method->label()) }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+
+                    <flux:input wire:model="confirmedOn" type="date" :label="__('Day they agreed')" data-test="reschedule-confirmed-on" />
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-reschedule">{{ __('Reschedule') }}</flux:button>
                 </div>
             </form>
         </flux:modal>

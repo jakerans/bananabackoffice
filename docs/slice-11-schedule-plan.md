@@ -3,7 +3,7 @@
 Status: **approved on 2026-10-14 (decision 144) in three steps, each stopping
 for Jacob's review, with the recommendation on all ten questions. Step 11a was
 built and merged on 2026-10-14 (decision 145); see "Step 11a as built". Step
-11b is being built.** It was written as what the implementation agent recommended
+11b is built and waits for Jacob's review; see "Step 11b as built".** It was written as what the implementation agent recommended
 after slice 10, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 6.2,
@@ -155,6 +155,47 @@ On a package: its confirmed first and last day, who confirmed and how, and
 every earlier set of dates with the reason it changed. On the Project: the
 production state "Scheduled".
 
+### Step 11b as built (2026-10-14)
+
+**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+What a reader of the code should know:
+
+- **Stored:** each package's confirmed first and last day
+  (`work_packages.scheduled_first_day`, `scheduled_last_day`), and every set
+  of dates it has had in `work_package_schedules`, which refuses to be
+  changed or deleted. The production state gained "Scheduled".
+- **"The customer confirmed"** is on each offered window. It asks who said
+  yes, how (in person, by phone, by text or by email, the same four as the
+  colors) and on which day, starting on the job's contact and today. Dates
+  that have started cannot be confirmed.
+- **Scheduled** is worked out after every change: a job is Scheduled when it
+  has packages and every one has confirmed dates. Until then the part says
+  "Partly scheduled". Adding a package to a Scheduled job takes it back to
+  pre-production until that package has its dates too. Changing the
+  Production Manager keeps a Scheduled job Scheduled.
+- **Work with confirmed dates** offers no more dates and cannot be removed;
+  it is rescheduled.
+- **Rescheduling** asks for the new dates, the reason, and who agreed, how
+  and when. The earlier dates stay listed under the new ones, with who
+  changed them, when, and why.
+- **The salesperson is told in Backoffice** when the job becomes Scheduled
+  and on every reschedule of a Scheduled job. The notice names the days and
+  nothing about the customer or the address. The Lead shows "Scheduled:
+  [days]. Confirmed with the customer." in place of the rough timeframe.
+- **In the customer's Activity:** dates confirmed and rescheduled, each with
+  the package and the days, and the reason for a reschedule.
+- **Production > Workspace** has a third list, "Scheduled", with the job's
+  dates from the first day of its first package to the last day of its last.
+  A scheduled job is no longer under "Ready to schedule".
+
+Readings made while building, for Jacob to change if wrong:
+
+- **A reschedule records who agreed to the new dates,** as the first
+  confirmation does, because the dates stay "customer-confirmed" (6.5).
+- **The salesperson is not told when only part of a split job is
+  confirmed,** only when the whole job is Scheduled.
+- **Confirmed dates cannot be taken away** without new ones. Putting a job
+  back to "no dates" is not in the plan; it can be added if it is needed.
 ## Step 11c — Production > Schedule
 
 ### What a person sees

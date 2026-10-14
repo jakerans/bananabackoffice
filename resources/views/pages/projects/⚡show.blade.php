@@ -42,7 +42,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectProductionManagerAssigned, AuditAction::ProjectProductionManagerChanged, AuditAction::ProjectTaken,
         AuditAction::ProjectWelcomeCallRecorded, AuditAction::ProjectWelcomeCallUndone, AuditAction::ProjectTimeframeSet, AuditAction::ProjectTimeframeChanged,
         AuditAction::ProjectColorsStarted, AuditAction::ProjectColorsNewVersion, AuditAction::ProjectColorsSentForApproval, AuditAction::ProjectColorsApproved,
-        AuditAction::ProjectWindowProposed, AuditAction::ProjectWindowWithdrawn,
+        AuditAction::ProjectWindowProposed, AuditAction::ProjectWindowWithdrawn, AuditAction::ProjectScheduleConfirmed, AuditAction::ProjectRescheduled,
     ];
 
     #[Locked]
@@ -114,17 +114,18 @@ new #[Title('Project')] class extends Component {
         return match ($event->action) {
             AuditAction::ProjectEdited => __('Title or description changed'),
             AuditAction::ProjectHandoffChanged => __('Handoff answers changed'),
-            AuditAction::ProjectWindowProposed, AuditAction::ProjectWindowWithdrawn => $this->windowLabel($event),
+            AuditAction::ProjectWindowProposed, AuditAction::ProjectWindowWithdrawn, AuditAction::ProjectScheduleConfirmed, AuditAction::ProjectRescheduled => $this->windowLabel($event),
             default => CustomerActivity::label($event->action),
         };
     }
 
     /**
-     * Dates offered or withdrawn, with which work and which days.
+     * Dates offered, withdrawn, confirmed or changed, with which work and
+     * which days. A change names the new days.
      */
     private function windowLabel(AuditEvent $event): string
     {
-        $window = $event->action === AuditAction::ProjectWindowProposed ? $event->values_after : $event->values_before;
+        $window = $event->action === AuditAction::ProjectWindowWithdrawn ? $event->values_before : $event->values_after;
         $first = is_string($window['first_day'] ?? null) ? CarbonImmutable::createFromFormat('!Y-m-d', $window['first_day']) : null;
         $last = is_string($window['last_day'] ?? null) ? CarbonImmutable::createFromFormat('!Y-m-d', $window['last_day']) : null;
 

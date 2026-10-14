@@ -15,11 +15,15 @@ enum ProjectProductionState: string
     /** A Production Manager has it and is getting it ready. */
     case PreProduction = 'pre_production';
 
+    /** Every package of its work has dates the customer confirmed (slice 11, step 11b). */
+    case Scheduled = 'scheduled';
+
     public function label(): string
     {
         return match ($this) {
             self::NewFromSales => 'New from Sales',
             self::PreProduction => 'Pre-production',
+            self::Scheduled => 'Scheduled',
         };
     }
 }

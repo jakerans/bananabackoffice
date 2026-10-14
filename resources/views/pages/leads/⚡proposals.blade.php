@@ -687,8 +687,11 @@ new class extends Component {
                                 @endcan
                             </span>
 
+                            {{-- The dates the customer confirmed, so Sales can answer the customer (slice 11, step 11b). --}}
+                            @if (($scheduledDays = $proposal->project->scheduledDays()) !== null)
+                                <span class="text-sm font-medium text-ink" data-test="proposal-scheduled">{{ __('Scheduled: :days. Confirmed with the customer.', ['days' => \App\Models\WorkPackageWindow::describe($scheduledDays[0], $scheduledDays[1])]) }}</span>
                             {{-- When the work is roughly expected, so Sales can answer the customer (slice 10, step 10a). --}}
-                            @if (RoughTimeframe::of($proposal->project) !== null)
+                            @elseif (RoughTimeframe::of($proposal->project) !== null)
                                 <span class="text-sm text-zinc-700" data-test="proposal-timeframe">{{ __('Rough timeframe: :when. Not a booked date.', ['when' => RoughTimeframe::of($proposal->project)]) }}</span>
                             @endif
 

@@ -23,12 +23,15 @@ use Illuminate\Support\Carbon;
  * @property string $scope What the work is, in words.
  * @property int $working_days How many working days it is expected to take.
  * @property int $minimum_crew The smallest crew it needs.
+ * @property Carbon|null $scheduled_first_day The first day the customer confirmed (step 11b). Empty until they confirm.
+ * @property Carbon|null $scheduled_last_day
  * @property int|null $created_by
  * @property string|null $created_by_name
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Project $project
  * @property-read Collection<int, WorkPackageWindow> $windows
+ * @property-read Collection<int, WorkPackageSchedule> $schedules
  */
 class WorkPackage extends Model
 {
@@ -61,6 +64,8 @@ class WorkPackage extends Model
             'position' => 'integer',
             'working_days' => 'integer',
             'minimum_crew' => 'integer',
+            'scheduled_first_day' => 'date',
+            'scheduled_last_day' => 'date',
         ];
     }
 
@@ -80,6 +85,24 @@ class WorkPackage extends Model
     public function windows(): HasMany
     {
         return $this->hasMany(WorkPackageWindow::class)->orderBy('first_day')->orderBy('id');
+    }
+
+    /**
+     * Every set of dates it has had, the one in force first.
+     *
+     * @return HasMany<WorkPackageSchedule, $this>
+     */
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(WorkPackageSchedule::class)->orderByDesc('id');
+    }
+
+    /**
+     * Whether the customer has confirmed its dates.
+     */
+    public function isScheduled(): bool
+    {
+        return $this->scheduled_first_day !== null && $this->scheduled_last_day !== null;
     }
 
     /**

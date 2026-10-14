@@ -35,6 +35,12 @@ class ProjectNotice extends Notification
     /** A Project the Production Manager has was cancelled because its sale was corrected. */
     public const string CANCELLED = 'project_cancelled';
 
+    /** A job the salesperson sold has dates the customer confirmed (slice 11, step 11b). */
+    public const string SCHEDULED = 'project_scheduled';
+
+    /** The confirmed dates of a job the salesperson sold were changed. */
+    public const string RESCHEDULED = 'project_rescheduled';
+
     /**
      * Tell someone about a Project: that its handoff is waiting or done, or
      * that it has changed hands (docs/slice-8-projects-plan.md, step 8b;
@@ -46,9 +52,9 @@ class ProjectNotice extends Notification
      * happened and links to the Project, which the person must be signed in
      * and allowed to open.
      *
-     * @param  self::HANDOFF_REMINDER|self::READY_FOR_PRODUCTION|self::ASSIGNED_TO_YOU|self::GIVEN_TO_ANOTHER|self::HAS_PRODUCTION_MANAGER|self::HANDOFF_CHANGED|self::CANCELLED  $kind
+     * @param  self::HANDOFF_REMINDER|self::READY_FOR_PRODUCTION|self::ASSIGNED_TO_YOU|self::GIVEN_TO_ANOTHER|self::HAS_PRODUCTION_MANAGER|self::HANDOFF_CHANGED|self::CANCELLED|self::SCHEDULED|self::RESCHEDULED  $kind
      * @param  self::IN_APP|self::EMAIL  $channel
-     * @param  string|null  $name  A staff member or a Location to name, where the message has one.
+     * @param  string|null  $name  A staff member, a Location or the days of the work to name, where the message has one.
      */
     public function __construct(public int $projectId, public string $kind, public string $channel = self::IN_APP, public ?string $name = null) {}
 
@@ -101,6 +107,8 @@ class ProjectNotice extends Notification
             self::HAS_PRODUCTION_MANAGER => __(':name is now the Production Manager for a job you sold.', ['name' => (string) $this->name]),
             self::HANDOFF_CHANGED => __('The handoff answers for a project of yours were changed.'),
             self::CANCELLED => __('A project of yours was cancelled because its sale was corrected.'),
+            self::SCHEDULED => __('A job you sold is scheduled: :days. The customer confirmed the dates.', ['days' => (string) $this->name]),
+            self::RESCHEDULED => __('A job you sold was rescheduled: it is now :days.', ['days' => (string) $this->name]),
         };
     }
 

@@ -3,10 +3,13 @@
 use App\Actions\Projects\AssignProductionManager;
 use App\Actions\Projects\TakeProject;
 use App\Enums\Permission;
+use App\Enums\ProjectProductionState;
 use App\Enums\Role;
 use App\Models\Location;
 use App\Models\Project;
 use App\Models\User;
+use App\Models\WorkPackage;
+use App\Models\WorkPackageWindow;
 use App\Support\Access\CurrentLocation;
 use App\Support\Projects\Readiness;
 use App\Support\Projects\RoughTimeframe;
@@ -24,12 +27,13 @@ use Livewire\Component;
 /**
  * Production > Workspace (docs/slice-8-projects-plan.md, step 8b;
  * product-architecture.md, 6.2): the sold jobs at one Location, from the
- * moment they are sold until they are ready to schedule.
+ * moment they are sold until they are scheduled.
  *
  * Four lists: new from Sales, ready to be taken; waiting for the
  * salesperson's handoff, which Production can see coming and cannot take yet
  * (decision 132); and pre-production in two parts, getting ready, each job
- * with what it still needs, and ready to schedule (slice 10, step 10c). A
+ * with what it still needs, and ready to schedule (slice 10, step 10c); and
+ * scheduled, with its confirmed dates (slice 11, step 11b). A
  * manager assigns the Production Manager; a Production Manager can take a
  * ready job themselves.
  *
@@ -128,6 +132,7 @@ new #[Title('Workspace')] class extends Component {
     public function gettingReady(): Collection
     {
         return Readiness::whereGettingReady($this->standing())
+            ->where('production_state', '!=', ProjectProductionState::Scheduled)
             ->with('handoff')
             ->orderByRaw('case when production_manager_id = ? then 0 else 1 end', [Auth::id()])
             ->orderByRaw('case when timeframe_earliest is null then 0 else 1 end')
@@ -149,11 +154,33 @@ new #[Title('Workspace')] class extends Component {
     public function readyToSchedule(): Collection
     {
         return Readiness::whereReady($this->standing())
+            ->where('production_state', '!=', ProjectProductionState::Scheduled)
             ->with('handoff')
             ->withCount('workPackageWindows')
             ->orderByRaw('case when production_manager_id = ? then 0 else 1 end', [Auth::id()])
             ->orderBy('timeframe_earliest')
             ->orderBy('production_manager_assigned_at')
+            ->orderBy('id')
+            ->limit(self::LIMIT)
+            ->get();
+    }
+
+    /**
+     * Every package of the work has dates the customer confirmed: the
+     * signed-in person's own first, then the soonest start (slice 11, step
+     * 11b).
+     *
+     * @return Collection<int, Project>
+     */
+    #[Computed]
+    public function scheduled(): Collection
+    {
+        return $this->standing()
+            ->where('production_state', ProjectProductionState::Scheduled)
+            ->with('workPackages')
+            ->addSelect(['first_scheduled_day' => WorkPackage::query()->selectRaw('min(scheduled_first_day)')->whereColumn('work_packages.project_id', 'projects.id')])
+            ->orderByRaw('case when production_manager_id = ? then 0 else 1 end', [Auth::id()])
+            ->orderBy('first_scheduled_day')
             ->orderBy('id')
             ->limit(self::LIMIT)
             ->get();
@@ -277,7 +304,7 @@ new #[Title('Workspace')] class extends Component {
 
     private function changed(): void
     {
-        unset($this->location, $this->awaitingHandoff, $this->newFromSales, $this->gettingReady, $this->readyToSchedule, $this->inPreProductionSince, $this->productionManagers, $this->manages, $this->takes);
+        unset($this->location, $this->awaitingHandoff, $this->newFromSales, $this->gettingReady, $this->readyToSchedule, $this->scheduled, $this->inPreProductionSince, $this->productionManagers, $this->manages, $this->takes);
     }
 }; ?>
 
@@ -304,13 +331,20 @@ new #[Title('Workspace')] class extends Component {
                 'none' => __('No job is ready to schedule yet.'),
                 'projects' => $this->readyToSchedule,
             ],
+            [
+                'key' => 'scheduled',
+                'heading' => __('Scheduled'),
+                'about' => __('Every part of the work has dates the customer confirmed. Yours come first, then the soonest start.'),
+                'none' => __('No job is scheduled yet.'),
+                'projects' => $this->scheduled,
+            ],
         ];
     @endphp
 
     <div>
         <flux:heading size="xl" level="1">{{ __('Workspace') }}</flux:heading>
         <flux:subheading data-test="workspace-scope">
-            {{ $location === null ? __('Sold jobs coming to Production.') : __('Sold jobs at :location, from the sale until they are ready to schedule.', ['location' => $location->name]) }}
+            {{ $location === null ? __('Sold jobs coming to Production.') : __('Sold jobs at :location, from the sale until they are scheduled.', ['location' => $location->name]) }}
         </flux:subheading>
     </div>
 
@@ -412,11 +446,14 @@ new #[Title('Workspace')] class extends Component {
                                         {{ $project->production_manager_id === Auth::id() ? __('Yours') : $project->production_manager_name }}
                                         @if ($project->production_manager_assigned_at !== null) &middot; {{ __('since') }} <x-local-time :at="$project->production_manager_assigned_at" />@endif
                                     </span>
-                                    @if ($since !== null)
+                                    @if ($since !== null && $list['key'] !== 'scheduled')
                                         <span class="text-sm text-zinc-500" data-test="workspace-in-pre-production">{{ __('In pre-production for :time', ['time' => $since->diffForHumans(now(), ['syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE, 'parts' => 1])]) }}</span>
                                     @endif
 
                                     {{-- What it has and still needs (slice 10, steps 10a to 10c). --}}
+                                    @if ($list['key'] === 'scheduled' && ($days = $project->scheduledDays()) !== null)
+                                        <span class="mt-1 font-semibold text-ink" data-test="workspace-scheduled-days">{{ __('Scheduled: :days', ['days' => WorkPackageWindow::describe($days[0], $days[1])]) }}</span>
+                                    @endif
                                     <span class="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-700" data-test="workspace-needs">
                                         @if ($project->handoff === null)
                                             <span data-test="workspace-no-handoff">{{ __('No handoff from Sales') }}</span>
@@ -429,8 +466,11 @@ new #[Title('Workspace')] class extends Component {
                                             <span data-test="workspace-not-called">{{ __('Customer not yet called') }}</span>
                                             <span>&middot;</span>
                                         @endif
-                                        <span data-test="workspace-timeframe">{{ RoughTimeframe::of($project) ?? __('No rough timeframe') }}</span>
-                                        <span>&middot;</span>
+                                        {{-- A scheduled job has its dates; the rough timeframe would only repeat them. --}}
+                                        @if ($list['key'] !== 'scheduled')
+                                            <span data-test="workspace-timeframe">{{ RoughTimeframe::of($project) ?? __('No rough timeframe') }}</span>
+                                            <span>&middot;</span>
+                                        @endif
                                         <span data-test="workspace-colors">{{ __('Colors: :state', ['state' => mb_strtolower(__($project->color_readiness->label()))]) }}</span>
                                         @if ($list['key'] === 'ready')
                                             {{-- Whether dates have been offered to the customer yet (slice 11, step 11a). --}}
