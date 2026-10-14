@@ -605,7 +605,7 @@ Added 2026-10-14 (slice 11; build plan: slice-11-schedule-plan.md; LOCKED by dec
 - Confirmed dates do not need approved colors; approved colors will be needed before a work order goes to a crew. A reschedule needs a reason, keeps the old dates and tells the salesperson in Backoffice. No message goes to the customer.
 - A ready job with no confirmed dates is flagged "needs dates soon" when its rough timeframe starts in less than three weeks. Production > Schedule is a plain list by week.
 - Built in step 11a (merged 2026-10-14, decision 145): Work Packages on a ready job, the first starting from the sale and the handoff; and the windows of dates offered to the customer for each, which are in the customer's Activity.
-- Built in step 11b (waiting for review, not merged): the customer's confirmation of one offered window for each package, with who, how and when; the production state Scheduled once every package has its dates; rescheduling with a reason, the earlier dates kept; the salesperson told in Backoffice and shown the dates on the Lead.
+- Built in step 11b (merged 2026-10-14, decision 146): the customer's confirmation of one offered window for each package, with who, how and when; the production state Scheduled once every package has its dates; rescheduling with a reason, the earlier dates kept; the salesperson told in Backoffice and shown the dates on the Lead.
 - Not built yet: Production > Schedule and "needs dates soon" (11c).
 
 PMs plan same-day starts manually. Established, capable subcontractors may run
