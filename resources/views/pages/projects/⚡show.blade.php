@@ -44,6 +44,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectColorsStarted, AuditAction::ProjectColorsNewVersion, AuditAction::ProjectColorsSentForApproval, AuditAction::ProjectColorsApproved,
         AuditAction::ProjectWindowProposed, AuditAction::ProjectWindowWithdrawn, AuditAction::ProjectScheduleConfirmed, AuditAction::ProjectRescheduled,
         AuditAction::ProjectWorkAwarded, AuditAction::ProjectAwardEnded, AuditAction::ProjectAwardAcceptedAgain, AuditAction::ProjectWorkOrderSent,
+        AuditAction::ProjectWorkStarted, AuditAction::ProjectWorkFinished, AuditAction::ProjectWorkExtended,
     ];
 
     #[Locked]
@@ -120,6 +121,11 @@ new #[Title('Project')] class extends Component {
                 'what' => CustomerActivity::label($event->action),
                 'package' => (string) ($event->values_after['package'] ?? ''),
                 'subcontractor' => (string) ($event->values_after['subcontractor'] ?? ''),
+            ]),
+            AuditAction::ProjectWorkStarted, AuditAction::ProjectWorkFinished, AuditAction::ProjectWorkExtended => __(':what: :package, :day', [
+                'what' => CustomerActivity::label($event->action),
+                'package' => (string) ($event->values_after['package'] ?? ''),
+                'day' => is_string($event->values_after['day'] ?? null) ? CarbonImmutable::createFromFormat('!Y-m-d', $event->values_after['day'])->format('M j, Y') : '',
             ]),
             AuditAction::ProjectAwardEnded => __(':what: :package from :subcontractor', [
                 'what' => CustomerActivity::label($event->action),

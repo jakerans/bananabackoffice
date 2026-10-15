@@ -18,12 +18,24 @@ enum ProjectProductionState: string
     /** Every package of its work has dates the customer confirmed (slice 11, step 11b). */
     case Scheduled = 'scheduled';
 
+    /** Work has started on at least one package (slice 14, step 14a). */
+    case InProgress = 'in_progress';
+
+    /** Every package's work has finished (slice 14, step 14a). */
+    case WorkComplete = 'work_complete';
+
+    /** The customer signed off, 100% satisfied (slice 14, step 14b). */
+    case SignedOff = 'signed_off';
+
     public function label(): string
     {
         return match ($this) {
             self::NewFromSales => 'New from Sales',
             self::PreProduction => 'Pre-production',
             self::Scheduled => 'Scheduled',
+            self::InProgress => 'In progress',
+            self::WorkComplete => 'Work complete',
+            self::SignedOff => 'Signed off',
         };
     }
 }

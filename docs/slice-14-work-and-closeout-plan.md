@@ -88,6 +88,38 @@ On each package: the day work started, the day it finished, and every
 extension with its cause. On the Project: the production states In
 progress and Work complete.
 
+### Step 14a as built (2026-10-15, overnight)
+
+**Built under decision 155; not merged.** Built as planned above. What a
+reader of the code should know:
+
+- **Stored:** `work_packages.work_started_on` and `work_finished_on`, and
+  `work_package_extensions` (previous and new last day, cause, reason, who),
+  never changed or deleted. The production state gained In progress, Work
+  complete and Signed off.
+- **One action:** `App\Actions\Projects\RecordWork` (start, finish, extend),
+  under the pre-production rule. Work starts only on a package given out
+  with dates the customer confirmed; days cannot be in the future; it cannot
+  finish before it started.
+- **The state** moves to In progress when any package starts and to Work
+  complete when every one has finished; from Scheduled on, adding a package
+  no longer moves the state back.
+- **Running over** is worked out (`WorkPackage::isRunningOver`): confirmed
+  dates, not finished, last day passed in the Location. It shows on the job,
+  the Schedule page and the Workspace.
+- **"More days"** on work under way: a later last day and the cause (the
+  subcontractor, the weather, the customer, or another reason in words).
+  "Reschedule" is no longer offered once work has started.
+- **Production > Workspace** gains "In progress" and "Work complete" lists.
+- **In the customer's Activity:** work started, finished and given more
+  days, with the package and the day.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **Taking an award back after work started is still allowed,** with whose
+  doing it was (question 4).
+- **"Work finished" is recorded per package,** and a job with one part
+  finished stays In progress until every part has.
 ## Step 14b — The walkthrough and signoff
 
 ### What a person sees

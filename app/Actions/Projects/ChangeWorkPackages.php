@@ -398,6 +398,11 @@ class ChangeWorkPackages
         $packages = $project->workPackages()->get();
         $allScheduled = $packages->isNotEmpty() && $packages->every(fn (WorkPackage $package): bool => $package->isScheduled());
 
+        // Once work has started, the work's own progress moves the state (slice 14), not its dates.
+        if (! in_array($project->production_state, [ProjectProductionState::PreProduction, ProjectProductionState::Scheduled], true)) {
+            return [];
+        }
+
         $state = match (true) {
             $allScheduled => ProjectProductionState::Scheduled,
             $project->production_state === ProjectProductionState::Scheduled => ProjectProductionState::PreProduction,

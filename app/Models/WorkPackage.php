@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,6 +28,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $scheduled_first_day The first day the customer confirmed (step 11b). Empty until they confirm.
  * @property Carbon|null $scheduled_last_day
  * @property int|null $payout_cents What Banana will pay for it now (step 13a). Finance-sensitive.
+ * @property Carbon|null $work_started_on The day the work started (slice 14, step 14a).
+ * @property Carbon|null $work_finished_on
  * @property int|null $created_by
  * @property string|null $created_by_name
  * @property Carbon|null $created_at
@@ -72,6 +75,8 @@ class WorkPackage extends Model
             'scheduled_first_day' => 'date',
             'scheduled_last_day' => 'date',
             'payout_cents' => 'integer',
+            'work_started_on' => 'date',
+            'work_finished_on' => 'date',
         ];
     }
 
@@ -141,6 +146,35 @@ class WorkPackage extends Model
     public function workOrdersSent(): HasMany
     {
         return $this->hasMany(WorkOrderSent::class)->orderByDesc('id');
+    }
+
+    /**
+     * Every time it was given a later last day, the latest first (slice 14).
+     *
+     * @return HasMany<WorkPackageExtension, $this>
+     */
+    public function extensions(): HasMany
+    {
+        return $this->hasMany(WorkPackageExtension::class)->orderByDesc('id');
+    }
+
+    public function hasStarted(): bool
+    {
+        return $this->work_started_on !== null;
+    }
+
+    public function hasFinished(): bool
+    {
+        return $this->work_finished_on !== null;
+    }
+
+    /**
+     * Whether its work runs past its last day: scheduled, not finished, and
+     * that day is behind us (decision 155, question 2).
+     */
+    public function isRunningOver(CarbonInterface $today): bool
+    {
+        return $this->isScheduled() && ! $this->hasFinished() && $this->scheduled_last_day->lessThan($today->copy()->startOfDay());
     }
 
     /**
