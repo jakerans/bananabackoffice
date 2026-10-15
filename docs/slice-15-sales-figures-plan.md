@@ -2,7 +2,7 @@
 
 Status: **planned and built overnight on 2026-10-15 under decision 155, its
 recommendations taken as the answers, for Jacob to review in the morning.**
-Not merged. One step.
+Merged on 2026-10-15 with Jacob's word (decision 157). One step.
 
 It follows [product-architecture.md](product-architecture.md), 5.2, which
 lists both figures among Sales' secondary figures without defining them, and

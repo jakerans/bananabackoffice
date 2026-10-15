@@ -2,7 +2,8 @@
 
 Status: **built overnight on 2026-10-15 under decision 155, with the
 recommendation on each of the ten questions taken as the answer, for Jacob
-to review in the morning.** Not merged. It was written as what the
+to review in the morning.** Merged on 2026-10-15 with Jacob's word (decision
+157). It was written as what the
 implementation agent recommended after slice 13, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 6.8,
@@ -218,7 +219,7 @@ Readings made while building, for Jacob to change if wrong:
 ### Slice 14 as built
 
 All three steps are built and pushed under decision 155, on the branch
-`checkpoint-overnight-slice-14-onward`. Not merged.
+`checkpoint-overnight-slice-14-onward`, merged on 2026-10-15 (decision 157).
 ## Who may do what
 
 No new permission.

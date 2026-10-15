@@ -1,9 +1,9 @@
-# Slice 16 — Document Storage: Proposed Plan
+# Slice 16 — Document Storage: Plan
 
-Status: **proposed on 2026-10-15. Not approved. Nothing in it is built.**
-It is what the implementation agent recommends, now that Jacob has set up the
-storage (decision 156). Jacob approves it, changes it, or chooses something
-else.
+Status: **approved on 2026-10-15 (decision 157) in three steps, each stopping
+for Jacob's review, with the recommendation on all ten questions. Step 16a
+is being built.** It was written as what the implementation agent
+recommended, once Jacob had set up the storage (decision 156).
 
 It follows decision 33 (one attachment model, in private storage of its
 own), [security-notes.md](security-notes.md) ("Database backups do NOT cover
@@ -115,6 +115,9 @@ purged after 30 days; nothing ever stored under its original name; and the
 migrations on MySQL 8.4. The tests use a local disk, never Wasabi.
 
 ## Decisions needed
+
+**Answered by Jacob on 2026-10-15 (decision 157): "looks good", confirmed as
+approving the plan.** The questions are kept below as they were asked.
 
 Each has a recommendation. "Follow your recommendations" is a complete answer.
 

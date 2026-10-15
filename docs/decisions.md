@@ -3203,6 +3203,24 @@ two buckets over one shared bucket: "I'll make two buckets."
    [slice-16-document-storage-plan.md](slice-16-document-storage-plan.md),
    proposed and not approved.
 
+## 157. Slices 14 and 15 are merged; slice 16 is approved; step 16a starts (2026-10-15)
+
+**Decided by Jacob,** in reply to the status of the overnight work and the
+slice 16 plan: "looks good". Asked what it covered, he chose both "Merge
+slices 14 and 15" and "Approve storage plan".
+
+1. **Slices 14 and 15 are merged.** The decisions taken overnight under
+   decision 155, and the readings in each plan's "as built" sections, stay
+   as built; he did not change them.
+2. **Slice 16, document storage, is approved** in three steps
+   ([slice-16-document-storage-plan.md](slice-16-document-storage-plan.md)),
+   each stopping for his review, with the recommendation on all ten
+   questions. Among them: the package `league/flysystem-aws-s3-v3` may be
+   added; the W-9 file is not stored; PDF, JPEG, PNG and HEIC up to 20 MB;
+   no virus scanning for now; links last five minutes; removed files are
+   purged after 30 days and their earlier versions after a further 30.
+3. **Step 16a, the storage itself, starts.** It stops for his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

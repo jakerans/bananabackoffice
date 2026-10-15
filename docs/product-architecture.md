@@ -304,7 +304,7 @@ Added 2026-10-13 (slice 7 step 7d; build plan: slice-7-appointment-results-plan.
 - NSLI is the sold amounts of the month over the Leads issued in the month, each after that month's corrections. There are no refunds to net out yet.
 - A month that has passed is not rewritten (decision 133). A sale corrected later, or a Lead Issued taken back later, stays in its month and comes off the month it was corrected in. Sales and their corrections are kept as lines that are never changed (`sale_entries`).
 - Not built: targets; the Leaderboard (5.8); a figure across all Locations at once.
-- Built in slice 15 (overnight under decision 155, not merged): Average Job Size, the month's sold revenue over the proposals sold in it after corrections; Close-on-the-Spot Rate, of the Leads first demoed in the month the ones with something sold at that demo by the end of its day.
+- Built in slice 15 (overnight under decision 155, merged 2026-10-15, decision 157): Average Job Size, the month's sold revenue over the proposals sold in it after corrections; Close-on-the-Spot Rate, of the Leads first demoed in the month the ones with something sold at that demo by the end of its day.
 - Built in slice 9, step 9c (decision 137): Pending Rate, of the Leads first demoed in the month the ones that left that demo with nothing sold and something still open; % Pending with Rehash booked during the appointment, of those the ones with a return visit booked by the end of that day; and Rehash conversion, of the Leads released to Rehash in the month the ones sold since.
 - Attribution is LOCKED by decision 133: Lead Issued stays with the first
   salesperson who received that issued Lead; appointment figures follow the
@@ -687,7 +687,7 @@ PM follows up and gives final-payment instructions. A qualified subcontractor
 may conduct it at the PM's discretion after at least five completed Projects
 and a 4.5+ rating; responsibility remains with the PM.
 
-Added 2026-10-15 (slice 14; build plan: slice-14-work-and-closeout-plan.md; built overnight under decision 155, not merged):
+Added 2026-10-15 (slice 14; build plan: slice-14-work-and-closeout-plan.md; built overnight under decision 155, merged 2026-10-15, decision 157):
 - Built: work started and finished on each package, the states In progress, Work complete and Signed off, work running over its last day marked, and more days given with whose cause it was (7.9); the internal inspection, the customer walkthrough (by the Production Manager or one of the job's subcontractors), the punch list and the customer's 100%-satisfied signoff; the subcontractor scorecard (7.10) and a track record of jobs completed and average rating (7.11).
 - Not built yet: financial close (job costing, receipts, Finance reconciliation, final balance), Brand Ambassador obligations, removing a failing crew with a completion package, photos.
 
