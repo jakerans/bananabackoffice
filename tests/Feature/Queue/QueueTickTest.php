@@ -47,7 +47,8 @@ test('the scheduler runs the queue tick every minute, inline, with a five-minute
 
     Artisan::call('schedule:list');
 
-    expect(Artisan::output())->toContain('backoffice:queue-tick')->toContain('* * * * *');
+    // The listing pads its columns to the longest schedule, so the spacing varies.
+    expect(Artisan::output())->toMatch('/\*\s+\*\s+\*\s+\*\s+\*\s+php artisan backoffice:queue-tick/');
 });
 
 test('the command writes the heartbeat and succeeds with nothing to do', function () {

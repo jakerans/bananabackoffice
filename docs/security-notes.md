@@ -375,20 +375,55 @@ overwritten or rebuilt, with a fresh backup taken immediately beforehand and a
 written recovery procedure. Production also needs its own backup configuration.
 See roadmap.md, "Backups".
 
-**File storage is set up in Wasabi (decision 156) and not used yet.** Two
-private buckets in `us-east-1`, `backoffice-staging` and `banana-backoffice`,
-with versioning on, each reachable only by its own API-only user. The keys
-are in Jacob's password manager and nowhere else. Before production stores
-real files, check that no other key in the Wasabi account can reach these
-buckets.
+**File storage is set up in Wasabi (decision 156); step 16a can use it, and
+nothing stores real files yet.** Two private buckets in `us-east-1`,
+`backoffice-staging` and `banana-backoffice`, with versioning on, each
+reachable only by its own API-only user. The keys are in Jacob's password
+manager and nowhere else; they go into each server's environment
+(`FILES_ACCESS_KEY_ID`, `FILES_SECRET_ACCESS_KEY`) and never into the
+repository. Before production stores real files, check that no other key in
+the Wasabi account can reach these buckets.
 
 **Database backups do NOT cover uploaded files.**
-A database backup contains the database only. Uploaded customer and project files
-are stored separately and would not be restored by it. Backoffice stores no
-uploaded files today. Before it begins storing meaningful uploaded files, it needs
-a separate, durable object-storage and backup strategy for them: private, protected
-against deletion and overwriting, restorable, and tested. This must be settled
-before Checkpoint B stores its first real photo.
+A database backup contains the database only. Uploaded files live in the
+bucket, and their backup is the bucket's versioning (step 16a):
+
+- Files are stored under random names and never overwritten, so the only
+  earlier version a file ever has is the one kept when it is deleted.
+- The application's key can store, read and delete files, but cannot list,
+  read or delete earlier versions. A stolen key can delete files; it cannot
+  destroy their backup.
+- A removed file is hidden at once and deleted from the bucket 30 days later
+  by the nightly purge. Its earlier version is then the backup for 30 more
+  days, until the bucket's own lifecycle rule ("permanently delete
+  noncurrent versions", 30 days) deletes it. That rule is set by Jacob in
+  Wasabi, on Backoffice's two buckets only.
+- Before production stores real files: the restore drill below passes on
+  staging, and the lifecycle rule is on both buckets. Replication to a
+  second region is decided then (decision 157, question 8).
+
+**Restoring a file.** The bucket keeps an earlier version of every deleted
+file for 30 days. To bring one back:
+
+1. Sign in to the Wasabi console with the account's own sign-in, not the
+   application's key (that key cannot see earlier versions, on purpose).
+2. Open the bucket, and turn on showing deleted files or versions.
+3. Find the file by its stored name. The stored name is in the
+   attachment's record (`attachments.path`); it is never the name the file
+   was uploaded with.
+4. Delete the file's "delete marker". The earlier version becomes the file
+   again. (Or download the earlier version and upload it again under the
+   same name.)
+5. If the file had been removed in Backoffice, it is still hidden there:
+   attach it again from the downloaded copy, with a note of why.
+
+**The restore drill.** On a server with the keys in place, run
+`php artisan backoffice:files-check`. It stores a test file, reads it back,
+makes a short-lived link and deletes it, and prints the test file's stored
+name. Restore that file by the steps above, then run
+`php artisan backoffice:files-check --restored=<name>`, which checks it came
+back whole and deletes it again. The drill has not yet been run: the staging
+key goes in only after step 16a is merged.
 
 **The application uses the server's main database account.**
 On staging the application connects to MySQL as the server's general `forge`

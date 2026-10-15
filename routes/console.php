@@ -12,3 +12,7 @@ Artisan::command('inspire', function () {
 // process: no queue worker is used. The overlap lock frees itself after five
 // minutes and is kept in the application's own cache store.
 Schedule::command('backoffice:queue-tick')->everyMinute()->withoutOverlapping(5);
+
+// Deletes from storage the files removed more than 30 days ago
+// (docs/slice-16-document-storage-plan.md, step 16a).
+Schedule::command('backoffice:files-purge')->dailyAt('03:15')->withoutOverlapping(60);

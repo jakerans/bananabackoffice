@@ -2,7 +2,7 @@
 
 Status: **approved on 2026-10-15 (decision 157) in three steps, each stopping
 for Jacob's review, with the recommendation on all ten questions. Step 16a
-is being built.** It was written as what the implementation agent
+is built and awaiting Jacob's review; see "Step 16a as built".** It was written as what the implementation agent
 recommended, once Jacob had set up the storage (decision 156).
 
 It follows decision 33 (one attachment model, in private storage of its
@@ -159,3 +159,55 @@ before production stores real files.
   sooner.
 - **The restore procedure is tried on staging only** until production
   exists.
+
+## Step 16a as built (2026-10-15)
+
+Built on `checkpoint-slice-16a-storage`. Nothing in the app uses it yet but
+its tests; 16b and 16c are the first uses.
+
+- **The package** `league/flysystem-aws-s3-v3` (question 1), version 3.
+- **The disk** `files`, set by `FILES_DRIVER`: `s3` points at Wasabi with
+  the `FILES_*` settings, private, and stops on any storage error; anything
+  else (developers' machines, the tests) is a private folder,
+  `storage/app/files`, which is never committed.
+- **The record** `attachments`: what it belongs to, its kind, the stored
+  path (`<what it belongs to>/<its id>/<random>.<type>`), the name it came
+  with, type, size, who added it, and if removed who, when, why, and when
+  its file was purged. The row can never be deleted.
+- **Attaching** (`AttachFile`): the caller names the ability that allows
+  changing what the file belongs to. Only PDF, JPEG, PNG and HEIC, judged
+  by the file's content as well as its name, up to 20 MB. If the record
+  cannot be saved, the stored file is deleted again. Audit event
+  `attachment.added`.
+- **Opening** (`AttachmentLink`): checks the ability that allows seeing
+  what it belongs to, refuses a removed file, and gives a five-minute link
+  that downloads under the original name (photos open in the browser).
+  Not logged (decision 34).
+- **Removing** (`RemoveAttachment`): a reason of up to 1,000 characters,
+  hidden at once, once only. Audit event `attachment.removed`.
+- **Purging** (`PurgeRemovedAttachments`, the nightly
+  `backoffice:files-purge` at 03:15): deletes from storage each file
+  removed 30 or more days ago and marks its record purged. One failure does
+  not stop the rest; it is tried again the next night. Audit event
+  `attachment.purged`.
+- **The storage check and restore drill** (`backoffice:files-check`):
+  stores, reads, links and deletes a test file, then, with `--restored`,
+  confirms it came back whole after a restore in the bucket. It never
+  prints a key or a link.
+- **The restore procedure** is in security-notes.md, "Restoring a file".
+- **Tests:** `tests/Feature/Attachments/AttachmentsTest.php`, 25 tests on a
+  fake disk, never Wasabi.
+
+### Deviations from the plan
+
+1. **Earlier versions are deleted by the bucket, not by the application**
+   (question 10). The key Jacob created can store, read and delete files,
+   but not touch earlier versions. That is safer: a stolen key cannot
+   destroy the backup. So the second 30 days is a lifecycle rule Jacob
+   sets on each Backoffice bucket in Wasabi ("permanently delete
+   noncurrent versions" after 30 days), and the `versions_purged_at`
+   column was not built. This needs Jacob's agreement.
+2. **The restore was not tried on staging before merge.** The staging key
+   goes in only after 16a is merged (question 3). Instead, after the
+   merge, Jacob adds the key and the drill is run on staging with his
+   approval, before 16b stores any real file.
