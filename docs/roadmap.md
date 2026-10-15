@@ -164,6 +164,11 @@ merged.
 overnight under decision 155,** for Jacob's review:
 [slice-15-sales-figures-plan.md](slice-15-sales-figures-plan.md). Not merged.
 
+**Slice 16, document storage, is proposed and not approved.** Jacob set up the
+Wasabi buckets (decision 156); its plan is
+[slice-16-document-storage-plan.md](slice-16-document-storage-plan.md).
+Nothing in it is built.
+
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
 Production Workspace instead of separate stage/project modules. Customers and

@@ -3,13 +3,21 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-15 · **Branch:** `checkpoint-overnight-slice-14-onward`
+**Updated:** 2026-10-15 · **Branch:** `checkpoint-slice-16-plan` (on top of
+`checkpoint-overnight-slice-14-onward`)
 
 **State:** **slices 14 and 15 were built overnight under decision 155 and
 wait for Jacob's review. Nothing is merged; staging is unchanged.** Slice 13
 was merged before the night began (decision 154). Every decision made
 overnight was a recommendation taken as the answer; each is listed below for
 Jacob to confirm or change.
+
+**Also waiting: the slice 16 plan, document storage,**
+[../slice-16-document-storage-plan.md](../slice-16-document-storage-plan.md),
+proposed and not approved. Jacob set up the Wasabi buckets this morning
+(decision 156). Its ten questions each have a recommendation; the one that
+needs his word before anything is built is approving the package Laravel
+uses to talk to the storage.
 
 ## What was built
 

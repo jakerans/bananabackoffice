@@ -3176,6 +3176,33 @@ How the implementation agent reads it, for Jacob to correct in the morning:
    service (document storage, QuickBooks), sends anything to a customer or
    subcontractor, or lets anyone outside Banana sign in.
 
+## 156. File storage is Wasabi, not a DigitalOcean Space (2026-10-15)
+
+**Decided by Jacob,** who already has a Wasabi subscription: "I have a
+Wasabi subscription. Would that work instead of the Digital Ocean service?"
+and, after hearing what it means, "let's get the bucket set up". He chose
+two buckets over one shared bucket: "I'll make two buckets."
+
+1. **Decision 33 stands, with Wasabi in place of a DigitalOcean Space.**
+   Wasabi is S3-compatible, so Laravel's standard S3 driver applies.
+2. **Jacob set it up himself,** adding only new things to his Wasabi
+   account and changing nothing that was there:
+   - two private buckets in `us-east-1`: `backoffice-staging` for staging
+     and `banana-backoffice` for production;
+   - versioning on; Object Lock, replication and logging off;
+   - two account-level policies, `backoffice-staging-files` and
+     `backoffice-production-files`, each allowing list, read, write and
+     delete on its own bucket only;
+   - two users with API access only, `backoffice-staging` and
+     `backoffice-production`, each with its own policy and nothing else.
+3. **The keys are in Jacob's password manager.** They are never pasted into
+   a chat, a document or the repository. The staging keys go into Forge's
+   environment by Jacob once the code that uses them is merged; the
+   production keys wait for production.
+4. **Nothing uses the storage yet.** The plan for using it is
+   [slice-16-document-storage-plan.md](slice-16-document-storage-plan.md),
+   proposed and not approved.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
