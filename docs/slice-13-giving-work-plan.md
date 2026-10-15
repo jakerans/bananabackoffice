@@ -3,8 +3,8 @@
 Status: **approved on 2026-10-14 (decision 151) in three steps, each
 stopping for Jacob's review, with the recommendation on all ten questions.
 Step 13a was built and merged on 2026-10-14 (decision 152); see "Step 13a as
-built". Step 13b is built and waits for Jacob's review; see "Step 13b as
-built".** It was written as what the implementation agent
+built". Step 13b was built and merged on 2026-10-14 (decision 153); see "Step 13b as
+built". Step 13c is being built.** It was written as what the implementation agent
 recommended after slice 12, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 6.6,
@@ -142,7 +142,8 @@ whose doing it was.
 
 ### Step 13b as built (2026-10-14)
 
-**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+**Merged into `main` on 2026-10-14** with Jacob's word ("continue", decision
+153). Built as planned above.
 What a reader of the code should know:
 
 - **Stored:** `work_package_awards`, one row each time a package is given

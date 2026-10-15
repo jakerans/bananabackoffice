@@ -638,7 +638,7 @@ Added 2026-10-14 (slice 13; build plan: slice-13-giving-work-plan.md; LOCKED by 
 - Work is given directly to one Active, compliant subcontractor at the job's Location, who picks one of the windows offered to the customer; how they accepted is recorded; taking back an award records whose doing it was.
 - The work order is a printable page with the address once awarded, the colors (approved first), the payout and the insurance deduction (one company rate, 10% to start).
 - Built in step 13a (merged 2026-10-14, decision 152): the payout and its history.
-- Built in step 13b (waiting for review, not merged): the award to one Active, compliant subcontractor at the job's Location, for one of the windows offered or the confirmed dates; acceptance recorded; a payout change needing a reason and acceptance again; taking back with whose doing it was; the crew on the Schedule and in the Workspace.
+- Built in step 13b (merged 2026-10-14, decision 153): the award to one Active, compliant subcontractor at the job's Location, for one of the windows offered or the confirmed dates; acceptance recorded; a payout change needing a reason and acceptance again; taking back with whose doing it was; the crew on the Schedule and in the Workspace.
 - Not built yet: the work order (13c).
 
 6.7 Change Orders vs Sub Work Order Revisions
