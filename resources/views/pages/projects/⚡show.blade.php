@@ -43,7 +43,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectWelcomeCallRecorded, AuditAction::ProjectWelcomeCallUndone, AuditAction::ProjectTimeframeSet, AuditAction::ProjectTimeframeChanged,
         AuditAction::ProjectColorsStarted, AuditAction::ProjectColorsNewVersion, AuditAction::ProjectColorsSentForApproval, AuditAction::ProjectColorsApproved,
         AuditAction::ProjectWindowProposed, AuditAction::ProjectWindowWithdrawn, AuditAction::ProjectScheduleConfirmed, AuditAction::ProjectRescheduled,
-        AuditAction::ProjectWorkAwarded, AuditAction::ProjectAwardEnded, AuditAction::ProjectAwardAcceptedAgain,
+        AuditAction::ProjectWorkAwarded, AuditAction::ProjectAwardEnded, AuditAction::ProjectAwardAcceptedAgain, AuditAction::ProjectWorkOrderSent,
     ];
 
     #[Locked]
@@ -116,7 +116,7 @@ new #[Title('Project')] class extends Component {
             AuditAction::ProjectEdited => __('Title or description changed'),
             AuditAction::ProjectHandoffChanged => __('Handoff answers changed'),
             AuditAction::ProjectWindowProposed, AuditAction::ProjectWindowWithdrawn, AuditAction::ProjectScheduleConfirmed, AuditAction::ProjectRescheduled => $this->windowLabel($event),
-            AuditAction::ProjectWorkAwarded, AuditAction::ProjectAwardAcceptedAgain => __(':what: :package to :subcontractor', [
+            AuditAction::ProjectWorkAwarded, AuditAction::ProjectAwardAcceptedAgain, AuditAction::ProjectWorkOrderSent => __(':what: :package to :subcontractor', [
                 'what' => CustomerActivity::label($event->action),
                 'package' => (string) ($event->values_after['package'] ?? ''),
                 'subcontractor' => (string) ($event->values_after['subcontractor'] ?? ''),

@@ -4,7 +4,8 @@ Status: **approved on 2026-10-14 (decision 151) in three steps, each
 stopping for Jacob's review, with the recommendation on all ten questions.
 Step 13a was built and merged on 2026-10-14 (decision 152); see "Step 13a as
 built". Step 13b was built and merged on 2026-10-14 (decision 153); see "Step 13b as
-built". Step 13c is being built.** It was written as what the implementation agent
+built". Step 13c, the last, is built and waits for Jacob's review; see "Step
+13c as built".** It was written as what the implementation agent
 recommended after slice 12, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 6.6,
@@ -205,6 +206,47 @@ When each work order was sent, how and by whom; and the deduction rate, a
 setting that starts at 10% and keeps every earlier rate with the day it
 changed.
 
+### Step 13c as built (2026-10-14)
+
+**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+What a reader of the code should know:
+
+- **Stored:** `insurance_deduction_rates` (basis points and the day each
+  takes effect; 10% written in from the start) and `work_orders_sent` (each
+  time a work order was sent: how, when, by whom, and what it said: the
+  award, the days, the payout and the deduction). Neither is ever changed or
+  deleted.
+- **What a work order says is worked out** by `App\Support\Projects\WorkOrder`
+  from the package, its award, the job's colors and the rate in force on the
+  work's first day. The days are the confirmed ones once the customer has
+  confirmed, otherwise those the subcontractor took.
+- **The deduction** applies when the subcontractor's compliance shows either
+  insurance item as Banana's coverage: the rate times the payout, rounded to
+  the cent, shown with the payout after it. The gross payout is kept as it
+  is (stakeholder answer 19).
+- **It can be sent** once the colors are approved (decision 141) and the
+  subcontractor has accepted the payout it has now.
+  `App\Actions\Projects\SendWorkOrder` records how and when; "It has changed
+  since it was sent" shows when the subcontractor, payout, deduction or days
+  differ from what was sent.
+- **The page** (`projects/{project}/work-orders/{package}`) needs
+  `payouts.view`; Finance reads it; only those who may set payouts record it
+  as sent. "Print" prints the work order alone: the menus, the impersonation
+  banner and the buttons are left off a printed page everywhere.
+- **The rate** is in Settings > Locations, "Insurance deduction", for
+  whoever manages Locations: the rate now, earlier and coming rates, and a
+  new rate from a day that has not passed.
+- **In the customer's Activity:** "Work order sent", with the package and
+  the subcontractor; never the payout.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **One deduction per work order,** whether one or both insurance items are
+  Banana's coverage.
+- **The rate is the one in force on the work's first day,** not the day it
+  was sent.
+- **A new rate cannot start in the past,** so a work order already sent is
+  never changed by it.
 ## Who may do what
 
 | What | Who |

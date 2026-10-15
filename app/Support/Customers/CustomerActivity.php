@@ -78,6 +78,7 @@ class CustomerActivity
             AuditAction::ProjectWorkAwarded,
             AuditAction::ProjectAwardEnded,
             AuditAction::ProjectAwardAcceptedAgain,
+            AuditAction::ProjectWorkOrderSent,
             AuditAction::LeadCustomerLinked,
             AuditAction::LeadCustomerLinkChanged,
         ];
@@ -147,6 +148,7 @@ class CustomerActivity
             AuditAction::ProjectWorkAwarded => __('Work given to a subcontractor'),
             AuditAction::ProjectAwardEnded => __('Work taken back from a subcontractor'),
             AuditAction::ProjectAwardAcceptedAgain => __('Subcontractor accepted the changed work again'),
+            AuditAction::ProjectWorkOrderSent => __('Work order sent'),
             AuditAction::LeadCustomerLinked => __('Lead linked to customer'),
             AuditAction::LeadCustomerLinkChanged => __('Lead customer link changed'),
             default => throw new \LogicException('This audit action is not customer activity.'),

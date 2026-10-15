@@ -9,6 +9,7 @@ use App\Models\Account;
 use App\Models\AppointmentCancellationReason;
 use App\Models\Contact;
 use App\Models\ContactCenterSettings;
+use App\Models\InsuranceDeductionRate;
 use App\Models\Lead;
 use App\Models\LeadChannel;
 use App\Models\LeadDisqualificationReason;
@@ -118,6 +119,7 @@ class AppServiceProvider extends ServiceProvider
             'property' => Property::class,
             'contact_center_settings' => ContactCenterSettings::class,
             'subcontractor' => Subcontractor::class,
+            'insurance_deduction_rate' => InsuranceDeductionRate::class,
         ]);
     }
 

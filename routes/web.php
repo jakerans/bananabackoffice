@@ -47,6 +47,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // of its own (product-architecture.md, 6.2) and is authorized by its own location.
     Route::livewire('projects/{project}', 'pages::projects.show')->can('view', 'project')->name('projects.show');
     Route::livewire('projects/{project}/handoff', 'pages::projects.handoff')->can('completeHandoff', 'project')->name('projects.handoff');
+    // A work order shows the payout, so it needs payouts.view (slice 13, step 13c).
+    Route::livewire('projects/{project}/work-orders/{workPackage}', 'pages::projects.work-order')->can('viewPayouts', 'project')->scopeBindings()->name('projects.work-order');
     Route::livewire('production/workspace', 'pages::production.workspace')->can(Permission::ProductionAccess)->name('production.workspace');
     Route::livewire('production/schedule', 'pages::production.schedule')->can(Permission::ProductionAccess)->name('production.schedule');
 

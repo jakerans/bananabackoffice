@@ -2,7 +2,7 @@
 
 {{-- Shown on every signed-in page while an Owner is viewing Backoffice as someone else. It stays on screen when the page scrolls. --}}
 @if ($impersonation->isActive())
-    <div role="status" data-test="impersonation-banner" class="sticky top-0 z-50 border-b-4 border-ink bg-red-600 text-white shadow-lg">
+    <div role="status" data-test="impersonation-banner" class="sticky top-0 z-50 border-b-4 border-ink bg-red-600 text-white shadow-lg print:hidden">
         <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 px-4 py-2.5 text-center">
             <span class="font-nav text-base font-bold tracking-wide sm:text-lg">
                 {{ __('Viewing Backoffice as :name', ['name' => $impersonation->impersonated()->name]) }}

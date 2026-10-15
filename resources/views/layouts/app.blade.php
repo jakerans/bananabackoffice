@@ -13,7 +13,8 @@
         @include('partials.impersonation-banner')
 
         {{-- The Ink header is the only dark region, so Flux renders its controls for a dark surface here. --}}
-        <header class="dark bg-ink text-white">
+        {{-- The menus are left off a printed page, such as a work order (slice 13, step 13c). --}}
+        <header class="dark bg-ink text-white print:hidden">
             <div class="flex h-14 items-stretch">
                 {{-- The logo has dark lettering, so it sits on a Cream block at the start of the Ink header. --}}
                 <x-app-logo :href="route('dashboard')" wire:navigate class="bg-cream px-4 lg:px-6" height="h-8 sm:h-9" />
@@ -37,17 +38,19 @@
         </header>
 
         @if ($currentDestination)
-            <x-shell.center-nav :center="$currentDestination" :shell="$shell" />
+            <div class="print:hidden">
+                <x-shell.center-nav :center="$currentDestination" :shell="$shell" />
 
-            @if ($currentSection = $shell->currentSection($currentDestination))
-                <x-shell.section-nav :section="$currentSection" :shell="$shell" />
-            @endif
+                @if ($currentSection = $shell->currentSection($currentDestination))
+                    <x-shell.section-nav :section="$currentSection" :shell="$shell" />
+                @endif
+            </div>
         @endif
 
         <livewire:pages::sales.close-out-prompt />
         <livewire:pages::sales.handoff-prompt />
 
-        <main class="px-4 py-6 lg:px-8 lg:py-8">
+        <main class="px-4 py-6 lg:px-8 lg:py-8 print:p-0">
             {{ $slot }}
         </main>
 
