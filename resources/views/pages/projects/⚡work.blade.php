@@ -2,12 +2,16 @@
 
 use App\Actions\Projects\AwardWorkPackage;
 use App\Actions\Projects\ChangeWorkPackages;
+use App\Actions\Projects\RecordWork;
+use App\Actions\Subcontractors\ScoreSubcontractor;
+use App\Models\SubcontractorScorecard;
 use App\Enums\ColorApprovalMethod;
 use App\Enums\ProjectProductionState;
 use App\Models\Project;
 use App\Models\Subcontractor;
 use App\Models\WorkPackage;
 use App\Models\WorkPackageAward;
+use App\Models\WorkPackageExtension;
 use App\Models\WorkPackagePayout;
 use App\Models\WorkPackageSchedule;
 use App\Models\WorkPackageWindow;
@@ -73,6 +77,20 @@ new class extends Component {
 
     public string $acceptedOn = '';
 
+    /** The work in progress (slice 14, step 14a): which it is, the day, and a later last day with its cause. */
+    public string $workStep = '';
+
+    public string $workDay = '';
+
+    public string $extendLastDay = '';
+
+    public string $extendCause = '';
+
+    public string $extendReason = '';
+
+    /** @var array<string, mixed> The scorecard being filled in (slice 14, step 14c). */
+    public array $scores = [];
+
     /** Taking an award back: whose doing it was, and why. */
     public string $awardEndCause = '';
 
@@ -105,7 +123,7 @@ new class extends Component {
     #[Computed]
     public function project(): Project
     {
-        return Project::query()->with(['location', 'handoff', 'proposal', 'contact', 'account', 'workPackages.windows', 'workPackages.schedules', 'workPackages.payouts', 'workPackages.awards.subcontractor'])->findOrFail($this->projectId);
+        return Project::query()->with(['location', 'handoff', 'proposal', 'contact', 'account', 'workPackages.windows', 'workPackages.schedules', 'workPackages.payouts', 'workPackages.awards.subcontractor', 'workPackages.extensions'])->findOrFail($this->projectId);
     }
 
     #[Computed]
@@ -132,6 +150,16 @@ new class extends Component {
     public function seesPayouts(): bool
     {
         return Auth::user()->can('viewPayouts', $this->project);
+    }
+
+    /**
+     * Whether the signed-in person may record the work in progress: the
+     * pre-production rule, readiness aside, since the job is under way.
+     */
+    #[Computed]
+    public function mayRecordWork(): bool
+    {
+        return Auth::user()->can('managePreProduction', $this->project);
     }
 
     /**
@@ -426,6 +454,101 @@ new class extends Component {
         $this->saved('confirm-work-window', __('Dates confirmed with the customer.'));
     }
 
+    /**
+     * Open the dialog for the work starting or finishing on a package.
+     */
+    public function openWorkDay(int $packageId, string $step): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+
+        $this->packageId = $this->shownPackage($packageId)->id;
+        $this->workStep = $step === 'finish' ? 'finish' : 'start';
+        $this->workDay = RoughTimeframe::today($this->project->location)->toDateString();
+        $this->resetValidation();
+
+        Flux::modal('work-day')->show();
+    }
+
+    public function saveWorkDay(RecordWork $recordWork): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+        $this->resetValidation();
+
+        $packageId = $this->packageId ?? abort(409, __('Choose the work package again. Reload the page.'));
+
+        if ($this->workStep === 'finish') {
+            $recordWork->finish($this->project, $packageId, $this->workDay, Auth::user());
+            $this->dispatch('project-readiness-changed');
+            $this->saved('work-day', __('Work finished.'));
+
+            return;
+        }
+
+        $recordWork->start($this->project, $packageId, $this->workDay, Auth::user());
+        $this->saved('work-day', __('Work started.'));
+    }
+
+    /**
+     * The scorecards of this job's awards, by award.
+     *
+     * @return \Illuminate\Support\Collection<int, SubcontractorScorecard>
+     */
+    #[Computed]
+    public function scorecards(): \Illuminate\Support\Collection
+    {
+        return SubcontractorScorecard::query()->where('project_id', $this->projectId)->get()->keyBy('work_package_award_id');
+    }
+
+    public function openScore(int $packageId): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+
+        $this->packageId = $this->shownPackage($packageId)->id;
+        $this->scores = [
+            ...array_fill_keys([...array_keys(SubcontractorScorecard::MEASURES), 'overall'], ''),
+            ...array_fill_keys(array_keys(SubcontractorScorecard::CHECKS), false),
+            'feedback' => '',
+            'internalNotes' => '',
+        ];
+        $this->resetValidation();
+
+        Flux::modal('work-score')->show();
+    }
+
+    public function saveScore(ScoreSubcontractor $scoreSubcontractor): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+        $this->resetValidation();
+
+        $scoreSubcontractor->score($this->project, $this->packageId ?? abort(409, __('Choose the work package again. Reload the page.')), $this->scores, Auth::user());
+
+        unset($this->scorecards);
+        $this->saved('work-score', __('Scorecard saved.'));
+    }
+
+    public function openExtend(int $packageId): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+
+        $this->packageId = $this->shownPackage($packageId)->id;
+        $this->extendLastDay = '';
+        $this->extendCause = '';
+        $this->extendReason = '';
+        $this->resetValidation();
+
+        Flux::modal('work-extend')->show();
+    }
+
+    public function saveExtend(RecordWork $recordWork): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+        $this->resetValidation();
+
+        $recordWork->extend($this->project, $this->packageId ?? abort(409, __('Choose the work package again. Reload the page.')), $this->extendLastDay, $this->extendCause, $this->extendReason, Auth::user());
+
+        $this->saved('work-extend', __('More days given. The days it had are kept.'));
+    }
+
     public function openReschedule(int $packageId): void
     {
         $this->authorize('managePreProduction', $this->project);
@@ -658,10 +781,69 @@ new class extends Component {
                                     @endif
                                 </div>
 
-                                @if ($mayChange)
+                                {{-- Once work has started, it is given more days rather than rescheduled (slice 14, step 14a). --}}
+                                @if ($mayChange && ! $shown->hasStarted())
                                     <flux:button size="sm" class="shrink-0" wire:click="openReschedule({{ $shown->id }})" data-test="reschedule-work">{{ __('Reschedule') }}</flux:button>
                                 @endif
                             </div>
+
+                            {{-- The work in progress (slice 14, step 14a). --}}
+                            @php
+                                $runningOver = $shown->isRunningOver(RoughTimeframe::today($project->location));
+                            @endphp
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-t border-emerald-200 pt-2" data-test="work-progress">
+                                <div class="flex flex-wrap items-center gap-2 text-sm text-ink">
+                                    @if ($shown->hasFinished())
+                                        <flux:badge size="sm" color="emerald" data-test="work-finished">{{ __('Finished on :day', ['day' => $shown->work_finished_on->format('M j, Y')]) }}</flux:badge>
+                                        <span class="text-zinc-600">{{ __('Started on :day', ['day' => $shown->work_started_on->format('M j, Y')]) }}</span>
+                                    @elseif ($shown->hasStarted())
+                                        <flux:badge size="sm" color="sky" data-test="work-in-progress">{{ __('In progress since :day', ['day' => $shown->work_started_on->format('M j, Y')]) }}</flux:badge>
+                                    @else
+                                        <span class="text-zinc-600" data-test="work-not-started">{{ __('Not started yet') }}</span>
+                                    @endif
+                                    @if ($runningOver)
+                                        <flux:badge size="sm" color="rose" data-test="work-running-over">{{ __('Running over') }}</flux:badge>
+                                    @endif
+                                </div>
+
+                                @if ($this->mayRecordWork && $award !== null)
+                                    <div class="flex flex-wrap gap-1">
+                                        @if (! $shown->hasStarted())
+                                            <flux:button size="sm" variant="primary" wire:click="openWorkDay({{ $shown->id }}, 'start')" data-test="work-start">{{ __('Work started') }}</flux:button>
+                                        @elseif (! $shown->hasFinished())
+                                            <flux:button size="sm" variant="primary" wire:click="openWorkDay({{ $shown->id }}, 'finish')" data-test="work-finish">{{ __('Work finished') }}</flux:button>
+                                            <flux:button size="sm" wire:click="openExtend({{ $shown->id }})" data-test="work-extend">{{ __('More days') }}</flux:button>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- The scorecard, once the work has finished (slice 14, step 14c). Seen by those who may see the subcontractor. --}}
+                            @if ($shown->hasFinished() && $award !== null && Auth::user()->can('view', $award->subcontractor))
+                                @php
+                                    $scorecard = $this->scorecards->get($award->id);
+                                @endphp
+                                <div class="flex flex-wrap items-center justify-between gap-2 text-sm" data-test="work-scorecard">
+                                    <span class="text-ink">
+                                        {{ $scorecard === null ? __(':name is not scored for this work yet.', ['name' => $award->subcontractor->business_name]) : __('Scored :overall of 5 overall by :name.', ['overall' => $scorecard->overall, 'name' => $scorecard->filled_by_name ?? __('Unknown')]) }}
+                                    </span>
+                                    @if ($scorecard === null && $this->mayRecordWork)
+                                        <flux:button size="sm" variant="primary" wire:click="openScore({{ $shown->id }})" data-test="open-score">{{ __('Score the subcontractor') }}</flux:button>
+                                    @endif
+                                </div>
+                            @endif
+
+                            @if ($shown->extensions->isNotEmpty())
+                                <ul class="flex flex-col gap-1 text-sm text-zinc-600" data-test="work-extensions">
+                                    @foreach ($shown->extensions as $extension)
+                                        <li wire:key="work-extension-{{ $extension->id }}">
+                                            {{ __('Last day moved from :from to :to', ['from' => $extension->previous_last_day->format('M j'), 'to' => $extension->new_last_day->format('M j, Y')]) }}
+                                            &middot; {{ __(WorkPackageExtension::causeLabel($extension->cause)) }}@if ($extension->reason !== null): &ldquo;{{ $extension->reason }}&rdquo;@endif
+                                            &middot; {{ $extension->recorded_by_name ?? __('Unknown') }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
 
                             {{-- Every earlier set of dates is kept, with why it changed (product-architecture.md, 6.5). --}}
                             @if ($shown->schedules->count() > 1)
@@ -985,6 +1167,95 @@ new class extends Component {
                     </flux:modal.close>
 
                     <flux:button type="submit" variant="primary" data-test="save-work-confirmation">{{ __('Confirm these dates') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        <flux:modal name="work-day" class="w-full max-w-md">
+            <form wire:submit="saveWorkDay" class="flex flex-col gap-5">
+                <flux:error name="work" />
+
+                <div>
+                    <flux:heading size="lg">{{ $workStep === 'finish' ? __('Work finished') : __('Work started') }}</flux:heading>
+                    <flux:subheading>{{ $chosen?->name }}</flux:subheading>
+                </div>
+
+                <flux:input wire:model="workDay" type="date" :label="$workStep === 'finish' ? __('Day it finished') : __('Day it started')" class="max-w-52" data-test="work-day" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-work-day">{{ __('Record') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        <flux:modal name="work-score" class="w-full max-w-xl">
+            <form wire:submit="saveScore" class="flex flex-col gap-5">
+                <flux:error name="scorecard" />
+
+                <div>
+                    <flux:heading size="lg">{{ __('Score the subcontractor') }}</flux:heading>
+                    <flux:subheading>{{ __('From 1 to 5, 5 the best. For "callback and punch burden", 5 means the least. It is not changed after it is saved; a correction is a note added.') }}</flux:subheading>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    @foreach ([...SubcontractorScorecard::MEASURES, 'overall' => 'Overall'] as $key => $label)
+                        <flux:select wire:model="scores.{{ $key }}" :label="__($label)" wire:key="score-{{ $key }}" data-test="score-{{ $key }}">
+                            <flux:select.option value="">{{ __('Choose') }}</flux:select.option>
+                            @foreach ([5, 4, 3, 2, 1] as $value)
+                                <flux:select.option :value="$value" wire:key="score-{{ $key }}-{{ $value }}">{{ $value }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    @endforeach
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    @foreach (SubcontractorScorecard::CHECKS as $key => $label)
+                        <flux:checkbox wire:model="scores.{{ $key }}" :label="__($label)" wire:key="score-check-{{ $key }}" data-test="score-{{ $key }}" />
+                    @endforeach
+                </div>
+
+                <flux:textarea wire:model="scores.feedback" rows="2" :label="__('Feedback for the subcontractor (they will see this)')" data-test="score-feedback" />
+                <flux:textarea wire:model="scores.internalNotes" rows="2" :label="__('Internal notes (never shown to them)')" data-test="score-internal" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-score">{{ __('Save scorecard') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        <flux:modal name="work-extend" class="w-full max-w-lg">
+            <form wire:submit="saveExtend" class="flex flex-col gap-5">
+                <flux:error name="work" />
+
+                <div>
+                    <flux:heading size="lg">{{ __('Give this work more days') }}</flux:heading>
+                    <flux:subheading>{{ $chosen?->isScheduled() ? __(':name runs to :day now. The days it had are kept.', ['name' => $chosen->name, 'day' => $chosen->scheduled_last_day->format('M j, Y')]) : '' }}</flux:subheading>
+                </div>
+
+                <flux:input wire:model="extendLastDay" type="date" :label="__('New last day')" class="max-w-52" data-test="extend-last-day" />
+
+                <flux:radio.group wire:model.live="extendCause" :label="__('Whose cause was it?')" data-test="extend-cause">
+                    @foreach (WorkPackageExtension::CAUSES as $cause)
+                        <flux:radio :value="$cause" :label="__(WorkPackageExtension::causeLabel($cause))" wire:key="extend-cause-{{ $cause }}" />
+                    @endforeach
+                </flux:radio.group>
+
+                <flux:textarea wire:model="extendReason" rows="2" maxlength="{{ WorkPackageExtension::REASON_LENGTH }}" :label="$extendCause === WorkPackageExtension::CAUSE_OTHER ? __('What happened (required)') : __('Note (optional)')" data-test="extend-reason" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-extend">{{ __('Save') }}</flux:button>
                 </div>
             </form>
         </flux:modal>

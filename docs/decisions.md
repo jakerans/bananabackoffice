@@ -3154,6 +3154,73 @@ merging and writing it: "continue".
    (product-architecture.md, 6.8, 7.9 and 7.10), written for his approval
    before anything is built.
 
+## 155. Continue through the remaining slices overnight, without stopping to merge (2026-10-15)
+
+**Decided by Jacob,** while the slice 14 plan was being written: "continue
+all the way through the remaining slices - im going to sleep i expect this
+to be ready to merge when im up. do not stop to merge betweeen each slice,
+just continue through. we will fix issues in the morning."
+
+How the implementation agent reads it, for Jacob to correct in the morning:
+
+1. **Slice 14 is built as proposed,** with the recommendation on each of its
+   ten questions taken as the answer
+   ([slice-14-work-and-closeout-plan.md](slice-14-work-and-closeout-plan.md)).
+   Any later slice is planned from the product architecture and built the
+   same way, its recommendations taken as the answers and listed for his
+   review.
+2. **Nothing is merged into `main`, and nothing changes on staging,** until
+   he says so. The work stays on one branch, each step its own commit,
+   tested and pushed, with both GitHub jobs confirmed.
+3. **Left alone overnight:** anything that needs his accounts or a paid
+   service (document storage, QuickBooks), sends anything to a customer or
+   subcontractor, or lets anyone outside Banana sign in.
+
+## 156. File storage is Wasabi, not a DigitalOcean Space (2026-10-15)
+
+**Decided by Jacob,** who already has a Wasabi subscription: "I have a
+Wasabi subscription. Would that work instead of the Digital Ocean service?"
+and, after hearing what it means, "let's get the bucket set up". He chose
+two buckets over one shared bucket: "I'll make two buckets."
+
+1. **Decision 33 stands, with Wasabi in place of a DigitalOcean Space.**
+   Wasabi is S3-compatible, so Laravel's standard S3 driver applies.
+2. **Jacob set it up himself,** adding only new things to his Wasabi
+   account and changing nothing that was there:
+   - two private buckets in `us-east-1`: `backoffice-staging` for staging
+     and `banana-backoffice` for production;
+   - versioning on; Object Lock, replication and logging off;
+   - two account-level policies, `backoffice-staging-files` and
+     `backoffice-production-files`, each allowing list, read, write and
+     delete on its own bucket only;
+   - two users with API access only, `backoffice-staging` and
+     `backoffice-production`, each with its own policy and nothing else.
+3. **The keys are in Jacob's password manager.** They are never pasted into
+   a chat, a document or the repository. The staging keys go into Forge's
+   environment by Jacob once the code that uses them is merged; the
+   production keys wait for production.
+4. **Nothing uses the storage yet.** The plan for using it is
+   [slice-16-document-storage-plan.md](slice-16-document-storage-plan.md),
+   proposed and not approved.
+
+## 157. Slices 14 and 15 are merged; slice 16 is approved; step 16a starts (2026-10-15)
+
+**Decided by Jacob,** in reply to the status of the overnight work and the
+slice 16 plan: "looks good". Asked what it covered, he chose both "Merge
+slices 14 and 15" and "Approve storage plan".
+
+1. **Slices 14 and 15 are merged.** The decisions taken overnight under
+   decision 155, and the readings in each plan's "as built" sections, stay
+   as built; he did not change them.
+2. **Slice 16, document storage, is approved** in three steps
+   ([slice-16-document-storage-plan.md](slice-16-document-storage-plan.md)),
+   each stopping for his review, with the recommendation on all ten
+   questions. Among them: the package `league/flysystem-aws-s3-v3` may be
+   added; the W-9 file is not stored; PDF, JPEG, PNG and HEIC up to 20 MB;
+   no virus scanning for now; links last five minutes; removed files are
+   purged after 30 days and their earlier versions after a further 30.
+3. **Step 16a, the storage itself, starts.** It stops for his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

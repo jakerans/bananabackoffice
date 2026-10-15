@@ -67,6 +67,8 @@ final readonly class SalesFigures
         public int $salesCorrected,
         /** Of the Leads first demoed in the month, the ones that left that demo with nothing sold and something still open. */
         public int $leadsLeftPending,
+        /** Of the Leads demoed for the first time in the month, the ones with something sold at that demo, by the end of its day (slice 15). */
+        public int $leadsClosedOnTheSpot,
         /** Of those, the ones with a return visit booked by the end of the day of the demo. */
         public int $pendingWithReturnVisit,
         /** Leads the timer released to Rehash in the month, each once. */
@@ -150,6 +152,9 @@ final readonly class SalesFigures
             && $proposal->result_at !== null
             && $proposal->result_at->lessThanOrEqualTo($end);
 
+        // Closed on the spot: something presented at the demo was sold by the end of its day (slice 15).
+        $closedOnTheSpot = $demos->filter(fn (Appointment $demo): bool => $demo->proposals->contains(fn (Proposal $proposal): bool => $soldBy($proposal, $endOfDay($demo))));
+
         // Pending: nothing presented at the demo was sold that day, and something presented at it was still open.
         $leftPending = $demos->filter(fn (Appointment $demo): bool => ! $demo->proposals->contains(fn (Proposal $proposal): bool => $soldBy($proposal, $endOfDay($demo)))
             && $demo->proposals->contains(fn (Proposal $proposal): bool => ! $lostBy($proposal, $endOfDay($demo))));
@@ -206,6 +211,7 @@ final readonly class SalesFigures
             correctedCents: -1 * (int) $entries(SaleEntry::CORRECTION)->sum('cents'),
             salesCorrected: $entries(SaleEntry::CORRECTION)->count(),
             leadsLeftPending: $leftPending->count(),
+            leadsClosedOnTheSpot: $closedOnTheSpot->count(),
             pendingWithReturnVisit: $withReturnVisit->count(),
             leadsReleasedToRehash: $releases->count(),
             rehashSold: $rehashSold->count(),
@@ -311,6 +317,31 @@ final readonly class SalesFigures
     public function rehashConversion(): ?int
     {
         return self::percent($this->rehashSold, $this->leadsReleasedToRehash);
+    }
+
+    /**
+     * Average Job Size, in cents (plan, 5.2; slice 15): the month's sold
+     * revenue over the jobs sold in it, each after the month's corrections. A
+     * job is a sold proposal, as each has a Project of its own (decision
+     * 130). Nothing when no job is left to divide by.
+     */
+    public function averageJobSizeCents(): ?int
+    {
+        $jobs = $this->salesMade - $this->salesCorrected;
+
+        return $jobs <= 0 ? null : (int) round($this->netSoldCents() / $jobs);
+    }
+
+    /**
+     * Close-on-the-Spot Rate (plan, 5.2; slice 15): of the Leads demoed for
+     * the first time in the month, the share with something sold at that
+     * demo, by the end of its day in the Location. The other side of Pending
+     * Rate, read the same way from the record of sales, so a later correction
+     * does not change the month of the demo.
+     */
+    public function closeOnTheSpotRate(): ?int
+    {
+        return self::percent($this->leadsClosedOnTheSpot, $this->leadsDemoed);
     }
 
     /**

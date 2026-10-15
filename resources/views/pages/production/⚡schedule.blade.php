@@ -262,7 +262,18 @@ new #[Title('Schedule')] class extends Component {
                             @endphp
 
                             <li wire:key="schedule-{{ $monday->toDateString() }}-{{ $package->id }}" class="flex flex-col py-3 first:pt-0 last:pb-0" data-test="schedule-booking">
-                                <span class="font-semibold text-ink" data-test="schedule-booking-days">{{ WorkPackageWindow::describe($package->scheduled_first_day, $package->scheduled_last_day) }}</span>
+                                <span class="flex flex-wrap items-center gap-2">
+                                    <span class="font-semibold text-ink" data-test="schedule-booking-days">{{ WorkPackageWindow::describe($package->scheduled_first_day, $package->scheduled_last_day) }}</span>
+                                    {{-- The work in progress (slice 14, step 14a). --}}
+                                    @if ($package->hasFinished())
+                                        <flux:badge size="sm" color="emerald">{{ __('Finished') }}</flux:badge>
+                                    @elseif ($package->hasStarted())
+                                        <flux:badge size="sm" color="sky">{{ __('In progress') }}</flux:badge>
+                                    @endif
+                                    @if ($package->isRunningOver(RoughTimeframe::today($location)))
+                                        <flux:badge size="sm" color="rose" data-test="schedule-running-over">{{ __('Running over') }}</flux:badge>
+                                    @endif
+                                </span>
                                 <a href="{{ route('projects.show', $project) }}" wire:navigate class="text-ink underline decoration-zinc-300 underline-offset-2 hover:decoration-ink">{{ $project->title }}</a>
                                 <span class="text-sm text-zinc-700">
                                     {{ $project->workPackages->count() > 1 ? $package->name.' · ' : '' }}{{ trans_choice(':count working day|:count working days', WorkPackageWindow::workingDaysBetween($package->scheduled_first_day, $package->scheduled_last_day)) }} &middot; {{ trans_choice('smallest crew: :count person|smallest crew: :count people', $package->minimum_crew) }}

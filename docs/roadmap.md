@@ -154,6 +154,19 @@ award) was built and merged on 2026-10-14 (decision 153).** **Step 13c (the work
 order) was built and merged on 2026-10-15 (decision 154).** **Slice 13 is
 complete as planned.**
 
+**Slice 14, the work and its completion, was built overnight under decision
+155 and merged on 2026-10-15 (decision 157).** Its plan is
+[slice-14-work-and-closeout-plan.md](slice-14-work-and-closeout-plan.md).
+
+**Slice 15, Average Job Size and Close-on-the-Spot Rate, was built overnight
+under decision 155 and merged on 2026-10-15 (decision 157):**
+[slice-15-sales-figures-plan.md](slice-15-sales-figures-plan.md).
+
+**Slice 16, document storage, is approved in three steps (2026-10-15,
+decision 157).** Jacob set up the Wasabi buckets (decision 156); its plan is
+[slice-16-document-storage-plan.md](slice-16-document-storage-plan.md). Step
+16a (the storage itself) is being built.
+
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
 Production Workspace instead of separate stage/project modules. Customers and

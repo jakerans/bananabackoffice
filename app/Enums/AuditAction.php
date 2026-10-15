@@ -98,6 +98,15 @@ enum AuditAction: string
     case ProjectAwardEnded = 'project.award_ended';
     case ProjectAwardAcceptedAgain = 'project.award_accepted_again';
     case ProjectWorkOrderSent = 'project.work_order_sent';
+    case ProjectWorkStarted = 'project.work_started';
+    case ProjectWorkFinished = 'project.work_finished';
+    case ProjectWorkExtended = 'project.work_extended';
+    case ProjectInspected = 'project.inspected';
+    case ProjectWalkthroughDone = 'project.walkthrough_done';
+    case ProjectPunchItemAdded = 'project.punch_item_added';
+    case ProjectPunchItemDone = 'project.punch_item_done';
+    case ProjectSignedOff = 'project.signed_off';
+    case ProjectNotSatisfied = 'project.not_satisfied';
     case InsuranceDeductionChanged = 'insurance_deduction.changed';
     case SubcontractorAdded = 'subcontractor.added';
     case SubcontractorChanged = 'subcontractor.changed';
@@ -105,6 +114,7 @@ enum AuditAction: string
     case SubcontractorVipSet = 'subcontractor.vip_set';
     case SubcontractorVipRemoved = 'subcontractor.vip_removed';
     case SubcontractorComplianceRecorded = 'subcontractor.compliance_recorded';
+    case SubcontractorScored = 'subcontractor.scored';
     case LocationComplianceRequirementAdded = 'location.compliance_requirement_added';
     case LocationComplianceRequirementRemoved = 'location.compliance_requirement_removed';
     case LeadReceivedTimeCorrected = 'lead.received_time_corrected';

@@ -176,8 +176,40 @@ new #[Title('Workspace')] class extends Component {
     #[Computed]
     public function scheduled(): Collection
     {
+        return $this->inState(ProjectProductionState::Scheduled);
+    }
+
+    /**
+     * Work under way, and work finished that waits for the walkthrough and
+     * the customer's signoff (slice 14).
+     *
+     * @return Collection<int, Project>
+     */
+    #[Computed]
+    public function inProgress(): Collection
+    {
+        return $this->inState(ProjectProductionState::InProgress);
+    }
+
+    /**
+     * @return Collection<int, Project>
+     */
+    #[Computed]
+    public function workComplete(): Collection
+    {
+        return $this->inState(ProjectProductionState::WorkComplete);
+    }
+
+    /**
+     * The jobs in one production state from Scheduled on: the signed-in
+     * person's own first, then the soonest start.
+     *
+     * @return Collection<int, Project>
+     */
+    private function inState(ProjectProductionState $state): Collection
+    {
         return $this->standing()
-            ->where('production_state', ProjectProductionState::Scheduled)
+            ->where('production_state', $state)
             ->with('workPackages.currentAward.subcontractor')
             ->addSelect(['first_scheduled_day' => WorkPackage::query()->selectRaw('min(scheduled_first_day)')->whereColumn('work_packages.project_id', 'projects.id')])
             ->orderByRaw('case when production_manager_id = ? then 0 else 1 end', [Auth::id()])
@@ -305,7 +337,7 @@ new #[Title('Workspace')] class extends Component {
 
     private function changed(): void
     {
-        unset($this->location, $this->awaitingHandoff, $this->newFromSales, $this->gettingReady, $this->readyToSchedule, $this->scheduled, $this->inPreProductionSince, $this->productionManagers, $this->manages, $this->takes);
+        unset($this->location, $this->awaitingHandoff, $this->newFromSales, $this->gettingReady, $this->readyToSchedule, $this->scheduled, $this->inProgress, $this->workComplete, $this->inPreProductionSince, $this->productionManagers, $this->manages, $this->takes);
     }
 }; ?>
 
@@ -339,7 +371,22 @@ new #[Title('Workspace')] class extends Component {
                 'none' => __('No job is scheduled yet.'),
                 'projects' => $this->scheduled,
             ],
+            [
+                'key' => 'in-progress',
+                'heading' => __('In progress'),
+                'about' => __('Work has started. Work running past its last day is marked.'),
+                'none' => __('No work is under way.'),
+                'projects' => $this->inProgress,
+            ],
+            [
+                'key' => 'complete',
+                'heading' => __('Work complete'),
+                'about' => __('The work is finished; the walkthrough and the customer\'s signoff are next.'),
+                'none' => __('No job is waiting for its walkthrough.'),
+                'projects' => $this->workComplete,
+            ],
         ];
+        $underWay = ['scheduled', 'in-progress', 'complete'];
     @endphp
 
     <div>
@@ -447,16 +494,19 @@ new #[Title('Workspace')] class extends Component {
                                         {{ $project->production_manager_id === Auth::id() ? __('Yours') : $project->production_manager_name }}
                                         @if ($project->production_manager_assigned_at !== null) &middot; {{ __('since') }} <x-local-time :at="$project->production_manager_assigned_at" />@endif
                                     </span>
-                                    @if ($since !== null && $list['key'] !== 'scheduled')
+                                    @if ($since !== null && ! in_array($list['key'], $underWay, true))
                                         <span class="text-sm text-zinc-500" data-test="workspace-in-pre-production">{{ __('In pre-production for :time', ['time' => $since->diffForHumans(now(), ['syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE, 'parts' => 1])]) }}</span>
                                     @endif
 
                                     {{-- What it has and still needs (slice 10, steps 10a to 10c). --}}
-                                    @if ($list['key'] === 'scheduled' && ($days = $project->scheduledDays()) !== null)
+                                    @if (in_array($list['key'], $underWay, true) && ($days = $project->scheduledDays()) !== null)
                                         <span class="mt-1 font-semibold text-ink" data-test="workspace-scheduled-days">{{ __('Scheduled: :days', ['days' => WorkPackageWindow::describe($days[0], $days[1])]) }}</span>
                                     @endif
+                                    @if ($list['key'] === 'in-progress' && $project->workPackages->contains(fn ($package) => $package->isRunningOver(RoughTimeframe::today($location))))
+                                        <span><flux:badge size="sm" color="rose" data-test="workspace-running-over">{{ __('Running over') }}</flux:badge></span>
+                                    @endif
                                     {{-- Who has the work (slice 13, step 13b). --}}
-                                    @if (in_array($list['key'], ['ready', 'scheduled'], true) && $project->workPackages->isNotEmpty())
+                                    @if (in_array($list['key'], ['ready', ...$underWay], true) && $project->workPackages->isNotEmpty())
                                         @php
                                             $crews = $project->workPackages->map(fn ($package) => $package->currentAward?->subcontractor->business_name)->filter()->unique()->values();
                                             $unawarded = $project->workPackages->filter(fn ($package) => $package->currentAward === null)->count();
@@ -486,7 +536,7 @@ new #[Title('Workspace')] class extends Component {
                                             <span>&middot;</span>
                                         @endif
                                         {{-- A scheduled job has its dates; the rough timeframe would only repeat them. --}}
-                                        @if ($list['key'] !== 'scheduled')
+                                        @if (! in_array($list['key'], $underWay, true))
                                             <span data-test="workspace-timeframe">{{ RoughTimeframe::of($project) ?? __('No rough timeframe') }}</span>
                                             <span>&middot;</span>
                                         @endif
