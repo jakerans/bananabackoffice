@@ -2,7 +2,7 @@
 
 Status: **approved on 2026-10-15 (decision 157) in three steps, each stopping
 for Jacob's review, with the recommendation on all ten questions. Step 16a
-is built and awaiting Jacob's review; see "Step 16a as built".** It was written as what the implementation agent
+is built and merged (decision 158); see "Step 16a as built".** It was written as what the implementation agent
 recommended, once Jacob had set up the storage (decision 156).
 
 It follows decision 33 (one attachment model, in private storage of its
@@ -206,7 +206,7 @@ its tests; 16b and 16c are the first uses.
    destroy the backup. So the second 30 days is a lifecycle rule Jacob
    sets on each Backoffice bucket in Wasabi ("permanently delete
    noncurrent versions" after 30 days), and the `versions_purged_at`
-   column was not built. This needs Jacob's agreement.
+   column was not built. Agreed by Jacob (decision 158).
 2. **The restore was not tried on staging before merge.** The staging key
    goes in only after 16a is merged (question 3). Instead, after the
    merge, Jacob adds the key and the drill is run on staging with his
