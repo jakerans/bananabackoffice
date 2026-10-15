@@ -601,6 +601,12 @@ new class extends Component {
                                     @endif
                                 </div>
 
+                                @if ($this->seesPayouts)
+                                    <div class="flex shrink-0 flex-wrap justify-end gap-1">
+                                        <flux:button size="sm" :href="route('projects.work-order', [$project, $shown])" wire:navigate icon="document-text" data-test="open-work-order">{{ __('Work order') }}</flux:button>
+                                    </div>
+                                @endif
+
                                 @if ($this->mayPay)
                                     <div class="flex shrink-0 flex-wrap justify-end gap-1">
                                         @if ($award->payout_cents !== $shown->payout_cents)

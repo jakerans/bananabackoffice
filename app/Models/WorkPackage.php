@@ -134,6 +134,16 @@ class WorkPackage extends Model
     }
 
     /**
+     * Every time its work order was sent, the latest first (step 13c).
+     *
+     * @return HasMany<WorkOrderSent, $this>
+     */
+    public function workOrdersSent(): HasMany
+    {
+        return $this->hasMany(WorkOrderSent::class)->orderByDesc('id');
+    }
+
+    /**
      * Whether the customer has confirmed its dates.
      */
     public function isScheduled(): bool

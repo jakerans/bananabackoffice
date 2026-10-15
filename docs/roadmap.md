@@ -150,8 +150,9 @@ steps (2026-10-14, decision 148).** Its plan is
 order), is approved in three steps (2026-10-14, decision 151).** Its plan is
 [slice-13-giving-work-plan.md](slice-13-giving-work-plan.md). **Step 13a
 (payout) was built and merged on 2026-10-14 (decision 152).** **Step 13b (the
-award) was built and merged on 2026-10-14 (decision 153).** Step 13c (the work
-order) is being built.
+award) was built and merged on 2026-10-14 (decision 153).** **Step 13c (the work
+order) was built and merged on 2026-10-15 (decision 154).** **Slice 13 is
+complete as planned.**
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

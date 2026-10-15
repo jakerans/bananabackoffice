@@ -639,7 +639,8 @@ Added 2026-10-14 (slice 13; build plan: slice-13-giving-work-plan.md; LOCKED by 
 - The work order is a printable page with the address once awarded, the colors (approved first), the payout and the insurance deduction (one company rate, 10% to start).
 - Built in step 13a (merged 2026-10-14, decision 152): the payout and its history.
 - Built in step 13b (merged 2026-10-14, decision 153): the award to one Active, compliant subcontractor at the job's Location, for one of the windows offered or the confirmed dates; acceptance recorded; a payout change needing a reason and acceptance again; taking back with whose doing it was; the crew on the Schedule and in the Workspace.
-- Not built yet: the work order (13c).
+- Built in step 13c (merged 2026-10-15, decision 154): the work order page that prints, with the address, access, scope, days, crew, approved colors, payout and the insurance deduction; "sent" recorded once colors are approved; the company deduction rate, effective-dated, in Settings.
+- Still not built after slice 13: the marketplace and the subcontractor portal (7.4, 7.5), declines (7.6), overruns (7.9), the scorecard (7.10), utilization, and paying subcontractors.
 
 6.7 Change Orders vs Sub Work Order Revisions
 Customer Change Order:

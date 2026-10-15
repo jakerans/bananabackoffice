@@ -3140,6 +3140,20 @@ merge it and start step 13c: "continue".
    decision 151 (questions 7 to 9) have it and stops for his review. It is
    the last step of slice 13.
 
+## 154. Step 13c is merged and slice 13 is complete; a plan for the work and closeout comes next (2026-10-15)
+
+**Decided by Jacob,** in reply to step 13c's handoff, which recommended a
+plan for the work itself and closeout and said that "continue" would mean
+merging and writing it: "continue".
+
+1. **Step 13c, the work order, is merged, and slice 13 is complete.** The
+   readings in its handoff and in the plan under "Step 13c as built" stay as
+   built; he did not change them: one deduction per work order; the rate in
+   force on the work's first day; a new rate cannot start in the past.
+2. **Next is a proposed plan for the work itself and closeout**
+   (product-architecture.md, 6.8, 7.9 and 7.10), written for his approval
+   before anything is built.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
