@@ -140,6 +140,34 @@ Readings made while building, for Jacob to change if wrong:
 The inspection, the walkthrough, each punch item and when it was done, and
 the signoff. On the Project: the production state Signed off.
 
+### Step 14b as built (2026-10-15, overnight)
+
+**Built under decision 155; not merged.** Built as planned above. What a
+reader of the code should know:
+
+- **Stored:** `project_completion_steps` (inspection, walkthrough, signoff,
+  or "not satisfied", each with the day, who, how, a note and who recorded
+  it; never changed or deleted) and `punch_items` (what, who fixes it, the
+  day it was done; changed only once, to tick it done).
+- **One action:** `App\Actions\Projects\CompleteProject` (inspect,
+  walkthrough, addPunchItem, finishPunchItem, signOff), under the
+  pre-production rule and only while the job is Work complete. The order is
+  enforced: inspection, then walkthrough, then punch items and signoff.
+- **The walkthrough** is conducted by the Production Manager or by one of
+  the job's subcontractors, named. The qualification hint (five completed
+  jobs and a 4.5 rating) comes with the scorecard in step 14c.
+- **Signoff** needs every punch item done and "100% satisfied". Not
+  satisfied, what is wrong is recorded and the job stays at Work complete.
+- **The Completion part** shows on the Project once the work is complete,
+  and stays after signoff, read only.
+- **In the customer's Activity:** inspection, walkthrough, signoff and "not
+  fully satisfied". Punch items are in the audit record only.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **One inspection and one walkthrough per job,** not one per package.
+- **Who did the inspection is typed,** starting with the person recording
+  it.
 ## Step 14c — The scorecard
 
 ### What a person sees

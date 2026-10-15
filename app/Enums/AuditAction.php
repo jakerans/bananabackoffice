@@ -101,6 +101,12 @@ enum AuditAction: string
     case ProjectWorkStarted = 'project.work_started';
     case ProjectWorkFinished = 'project.work_finished';
     case ProjectWorkExtended = 'project.work_extended';
+    case ProjectInspected = 'project.inspected';
+    case ProjectWalkthroughDone = 'project.walkthrough_done';
+    case ProjectPunchItemAdded = 'project.punch_item_added';
+    case ProjectPunchItemDone = 'project.punch_item_done';
+    case ProjectSignedOff = 'project.signed_off';
+    case ProjectNotSatisfied = 'project.not_satisfied';
     case InsuranceDeductionChanged = 'insurance_deduction.changed';
     case SubcontractorAdded = 'subcontractor.added';
     case SubcontractorChanged = 'subcontractor.changed';

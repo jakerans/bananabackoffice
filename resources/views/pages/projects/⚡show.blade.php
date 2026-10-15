@@ -45,6 +45,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectWindowProposed, AuditAction::ProjectWindowWithdrawn, AuditAction::ProjectScheduleConfirmed, AuditAction::ProjectRescheduled,
         AuditAction::ProjectWorkAwarded, AuditAction::ProjectAwardEnded, AuditAction::ProjectAwardAcceptedAgain, AuditAction::ProjectWorkOrderSent,
         AuditAction::ProjectWorkStarted, AuditAction::ProjectWorkFinished, AuditAction::ProjectWorkExtended,
+        AuditAction::ProjectInspected, AuditAction::ProjectWalkthroughDone, AuditAction::ProjectSignedOff, AuditAction::ProjectNotSatisfied,
     ];
 
     #[Locked]
@@ -177,6 +178,16 @@ new #[Title('Project')] class extends Component {
      */
     #[On('project-colors-changed')]
     public function colorsChanged(): void
+    {
+        unset($this->project, $this->activity);
+    }
+
+    /**
+     * The Completion part changed the Project (slice 14, step 14b): read it
+     * and its Activity again.
+     */
+    #[On('project-completion-changed')]
+    public function completionChanged(): void
     {
         unset($this->project, $this->activity);
     }
@@ -564,6 +575,11 @@ new #[Title('Project')] class extends Component {
 
             {{-- The Color Specification (slice 10, step 10b). --}}
             <livewire:pages::projects.colors :project="$project" :key="'colors-'.$project->id" />
+
+            {{-- The walkthrough, punch list and signoff (slice 14, step 14b): once all the work has finished. --}}
+            @if (in_array($project->production_state, [\App\Enums\ProjectProductionState::WorkComplete, \App\Enums\ProjectProductionState::SignedOff], true))
+                <livewire:pages::projects.completion :project="$project" :key="'completion-'.$project->id" />
+            @endif
 
             {{-- Work Packages and the dates offered to the customer (slice 11, step 11a): once the job is ready to schedule, and kept in view after. --}}
             @if ($readiness->isReadyToSchedule() || $project->workPackages()->exists())
