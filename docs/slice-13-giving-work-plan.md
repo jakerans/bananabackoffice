@@ -3,7 +3,8 @@
 Status: **approved on 2026-10-14 (decision 151) in three steps, each
 stopping for Jacob's review, with the recommendation on all ten questions.
 Step 13a was built and merged on 2026-10-14 (decision 152); see "Step 13a as
-built". Step 13b is being built.** It was written as what the implementation agent
+built". Step 13b was built and merged on 2026-10-14 (decision 153); see "Step 13b as
+built". Step 13c is being built.** It was written as what the implementation agent
 recommended after slice 12, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 6.6,
@@ -139,6 +140,49 @@ Each award of a package: the subcontractor, the payout at the time, the
 window chosen, how and when they accepted, and, if it ended, when, why and
 whose doing it was.
 
+### Step 13b as built (2026-10-14)
+
+**Merged into `main` on 2026-10-14** with Jacob's word ("continue", decision
+153). Built as planned above.
+What a reader of the code should know:
+
+- **Stored:** `work_package_awards`, one row each time a package is given
+  out: the subcontractor, the payout accepted, the days taken, the window
+  they came from, who accepted, how and when, and when it ended, whose doing
+  it was and why. A row can only be ended, once; none is deleted. The one
+  with no end is the award now.
+- **One action:** `App\Actions\Projects\AwardWorkPackage` (award, takeBack,
+  acceptAgain, and the list of candidates). It needs `managePayouts` and a
+  job that is ready to schedule.
+- **Who can be given the work:** Active, compliant, at the job's Location.
+  A crew smaller than the package needs, or of unknown size, is a warning
+  in the dialog.
+- **The days:** one of the windows offered, or the confirmed dates when the
+  customer has confirmed already. Once given out, the customer can be
+  confirmed only for the days the subcontractor took; the window they took
+  cannot be withdrawn; the package cannot be removed until the award is
+  taken back.
+- **A payout changed after the award** needs a reason. The page then says
+  their acceptance must be recorded again; "They accepted the new payout"
+  ends the old award as "payout changed" and starts a new one at the new
+  payout, for the same days.
+- **Taking back:** "the subcontractor withdrew" or "the customer or Banana
+  asked", and a reason. Earlier awards are listed under the package.
+- **Who sees what:** everyone who may see the job sees who has the work and
+  the days; only `payouts.view` shows "at $...". In the customer's Activity:
+  work given, taken back, and accepted again, by business name; never the
+  payout.
+- **Production > Schedule** shows each booking's crew; **the Workspace**
+  shows the crew of each ready or scheduled job and how many parts are not
+  given out.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **Rescheduling keeps the award** with the same subcontractor; the award
+  still records the days they first took. The work order (13c) will show the
+  job's dates now.
+- **A payout change does not take the work back.** It stays with them,
+  marked until their acceptance is recorded again.
 ## Step 13c — The work order
 
 ### What a person sees

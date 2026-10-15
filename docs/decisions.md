@@ -3127,6 +3127,19 @@ merge it and start step 13b: "continue".
 2. **Step 13b, the award, starts.** It is built as the plan and decision 151
    (questions 2 to 6) have it and stops for his review.
 
+## 153. Step 13b is merged; step 13c starts (2026-10-14)
+
+**Decided by Jacob,** in reply to step 13b's handoff, which asked whether to
+merge it and start step 13c: "continue".
+
+1. **Step 13b, the award, is merged.** The readings in its handoff and in
+   the plan under "Step 13b as built" stay as built; he did not change them:
+   rescheduling keeps the award with the same subcontractor; a payout change
+   keeps the work with them, marked until they accept again.
+2. **Step 13c, the work order, starts.** It is built as the plan and
+   decision 151 (questions 7 to 9) have it and stops for his review. It is
+   the last step of slice 13.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

@@ -5,24 +5,22 @@ No secrets or customer information belong here.
 
 **Updated:** 2026-10-14 · **Branch:** `main`
 
-**State:** nothing waits for review. **Slice 13, step 13a is merged** on
-2026-10-14 with Jacob's word ("continue", decision 152), with the approved
-slice 13 plan: each Work Package's payout, seen only with `payouts.view`.
+**State:** nothing waits for review. **Slice 13, step 13b is merged** on
+2026-10-14 with Jacob's word ("continue", decision 153): giving a Work
+Package to a subcontractor.
 
 ## What is being built now
 
-**Step 13b, the award** (plan:
+**Step 13c, the work order** (plan:
 [../slice-13-giving-work-plan.md](../slice-13-giving-work-plan.md), "Step
-13b"; decision 151, questions 2 to 6):
+13c"; decision 151, questions 7 to 9):
 
-- the Production Manager gives a package with a payout to one Active,
-  compliant subcontractor at the job's Location, who picks one of the
-  windows offered (or takes the confirmed dates); how they accepted is
-  recorded;
-- a payout changed after the award needs a reason, and their acceptance is
-  recorded again;
-- taking back an award needs a reason and whose doing it was;
-- the Schedule page, the Workspace and the Project show who has the work.
+- a page for each package given out, that prints: the address and access
+  notes, the scope, the dates, the crew, the approved colors, the payout
+  and, for a subcontractor using Banana's coverage, the deduction;
+- "Work order sent" recorded, with approved colors needed first;
+- the deduction rate, 10% to start, changed in Settings with the day it
+  takes effect.
 
 It will be pushed for review and will replace this page. It is not merged
-without Jacob's word.
+without Jacob's word. It is the last step of slice 13.

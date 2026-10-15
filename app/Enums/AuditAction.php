@@ -94,6 +94,9 @@ enum AuditAction: string
     case ProjectScheduleConfirmed = 'project.schedule_confirmed';
     case ProjectRescheduled = 'project.rescheduled';
     case ProjectPayoutSet = 'project.payout_set';
+    case ProjectWorkAwarded = 'project.work_awarded';
+    case ProjectAwardEnded = 'project.award_ended';
+    case ProjectAwardAcceptedAgain = 'project.award_accepted_again';
     case SubcontractorAdded = 'subcontractor.added';
     case SubcontractorChanged = 'subcontractor.changed';
     case SubcontractorStandingChanged = 'subcontractor.standing_changed';
