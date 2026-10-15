@@ -3221,6 +3221,26 @@ slices 14 and 15" and "Approve storage plan".
    purged after 30 days and their earlier versions after a further 30.
 3. **Step 16a, the storage itself, starts.** It stops for his review.
 
+## 158. Step 16a is merged; the bucket deletes earlier versions (2026-10-15)
+
+**Decided by Jacob,** in reply to the step 16a report, which recommended
+both: "merge and then tell me what to do".
+
+1. **Step 16a is merged** as built
+   ([slice-16-document-storage-plan.md](slice-16-document-storage-plan.md),
+   "Step 16a as built").
+2. **Earlier versions are deleted by the bucket, not the application.**
+   This changes decision 157's answer to question 10 in how, not in what:
+   a removed file is purged by the application after 30 days, and its
+   earlier version by a lifecycle rule Jacob sets on each Backoffice bucket
+   in Wasabi ("permanently delete noncurrent versions", 30 days). The
+   application's key never gets permission over earlier versions, so it
+   cannot destroy the backup.
+3. **Next, by Jacob:** the staging key and the `FILES_*` settings in Forge,
+   and the lifecycle rule on `backoffice-staging`. Then the restore drill is
+   run on staging, with his approval, before step 16b stores a real file.
+   Step 16b waits for his word.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

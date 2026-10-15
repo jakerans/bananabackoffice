@@ -5,22 +5,21 @@ No secrets or customer information belong here.
 
 **Updated:** 2026-10-15 · **Branch:** `main`
 
-**State:** nothing waits for review. **Slices 14 and 15 are merged** on
-2026-10-15 with Jacob's word (decision 157): the work in progress, the
-walkthrough and signoff, the subcontractor scorecard, and Average Job Size
-and Close-on-the-Spot Rate. The decisions taken overnight under decision 155
-stand as built.
+**State:** step 16a, the storage itself, is merged (decision 158). Nothing
+waits for review. Next is Jacob's setup on staging, then the restore drill;
+step 16b waits for both and his word.
 
-## What is being built now
+## For Jacob, on staging (nothing secret here)
 
-**Slice 16 is approved** (decision 157, all ten answers as recommended).
-Plan: [../slice-16-document-storage-plan.md](../slice-16-document-storage-plan.md).
-
-**Step 16a, the storage itself:** the connection to the Wasabi buckets
-Jacob set up (decision 156), the attachment record, uploading, opening by a
-five-minute link, removing and purging after 30 days, and a written restore
-procedure tried on staging. Once it is merged, Jacob pastes the staging keys
-into Forge himself.
-
-It will be pushed for review and will replace this page. It is not merged
-without Jacob's word.
+1. **Forge, staging site, Environment:** set `FILES_DRIVER=s3` and
+   `FILES_BUCKET=backoffice-staging`, and paste the staging user's two keys
+   into `FILES_ACCESS_KEY_ID` and `FILES_SECRET_ACCESS_KEY` from the
+   password manager. Save, then deploy once so the settings are read.
+2. **Wasabi, `backoffice-staging` only:** a lifecycle rule, whole bucket,
+   that permanently deletes noncurrent versions after 30 days.
+3. **The drill:** in Forge, the site's Commands, run
+   `php artisan backoffice:files-check`. It ends by printing a test file's
+   name. Restore that file in the Wasabi console (security-notes.md,
+   "Restoring a file"), then run
+   `php artisan backoffice:files-check --restored=<that name>`.
+   Report what each one printed.
