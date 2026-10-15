@@ -3154,6 +3154,28 @@ merging and writing it: "continue".
    (product-architecture.md, 6.8, 7.9 and 7.10), written for his approval
    before anything is built.
 
+## 155. Continue through the remaining slices overnight, without stopping to merge (2026-10-15)
+
+**Decided by Jacob,** while the slice 14 plan was being written: "continue
+all the way through the remaining slices - im going to sleep i expect this
+to be ready to merge when im up. do not stop to merge betweeen each slice,
+just continue through. we will fix issues in the morning."
+
+How the implementation agent reads it, for Jacob to correct in the morning:
+
+1. **Slice 14 is built as proposed,** with the recommendation on each of its
+   ten questions taken as the answer
+   ([slice-14-work-and-closeout-plan.md](slice-14-work-and-closeout-plan.md)).
+   Any later slice is planned from the product architecture and built the
+   same way, its recommendations taken as the answers and listed for his
+   review.
+2. **Nothing is merged into `main`, and nothing changes on staging,** until
+   he says so. The work stays on one branch, each step its own commit,
+   tested and pushed, with both GitHub jobs confirmed.
+3. **Left alone overnight:** anything that needs his accounts or a paid
+   service (document storage, QuickBooks), sends anything to a customer or
+   subcontractor, or lets anyone outside Banana sign in.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

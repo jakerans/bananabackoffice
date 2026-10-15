@@ -154,6 +154,11 @@ award) was built and merged on 2026-10-14 (decision 153).** **Step 13c (the work
 order) was built and merged on 2026-10-15 (decision 154).** **Slice 13 is
 complete as planned.**
 
+**Slice 14, the work and its completion, is being built overnight under
+decision 155,** its recommendations taken as answers, for Jacob's review. Its
+plan is [slice-14-work-and-closeout-plan.md](slice-14-work-and-closeout-plan.md).
+Not merged.
+
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
 Production Workspace instead of separate stage/project modules. Customers and
