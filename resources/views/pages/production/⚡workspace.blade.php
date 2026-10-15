@@ -156,7 +156,7 @@ new #[Title('Workspace')] class extends Component {
     {
         return Readiness::whereReady($this->standing())
             ->where('production_state', '!=', ProjectProductionState::Scheduled)
-            ->with('handoff')
+            ->with(['handoff', 'workPackages.currentAward.subcontractor'])
             ->withCount('workPackageWindows')
             ->orderByRaw('case when production_manager_id = ? then 0 else 1 end', [Auth::id()])
             ->orderBy('timeframe_earliest')
@@ -178,7 +178,7 @@ new #[Title('Workspace')] class extends Component {
     {
         return $this->standing()
             ->where('production_state', ProjectProductionState::Scheduled)
-            ->with('workPackages')
+            ->with('workPackages.currentAward.subcontractor')
             ->addSelect(['first_scheduled_day' => WorkPackage::query()->selectRaw('min(scheduled_first_day)')->whereColumn('work_packages.project_id', 'projects.id')])
             ->orderByRaw('case when production_manager_id = ? then 0 else 1 end', [Auth::id()])
             ->orderBy('first_scheduled_day')
@@ -454,6 +454,20 @@ new #[Title('Workspace')] class extends Component {
                                     {{-- What it has and still needs (slice 10, steps 10a to 10c). --}}
                                     @if ($list['key'] === 'scheduled' && ($days = $project->scheduledDays()) !== null)
                                         <span class="mt-1 font-semibold text-ink" data-test="workspace-scheduled-days">{{ __('Scheduled: :days', ['days' => WorkPackageWindow::describe($days[0], $days[1])]) }}</span>
+                                    @endif
+                                    {{-- Who has the work (slice 13, step 13b). --}}
+                                    @if (in_array($list['key'], ['ready', 'scheduled'], true) && $project->workPackages->isNotEmpty())
+                                        @php
+                                            $crews = $project->workPackages->map(fn ($package) => $package->currentAward?->subcontractor->business_name)->filter()->unique()->values();
+                                            $unawarded = $project->workPackages->filter(fn ($package) => $package->currentAward === null)->count();
+                                        @endphp
+                                        <span class="text-sm text-zinc-700" data-test="workspace-given-to">
+                                            @if ($crews->isEmpty())
+                                                {{ __('Not given to a subcontractor yet') }}
+                                            @else
+                                                {{ __('Crew: :names', ['names' => $crews->join(', ')]) }}@if ($unawarded > 0) &middot; {{ trans_choice(':count part not given out yet|:count parts not given out yet', $unawarded) }}@endif
+                                            @endif
+                                        </span>
                                     @endif
                                     <span class="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-700" data-test="workspace-needs">
                                         {{-- Its rough start is close and it has no dates yet (slice 11, step 11c). --}}

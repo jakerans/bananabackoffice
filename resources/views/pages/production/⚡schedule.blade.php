@@ -114,7 +114,7 @@ new #[Title('Schedule')] class extends Component {
             ->where('scheduled_first_day', '<=', $last)
             ->where('scheduled_last_day', '>=', $first)
             ->whereHas('project', fn ($project) => $project->standing()->where('location_id', $this->location?->id ?? 0))
-            ->with(['project.account', 'project.workPackages'])
+            ->with(['project.account', 'project.workPackages', 'currentAward.subcontractor'])
             ->orderBy('scheduled_first_day')
             ->orderBy('project_id')
             ->orderBy('position')
@@ -267,6 +267,8 @@ new #[Title('Schedule')] class extends Component {
                                 <span class="text-sm text-zinc-700">
                                     {{ $project->workPackages->count() > 1 ? $package->name.' · ' : '' }}{{ trans_choice(':count working day|:count working days', WorkPackageWindow::workingDaysBetween($package->scheduled_first_day, $package->scheduled_last_day)) }} &middot; {{ trans_choice('smallest crew: :count person|smallest crew: :count people', $package->minimum_crew) }}
                                 </span>
+                                {{-- Who does it (slice 13, step 13b). --}}
+                                <span class="text-sm text-ink" data-test="schedule-booking-crew">{{ $package->currentAward === null ? __('Not given to a subcontractor yet') : __('Crew: :name', ['name' => $package->currentAward->subcontractor->business_name]) }}</span>
                                 <span class="text-sm text-zinc-500">
                                     {{ $project->account->display_name }} &middot; {{ $project->production_manager_id === Auth::id() ? __('Yours') : ($project->production_manager_name ?? __('No Production Manager')) }} &middot; {{ __('Colors: :state', ['state' => mb_strtolower(__($project->color_readiness->label()))]) }}
                                 </span>

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -34,6 +35,8 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, WorkPackageWindow> $windows
  * @property-read Collection<int, WorkPackageSchedule> $schedules
  * @property-read Collection<int, WorkPackagePayout> $payouts
+ * @property-read Collection<int, WorkPackageAward> $awards
+ * @property-read WorkPackageAward|null $currentAward
  */
 class WorkPackage extends Model
 {
@@ -108,6 +111,26 @@ class WorkPackage extends Model
     public function payouts(): HasMany
     {
         return $this->hasMany(WorkPackagePayout::class)->orderByDesc('id');
+    }
+
+    /**
+     * Every time it was given to a subcontractor, the latest first (step 13b).
+     *
+     * @return HasMany<WorkPackageAward, $this>
+     */
+    public function awards(): HasMany
+    {
+        return $this->hasMany(WorkPackageAward::class)->orderByDesc('id');
+    }
+
+    /**
+     * The subcontractor who has it now, if anyone does.
+     *
+     * @return HasOne<WorkPackageAward, $this>
+     */
+    public function currentAward(): HasOne
+    {
+        return $this->hasOne(WorkPackageAward::class)->whereNull('ended_at');
     }
 
     /**

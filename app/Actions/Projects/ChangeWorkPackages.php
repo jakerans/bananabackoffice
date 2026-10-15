@@ -9,6 +9,7 @@ use App\Enums\ProjectProductionState;
 use App\Models\Project;
 use App\Models\User;
 use App\Models\WorkPackage;
+use App\Models\WorkPackageAward;
 use App\Models\WorkPackagePayout;
 use App\Models\WorkPackageSchedule;
 use App\Models\WorkPackageWindow;
@@ -117,6 +118,10 @@ class ChangeWorkPackages
                 throw ValidationException::withMessages(['work' => __('This work has dates the customer confirmed. Reschedule it rather than removing it.')]);
             }
 
+            if ($existing->currentAward()->exists()) {
+                throw ValidationException::withMessages(['work' => __('This work is given to a subcontractor. Take the award back before removing it.')]);
+            }
+
             $before = [...$existing->summary(), 'windows' => $existing->windows->map(fn (WorkPackageWindow $window): array => self::windowSummary($window))->all()];
 
             $existing->windows()->delete();
@@ -189,6 +194,16 @@ class ChangeWorkPackages
 
             if ($window->first_day->lessThan(RoughTimeframe::today($project->location))) {
                 throw ValidationException::withMessages(['work' => __('These dates have started or passed. Offer new ones.')]);
+            }
+
+            // Given to a subcontractor, the customer confirms the days the subcontractor took (7.8).
+            $award = $package->currentAward()->with('subcontractor')->first();
+
+            if ($award !== null && (! $award->first_day->isSameDay($window->first_day) || ! $award->last_day->isSameDay($window->last_day))) {
+                throw ValidationException::withMessages(['work' => __(':name took :days. Confirm those dates with the customer, or take the award back first.', [
+                    'name' => $award->subcontractor->business_name,
+                    'days' => WorkPackageWindow::describe($award->first_day, $award->last_day),
+                ])]);
             }
 
             $confirmation = self::readConfirmation($project, $confirmedBy, $method, $confirmedOn);
@@ -287,6 +302,11 @@ class ChangeWorkPackages
                 return $package;
             }
 
+            // Once the work is given out, a change needs a reason (decision 151, question 2).
+            if ($reason === '' && $package->currentAward()->exists()) {
+                throw ValidationException::withMessages(['payoutReason' => __('This work is given to a subcontractor. Say why the payout changes.')]);
+            }
+
             $before = $package->payout_cents;
 
             $payout = new WorkPackagePayout;
@@ -329,6 +349,10 @@ class ChangeWorkPackages
                 ->whereIn('work_package_id', $project->workPackages()->select('id'))
                 ->first()
                 ?? throw ValidationException::withMessages(['work' => __('These dates are no longer offered. Reload the page.')]);
+
+            if (WorkPackageAward::query()->whereNull('ended_at')->where('work_package_window_id', $window->id)->exists()) {
+                throw ValidationException::withMessages(['work' => __('A subcontractor took these dates. Take the award back before withdrawing them.')]);
+            }
 
             $before = self::windowSummary($window);
 
