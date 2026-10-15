@@ -375,8 +375,8 @@ overwritten or rebuilt, with a fresh backup taken immediately beforehand and a
 written recovery procedure. Production also needs its own backup configuration.
 See roadmap.md, "Backups".
 
-**File storage is set up in Wasabi (decision 156); step 16a can use it, and
-nothing stores real files yet.** Two private buckets in `us-east-1`,
+**File storage is set up in Wasabi (decision 156) and connected on staging
+(step 16a); nothing stores real files yet.** Two private buckets in `us-east-1`,
 `backoffice-staging` and `banana-backoffice`, with versioning on, each
 reachable only by its own API-only user. The keys are in Jacob's password
 manager and nowhere else; they go into each server's environment
@@ -399,7 +399,7 @@ bucket, and their backup is the bucket's versioning (step 16a):
   noncurrent versions", 30 days) deletes it. That rule is set by Jacob in
   Wasabi, on Backoffice's two buckets only.
 - Before production stores real files: the restore drill below passes on
-  staging, and the lifecycle rule is on both buckets. Replication to a
+  production too, and the lifecycle rule is on both buckets. Replication to a
   second region is decided then (decision 157, question 8).
 
 **Restoring a file.** The bucket keeps an earlier version of every deleted
@@ -422,8 +422,11 @@ file for 30 days. To bring one back:
 makes a short-lived link and deletes it, and prints the test file's stored
 name. Restore that file by the steps above, then run
 `php artisan backoffice:files-check --restored=<name>`, which checks it came
-back whole and deletes it again. The drill has not yet been run: the staging
-key goes in only after step 16a is merged.
+back whole and deletes it again. **Passed on staging on 2026-10-15:**
+Jacob set the staging key, deployed, ran the check against
+`backoffice-staging`, restored the test file in the Wasabi console by
+deleting its delete marker, and the second run confirmed it whole. Run it
+again on production before production stores real files.
 
 **The application uses the server's main database account.**
 On staging the application connects to MySQL as the server's general `forge`

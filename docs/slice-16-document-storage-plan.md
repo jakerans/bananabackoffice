@@ -210,4 +210,5 @@ its tests; 16b and 16c are the first uses.
 2. **The restore was not tried on staging before merge.** The staging key
    goes in only after 16a is merged (question 3). Instead, after the
    merge, Jacob adds the key and the drill is run on staging with his
-   approval, before 16b stores any real file.
+   approval, before 16b stores any real file. **Done on 2026-10-15: the
+   drill passed on staging.**
