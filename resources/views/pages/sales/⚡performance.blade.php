@@ -320,6 +320,26 @@ new #[Title('Performance')] class extends Component {
             </div>
         </div>
 
+        {{-- Average Job Size and Close-on-the-Spot Rate (plan, 5.2; slice 15). --}}
+        @php
+            $jobs = $figures->salesMade - $figures->salesCorrected;
+            $jobSizeDetail = $jobs <= 0 ? __('No job sold this month.') : trans_choice('{1} :revenue over 1 job sold|[2,*] :revenue over :count jobs sold', $jobs, ['revenue' => Money::format($figures->netSoldCents()), 'count' => $jobs]);
+            $spotDetail = $figures->leadsDemoed === 0 ? __('No lead demoed for the first time this month.') : trans_choice('{1} :closed of 1 lead demoed sold at the demo|[2,*] :closed of :count leads demoed sold at the demo', $figures->leadsDemoed, ['closed' => $figures->leadsClosedOnTheSpot, 'count' => $figures->leadsDemoed]);
+        @endphp
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="figure-average-job-size">
+                <div class="text-sm font-medium text-zinc-500">{{ __('Average job size') }}</div>
+                <div class="mt-1 font-nav text-3xl font-bold tabular-nums text-ink" data-test="figure-value">{{ $figures->averageJobSizeCents() === null ? '—' : Money::format($figures->averageJobSizeCents()) }}</div>
+                <div class="mt-1 text-sm text-zinc-700" data-test="figure-detail">{{ $jobSizeDetail }}</div>
+            </div>
+
+            <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="figure-close-on-the-spot">
+                <div class="text-sm font-medium text-zinc-500">{{ __('Close on the spot') }}</div>
+                <div class="mt-1 font-nav text-3xl font-bold tabular-nums text-ink" data-test="figure-value">{{ $percent($figures->closeOnTheSpotRate()) }}</div>
+                <div class="mt-1 text-sm text-zinc-700" data-test="figure-detail">{{ $spotDetail }}</div>
+            </div>
+        </div>
+
         {{-- Pending and rehash (plan, 5.2; slice 9, step 9c). --}}
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="figure-pending-rate">
@@ -353,6 +373,8 @@ new #[Title('Performance')] class extends Component {
                 <li>{{ __('Sold revenue: the sold amounts of the proposals accepted in the month.') }}</li>
                 <li>{{ __('NSLI: sold revenue in the month, divided by leads issued in the month.') }}</li>
                 <li>{{ __('Cancellation rate: of the appointments booked for a day in the month, the ones that were cancelled. No-shows are shown beside it.') }}</li>
+                <li>{{ __('Average job size: sold revenue in the month, divided by the jobs sold in it. A job is a sold proposal; a corrected sale comes off both.') }}</li>
+                <li>{{ __('Close on the spot: of the leads demoed for the first time in the month, the ones with something sold at that demo, by the end of its day. It is the other side of pending rate.') }}</li>
                 <li>{{ __('Pending rate: of the leads demoed for the first time in the month, the ones that left that demo with nothing sold and something still open. A lead that was sold a week later still left its demo pending.') }}</li>
                 <li>{{ __('Return visit booked: of those pending leads, the ones with another visit booked by the end of the day of the demo.') }}</li>
                 <li>{{ __('Rehash conversion: of the leads that went from a salesperson to the Contact Center for rehash in the month, the ones sold since, by anyone. A past month goes up when one of its leads is sold later. For one salesperson, it is the leads released from them.') }}</li>

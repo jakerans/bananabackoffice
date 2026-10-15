@@ -160,6 +160,10 @@ review. Its plan is
 [slice-14-work-and-closeout-plan.md](slice-14-work-and-closeout-plan.md). Not
 merged.
 
+**Slice 15, Average Job Size and Close-on-the-Spot Rate, was planned and built
+overnight under decision 155,** for Jacob's review:
+[slice-15-sales-figures-plan.md](slice-15-sales-figures-plan.md). Not merged.
+
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
 Production Workspace instead of separate stage/project modules. Customers and

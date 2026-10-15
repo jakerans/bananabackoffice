@@ -303,7 +303,8 @@ Added 2026-10-13 (slice 7 step 7d; build plan: slice-7-appointment-results-plan.
 - The Sales funnel is three rates (decision 135): lead to appointment (booking; kept by channel with Marketing and Contact Center, 4.1 and 4.6, not built), appointment to demo (Demo Rate), demo to close (Close Rate).
 - NSLI is the sold amounts of the month over the Leads issued in the month, each after that month's corrections. There are no refunds to net out yet.
 - A month that has passed is not rewritten (decision 133). A sale corrected later, or a Lead Issued taken back later, stays in its month and comes off the month it was corrected in. Sales and their corrections are kept as lines that are never changed (`sale_entries`).
-- Not built: Average Job Size, Close-on-the-Spot Rate; targets; the Leaderboard (5.8); a figure across all Locations at once.
+- Not built: targets; the Leaderboard (5.8); a figure across all Locations at once.
+- Built in slice 15 (overnight under decision 155, not merged): Average Job Size, the month's sold revenue over the proposals sold in it after corrections; Close-on-the-Spot Rate, of the Leads first demoed in the month the ones with something sold at that demo by the end of its day.
 - Built in slice 9, step 9c (decision 137): Pending Rate, of the Leads first demoed in the month the ones that left that demo with nothing sold and something still open; % Pending with Rehash booked during the appointment, of those the ones with a return visit booked by the end of that day; and Rehash conversion, of the Leads released to Rehash in the month the ones sold since.
 - Attribution is LOCKED by decision 133: Lead Issued stays with the first
   salesperson who received that issued Lead; appointment figures follow the
