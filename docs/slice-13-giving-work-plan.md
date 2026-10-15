@@ -4,8 +4,8 @@ Status: **approved on 2026-10-14 (decision 151) in three steps, each
 stopping for Jacob's review, with the recommendation on all ten questions.
 Step 13a was built and merged on 2026-10-14 (decision 152); see "Step 13a as
 built". Step 13b was built and merged on 2026-10-14 (decision 153); see "Step 13b as
-built". Step 13c, the last, is built and waits for Jacob's review; see "Step
-13c as built".** It was written as what the implementation agent
+built". Step 13c was built and merged on 2026-10-15 (decision 154); see "Step 13c
+as built". Slice 13 is complete.** It was written as what the implementation agent
 recommended after slice 12, from the plan.
 
 It follows [product-architecture.md](product-architecture.md), sections 6.6,
@@ -208,7 +208,8 @@ changed.
 
 ### Step 13c as built (2026-10-14)
 
-**Built and waiting for Jacob's review. Not merged.** Built as planned above.
+**Merged into `main` on 2026-10-15** with Jacob's word ("continue", decision
+154). Built as planned above.
 What a reader of the code should know:
 
 - **Stored:** `insurance_deduction_rates` (basis points and the day each
