@@ -11,7 +11,9 @@ use App\Models\Location;
 use App\Models\Service;
 use App\Models\Subcontractor;
 use App\Support\Projects\RoughTimeframe;
+use App\Models\SubcontractorScorecard;
 use App\Support\Subcontractors\Compliance;
+use App\Support\Subcontractors\TrackRecord;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -76,6 +78,26 @@ new #[Title('Subcontractor')] class extends Component {
     public function subcontractor(): Subcontractor
     {
         return Subcontractor::query()->with(['locations', 'services', 'complianceRecords'])->findOrFail($this->subcontractorId);
+    }
+
+    /**
+     * Their jobs completed and average rating (slice 14, step 14c).
+     */
+    #[Computed]
+    public function trackRecord(): TrackRecord
+    {
+        return TrackRecord::for($this->subcontractor);
+    }
+
+    /**
+     * Every scorecard of theirs, the latest first.
+     *
+     * @return Collection<int, SubcontractorScorecard>
+     */
+    #[Computed]
+    public function scorecards(): Collection
+    {
+        return SubcontractorScorecard::query()->where('subcontractor_id', $this->subcontractorId)->with(['project', 'award.package', 'notes'])->orderByDesc('id')->get();
     }
 
     /**
@@ -148,6 +170,7 @@ new #[Title('Subcontractor')] class extends Component {
                 .(($event->values_after['vip'] ?? null) === false ? ' '.__('(VIP taken off)') : ''),
             AuditAction::SubcontractorVipSet => __('Made VIP'),
             AuditAction::SubcontractorVipRemoved => __('VIP taken off'),
+            AuditAction::SubcontractorScored => __('Scored for :package (:project): overall :overall of 5', ['package' => (string) ($event->values_after['package'] ?? ''), 'project' => (string) ($event->values_after['project'] ?? ''), 'overall' => (string) ($event->values_after['overall'] ?? '')]),
             AuditAction::SubcontractorComplianceRecorded => ($event->values_after['uses_banana_coverage'] ?? false) === true
                 ? __(':requirement: uses Banana\'s coverage', ['requirement' => (string) ($event->values_after['requirement'] ?? '')])
                 : __(':requirement recorded', ['requirement' => (string) ($event->values_after['requirement'] ?? '')]),
@@ -382,6 +405,43 @@ new #[Title('Subcontractor')] class extends Component {
                 </li>
             @endforeach
         </ul>
+    </div>
+
+    {{-- Their track record and scorecards (slice 14, step 14c). --}}
+    <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="subcontractor-track-record">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <flux:heading size="lg" level="2">{{ __('Track record') }}</flux:heading>
+                <flux:subheading data-test="track-record-words">{{ $this->trackRecord->words() }}</flux:subheading>
+            </div>
+            @if ($this->trackRecord->meetsTheBar())
+                <flux:badge color="emerald" data-test="track-record-bar">{{ __('Meets the bar: 5 jobs and a 4.5 rating') }}</flux:badge>
+            @endif
+        </div>
+
+        @forelse ($this->scorecards as $scorecard)
+            <div wire:key="scorecard-{{ $scorecard->id }}" class="flex flex-col gap-1 border-t border-zinc-200 pt-3 first-of-type:border-0 first-of-type:pt-0" data-test="scorecard">
+                <span class="font-semibold text-ink">{{ __(':package · :project', ['package' => $scorecard->award->package->name, 'project' => $scorecard->project->title]) }} &middot; {{ __('overall :overall of 5', ['overall' => $scorecard->overall]) }}</span>
+                <span class="text-sm text-zinc-700">
+                    {{ collect(SubcontractorScorecard::MEASURES)->map(fn (string $label, string $key): string => __($label).' '.$scorecard->{$key})->join(' · ') }}
+                </span>
+                <span class="text-sm text-zinc-700">
+                    {{ collect(SubcontractorScorecard::CHECKS)->map(fn (string $label, string $key): string => __($label).': '.($scorecard->{$key} ? __('yes') : __('no')))->join(' · ') }}
+                </span>
+                @if ($scorecard->feedback !== null)
+                    <span class="text-sm text-ink">{{ __('Feedback for them:') }} &ldquo;{{ $scorecard->feedback }}&rdquo;</span>
+                @endif
+                @if ($scorecard->internal_notes !== null)
+                    <span class="text-sm text-zinc-600">{{ __('Internal notes, never shown to them:') }} &ldquo;{{ $scorecard->internal_notes }}&rdquo;</span>
+                @endif
+                @foreach ($scorecard->notes as $note)
+                    <span wire:key="scorecard-note-{{ $note->id }}" class="text-sm text-zinc-600">{{ __('Note added by :name:', ['name' => $note->written_by_name ?? __('Unknown')]) }} &ldquo;{{ $note->note }}&rdquo;</span>
+                @endforeach
+                <span class="text-sm text-zinc-500">{{ __('Scored by :name', ['name' => $scorecard->filled_by_name ?? __('Unknown')]) }} &middot; <x-local-time :at="$scorecard->created_at" /></span>
+            </div>
+        @empty
+            <flux:text class="text-sm" data-test="scorecards-none">{{ __('No scorecard yet. The Production Manager scores them once their work finishes.') }}</flux:text>
+        @endforelse
     </div>
 
     <div class="grid gap-6 lg:grid-cols-2">

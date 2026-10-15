@@ -3,6 +3,8 @@
 use App\Actions\Projects\AwardWorkPackage;
 use App\Actions\Projects\ChangeWorkPackages;
 use App\Actions\Projects\RecordWork;
+use App\Actions\Subcontractors\ScoreSubcontractor;
+use App\Models\SubcontractorScorecard;
 use App\Enums\ColorApprovalMethod;
 use App\Enums\ProjectProductionState;
 use App\Models\Project;
@@ -85,6 +87,9 @@ new class extends Component {
     public string $extendCause = '';
 
     public string $extendReason = '';
+
+    /** @var array<string, mixed> The scorecard being filled in (slice 14, step 14c). */
+    public array $scores = [];
 
     /** Taking an award back: whose doing it was, and why. */
     public string $awardEndCause = '';
@@ -483,6 +488,44 @@ new class extends Component {
         $this->saved('work-day', __('Work started.'));
     }
 
+    /**
+     * The scorecards of this job's awards, by award.
+     *
+     * @return \Illuminate\Support\Collection<int, SubcontractorScorecard>
+     */
+    #[Computed]
+    public function scorecards(): \Illuminate\Support\Collection
+    {
+        return SubcontractorScorecard::query()->where('project_id', $this->projectId)->get()->keyBy('work_package_award_id');
+    }
+
+    public function openScore(int $packageId): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+
+        $this->packageId = $this->shownPackage($packageId)->id;
+        $this->scores = [
+            ...array_fill_keys([...array_keys(SubcontractorScorecard::MEASURES), 'overall'], ''),
+            ...array_fill_keys(array_keys(SubcontractorScorecard::CHECKS), false),
+            'feedback' => '',
+            'internalNotes' => '',
+        ];
+        $this->resetValidation();
+
+        Flux::modal('work-score')->show();
+    }
+
+    public function saveScore(ScoreSubcontractor $scoreSubcontractor): void
+    {
+        $this->authorize('managePreProduction', $this->project);
+        $this->resetValidation();
+
+        $scoreSubcontractor->score($this->project, $this->packageId ?? abort(409, __('Choose the work package again. Reload the page.')), $this->scores, Auth::user());
+
+        unset($this->scorecards);
+        $this->saved('work-score', __('Scorecard saved.'));
+    }
+
     public function openExtend(int $packageId): void
     {
         $this->authorize('managePreProduction', $this->project);
@@ -774,6 +817,21 @@ new class extends Component {
                                     </div>
                                 @endif
                             </div>
+
+                            {{-- The scorecard, once the work has finished (slice 14, step 14c). Seen by those who may see the subcontractor. --}}
+                            @if ($shown->hasFinished() && $award !== null && Auth::user()->can('view', $award->subcontractor))
+                                @php
+                                    $scorecard = $this->scorecards->get($award->id);
+                                @endphp
+                                <div class="flex flex-wrap items-center justify-between gap-2 text-sm" data-test="work-scorecard">
+                                    <span class="text-ink">
+                                        {{ $scorecard === null ? __(':name is not scored for this work yet.', ['name' => $award->subcontractor->business_name]) : __('Scored :overall of 5 overall by :name.', ['overall' => $scorecard->overall, 'name' => $scorecard->filled_by_name ?? __('Unknown')]) }}
+                                    </span>
+                                    @if ($scorecard === null && $this->mayRecordWork)
+                                        <flux:button size="sm" variant="primary" wire:click="openScore({{ $shown->id }})" data-test="open-score">{{ __('Score the subcontractor') }}</flux:button>
+                                    @endif
+                                </div>
+                            @endif
 
                             @if ($shown->extensions->isNotEmpty())
                                 <ul class="flex flex-col gap-1 text-sm text-zinc-600" data-test="work-extensions">
@@ -1130,6 +1188,45 @@ new class extends Component {
                     </flux:modal.close>
 
                     <flux:button type="submit" variant="primary" data-test="save-work-day">{{ __('Record') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        <flux:modal name="work-score" class="w-full max-w-xl">
+            <form wire:submit="saveScore" class="flex flex-col gap-5">
+                <flux:error name="scorecard" />
+
+                <div>
+                    <flux:heading size="lg">{{ __('Score the subcontractor') }}</flux:heading>
+                    <flux:subheading>{{ __('From 1 to 5, 5 the best. For "callback and punch burden", 5 means the least. It is not changed after it is saved; a correction is a note added.') }}</flux:subheading>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    @foreach ([...SubcontractorScorecard::MEASURES, 'overall' => 'Overall'] as $key => $label)
+                        <flux:select wire:model="scores.{{ $key }}" :label="__($label)" wire:key="score-{{ $key }}" data-test="score-{{ $key }}">
+                            <flux:select.option value="">{{ __('Choose') }}</flux:select.option>
+                            @foreach ([5, 4, 3, 2, 1] as $value)
+                                <flux:select.option :value="$value" wire:key="score-{{ $key }}-{{ $value }}">{{ $value }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    @endforeach
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    @foreach (SubcontractorScorecard::CHECKS as $key => $label)
+                        <flux:checkbox wire:model="scores.{{ $key }}" :label="__($label)" wire:key="score-check-{{ $key }}" data-test="score-{{ $key }}" />
+                    @endforeach
+                </div>
+
+                <flux:textarea wire:model="scores.feedback" rows="2" :label="__('Feedback for the subcontractor (they will see this)')" data-test="score-feedback" />
+                <flux:textarea wire:model="scores.internalNotes" rows="2" :label="__('Internal notes (never shown to them)')" data-test="score-internal" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-score">{{ __('Save scorecard') }}</flux:button>
                 </div>
             </form>
         </flux:modal>

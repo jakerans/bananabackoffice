@@ -686,6 +686,10 @@ PM follows up and gives final-payment instructions. A qualified subcontractor
 may conduct it at the PM's discretion after at least five completed Projects
 and a 4.5+ rating; responsibility remains with the PM.
 
+Added 2026-10-15 (slice 14; build plan: slice-14-work-and-closeout-plan.md; built overnight under decision 155, not merged):
+- Built: work started and finished on each package, the states In progress, Work complete and Signed off, work running over its last day marked, and more days given with whose cause it was (7.9); the internal inspection, the customer walkthrough (by the Production Manager or one of the job's subcontractors), the punch list and the customer's 100%-satisfied signoff; the subcontractor scorecard (7.10) and a track record of jobs completed and average rating (7.11).
+- Not built yet: financial close (job costing, receipts, Finance reconciliation, final balance), Brand Ambassador obligations, removing a failing crew with a completion package, photos.
+
 6.9 Job-cost governance
 PM prepares.
 Finance validates.

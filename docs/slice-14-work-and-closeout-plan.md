@@ -188,6 +188,37 @@ Readings made while building, for Jacob to change if wrong:
 
 Each scorecard, with who filled it in and when.
 
+### Step 14c as built (2026-10-15, overnight)
+
+**Built under decision 155; not merged.** Built as planned above. What a
+reader of the code should know:
+
+- **Stored:** `subcontractor_scorecards` (one per award whose work finished:
+  six measures 1 to 5, three yes-or-no items, overall, feedback, internal
+  notes; never changed) and `subcontractor_scorecard_notes` (corrections).
+- **One action:** `App\Actions\Subcontractors\ScoreSubcontractor` (score,
+  addNote), under the pre-production rule for the job and
+  `subcontractors.view` for the subcontractor.
+- **The track record** (`App\Support\Subcontractors\TrackRecord`): jobs
+  completed (distinct Projects with work of theirs finished) and the average
+  overall rating, and whether they meet the plan's bar of five jobs and a
+  4.5 rating. It shows on the subcontractor's page and beside each
+  subcontractor offered to conduct a walkthrough; it refuses nothing.
+- **The job page** shows "Score the subcontractor" on finished work; the
+  subcontractor's page lists every scorecard with its feedback, internal
+  notes and notes. A scorecard is in the subcontractor's history, never in a
+  customer's Activity; the salesperson does not see it.
+
+Readings made while building, for Jacob to change if wrong:
+
+- **One scorecard per piece of work given out,** so a job split between two
+  parts for the same subcontractor gives two scorecards.
+- **Adding a note to a scorecard** is in the action, not yet on a page.
+
+### Slice 14 as built
+
+All three steps are built and pushed under decision 155, on the branch
+`checkpoint-overnight-slice-14-onward`. Not merged.
 ## Who may do what
 
 No new permission.

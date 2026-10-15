@@ -8,6 +8,7 @@ use App\Models\ProjectCompletionStep;
 use App\Models\PunchItem;
 use App\Models\Subcontractor;
 use App\Support\Projects\RoughTimeframe;
+use App\Support\Subcontractors\TrackRecord;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -307,7 +308,11 @@ new class extends Component {
                     <flux:select wire:model.live="walkthroughSubcontractorId" :label="__('Conducted by')" data-test="walkthrough-conductor">
                         <flux:select.option value="">{{ __('The Production Manager') }}</flux:select.option>
                         @foreach ($this->jobSubcontractors as $subcontractor)
-                            <flux:select.option :value="$subcontractor->id" wire:key="walkthrough-sub-{{ $subcontractor->id }}">{{ $subcontractor->business_name }}</flux:select.option>
+                            @php
+                                $record = TrackRecord::for($subcontractor);
+                            @endphp
+                            {{-- Whether they meet the plan's bar is shown, not enforced: the Production Manager decides (6.8). --}}
+                            <flux:select.option :value="$subcontractor->id" wire:key="walkthrough-sub-{{ $subcontractor->id }}">{{ $subcontractor->business_name }} &middot; {{ $record->meetsTheBar() ? __('meets the bar') : $record->words() }}</flux:select.option>
                         @endforeach
                     </flux:select>
                 @endif
