@@ -4,6 +4,7 @@ use App\Enums\Permission;
 use App\Http\Controllers\CenterController;
 use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\NavigationLandingController;
+use App\Http\Controllers\OpenAttachmentController;
 use App\Http\Controllers\PasswordResetLinkController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StopImpersonationController;
@@ -55,6 +56,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Subcontractors are seen by Production and managers only (slice 12; decision 148, question 9).
     Route::livewire('production/subcontractors', 'pages::production.subcontractors')->can(Permission::ViewSubcontractors)->name('production.subcontractors');
     Route::livewire('production/subcontractors/{subcontractor}', 'pages::production.subcontractor')->can('view', 'subcontractor')->name('production.subcontractors.show');
+
+    // An attached file opens by a five-minute link, given after checking the person may see
+    // what it belongs to (slice 16; decision 33). Never a lasting address.
+    Route::get('attachments/{attachment}', OpenAttachmentController::class)->name('attachments.open');
 
     // The Call Queue is a Marketing > Contact Center page. It is opened by the queue permission,
     // like Leads; every action on it checks the permission again and each Lead by its own location.

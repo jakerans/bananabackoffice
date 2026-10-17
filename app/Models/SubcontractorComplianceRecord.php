@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use App\Support\Attachments\Attachable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 use LogicException;
 
@@ -11,8 +14,9 @@ use LogicException;
  * One time a compliance item was received from a subcontractor, or that they
  * use Banana's coverage instead (docs/slice-12-subcontractors-plan.md, step
  * 12b). The latest for an item is the one in force. Renewing adds a record;
- * none is changed or deleted. It records that the item was received, not
- * the document.
+ * none is changed or deleted. The document itself can be attached to it
+ * (step 16b), except the W-9, which carries a tax ID number (decision 157,
+ * question 4), and Banana's coverage, which has none.
  *
  * @property int $id
  * @property int $subcontractor_id
@@ -27,9 +31,13 @@ use LogicException;
  * @property Carbon|null $updated_at
  * @property-read Subcontractor $subcontractor
  * @property-read ComplianceRequirement $requirement
+ * @property-read Collection<int, Attachment> $documents
  */
-class SubcontractorComplianceRecord extends Model
+class SubcontractorComplianceRecord extends Model implements Attachable
 {
+    /** What its attached files are called. */
+    public const string DOCUMENT = 'document';
+
     /** The longest note kept. */
     public const int NOTE_LENGTH = 500;
 
@@ -71,5 +79,39 @@ class SubcontractorComplianceRecord extends Model
     public function requirement(): BelongsTo
     {
         return $this->belongsTo(ComplianceRequirement::class, 'compliance_requirement_id');
+    }
+
+    /**
+     * The documents attached to it and not removed, the earliest first.
+     *
+     * @return MorphMany<Attachment, $this>
+     */
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable')->where('kind', self::DOCUMENT)->whereNull('removed_at')->orderBy('id');
+    }
+
+    /**
+     * Whether a document may be attached: not to the W-9, whose file is not
+     * kept (decision 157, question 4), nor to Banana's coverage.
+     */
+    public function takesDocuments(): bool
+    {
+        return ! $this->uses_banana_coverage && $this->requirement->base_key !== 'w9';
+    }
+
+    public function attachmentAuditSubject(): Model
+    {
+        return $this->subcontractor;
+    }
+
+    public function attachmentAuditLocation(): ?Location
+    {
+        return $this->subcontractor->locations->first();
+    }
+
+    public function attachmentDescription(): string
+    {
+        return $this->requirement->name;
     }
 }

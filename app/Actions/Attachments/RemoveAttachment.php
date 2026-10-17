@@ -6,8 +6,8 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Models\Attachment;
 use App\Models\User;
+use App\Support\Attachments\Attachable;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -29,9 +29,9 @@ class RemoveAttachment
      * @throws ValidationException
      * @throws AuthorizationException
      */
-    public function handle(Attachment $attachment, ?string $reason, string $ability, User $actor, ?Model $auditSubject = null): Attachment
+    public function handle(Attachment $attachment, ?string $reason, string $ability, User $actor): Attachment
     {
-        return DB::transaction(function () use ($attachment, $reason, $ability, $actor, $auditSubject): Attachment {
+        return DB::transaction(function () use ($attachment, $reason, $ability, $actor): Attachment {
             $attachment = Attachment::query()->lockForUpdate()->findOrFail($attachment->id);
             $attachable = $attachment->attachable;
 
@@ -51,9 +51,10 @@ class RemoveAttachment
 
             $this->recordAuditEvent->handle(
                 AuditAction::AttachmentRemoved,
-                $auditSubject ?? $attachable,
+                $attachable instanceof Attachable ? $attachable->attachmentAuditSubject() : $attachable,
                 actor: $actor,
-                before: ['kind' => $attachment->kind, 'name' => $attachment->original_name],
+                before: [...AttachFile::describe($attachable), 'kind' => $attachment->kind, 'name' => $attachment->original_name],
+                location: $attachable instanceof Attachable ? $attachable->attachmentAuditLocation() : null,
                 reason: $reason,
             );
 

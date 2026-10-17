@@ -1,26 +1,33 @@
 <?php
 
+use App\Actions\Attachments\RemoveAttachment;
+use App\Actions\Subcontractors\AttachComplianceDocument;
 use App\Actions\Subcontractors\ChangeSubcontractor;
 use App\Actions\Subcontractors\RecordCompliance;
 use App\Enums\AuditAction;
 use App\Enums\Permission;
 use App\Enums\SubcontractorStanding;
+use App\Models\Attachment;
 use App\Models\AuditEvent;
 use App\Models\ComplianceRequirement;
 use App\Models\Location;
 use App\Models\Service;
 use App\Models\Subcontractor;
 use App\Support\Projects\RoughTimeframe;
+use App\Models\SubcontractorComplianceRecord;
 use App\Models\SubcontractorScorecard;
 use App\Support\Subcontractors\Compliance;
 use App\Support\Subcontractors\TrackRecord;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
 /**
  * A subcontractor's page (docs/slice-12-subcontractors-plan.md, step 12a;
@@ -30,9 +37,12 @@ use Livewire\Component;
  * Anyone who may see subcontractors at one of their Locations reads it. The
  * Production Manager or a manager there changes it; benching, offboarding,
  * not hiring and VIP need a reason every time. Their compliance is worked out
- * from what was recorded (step 12b).
+ * from what was recorded (step 12b), and each item can carry its document
+ * (slice 16, step 16b), all but the W-9.
  */
 new #[Title('Subcontractor')] class extends Component {
+    use WithFileUploads;
+
     #[Locked]
     public int $subcontractorId;
 
@@ -58,6 +68,19 @@ new #[Title('Subcontractor')] class extends Component {
 
     public string $complianceNote = '';
 
+    /** @var TemporaryUploadedFile|null The document chosen, while recording or attaching. */
+    public $complianceDocument = null;
+
+    /** The compliance record a document is being attached to. */
+    #[Locked]
+    public ?int $documentRecordId = null;
+
+    /** The document being removed, and why. */
+    #[Locked]
+    public ?int $removingDocumentId = null;
+
+    public string $documentRemovalReason = '';
+
     public function mount(Subcontractor $subcontractor): void
     {
         $this->authorize('view', $subcontractor);
@@ -77,7 +100,7 @@ new #[Title('Subcontractor')] class extends Component {
     #[Computed]
     public function subcontractor(): Subcontractor
     {
-        return Subcontractor::query()->with(['locations', 'services', 'complianceRecords'])->findOrFail($this->subcontractorId);
+        return Subcontractor::query()->with(['locations', 'services', 'complianceRecords.requirement', 'complianceRecords.documents'])->findOrFail($this->subcontractorId);
     }
 
     /**
@@ -174,6 +197,9 @@ new #[Title('Subcontractor')] class extends Component {
             AuditAction::SubcontractorComplianceRecorded => ($event->values_after['uses_banana_coverage'] ?? false) === true
                 ? __(':requirement: uses Banana\'s coverage', ['requirement' => (string) ($event->values_after['requirement'] ?? '')])
                 : __(':requirement recorded', ['requirement' => (string) ($event->values_after['requirement'] ?? '')]),
+            AuditAction::AttachmentAdded => __(':requirement: :name attached', ['requirement' => (string) ($event->values_after['for'] ?? ''), 'name' => (string) ($event->values_after['name'] ?? '')]),
+            AuditAction::AttachmentRemoved => __(':requirement: :name removed', ['requirement' => (string) ($event->values_before['for'] ?? ''), 'name' => (string) ($event->values_before['name'] ?? '')]),
+            AuditAction::AttachmentPurged => __(':requirement: :name deleted from storage, 30 days after it was removed', ['requirement' => (string) ($event->values_before['for'] ?? ''), 'name' => (string) ($event->values_before['name'] ?? '')]),
             default => __('Changed'),
         };
     }
@@ -264,6 +290,7 @@ new #[Title('Subcontractor')] class extends Component {
         $this->complianceExpiresOn = '';
         $this->complianceCoverage = false;
         $this->complianceNote = '';
+        $this->complianceDocument = null;
         $this->resetValidation();
 
         Flux::modal('subcontractor-compliance')->show();
@@ -282,10 +309,84 @@ new #[Title('Subcontractor')] class extends Component {
             $this->complianceCoverage,
             $this->complianceNote,
             Auth::user(),
+            $this->complianceCoverage ? null : $this->chosenDocument(),
         );
 
         $this->requirementId = null;
+        $this->complianceDocument = null;
         $this->saved('subcontractor-compliance', __('Recorded.'));
+    }
+
+    /**
+     * Attach the document to an item already recorded.
+     */
+    public function openAttachDocument(int $recordId): void
+    {
+        $this->authorize('update', $this->subcontractor);
+
+        $record = $this->subcontractor->complianceRecords->firstWhere('id', $recordId) ?? abort(409, __('This was changed since. Reload the page.'));
+
+        $this->documentRecordId = $record->id;
+        $this->complianceDocument = null;
+        $this->resetValidation();
+
+        Flux::modal('compliance-document')->show();
+    }
+
+    public function saveDocument(AttachComplianceDocument $attachComplianceDocument): void
+    {
+        $this->authorize('update', $this->subcontractor);
+        $this->resetValidation();
+
+        $record = $this->subcontractor->complianceRecords->firstWhere('id', $this->documentRecordId) ?? abort(409, __('This was changed since. Reload the page.'));
+
+        $attachComplianceDocument->handle($record, $this->chosenDocument() ?? throw ValidationException::withMessages(['complianceDocument' => __('Choose the file.')]), Auth::user());
+
+        $this->documentRecordId = null;
+        $this->complianceDocument = null;
+        $this->saved('compliance-document', __('Attached.'));
+    }
+
+    public function openRemoveDocument(int $attachmentId): void
+    {
+        $this->authorize('update', $this->subcontractor);
+
+        $this->removingDocumentId = $this->documentOfTheirs($attachmentId)->id;
+        $this->documentRemovalReason = '';
+        $this->resetValidation();
+
+        Flux::modal('remove-compliance-document')->show();
+    }
+
+    public function removeDocument(RemoveAttachment $removeAttachment): void
+    {
+        $this->authorize('update', $this->subcontractor);
+        $this->resetValidation();
+
+        $removeAttachment->handle($this->documentOfTheirs($this->removingDocumentId ?? 0), $this->documentRemovalReason, 'update', Auth::user());
+
+        $this->removingDocumentId = null;
+        $this->saved('remove-compliance-document', __('Removed. It is kept for 30 days in case it is needed.'));
+    }
+
+    /**
+     * The file chosen, once it has finished uploading.
+     */
+    private function chosenDocument(): ?TemporaryUploadedFile
+    {
+        return $this->complianceDocument instanceof TemporaryUploadedFile ? $this->complianceDocument : null;
+    }
+
+    /**
+     * One of the documents on this subcontractor's compliance records.
+     */
+    private function documentOfTheirs(int $attachmentId): Attachment
+    {
+        return Attachment::query()
+            ->shown()
+            ->where('attachable_type', (new SubcontractorComplianceRecord)->getMorphClass())
+            ->whereIn('attachable_id', $this->subcontractor->complianceRecords->modelKeys())
+            ->find($attachmentId) ?? abort(409, __('This was changed since. Reload the page.'));
     }
 
     private function saved(string $modal, string $message): void
@@ -305,6 +406,8 @@ new #[Title('Subcontractor')] class extends Component {
         $reasonNeeded = $standingNow->needsReason() || ($chosenStanding?->needsReason() ?? false);
         $compliance = $this->compliance;
         $recording = $requirementId === null ? null : ComplianceRequirement::query()->find($requirementId);
+        $attachingTo = $documentRecordId === null ? null : $subcontractor->complianceRecords->firstWhere('id', $documentRecordId);
+        $documentTypes = '.pdf,.jpg,.jpeg,.png,.heic,application/pdf,image/jpeg,image/png,image/heic';
     @endphp
 
     <div>
@@ -342,12 +445,12 @@ new #[Title('Subcontractor')] class extends Component {
         @endif
     </div>
 
-    {{-- Compliance (slice 12, step 12b): each item ticked by what was recorded. The documents themselves are not kept here. --}}
+    {{-- Compliance (slice 12, step 12b): each item ticked by what was recorded, with its document where it has one (slice 16, step 16b). --}}
     <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="subcontractor-compliance">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
                 <flux:heading size="lg" level="2">{{ __('Compliance') }}</flux:heading>
-                <flux:subheading>{{ __('What they must have before they get work. Recorded as received; the documents themselves are not kept in Backoffice yet.') }}</flux:subheading>
+                <flux:subheading>{{ __('What they must have before they get work, with the document attached. The W-9 is recorded as received; its file is not kept here.') }}</flux:subheading>
             </div>
 
             @if ($compliance->isCompliant())
@@ -376,7 +479,7 @@ new #[Title('Subcontractor')] class extends Component {
                 @endphp
 
                 <li wire:key="compliance-{{ $requirement->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="compliance-item" data-state="{{ $item['state'] }}">
-                    <div class="flex min-w-0 flex-1 flex-col gap-1">
+                    <div class="flex min-w-64 flex-1 flex-col gap-1">
                         <span class="flex flex-wrap items-center gap-2">
                             <span class="font-semibold text-ink">{{ $requirement->name }}</span>
                             <flux:badge size="sm" :color="$color">{{ $label }}</flux:badge>
@@ -394,13 +497,39 @@ new #[Title('Subcontractor')] class extends Component {
                                 @endif
                             </span>
                             <span class="text-sm text-zinc-500">{{ __('Recorded by :name', ['name' => $record->recorded_by_name ?? __('Unknown')]) }} &middot; <x-local-time :at="$record->created_at" />@if ($record->note !== null) &middot; &ldquo;{{ $record->note }}&rdquo;@endif</span>
+
+                            @if ($record->takesDocuments())
+                                @if ($record->documents->isEmpty())
+                                    <span class="text-sm text-zinc-500" data-test="compliance-no-document">{{ __('No document attached.') }}</span>
+                                @else
+                                    <ul class="flex flex-col gap-1" data-test="compliance-documents">
+                                        @foreach ($record->documents as $document)
+                                            <li wire:key="document-{{ $document->id }}" class="flex flex-wrap items-center gap-2 text-sm" data-test="compliance-document">
+                                                <flux:icon name="{{ $document->isImage() ? 'photo' : 'document-text' }}" variant="mini" class="text-zinc-500" />
+                                                <a href="{{ route('attachments.open', $document) }}" target="_blank" rel="noopener" class="font-medium text-ink underline decoration-zinc-300 underline-offset-2 hover:decoration-ink" data-test="open-document">{{ $document->original_name }}</a>
+                                                <span class="text-zinc-500">{{ $document->size() }} &middot; {{ __('added by :name', ['name' => $document->uploaded_by_name ?? __('Unknown')]) }}</span>
+                                                @if ($this->mayChange)
+                                                    <flux:button size="xs" variant="ghost" wire:click="openRemoveDocument({{ $document->id }})" data-test="remove-document">{{ __('Remove') }}</flux:button>
+                                                @endif
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            @elseif (! $record->uses_banana_coverage)
+                                <span class="text-sm text-zinc-500" data-test="compliance-w9-note">{{ __('The W-9 file is not kept in Backoffice, as it carries a tax ID number.') }}</span>
+                            @endif
                         @endif
                     </div>
 
                     @if ($this->mayChange)
-                        <flux:button size="sm" :variant="$record === null ? 'primary' : 'ghost'" class="shrink-0" wire:click="openCompliance({{ $requirement->id }})" data-test="record-compliance">
-                            {{ $record === null ? __('Record') : __('Renew or correct') }}
-                        </flux:button>
+                        <div class="flex shrink-0 flex-wrap gap-2">
+                            @if ($record?->takesDocuments())
+                                <flux:button size="sm" variant="ghost" icon="paper-clip" wire:click="openAttachDocument({{ $record->id }})" data-test="attach-document">{{ __('Attach') }}</flux:button>
+                            @endif
+                            <flux:button size="sm" :variant="$record === null ? 'primary' : 'ghost'" wire:click="openCompliance({{ $requirement->id }})" data-test="record-compliance">
+                                {{ $record === null ? __('Record') : __('Renew or correct') }}
+                            </flux:button>
+                        </div>
                     @endif
                 </li>
             @endforeach
@@ -553,7 +682,13 @@ new #[Title('Subcontractor')] class extends Component {
 
                 <div>
                     <flux:heading size="lg">{{ $recording?->name ?? __('Compliance') }}</flux:heading>
-                    <flux:subheading>{{ __('Record that you have it. The document itself is kept where you keep it today. What was recorded before is kept.') }}</flux:subheading>
+                    <flux:subheading>
+                        @if ($recording?->base_key === 'w9')
+                            {{ __('Record that you have it. The W-9 file is not kept in Backoffice, as it carries a tax ID number. What was recorded before is kept.') }}
+                        @else
+                            {{ __('Record that you have it, with the document. What was recorded before is kept, with its own document.') }}
+                        @endif
+                    </flux:subheading>
                 </div>
 
                 @if ($recording?->allows_banana_coverage)
@@ -569,6 +704,14 @@ new #[Title('Subcontractor')] class extends Component {
                     </div>
                 @endunless
 
+                @if ($recording !== null && $recording->base_key !== 'w9' && ! $complianceCoverage)
+                    <div class="flex flex-col gap-2">
+                        <flux:input type="file" wire:model="complianceDocument" :accept="$documentTypes" :label="__('The document (optional)')" :description="__('PDF, or a JPEG, PNG or HEIC photo, up to 20 MB.')" data-test="compliance-document-file" />
+                        <flux:text size="sm" wire:loading wire:target="complianceDocument">{{ __('Uploading...') }}</flux:text>
+                        <flux:error name="attachment" />
+                    </div>
+                @endif
+
                 <flux:textarea wire:model="complianceNote" rows="2" :label="__('Note (optional)')" :placeholder="__('Insurer, policy number, who sent it')" data-test="compliance-note" />
 
                 <div class="flex justify-end gap-2">
@@ -576,10 +719,44 @@ new #[Title('Subcontractor')] class extends Component {
                         <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
                     </flux:modal.close>
 
-                    <flux:button type="submit" variant="primary" data-test="save-compliance">{{ __('Record') }}</flux:button>
+                    <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="complianceDocument" data-test="save-compliance">{{ __('Record') }}</flux:button>
                 </div>
             </form>
         </flux:modal>
+
+        <flux:modal name="compliance-document" class="w-full max-w-lg">
+            <form wire:submit="saveDocument" class="flex flex-col gap-5">
+                <div>
+                    <flux:heading size="lg">{{ $attachingTo?->requirement->name ?? __('Attach the document') }}</flux:heading>
+                    <flux:subheading>{{ __('Attach the document for what was recorded. It is kept privately, and opened only by those who may see this subcontractor.') }}</flux:subheading>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <flux:input type="file" wire:model="complianceDocument" :accept="$documentTypes" :label="__('The document')" :description="__('PDF, or a JPEG, PNG or HEIC photo, up to 20 MB.')" data-test="document-file" />
+                    <flux:text size="sm" wire:loading wire:target="complianceDocument">{{ __('Uploading...') }}</flux:text>
+                    <flux:error name="attachment" />
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="complianceDocument" data-test="save-document">{{ __('Attach') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        <x-confirmation-modal
+            name="remove-compliance-document"
+            :title="__('Remove this document?')"
+            :description="__('It is hidden at once, and kept for 30 days in case it is needed. Say why.')"
+            action="removeDocument"
+            :confirm-label="__('Remove')"
+            :error="['attachment', 'attachmentReason']"
+        >
+            <flux:textarea wire:model="documentRemovalReason" rows="2" :label="__('Why (required)')" :placeholder="__('Uploaded to the wrong subcontractor, a newer one came...')" data-test="document-removal-reason" />
+        </x-confirmation-modal>
 
         <flux:modal name="subcontractor-vip" class="w-full max-w-lg">
             <form wire:submit="saveVip" class="flex flex-col gap-5">

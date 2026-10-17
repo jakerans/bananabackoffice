@@ -23,6 +23,7 @@ use App\Models\Property;
 use App\Models\SalesLossReason;
 use App\Models\Service;
 use App\Models\Subcontractor;
+use App\Models\SubcontractorComplianceRecord;
 use App\Models\User;
 use App\Support\Access\CurrentLocation;
 use App\Support\Access\Impersonation;
@@ -119,6 +120,7 @@ class AppServiceProvider extends ServiceProvider
             'property' => Property::class,
             'contact_center_settings' => ContactCenterSettings::class,
             'subcontractor' => Subcontractor::class,
+            'subcontractor_compliance_record' => SubcontractorComplianceRecord::class,
             'insurance_deduction_rate' => InsuranceDeductionRate::class,
         ]);
     }

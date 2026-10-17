@@ -3241,6 +3241,20 @@ both: "merge and then tell me what to do".
    run on staging, with his approval, before step 16b stores a real file.
    Step 16b waits for his word.
 
+## 159. Staging storage is ready; step 16b starts (2026-10-16)
+
+**Decided by Jacob,** after the restore drill passed on staging: "Yes, I
+did add the lifecycle rule to Wasabi. I think we're all good to go. Let me
+know if we're not. Otherwise, continue."
+
+1. **Staging's storage is set up:** the key and `FILES_*` settings are in
+   Forge, the lifecycle rule (noncurrent versions deleted after 30 days) is
+   on `backoffice-staging`, and the restore drill passed on 2026-10-15.
+2. **Step 16b, compliance documents, starts**
+   ([slice-16-document-storage-plan.md](slice-16-document-storage-plan.md)),
+   with decision 157's answers: the W-9 file is not stored. It stops for
+   his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

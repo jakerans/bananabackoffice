@@ -2,6 +2,7 @@
 
 namespace App\Actions\Subcontractors;
 
+use App\Actions\Attachments\AttachFile;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Models\ComplianceRequirement;
@@ -12,6 +13,7 @@ use App\Support\Projects\RoughTimeframe;
 use App\Support\Subcontractors\Compliance;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -23,20 +25,25 @@ use Illuminate\Validation\ValidationException;
  * 7.2; decision 148).
  *
  * The Production Manager or a manager at one of their Locations. Renewing is
- * recording it again; the earlier record is kept. The document itself is not
- * stored (question 6).
+ * recording it again; the earlier record is kept. The document can be
+ * attached at the same time (slice 16, step 16b): the record and its
+ * document are saved together, or neither is.
  */
 class RecordCompliance
 {
-    public function __construct(private RecordAuditEvent $recordAuditEvent) {}
+    public function __construct(private RecordAuditEvent $recordAuditEvent, private AttachComplianceDocument $attachComplianceDocument) {}
 
     /**
      * @throws ValidationException
      * @throws AuthorizationException
      */
-    public function handle(Subcontractor $subcontractor, int $requirementId, ?string $receivedOn, ?string $expiresOn, bool $usesBananaCoverage, ?string $note, User $actor): SubcontractorComplianceRecord
+    public function handle(Subcontractor $subcontractor, int $requirementId, ?string $receivedOn, ?string $expiresOn, bool $usesBananaCoverage, ?string $note, User $actor, ?UploadedFile $document = null): SubcontractorComplianceRecord
     {
-        return DB::transaction(function () use ($subcontractor, $requirementId, $receivedOn, $expiresOn, $usesBananaCoverage, $note, $actor): SubcontractorComplianceRecord {
+        if ($document !== null) {
+            AttachFile::ensureAccepted($document);
+        }
+
+        return DB::transaction(function () use ($subcontractor, $requirementId, $receivedOn, $expiresOn, $usesBananaCoverage, $note, $actor, $document): SubcontractorComplianceRecord {
             // Read as it is now, and held so two records cannot cross.
             $subcontractor = Subcontractor::query()->with(['locations', 'complianceRecords'])->lockForUpdate()->findOrFail($subcontractor->id);
 
@@ -72,6 +79,10 @@ class RecordCompliance
                 location: $subcontractor->locations->first(),
                 reason: $record->note,
             );
+
+            if ($document !== null) {
+                $this->attachComplianceDocument->handle($record, $document, $actor);
+            }
 
             return $record;
         });
