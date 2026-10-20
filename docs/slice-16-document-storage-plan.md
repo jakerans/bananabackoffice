@@ -3,7 +3,7 @@
 Status: **approved on 2026-10-15 (decision 157) in three steps, each stopping
 for Jacob's review, with the recommendation on all ten questions. Step 16a
 is built and merged (decision 158); see "Step 16a as built". Step 16b is
-built and awaiting Jacob's review (decision 159); see "Step 16b as built".** It was written as what the implementation agent
+merged (decision 160); see "Step 16b as built". Step 16c is being built.** It was written as what the implementation agent
 recommended, once Jacob had set up the storage (decision 156).
 
 It follows decision 33 (one attachment model, in private storage of its

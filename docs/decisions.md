@@ -3255,6 +3255,21 @@ know if we're not. Otherwise, continue."
    with decision 157's answers: the W-9 file is not stored. It stops for
    his review.
 
+## 160. Step 16b is merged; step 16c starts (2026-10-20)
+
+**Decided by Jacob,** in reply to the step 16b report and the steps for
+raising staging's upload limit: "continue", which in this project has meant
+merge the step and go on (decisions 149, 150, 152 to 154).
+
+1. **Step 16b, compliance documents, is merged** as built
+   ([slice-16-document-storage-plan.md](slice-16-document-storage-plan.md),
+   "Step 16b as built").
+2. **Step 16c, photos of the work, starts.** It stops for his review.
+3. **Staging's upload limit is still 2 MB** (read on 2026-10-20). Raising it
+   to 20 MB is Jacob's, in Forge (the server's Runtime tab, PHP, max upload
+   size): the agent's Forge key may only read, and was refused when Jacob
+   asked it to make the change on 2026-10-16.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
