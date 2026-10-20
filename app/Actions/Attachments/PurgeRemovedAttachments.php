@@ -5,6 +5,7 @@ namespace App\Actions\Attachments;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Models\Attachment;
+use App\Support\Attachments\Attachable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -49,10 +50,13 @@ class PurgeRemovedAttachments
 
                         $attachment->forceFill(['purged_at' => now()])->save();
 
+                        $attachable = $attachment->attachable;
+
                         $this->recordAuditEvent->handle(
                             AuditAction::AttachmentPurged,
-                            $attachment->attachable,
-                            before: ['kind' => $attachment->kind, 'name' => $attachment->original_name],
+                            $attachable instanceof Attachable ? $attachable->attachmentAuditSubject() : $attachable,
+                            before: [...AttachFile::describe($attachable), 'kind' => $attachment->kind, 'name' => $attachment->original_name],
+                            location: $attachable instanceof Attachable ? $attachable->attachmentAuditLocation() : null,
                         );
                     });
 

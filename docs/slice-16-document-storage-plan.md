@@ -2,7 +2,8 @@
 
 Status: **approved on 2026-10-15 (decision 157) in three steps, each stopping
 for Jacob's review, with the recommendation on all ten questions. Step 16a
-is built and merged (decision 158); see "Step 16a as built".** It was written as what the implementation agent
+is built and merged (decision 158); see "Step 16a as built". Step 16b is
+merged (decision 160); see "Step 16b as built". Step 16c is being built.** It was written as what the implementation agent
 recommended, once Jacob had set up the storage (decision 156).
 
 It follows decision 33 (one attachment model, in private storage of its
@@ -212,3 +213,51 @@ its tests; 16b and 16c are the first uses.
    merge, Jacob adds the key and the drill is run on staging with his
    approval, before 16b stores any real file. **Done on 2026-10-15: the
    drill passed on staging.**
+
+## Step 16b as built (2026-10-16)
+
+Built on `checkpoint-slice-16b-compliance-documents` under decision 159.
+
+- **Where:** the Compliance card on a subcontractor's page. Each item
+  recorded as received shows its documents (name, size, who added it),
+  each opening in a new tab by a five-minute link, or "No document
+  attached."
+- **Attaching:** "Attach" beside an item, or the document chosen while
+  recording or renewing it (`RecordCompliance` takes it as an option; the
+  record and its document are saved together, or neither is). Any number of
+  documents per record, for a certificate sent in several files.
+- **Only the record in force** takes a document
+  (`AttachComplianceDocument`); a page left open after a renewal is told to
+  reload. Renewing puts the new document on the new record; the earlier
+  record keeps its own.
+- **Never the W-9** (decision 157, question 4): no Attach button, the
+  recording dialog says so, and the item reads "The W-9 file is not kept in
+  Backoffice, as it carries a tax ID number." Banana's coverage takes no
+  document either.
+- **Removing:** "Remove" beside a document, in the shared confirmation
+  dialog, with a reason. It is hidden at once and purged 30 days later (16a).
+- **Who:** `subcontractors.view` at one of the subcontractor's Locations
+  opens a document; `subcontractors.manage` there attaches and removes
+  (`SubcontractorComplianceRecordPolicy`, which follows the subcontractor's
+  own policy).
+- **History:** attaching, removing and purging each show in the
+  subcontractor's history, naming the item and the file: "General liability
+  insurance: certificate.pdf attached". Files attached to anything now say,
+  through `App\Support\Attachments\Attachable`, whose history they belong
+  in.
+- **Opening** is a general route, `attachments/{attachment}`, that checks
+  the person may see what the file belongs to and sends them on by the
+  five-minute link; a removed file is not found. 16c uses it too.
+- **Uploads up to 20 MB:** Livewire's own limit (12 MB) is raised in a new
+  `config/livewire.php`. Chosen files wait on the server's own disk, never
+  in the bucket, until saved, and are cleared after a day.
+- **Tests:** `tests/Feature/Subcontractors/ComplianceDocumentsTest.php`, 17
+  tests.
+
+### Known limits
+
+- **Staging accepts only 2 MB per upload** until its PHP limit is raised
+  (Forge: the server's PHP settings, "Max File Upload Size", to 20 MB).
+  Read on 2026-10-16: `upload_max_filesize` 2M, `post_max_size` 8M.
+- **The app's top bar scrolls sideways on a phone**, on every page. Found in
+  this review; not part of 16b.

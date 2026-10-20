@@ -166,7 +166,8 @@ under decision 155 and merged on 2026-10-15 (decision 157):**
 decision 157).** Jacob set up the Wasabi buckets (decision 156); its plan is
 [slice-16-document-storage-plan.md](slice-16-document-storage-plan.md). Step
 16a (the storage itself) is merged (decision 158), and its restore drill
-passed on staging on 2026-10-15; 16b waits for Jacob's word.
+passed on staging on 2026-10-15. Step 16b (compliance documents) is merged
+(decision 160); step 16c (photos of the work) is being built.
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one

@@ -6,6 +6,7 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Models\Attachment;
 use App\Models\User;
+use App\Support\Attachments\Attachable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
@@ -32,27 +33,18 @@ class AttachFile
 
     /**
      * @param  string  $ability  The policy ability that allows changing $attachable.
-     * @param  Model|null  $auditSubject  Whose history the upload belongs in, when not $attachable itself.
      *
      * @throws ValidationException
      * @throws AuthorizationException
      */
-    public function handle(Model $attachable, string $kind, UploadedFile $file, string $ability, User $actor, ?Model $auditSubject = null): Attachment
+    public function handle(Model $attachable, string $kind, UploadedFile $file, string $ability, User $actor): Attachment
     {
         Gate::forUser($actor)->authorize($ability, $attachable);
 
+        self::ensureAccepted($file);
+
         $extension = mb_strtolower($file->getClientOriginalExtension());
         $mime = (string) $file->getMimeType();
-        $accepted = [...array_values(Attachment::TYPES), 'image/heif'];
-
-        if (! $file->isValid() || ! array_key_exists($extension, Attachment::TYPES) || ! in_array($mime, $accepted, true)) {
-            throw ValidationException::withMessages(['attachment' => __('Attach a PDF, or a JPEG, PNG or HEIC photo.')]);
-        }
-
-        if ((int) $file->getSize() > Attachment::MAX_BYTES) {
-            throw ValidationException::withMessages(['attachment' => __('The file is too large. Keep it to :max MB.', ['max' => Attachment::MAX_BYTES / 1024 / 1024])]);
-        }
-
         $originalName = Str::limit(trim($file->getClientOriginalName()) ?: 'file.'.$extension, 250, '');
         $directory = $attachable->getMorphClass().'/'.$attachable->getKey();
         $name = Str::uuid()->toString().'.'.$extension;
@@ -61,7 +53,7 @@ class AttachFile
         Storage::disk('files')->putFileAs($directory, $file, $name);
 
         try {
-            return DB::transaction(function () use ($attachable, $kind, $path, $originalName, $mime, $file, $actor, $auditSubject): Attachment {
+            return DB::transaction(function () use ($attachable, $kind, $path, $originalName, $mime, $file, $actor): Attachment {
                 $attachment = new Attachment;
                 $attachment->forceFill([
                     'attachable_type' => $attachable->getMorphClass(),
@@ -78,9 +70,10 @@ class AttachFile
 
                 $this->recordAuditEvent->handle(
                     AuditAction::AttachmentAdded,
-                    $auditSubject ?? $attachable,
+                    $attachable instanceof Attachable ? $attachable->attachmentAuditSubject() : $attachable,
                     actor: $actor,
-                    after: ['kind' => $kind, 'name' => $originalName, 'size_bytes' => $attachment->size_bytes],
+                    after: [...self::describe($attachable), 'kind' => $kind, 'name' => $originalName, 'size_bytes' => $attachment->size_bytes],
+                    location: $attachable instanceof Attachable ? $attachable->attachmentAuditLocation() : null,
                 );
 
                 return $attachment;
@@ -91,5 +84,35 @@ class AttachFile
 
             throw $failed;
         }
+    }
+
+    /**
+     * Refuse a file of a type or size that is not accepted. Checked before
+     * anything is saved, so a caller can check first and then save more.
+     *
+     * @throws ValidationException
+     */
+    public static function ensureAccepted(UploadedFile $file): void
+    {
+        $extension = mb_strtolower($file->getClientOriginalExtension());
+        $accepted = [...array_values(Attachment::TYPES), 'image/heif'];
+
+        if (! $file->isValid() || ! array_key_exists($extension, Attachment::TYPES) || ! in_array((string) $file->getMimeType(), $accepted, true)) {
+            throw ValidationException::withMessages(['attachment' => __('Attach a PDF, or a JPEG, PNG or HEIC photo.')]);
+        }
+
+        if ((int) $file->getSize() > Attachment::MAX_BYTES) {
+            throw ValidationException::withMessages(['attachment' => __('The file is too large. Keep it to :max MB.', ['max' => Attachment::MAX_BYTES / 1024 / 1024])]);
+        }
+    }
+
+    /**
+     * What the file is attached to, for its history.
+     *
+     * @return array{for?: string}
+     */
+    public static function describe(Model $attachable): array
+    {
+        return $attachable instanceof Attachable ? ['for' => $attachable->attachmentDescription()] : [];
     }
 }
