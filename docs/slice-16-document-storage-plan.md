@@ -3,7 +3,8 @@
 Status: **approved on 2026-10-15 (decision 157) in three steps, each stopping
 for Jacob's review, with the recommendation on all ten questions. Step 16a
 is built and merged (decision 158); see "Step 16a as built". Step 16b is
-merged (decision 160); see "Step 16b as built". Step 16c is being built.** It was written as what the implementation agent
+merged (decision 160); see "Step 16b as built". Step 16c is built and
+awaiting Jacob's review; see "Step 16c as built".** It was written as what the implementation agent
 recommended, once Jacob had set up the storage (decision 156).
 
 It follows decision 33 (one attachment model, in private storage of its
@@ -261,3 +262,41 @@ Built on `checkpoint-slice-16b-compliance-documents` under decision 159.
   Read on 2026-10-16: `upload_max_filesize` 2M, `post_max_size` 8M.
 - **The app's top bar scrolls sideways on a phone**, on every page. Found in
   this review; not part of 16b.
+
+## Step 16c as built (2026-10-20)
+
+Built on `checkpoint-slice-16c-work-photos` under decision 160.
+
+- **One photo strip**, the same everywhere (`pages::projects.photos`):
+  thumbnails grouped by kind, each opening full size in a new tab by a
+  five-minute link; "Add photos" for several at once (up to 20); an × on
+  each photo to remove it, with a reason, in the shared confirmation
+  dialog. iPhone HEIC photos, which most browsers cannot show in a page,
+  are a tile with the name that opens the photo.
+- **Where:** each Work Package once its dates are confirmed (before,
+  progress, after); the walkthrough, once recorded ("Walkthrough photos",
+  kept on the job); each punch item (as found, fixed).
+- **Only photos:** JPEG, PNG or HEIC, up to 20 MB each. Every photo chosen
+  is checked before any is stored, so one wrong file refuses them all
+  (`AddPhotos`).
+- **Who:** everyone who may see the job sees them; its Production Manager
+  or a manager there (`projects.manage`) adds and removes them
+  (`ProjectPolicy::managePhotos`, the same people as pre-production; the
+  Work Package and punch item policies follow the job's).
+- **History:** each photo added, removed or purged is in the job's
+  activity, naming where it is and the file: "Photo added: Deck and rail,
+  before (porch.jpg)". It refreshes as photos change.
+- **The scorecard's "Progress photos"** is ticked when progress photos were
+  added to that Work Package, and says how many; it can still be changed.
+- **Tests:** `tests/Feature/Projects/WorkPhotosTest.php`, 15 tests.
+
+### Known limits
+
+- **Staging accepts only 2 MB per upload** until Jacob raises its limit
+  (decision 160, item 3). Phone photos are often 2 to 5 MB.
+- **Photos are not resized:** the thumbnail loads the full photo. Fine for
+  a few photos per job; many large photos on one page will be slow on a
+  phone.
+- **Found in review, not part of 16c:** on a phone, the "Given to" box of a
+  Work Package squeezes its text into a narrow column, as the compliance
+  rows did before 16b fixed them.

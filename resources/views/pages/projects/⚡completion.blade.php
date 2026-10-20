@@ -259,18 +259,25 @@ new class extends Component {
                         @endif
                     </div>
                     @forelse ($this->punchItems as $item)
-                        <div wire:key="punch-{{ $item->id }}" class="flex items-start justify-between gap-3" data-test="punch-item">
-                            <span class="text-sm {{ $item->isDone() ? 'text-zinc-500 line-through' : 'text-ink' }}">
-                                {{ $item->description }} &middot; {{ $item->fixer === PunchItem::FIXER_BANANA ? __('Banana fixes it') : __('the subcontractor fixes it') }}@if ($item->isDone()) &middot; {{ __('done :day', ['day' => $item->done_on->format('M j')]) }}@endif
-                            </span>
-                            @if ($mayChange && ! $item->isDone())
-                                <flux:button size="sm" variant="ghost" wire:click="openPunchDone({{ $item->id }})" data-test="punch-done">{{ __('Done') }}</flux:button>
-                            @endif
+                        <div wire:key="punch-{{ $item->id }}" class="flex flex-col gap-2 border-b border-zinc-200 pb-2 last:border-b-0 last:pb-0" data-test="punch-item">
+                            <div class="flex items-start justify-between gap-3">
+                                <span class="text-sm {{ $item->isDone() ? 'text-zinc-500 line-through' : 'text-ink' }}">
+                                    {{ $item->description }} &middot; {{ $item->fixer === PunchItem::FIXER_BANANA ? __('Banana fixes it') : __('the subcontractor fixes it') }}@if ($item->isDone()) &middot; {{ __('done :day', ['day' => $item->done_on->format('M j')]) }}@endif
+                                </span>
+                                @if ($mayChange && ! $item->isDone())
+                                    <flux:button size="sm" variant="ghost" wire:click="openPunchDone({{ $item->id }})" data-test="punch-done">{{ __('Done') }}</flux:button>
+                                @endif
+                            </div>
+                            {{-- What was found, and it fixed (slice 16, step 16c). --}}
+                            <livewire:pages::projects.photos :attachable="$item" :key="'photos-punch-'.$item->id" />
                         </div>
                     @empty
                         <flux:text class="text-sm" data-test="punch-none">{{ __('Nothing to touch up.') }}</flux:text>
                     @endforelse
                 </div>
+
+                {{-- Photos taken at the walkthrough (slice 16, step 16c). --}}
+                <livewire:pages::projects.photos :attachable="$project" title="Walkthrough photos" :key="'photos-walkthrough-'.$project->id" />
             @endif
         </li>
 

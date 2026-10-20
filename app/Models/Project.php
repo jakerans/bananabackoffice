@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\ColorReadiness;
 use App\Enums\ProjectProductionState;
+use App\Support\Attachments\HasPhotos;
+use App\Support\Attachments\KeepsPhotos;
 use App\Support\Money;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -75,10 +77,12 @@ use LogicException;
  * @property-read ProjectHandoff|null $handoff
  * @property-read Collection<int, WorkPackage> $workPackages
  */
-class Project extends Model
+class Project extends Model implements HasPhotos
 {
     /** @use HasFactory<ProjectFactory> */
     use HasFactory;
+
+    use KeepsPhotos;
 
     /** The longest title a Project can have. */
     public const int TITLE_LENGTH = 160;
@@ -308,5 +312,24 @@ class Project extends Model
         return $this->project_size_min_value === null
             ? null
             : ProjectSize::describeRange($this->project_size_min_value, $this->project_size_max_value);
+    }
+
+    /**
+     * The Project itself takes the walkthrough's photos (slice 16, step
+     * 16c); its Work Packages and punch items take their own.
+     */
+    public function photoKinds(): array
+    {
+        return ['walkthrough' => 'Walkthrough'];
+    }
+
+    public function photoProject(): Project
+    {
+        return $this;
+    }
+
+    public function attachmentDescription(string $kind): string
+    {
+        return $this->photoKinds()[$kind] ?? $kind;
     }
 }

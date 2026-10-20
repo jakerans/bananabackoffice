@@ -55,7 +55,7 @@ class PurgeRemovedAttachments
                         $this->recordAuditEvent->handle(
                             AuditAction::AttachmentPurged,
                             $attachable instanceof Attachable ? $attachable->attachmentAuditSubject() : $attachable,
-                            before: [...AttachFile::describe($attachable), 'kind' => $attachment->kind, 'name' => $attachment->original_name],
+                            before: [...AttachFile::describe($attachable, $attachment->kind), 'kind' => $attachment->kind, 'name' => $attachment->original_name],
                             location: $attachable instanceof Attachable ? $attachable->attachmentAuditLocation() : null,
                         );
                     });

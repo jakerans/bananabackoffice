@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\Attachments\HasPhotos;
+use App\Support\Attachments\KeepsPhotos;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -40,9 +42,12 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, WorkPackagePayout> $payouts
  * @property-read Collection<int, WorkPackageAward> $awards
  * @property-read WorkPackageAward|null $currentAward
+ * @property-read Collection<int, Attachment> $photos Before, progress and after photos (slice 16, step 16c).
  */
-class WorkPackage extends Model
+class WorkPackage extends Model implements HasPhotos
 {
+    use KeepsPhotos;
+
     /** The longest a package's name can be. */
     public const int NAME_LENGTH = 120;
 
@@ -198,5 +203,20 @@ class WorkPackage extends Model
             'working_days' => $this->working_days,
             'minimum_crew' => $this->minimum_crew,
         ];
+    }
+
+    public function photoKinds(): array
+    {
+        return ['before' => 'Before', 'progress' => 'Progress', 'after' => 'After'];
+    }
+
+    public function photoProject(): Project
+    {
+        return $this->project;
+    }
+
+    public function attachmentDescription(string $kind): string
+    {
+        return $this->name.', '.mb_strtolower($this->photoKinds()[$kind] ?? $kind);
     }
 }

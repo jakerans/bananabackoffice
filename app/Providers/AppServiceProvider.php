@@ -20,11 +20,13 @@ use App\Models\Objection;
 use App\Models\Project;
 use App\Models\ProjectSize;
 use App\Models\Property;
+use App\Models\PunchItem;
 use App\Models\SalesLossReason;
 use App\Models\Service;
 use App\Models\Subcontractor;
 use App\Models\SubcontractorComplianceRecord;
 use App\Models\User;
+use App\Models\WorkPackage;
 use App\Support\Access\CurrentLocation;
 use App\Support\Access\Impersonation;
 use App\Support\Addresses\AddressLookup;
@@ -121,6 +123,8 @@ class AppServiceProvider extends ServiceProvider
             'contact_center_settings' => ContactCenterSettings::class,
             'subcontractor' => Subcontractor::class,
             'subcontractor_compliance_record' => SubcontractorComplianceRecord::class,
+            'work_package' => WorkPackage::class,
+            'punch_item' => PunchItem::class,
             'insurance_deduction_rate' => InsuranceDeductionRate::class,
         ]);
     }
