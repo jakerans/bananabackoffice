@@ -3,7 +3,7 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-20 · **Branch:** `checkpoint-slice-16c-work-photos`
+**Updated:** 2026-10-21 · **Branch:** `checkpoint-slice-16c-work-photos`
 
 **State:** step 16c, photos of the work, is built and waits for Jacob's
 review (decision 160). Not merged. What was built is in
@@ -26,7 +26,9 @@ On a job's page, as its Production Manager:
 ## Decisions needed
 
 1. **Merge 16c.** Slice 16 is then complete.
-2. **Staging's upload limit is still 2 MB.** In Forge: the BackOffice
-   server, the **Runtime** tab, PHP, max upload size: set it to 20. Phone
-   photos are often larger than 2 MB, so most would be refused on staging
-   until then.
+2. **Staging's upload limit: 20 MB or 100 MB.** Jacob raised it to 20 MB on
+   2026-10-21 (read back: `upload_max_filesize` and `post_max_size` both
+   20M). One file is now fine, but "Add photos" sends all the photos chosen
+   in one request, so several large phone photos together can pass 20 MB
+   and be refused. *Recommended:* set Forge's max upload size to 100; the
+   app still refuses any single file over 20 MB.

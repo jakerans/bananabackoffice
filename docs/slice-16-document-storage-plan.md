@@ -257,9 +257,10 @@ Built on `checkpoint-slice-16b-compliance-documents` under decision 159.
 
 ### Known limits
 
-- **Staging accepts only 2 MB per upload** until its PHP limit is raised
-  (Forge: the server's PHP settings, "Max File Upload Size", to 20 MB).
-  Read on 2026-10-16: `upload_max_filesize` 2M, `post_max_size` 8M.
+- **Staging accepted only 2 MB per upload** until Jacob raised it to 20 MB
+  on 2026-10-21 (Forge: the server's Runtime tab, PHP, max upload size).
+  Read on 2026-10-16: `upload_max_filesize` 2M, `post_max_size` 8M; read
+  on 2026-10-21: both 20M.
 - **The app's top bar scrolls sideways on a phone**, on every page. Found in
   this review; not part of 16b.
 
@@ -292,8 +293,11 @@ Built on `checkpoint-slice-16c-work-photos` under decision 160.
 
 ### Known limits
 
-- **Staging accepts only 2 MB per upload** until Jacob raises its limit
-  (decision 160, item 3). Phone photos are often 2 to 5 MB.
+- **Several photos at once share one upload.** Staging's limit is 20 MB
+  for the whole request (raised from 2 MB on 2026-10-21), and "Add photos"
+  sends all the photos chosen together, so a handful of large phone photos
+  can pass it and be refused. Raising Forge's max upload size to 100 MB
+  fixes it; the app still refuses any single file over 20 MB.
 - **Photos are not resized:** the thumbnail loads the full photo. Fine for
   a few photos per job; many large photos on one page will be slow on a
   phone.
