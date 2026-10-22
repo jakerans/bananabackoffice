@@ -110,7 +110,7 @@ class SubcontractorComplianceRecord extends Model implements Attachable
         return $this->subcontractor->locations->first();
     }
 
-    public function attachmentDescription(): string
+    public function attachmentDescription(string $kind): string
     {
         return $this->requirement->name;
     }

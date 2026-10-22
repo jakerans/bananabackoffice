@@ -69,6 +69,16 @@ class ProjectPolicy
     }
 
     /**
+     * Determine whether the user can add or remove photos of the work on the
+     * Project: its Production Manager, or a manager where it is
+     * (docs/slice-16-document-storage-plan.md, step 16c).
+     */
+    public function managePhotos(User $user, Project $project): bool
+    {
+        return $this->managePreProduction($user, $project);
+    }
+
+    /**
      * Determine whether the user can see what Banana will pay for the
      * Project's work: finance-sensitive, so it needs `payouts.view` at the
      * Project's Location (slice 13; decision 151, question 1).

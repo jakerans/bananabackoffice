@@ -33,15 +33,16 @@ class AttachFile
 
     /**
      * @param  string  $ability  The policy ability that allows changing $attachable.
+     * @param  bool  $photosOnly  Whether only a photo will do.
      *
      * @throws ValidationException
      * @throws AuthorizationException
      */
-    public function handle(Model $attachable, string $kind, UploadedFile $file, string $ability, User $actor): Attachment
+    public function handle(Model $attachable, string $kind, UploadedFile $file, string $ability, User $actor, bool $photosOnly = false): Attachment
     {
         Gate::forUser($actor)->authorize($ability, $attachable);
 
-        self::ensureAccepted($file);
+        self::ensureAccepted($file, $photosOnly);
 
         $extension = mb_strtolower($file->getClientOriginalExtension());
         $mime = (string) $file->getMimeType();
@@ -72,7 +73,7 @@ class AttachFile
                     AuditAction::AttachmentAdded,
                     $attachable instanceof Attachable ? $attachable->attachmentAuditSubject() : $attachable,
                     actor: $actor,
-                    after: [...self::describe($attachable), 'kind' => $kind, 'name' => $originalName, 'size_bytes' => $attachment->size_bytes],
+                    after: [...self::describe($attachable, $kind), 'kind' => $kind, 'name' => $originalName, 'size_bytes' => $attachment->size_bytes],
                     location: $attachable instanceof Attachable ? $attachable->attachmentAuditLocation() : null,
                 );
 
@@ -92,13 +93,16 @@ class AttachFile
      *
      * @throws ValidationException
      */
-    public static function ensureAccepted(UploadedFile $file): void
+    public static function ensureAccepted(UploadedFile $file, bool $photosOnly = false): void
     {
+        $types = $photosOnly ? Attachment::PHOTO_TYPES : Attachment::TYPES;
         $extension = mb_strtolower($file->getClientOriginalExtension());
-        $accepted = [...array_values(Attachment::TYPES), 'image/heif'];
+        $accepted = [...array_values($types), 'image/heif'];
 
-        if (! $file->isValid() || ! array_key_exists($extension, Attachment::TYPES) || ! in_array((string) $file->getMimeType(), $accepted, true)) {
-            throw ValidationException::withMessages(['attachment' => __('Attach a PDF, or a JPEG, PNG or HEIC photo.')]);
+        if (! $file->isValid() || ! array_key_exists($extension, $types) || ! in_array((string) $file->getMimeType(), $accepted, true)) {
+            throw ValidationException::withMessages(['attachment' => $photosOnly
+                ? __('Add a JPEG, PNG or HEIC photo.')
+                : __('Attach a PDF, or a JPEG, PNG or HEIC photo.')]);
         }
 
         if ((int) $file->getSize() > Attachment::MAX_BYTES) {
@@ -111,8 +115,8 @@ class AttachFile
      *
      * @return array{for?: string}
      */
-    public static function describe(Model $attachable): array
+    public static function describe(Model $attachable, string $kind): array
     {
-        return $attachable instanceof Attachable ? ['for' => $attachable->attachmentDescription()] : [];
+        return $attachable instanceof Attachable ? ['for' => $attachable->attachmentDescription($kind)] : [];
     }
 }

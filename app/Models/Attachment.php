@@ -51,6 +51,14 @@ class Attachment extends Model
         'heic' => 'image/heic',
     ];
 
+    /** The types accepted where only a photo will do (step 16c). */
+    public const array PHOTO_TYPES = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'heic' => 'image/heic',
+    ];
+
     /** The largest file accepted: 20 MB. */
     public const int MAX_BYTES = 20 * 1024 * 1024;
 

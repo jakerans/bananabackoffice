@@ -503,10 +503,14 @@ new class extends Component {
     {
         $this->authorize('managePreProduction', $this->project);
 
-        $this->packageId = $this->shownPackage($packageId)->id;
+        $package = $this->shownPackage($packageId);
+
+        $this->packageId = $package->id;
         $this->scores = [
             ...array_fill_keys([...array_keys(SubcontractorScorecard::MEASURES), 'overall'], ''),
             ...array_fill_keys(array_keys(SubcontractorScorecard::CHECKS), false),
+            // Ticked when progress photos were added here (slice 16, step 16c); it can still be changed.
+            'progress_photos' => $this->progressPhotoCount($package) > 0,
             'feedback' => '',
             'internalNotes' => '',
         ];
@@ -606,6 +610,15 @@ new class extends Component {
     private function shownPackage(int $packageId): WorkPackage
     {
         return $this->project->workPackages->firstWhere('id', $packageId) ?? abort(409, __('This work package is no longer here. Reload the page.'));
+    }
+
+    /**
+     * How many progress photos were added to a Work Package, for the
+     * scorecard's "Progress photos" item (slice 16, step 16c).
+     */
+    public function progressPhotoCount(WorkPackage $package): int
+    {
+        return $package->photos()->where('kind', 'progress')->count();
     }
 
     /**
@@ -816,6 +829,11 @@ new class extends Component {
                                         @endif
                                     </div>
                                 @endif
+                            </div>
+
+                            {{-- Before, progress and after photos (slice 16, step 16c). --}}
+                            <div class="border-t border-emerald-200 pt-2">
+                                <livewire:pages::projects.photos :attachable="$shown" :key="'photos-package-'.$shown->id" />
                             </div>
 
                             {{-- The scorecard, once the work has finished (slice 14, step 14c). Seen by those who may see the subcontractor. --}}
@@ -1214,7 +1232,7 @@ new class extends Component {
 
                 <div class="flex flex-col gap-2">
                     @foreach (SubcontractorScorecard::CHECKS as $key => $label)
-                        <flux:checkbox wire:model="scores.{{ $key }}" :label="__($label)" wire:key="score-check-{{ $key }}" data-test="score-{{ $key }}" />
+                        <flux:checkbox wire:model="scores.{{ $key }}" :label="__($label)" :description="$key === 'progress_photos' && $chosen !== null ? trans_choice(':count progress photo was added here.|:count progress photos were added here.', $this->progressPhotoCount($chosen)) : null" wire:key="score-check-{{ $key }}" data-test="score-{{ $key }}" />
                     @endforeach
                 </div>
 

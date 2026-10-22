@@ -23,7 +23,8 @@ interface Attachable
     public function attachmentAuditLocation(): ?Location;
 
     /**
-     * What it is, as the history names it: "General liability insurance".
+     * What it is, as the history names it, for a file of the given kind:
+     * "General liability insurance", "Deck and rail, before".
      */
-    public function attachmentDescription(): string;
+    public function attachmentDescription(string $kind): string;
 }

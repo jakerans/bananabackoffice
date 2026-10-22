@@ -1,0 +1,104 @@
+# Slice 17 — Customer Payments: Plan
+
+Status: **proposed on 2026-10-21 for Jacob's review, after slice 16 was
+merged (decision 161). Nothing is built.** Written as what the implementation
+agent recommends from the plan check below.
+
+## Why this is next (the plan check)
+
+Checked against [product-architecture.md](product-architecture.md) after
+slice 16:
+
+1. **The job now runs from first call to the customer's signoff** (slices 1
+   to 16). The one customer-facing step of closeout still missing is the
+   last one: **"final balance collected"** (6.8).
+2. **No money from the customer is recorded anywhere.** The deposit (10.4),
+   what is owed and when (10.6, 9.2) and the payment state of a Project (a
+   separate state dimension, section 2) do not exist yet.
+3. **Much waits on it:** the deposit-paid handoff call (6.3, 10.6), a job
+   that is "complete" for the Production Bonus only once final payment is
+   collected (6.1), the sales commission advance, which needs a full 50%
+   deposit actually collected (5.7), and Finance > Receivables (9.2).
+4. **The Finance boundary is already decided** (decision 133): Backoffice
+   records what is expected and what was paid, with QuickBooks' and the
+   payment processor's references; QuickBooks owns posting, tax and
+   reconciliation. Cash and check need receipt evidence and Finance approval,
+   and slice 16 now stores the receipt.
+
+Change orders (6.7) are the natural slice after this one: they change what
+the customer owes, so they build on what this slice records.
+
+## What slice 17 is, and is not
+
+Three reviewed steps. Each stops for Jacob's review.
+
+| Step | Delivers |
+| --- | --- |
+| 17a | **What the customer owes and what they paid.** On each Project: the deposit invoice and the final invoice, as sent from QuickBooks (amount with tax, its number, the day sent); each payment received against them (amount, method, day, the processor's or QuickBooks' reference); the balance; and the Project's **payment state**: Deposit due, Deposit paid, Balance due, Paid in full. Cash and check need a photo of the receipt and Finance's approval before they count. A wrong payment is reversed by a correcting entry; nothing is deleted. |
+| 17b | **The deposit.** The deposit expected from each Location's policy (50% by default, set in Settings > Locations); a smaller or no deposit only with a manager's approval and a reason; "full deposit collected" kept for the commission advance later; and when the deposit is paid, the Production Manager is told and has 24 hours to call the customer (10.6), shown on Production > Workspace. |
+| 17c | **The final balance and who chases it.** The final balance is due 7 days after the final invoice. Each Project shows the day it is due and how late it is; the Production Manager's list of what to chase today (daily for the first three days, then on days 7 and 14, then weekly); at 30 days it moves to **Collections**. **Finance > Receivables** lists every open balance by age (current, 1–7, 8–14, 15–30, over 30 days), by Location, with its owner. |
+
+Not in slice 17:
+
+- **Sending anything to the customer** (invoices, notices, payment links):
+  invoices come from QuickBooks as today; no message to customers is
+  approved.
+- **Taking card or bank payments** in Backoffice, or any payment provider.
+- **The QuickBooks connection.** References are typed in for now.
+- **Change orders** (6.7), **refunds and credits** (10.5), **bad debt**
+  (10.7), **job costing** (6.9), **commissions** (5.7): each its own plan.
+
+## Who may do what
+
+| What | Who |
+| --- | --- |
+| See a Project's invoices, payments and balance | Everyone who may see the Project, and Finance. |
+| Record an invoice or a card, bank or financing payment | The Project's Production Manager, a manager there, or Finance. |
+| Record a cash or check payment | The same, with a photo of the receipt; it counts only once Finance approves it. |
+| Approve cash and check, reverse a payment | Finance (`finance.access` at the Project's Location), with a reason for a reversal. |
+| Lower or waive a deposit | A manager at the Location, with a reason. |
+| Set a Location's deposit policy | Whoever manages Locations. |
+| See Finance > Receivables | Finance, and managers for their Locations. |
+
+## Decisions needed
+
+Each has a recommendation. "Follow your recommendations" is a complete answer.
+
+1. **The steps and their order.** *Recommended:* 17a, 17b, 17c, each
+   reviewed.
+2. **Amounts come from QuickBooks.** QuickBooks works out the tax, so
+   Backoffice cannot know an invoice's total by itself. *Recommended:* the
+   person records each invoice's total as QuickBooks shows it, with its
+   invoice number; Backoffice suggests the deposit as the policy's share of
+   the sold price before tax.
+3. **Who records payments.** *Recommended:* as in the table: the
+   Production Manager, a manager or Finance; cash and check only with a
+   receipt photo and Finance's approval (decision 133).
+4. **The deposit policy.** *Recommended:* a percent per Location, 50% by
+   default; less, or none, only by a manager with a reason. (The PFAD rule of
+   75% (8.9) waits for PFAD.)
+5. **The late fee at day 7.** Its amount is not written down. *Recommended:*
+   Backoffice marks the balance late and shows "late fee applies"; the fee
+   itself is added in QuickBooks and recorded as part of the final invoice
+   total. Tell us the amount if it should be shown.
+6. **Collections at 30 days.** *Recommended:* Collections is Finance for
+   now: the balance moves to Finance > Receivables as "Collections" and
+   leaves the Production Manager's list.
+7. **Card and financing surcharges** (passed to the customer). *Recommended:*
+   included in the invoice total from QuickBooks; nothing separate in
+   Backoffice for now.
+8. **The deposit-paid call.** *Recommended:* the Production Manager is told
+   by the bell, and the call is a tick on the Project, due within 24 hours,
+   shown late on Production > Workspace once missed.
+
+To start, Jacob approves the plan, or step 17a alone, and answers 1 to 3.
+Questions 4 and 8 are needed before 17b; 5 and 6 before 17c.
+
+## Known limits of this plan
+
+- **Typing references by hand** until QuickBooks is connected; a mistyped
+  amount is corrected by a reversing entry.
+- **No customer notices are sent;** the Production Manager is shown whom to
+  contact and when.
+- **Existing Projects** start with no invoices recorded; their payment state
+  reads "Deposit due" until someone records what was invoiced and paid.

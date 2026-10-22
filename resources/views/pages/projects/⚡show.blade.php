@@ -46,6 +46,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectWorkAwarded, AuditAction::ProjectAwardEnded, AuditAction::ProjectAwardAcceptedAgain, AuditAction::ProjectWorkOrderSent,
         AuditAction::ProjectWorkStarted, AuditAction::ProjectWorkFinished, AuditAction::ProjectWorkExtended,
         AuditAction::ProjectInspected, AuditAction::ProjectWalkthroughDone, AuditAction::ProjectSignedOff, AuditAction::ProjectNotSatisfied,
+        AuditAction::AttachmentAdded, AuditAction::AttachmentRemoved, AuditAction::AttachmentPurged,
     ];
 
     #[Locked]
@@ -128,6 +129,9 @@ new #[Title('Project')] class extends Component {
                 'package' => (string) ($event->values_after['package'] ?? ''),
                 'day' => is_string($event->values_after['day'] ?? null) ? CarbonImmutable::createFromFormat('!Y-m-d', $event->values_after['day'])->format('M j, Y') : '',
             ]),
+            AuditAction::AttachmentAdded => __('Photo added: :what (:name)', ['what' => (string) ($event->values_after['for'] ?? ''), 'name' => (string) ($event->values_after['name'] ?? '')]),
+            AuditAction::AttachmentRemoved => __('Photo removed: :what (:name)', ['what' => (string) ($event->values_before['for'] ?? ''), 'name' => (string) ($event->values_before['name'] ?? '')]),
+            AuditAction::AttachmentPurged => __('Photo deleted from storage, 30 days after it was removed: :what (:name)', ['what' => (string) ($event->values_before['for'] ?? ''), 'name' => (string) ($event->values_before['name'] ?? '')]),
             AuditAction::ProjectAwardEnded => __(':what: :package from :subcontractor', [
                 'what' => CustomerActivity::label($event->action),
                 'package' => (string) ($event->values_before['package'] ?? ''),
@@ -190,6 +194,16 @@ new #[Title('Project')] class extends Component {
     public function completionChanged(): void
     {
         unset($this->project, $this->activity);
+    }
+
+    /**
+     * A photo of the work was added or removed (slice 16, step 16c): the
+     * activity says so.
+     */
+    #[On('project-photos-changed')]
+    public function photosChanged(): void
+    {
+        unset($this->activity);
     }
 
     /**

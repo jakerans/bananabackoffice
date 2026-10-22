@@ -2,8 +2,13 @@
 
 namespace App\Models;
 
+use App\Support\Attachments\HasPhotos;
+use App\Support\Attachments\KeepsPhotos;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use LogicException;
 
 /**
@@ -23,9 +28,13 @@ use LogicException;
  * @property string|null $created_by_name
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read Project $project
+ * @property-read Collection<int, Attachment> $photos What was found and it fixed (slice 16, step 16c).
  */
-class PunchItem extends Model
+class PunchItem extends Model implements HasPhotos
 {
+    use KeepsPhotos;
+
     public const string FIXER_SUBCONTRACTOR = 'subcontractor';
 
     public const string FIXER_BANANA = 'banana';
@@ -63,5 +72,28 @@ class PunchItem extends Model
     public function isDone(): bool
     {
         return $this->done_on !== null;
+    }
+
+    /**
+     * @return BelongsTo<Project, $this>
+     */
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function photoKinds(): array
+    {
+        return ['found' => 'As found', 'fixed' => 'Fixed'];
+    }
+
+    public function photoProject(): Project
+    {
+        return $this->project;
+    }
+
+    public function attachmentDescription(string $kind): string
+    {
+        return 'Punch item "'.Str::limit($this->description, 60).'", '.mb_strtolower($this->photoKinds()[$kind] ?? $kind);
     }
 }

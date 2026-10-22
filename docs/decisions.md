@@ -3270,6 +3270,20 @@ merge the step and go on (decisions 149, 150, 152 to 154).
    size): the agent's Forge key may only read, and was refused when Jacob
    asked it to make the change on 2026-10-16.
 
+## 161. Step 16c is merged; slice 16 is complete (2026-10-21)
+
+**Decided by Jacob,** after the step 16c report and the staging upload
+limit: "continue", which in this project has meant merge the step and go on.
+
+1. **Step 16c, photos of the work, is merged** as built
+   ([slice-16-document-storage-plan.md](slice-16-document-storage-plan.md),
+   "Step 16c as built"). Slice 16, document storage, is complete.
+2. **Staging's upload limit is 20 MB,** raised by Jacob in Forge on
+   2026-10-21 (decision 160, item 3). Raising it to 100 MB, so several
+   large photos can be added at once, is recommended and his to do.
+3. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
