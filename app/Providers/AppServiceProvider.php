@@ -18,6 +18,7 @@ use App\Models\Location;
 use App\Models\MarketingSource;
 use App\Models\Objection;
 use App\Models\Project;
+use App\Models\ProjectPayment;
 use App\Models\ProjectSize;
 use App\Models\Property;
 use App\Models\PunchItem;
@@ -125,6 +126,7 @@ class AppServiceProvider extends ServiceProvider
             'subcontractor_compliance_record' => SubcontractorComplianceRecord::class,
             'work_package' => WorkPackage::class,
             'punch_item' => PunchItem::class,
+            'project_payment' => ProjectPayment::class,
             'insurance_deduction_rate' => InsuranceDeductionRate::class,
         ]);
     }

@@ -170,7 +170,9 @@ passed on staging on 2026-10-15. Step 16b (compliance documents) is merged
 (decision 160); step 16c (photos of the work) is merged (decision 161).
 Slice 16 is complete.
 
-**Slice 17, customer payments, is proposed (2026-10-21) and not approved.**
+**Slice 17, customer payments, is approved in three steps (2026-10-22,
+decision 162); step 17a (invoices and payments) is built and awaiting
+Jacob's review.**
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the
 customer still unbuilt. Its plan is

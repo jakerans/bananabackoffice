@@ -79,6 +79,32 @@ class ProjectPolicy
     }
 
     /**
+     * Determine whether the user can record the Project's invoices and the
+     * customer's payments, and void an invoice: its Production Manager, a
+     * manager where it is, or Finance there
+     * (docs/slice-17-customer-payments-plan.md; decision 162). A deposit is
+     * often taken at the sale, before there is a Production Manager.
+     */
+    public function recordPayments(User $user, Project $project): bool
+    {
+        return $this->view($user, $project)
+            && ! $project->isCancelled()
+            && ($project->production_manager_id === $user->id
+                || $user->hasPermissionAt(Permission::ManageProjects, $project->location)
+                || $user->hasPermissionAt(Permission::FinanceAccess, $project->location));
+    }
+
+    /**
+     * Determine whether the user can approve a cash or check payment, or
+     * reverse a payment: Finance at the Project's Location (decision 133;
+     * decision 162).
+     */
+    public function approvePayments(User $user, Project $project): bool
+    {
+        return $this->view($user, $project) && $user->hasPermissionAt(Permission::FinanceAccess, $project->location);
+    }
+
+    /**
      * Determine whether the user can see what Banana will pay for the
      * Project's work: finance-sensitive, so it needs `payouts.view` at the
      * Project's Location (slice 13; decision 151, question 1).

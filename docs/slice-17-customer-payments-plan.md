@@ -1,8 +1,10 @@
 # Slice 17 — Customer Payments: Plan
 
-Status: **proposed on 2026-10-21 for Jacob's review, after slice 16 was
-merged (decision 161). Nothing is built.** Written as what the implementation
-agent recommends from the plan check below.
+Status: **approved on 2026-10-22 (decision 162) in three steps, each stopping
+for Jacob's review, with the recommendation on all eight questions. Step 17a
+is being built.** Written as what the implementation agent recommended from
+the plan check below. **Step 17a is built and awaiting Jacob's review; see
+"Step 17a as built".**
 
 ## Why this is next (the plan check)
 
@@ -102,3 +104,47 @@ Questions 4 and 8 are needed before 17b; 5 and 6 before 17c.
   contact and when.
 - **Existing Projects** start with no invoices recorded; their payment state
   reads "Deposit due" until someone records what was invoiced and paid.
+
+## Step 17a as built (2026-10-22)
+
+Built on `checkpoint-slice-17a-payments` under decision 162.
+
+- **Where:** a **Payments** card on every job page, above "What was sold",
+  kept on a cancelled job too, and a "Payment: ..." badge beside the job's
+  other states in its header.
+- **Invoices** (`project_invoices`): the deposit and the final invoice, one
+  of each at a time, with QuickBooks' number, the total with tax and the day
+  sent. The amount is suggested before tax (the deposit as half the sold
+  price, the final as the sold price less the deposit invoice) and changed
+  to what QuickBooks shows. A wrong invoice is **voided** with a reason,
+  only once no payment stands against it, and recorded again.
+- **Payments** (`project_payments`): against one invoice, never more than
+  is still owed on it; card, bank transfer (ACH), check, cash or financing;
+  the day received; the processor's or QuickBooks' reference, required
+  except for cash and check. **Cash and check** need a photo or scan of the
+  receipt (stored as in slice 16) and count only once **Finance approves**
+  them, in a confirmation that shows the amount and asks to check the
+  receipt. **Finance reverses** a payment with a reason; it stops counting
+  and stays on record, crossed out.
+- **The payment state** (`App\Support\Projects\Payments`), worked out from
+  the records: Deposit due until the deposit invoice is paid, then Deposit
+  paid, then Balance due once there is a final invoice, then Paid in full.
+  The card shows what was invoiced, paid, the balance, and any cash or
+  check waiting for approval.
+- **Who** (`ProjectPolicy::recordPayments` and `approvePayments`): the
+  Production Manager, a manager there or Finance records; Finance approves
+  and reverses. A deposit can be recorded before the job has a Production
+  Manager. Everyone who may see the job reads it.
+- **History:** every invoice recorded or voided and every payment recorded,
+  approved or reversed is in the job's activity, with amounts.
+- **Nothing is changed in place or deleted:** invoices and payments refuse
+  any change but voiding, approving and reversing.
+- **Tests:** `tests/Feature/Projects/PaymentsTest.php`, 21 tests.
+
+### Known limits
+
+- **Finance finds cash and check waiting for approval on each job page**
+  for now; 17c's Finance > Receivables lists them in one place.
+- **Whoever recorded a cash payment may also approve it,** if they hold
+  Finance. See "Decisions needed" in review/current.md.
+- **Existing jobs** read "Deposit due" until their invoices are recorded.

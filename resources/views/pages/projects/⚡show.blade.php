@@ -12,6 +12,8 @@ use App\Models\AuditEvent;
 use App\Models\Project;
 use App\Models\WorkPackageWindow;
 use App\Support\Customers\CustomerActivity;
+use App\Support\Money;
+use App\Support\Projects\Payments;
 use App\Support\Projects\Readiness;
 use App\Support\Projects\RoughTimeframe;
 use Carbon\CarbonImmutable;
@@ -47,6 +49,8 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectWorkStarted, AuditAction::ProjectWorkFinished, AuditAction::ProjectWorkExtended,
         AuditAction::ProjectInspected, AuditAction::ProjectWalkthroughDone, AuditAction::ProjectSignedOff, AuditAction::ProjectNotSatisfied,
         AuditAction::AttachmentAdded, AuditAction::AttachmentRemoved, AuditAction::AttachmentPurged,
+        AuditAction::ProjectInvoiceRecorded, AuditAction::ProjectInvoiceVoided,
+        AuditAction::ProjectPaymentRecorded, AuditAction::ProjectPaymentApproved, AuditAction::ProjectPaymentReversed,
     ];
 
     #[Locked]
@@ -129,6 +133,13 @@ new #[Title('Project')] class extends Component {
                 'package' => (string) ($event->values_after['package'] ?? ''),
                 'day' => is_string($event->values_after['day'] ?? null) ? CarbonImmutable::createFromFormat('!Y-m-d', $event->values_after['day'])->format('M j, Y') : '',
             ]),
+            AuditAction::ProjectInvoiceRecorded => __(':invoice recorded: #:number, :amount', ['invoice' => (string) ($event->values_after['invoice'] ?? ''), 'number' => (string) ($event->values_after['number'] ?? ''), 'amount' => Money::format((int) ($event->values_after['amount_cents'] ?? 0))]),
+            AuditAction::ProjectInvoiceVoided => __(':invoice voided: #:number, :amount', ['invoice' => (string) ($event->values_before['invoice'] ?? ''), 'number' => (string) ($event->values_before['number'] ?? ''), 'amount' => Money::format((int) ($event->values_before['amount_cents'] ?? 0))]),
+            AuditAction::ProjectPaymentRecorded => (($event->values_after['awaiting_approval'] ?? false) === true
+                ? __('Payment recorded, waiting for Finance\'s approval: :amount by :method toward the :invoice', ['amount' => Money::format((int) ($event->values_after['amount_cents'] ?? 0)), 'method' => mb_strtolower((string) ($event->values_after['method'] ?? '')), 'invoice' => mb_strtolower((string) ($event->values_after['invoice'] ?? ''))])
+                : __('Payment recorded: :amount by :method toward the :invoice', ['amount' => Money::format((int) ($event->values_after['amount_cents'] ?? 0)), 'method' => mb_strtolower((string) ($event->values_after['method'] ?? '')), 'invoice' => mb_strtolower((string) ($event->values_after['invoice'] ?? ''))])),
+            AuditAction::ProjectPaymentApproved => __('Payment approved: :amount by :method', ['amount' => Money::format((int) ($event->values_after['amount_cents'] ?? 0)), 'method' => mb_strtolower((string) ($event->values_after['method'] ?? ''))]),
+            AuditAction::ProjectPaymentReversed => __('Payment reversed: :amount by :method', ['amount' => Money::format((int) ($event->values_before['amount_cents'] ?? 0)), 'method' => mb_strtolower((string) ($event->values_before['method'] ?? ''))]),
             AuditAction::AttachmentAdded => __('Photo added: :what (:name)', ['what' => (string) ($event->values_after['for'] ?? ''), 'name' => (string) ($event->values_after['name'] ?? '')]),
             AuditAction::AttachmentRemoved => __('Photo removed: :what (:name)', ['what' => (string) ($event->values_before['for'] ?? ''), 'name' => (string) ($event->values_before['name'] ?? '')]),
             AuditAction::AttachmentPurged => __('Photo deleted from storage, 30 days after it was removed: :what (:name)', ['what' => (string) ($event->values_before['for'] ?? ''), 'name' => (string) ($event->values_before['name'] ?? '')]),
@@ -192,6 +203,16 @@ new #[Title('Project')] class extends Component {
      */
     #[On('project-completion-changed')]
     public function completionChanged(): void
+    {
+        unset($this->project, $this->activity);
+    }
+
+    /**
+     * An invoice or payment was recorded or changed (slice 17): the payment
+     * state and the activity say so.
+     */
+    #[On('project-payments-changed')]
+    public function paymentsChanged(): void
     {
         unset($this->project, $this->activity);
     }
@@ -361,6 +382,8 @@ new #[Title('Project')] class extends Component {
                     @if ($project->production_manager_id !== null)
                         <flux:badge size="sm" :color="$project->color_readiness->color()" data-test="project-color-readiness">{{ __('Colors: :state', ['state' => mb_strtolower(__($project->color_readiness->label()))]) }}</flux:badge>
                     @endif
+                    {{-- The customer's payments are a state of their own too (slice 17). --}}
+                    <flux:badge size="sm" color="zinc" data-test="project-payment-state">{{ __('Payment: :state', ['state' => mb_strtolower(__(Payments::for($project)->stateLabel()))]) }}</flux:badge>
                 @endif
 
                 <span class="text-sm text-zinc-600">{{ $project->location->name }}</span>
@@ -601,6 +624,9 @@ new #[Title('Project')] class extends Component {
             @endif
         @endif
     @endunless
+
+    {{-- The customer's invoices and payments (slice 17, step 17a), kept in view on a cancelled job too. --}}
+    <livewire:pages::projects.payments :project="$project" :key="'payments-'.$project->id" />
 
     <div class="grid gap-6 lg:grid-cols-2">
         <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-sale">
