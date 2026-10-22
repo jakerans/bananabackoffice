@@ -115,6 +115,11 @@ enum AuditAction: string
     case SubcontractorVipRemoved = 'subcontractor.vip_removed';
     case SubcontractorComplianceRecorded = 'subcontractor.compliance_recorded';
     case SubcontractorScored = 'subcontractor.scored';
+    case ProjectInvoiceRecorded = 'project.invoice_recorded';
+    case ProjectInvoiceVoided = 'project.invoice_voided';
+    case ProjectPaymentRecorded = 'project.payment_recorded';
+    case ProjectPaymentApproved = 'project.payment_approved';
+    case ProjectPaymentReversed = 'project.payment_reversed';
     case AttachmentAdded = 'attachment.added';
     case AttachmentRemoved = 'attachment.removed';
     case AttachmentPurged = 'attachment.purged';

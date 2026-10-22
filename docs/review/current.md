@@ -3,33 +3,19 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-21 · **Branch:** `main`
+**Updated:** 2026-10-22 · **Branch:** `main`
 
-**State:** slice 16 is complete and merged (decision 161). **Slice 17,
-customer payments, is proposed and waits for Jacob's approval.** Nothing of
-it is built.
+**State:** step 17a, invoices and payments, is merged (decision 163).
+Nothing waits for review.
 
-## The proposal
+## Next, on Jacob's word
 
-Plan: [../slice-17-customer-payments-plan.md](../slice-17-customer-payments-plan.md).
-
-- **17a:** the deposit and final invoices on each Project, as sent from
-  QuickBooks; payments received against them; the balance; the payment
-  state (Deposit due, Deposit paid, Balance due, Paid in full). Cash and
-  check need a receipt photo and Finance's approval.
-- **17b:** the deposit policy per Location (50% by default), a smaller one
-  only by a manager with a reason, and the deposit-paid call within 24 hours.
-- **17c:** the final balance due in 7 days, the Production Manager's list of
-  whom to chase, Collections at 30 days, and Finance > Receivables by age.
-
-Nothing is sent to customers, no payment is taken in Backoffice, and
-QuickBooks is not connected.
-
-## Decisions needed
-
-The plan's eight questions, each with a recommendation. "Follow your
-recommendations" is a complete answer. To start, approve the plan or step
-17a alone.
+**Step 17b, the deposit**
+([../slice-17-customer-payments-plan.md](../slice-17-customer-payments-plan.md)):
+the deposit percent per Location (50% by default), a smaller deposit only by
+a manager with a reason, and the deposit-paid call within 24 hours. With
+decision 163: someone other than who recorded a cash or check payment
+approves it, once they see it in the bank account.
 
 ## Optional, for Jacob
 

@@ -3284,6 +3284,49 @@ limit: "continue", which in this project has meant merge the step and go on.
 3. **Next:** the plan check after a slice, and a proposed next slice, for
    his approval.
 
+## 162. Slice 17, customer payments, is approved; step 17a starts (2026-10-22)
+
+**Decided by Jacob,** in reply to the plan check after slice 16 and the
+slice 17 plan: "Looks good, continue."
+
+1. **Slice 17 is approved** in three steps
+   ([slice-17-customer-payments-plan.md](slice-17-customer-payments-plan.md)),
+   each stopping for his review, with the recommendation on all eight
+   questions:
+   - 17a, 17b, 17c, in that order;
+   - invoice totals are recorded as QuickBooks shows them, with the invoice
+     number; Backoffice suggests the deposit from the sold price before tax;
+   - the Production Manager, a manager or Finance records invoices and
+     payments; cash and check only with a receipt photo, and they count
+     once Finance approves them (decision 133);
+   - a deposit percent per Location, 50% by default; less, or none, only by
+     a manager with a reason;
+   - at day 7 the balance is marked late and "late fee applies"; the fee is
+     added in QuickBooks, as part of the final invoice total;
+   - Collections is Finance for now;
+   - card and financing surcharges are part of the invoice total;
+   - the deposit-paid call is a tick on the Project, due within 24 hours,
+     with the Production Manager told by the bell.
+2. **Step 17a, invoices and payments, starts.** It stops for his review.
+
+## 163. Step 17a is merged; Finance approves cash and check from the bank (2026-10-22)
+
+**Decided by Jacob,** in reply to the step 17a report, which asked whether
+the person who recorded a cash or check payment should be barred from
+approving it: "Correct. It gets approved by finance, the person who actually
+has access to the bank account and can see that it actually came into the
+bank account. Otherwise, go ahead and merge."
+
+1. **Step 17a is merged** as built
+   ([slice-17-customer-payments-plan.md](slice-17-customer-payments-plan.md),
+   "Step 17a as built").
+2. **What approving means:** Finance approves a cash or check payment once
+   they see it arrived in the bank account, not only from the receipt. The
+   approval asks exactly that.
+3. **Someone other than who recorded it approves it,** as recommended; the
+   Owner is the exception, as recommended and not changed by Jacob. Built in
+   step 17b, which waits for his word.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

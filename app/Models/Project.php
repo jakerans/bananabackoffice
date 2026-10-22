@@ -315,6 +315,26 @@ class Project extends Model implements HasPhotos
     }
 
     /**
+     * Its deposit and final invoices, voided ones too (slice 17).
+     *
+     * @return HasMany<ProjectInvoice, $this>
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(ProjectInvoice::class)->orderBy('id');
+    }
+
+    /**
+     * The customer's payments, reversed ones too (slice 17).
+     *
+     * @return HasMany<ProjectPayment, $this>
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(ProjectPayment::class)->orderBy('id');
+    }
+
+    /**
      * The Project itself takes the walkthrough's photos (slice 16, step
      * 16c); its Work Packages and punch items take their own.
      */
