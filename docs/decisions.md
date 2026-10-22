@@ -3309,6 +3309,24 @@ slice 17 plan: "Looks good, continue."
      with the Production Manager told by the bell.
 2. **Step 17a, invoices and payments, starts.** It stops for his review.
 
+## 163. Step 17a is merged; Finance approves cash and check from the bank (2026-10-22)
+
+**Decided by Jacob,** in reply to the step 17a report, which asked whether
+the person who recorded a cash or check payment should be barred from
+approving it: "Correct. It gets approved by finance, the person who actually
+has access to the bank account and can see that it actually came into the
+bank account. Otherwise, go ahead and merge."
+
+1. **Step 17a is merged** as built
+   ([slice-17-customer-payments-plan.md](slice-17-customer-payments-plan.md),
+   "Step 17a as built").
+2. **What approving means:** Finance approves a cash or check payment once
+   they see it arrived in the bank account, not only from the receipt. The
+   approval asks exactly that.
+3. **Someone other than who recorded it approves it,** as recommended; the
+   Owner is the exception, as recommended and not changed by Jacob. Built in
+   step 17b, which waits for his word.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

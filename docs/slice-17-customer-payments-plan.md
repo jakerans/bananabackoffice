@@ -3,8 +3,9 @@
 Status: **approved on 2026-10-22 (decision 162) in three steps, each stopping
 for Jacob's review, with the recommendation on all eight questions. Step 17a
 is being built.** Written as what the implementation agent recommended from
-the plan check below. **Step 17a is built and awaiting Jacob's review; see
-"Step 17a as built".**
+the plan check below. **Step 17a is merged (decision 163); see "Step 17a as
+built". Step 17b waits for Jacob's word, and adds decision 163's approval
+rule.**
 
 ## Why this is next (the plan check)
 
@@ -146,5 +147,6 @@ Built on `checkpoint-slice-17a-payments` under decision 162.
 - **Finance finds cash and check waiting for approval on each job page**
   for now; 17c's Finance > Receivables lists them in one place.
 - **Whoever recorded a cash payment may also approve it,** if they hold
-  Finance. See "Decisions needed" in review/current.md.
+  Finance. Decision 163: someone else approves, once they see the money in
+  the bank; built in 17b.
 - **Existing jobs** read "Deposit due" until their invoices are recorded.

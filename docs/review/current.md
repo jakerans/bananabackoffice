@@ -3,35 +3,19 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-22 · **Branch:** `checkpoint-slice-17a-payments`
+**Updated:** 2026-10-22 · **Branch:** `main`
 
-**State:** step 17a, invoices and payments, is built and waits for Jacob's
-review (decision 162). Not merged. What was built is in
-[../slice-17-customer-payments-plan.md](../slice-17-customer-payments-plan.md),
-"Step 17a as built".
+**State:** step 17a, invoices and payments, is merged (decision 163).
+Nothing waits for review.
 
-## Browser review (done locally by the agent)
+## Next, on Jacob's word
 
-On a job's page, the new Payments card:
-
-1. As its Production Manager, "Record the deposit invoice": the amount is
-   suggested; without a number it is refused; recorded as R-1042.
-2. "Record a payment" by card with its reference: the job reads Deposit
-   paid, in the card and in the header badge.
-3. "Record the final invoice", then $500 in cash with a receipt photo: it
-   waits for Finance's approval and does not count yet.
-4. As Finance: the receipt opens; "Approve" asks to check it first, with
-   Cancel focused; the balance drops by $500.
-5. The job's activity names each invoice and payment.
-
-## Decisions needed
-
-1. **Merge 17a.**
-2. **Should the person who recorded a cash or check payment be barred from
-   approving it themselves?** Today someone who holds Finance can do both.
-   *Recommended:* yes, someone else approves, unless they are the Owner, so
-   the receipt is always seen by a second person (decision 133's control).
-   Built in 17b if agreed.
+**Step 17b, the deposit**
+([../slice-17-customer-payments-plan.md](../slice-17-customer-payments-plan.md)):
+the deposit percent per Location (50% by default), a smaller deposit only by
+a manager with a reason, and the deposit-paid call within 24 hours. With
+decision 163: someone other than who recorded a cash or check payment
+approves it, once they see it in the bank account.
 
 ## Optional, for Jacob
 
