@@ -167,8 +167,14 @@ decision 157).** Jacob set up the Wasabi buckets (decision 156); its plan is
 [slice-16-document-storage-plan.md](slice-16-document-storage-plan.md). Step
 16a (the storage itself) is merged (decision 158), and its restore drill
 passed on staging on 2026-10-15. Step 16b (compliance documents) is merged
-(decision 160); step 16c (photos of the work) is built and awaiting Jacob's
-review.
+(decision 160); step 16c (photos of the work) is merged (decision 161).
+Slice 16 is complete.
+
+**Slice 17, customer payments, is proposed (2026-10-21) and not approved.**
+The plan check after slice 16 found the last customer-facing step of
+closeout, "final balance collected", and everything about money from the
+customer still unbuilt. Its plan is
+[slice-17-customer-payments-plan.md](slice-17-customer-payments-plan.md).
 
 Canonical navigation also keeps Marketing Contact Center separate from Inbox,
 uses one Sales Workspace instead of separate Estimate/Proposal modules, and one
