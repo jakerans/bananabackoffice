@@ -655,6 +655,11 @@ new #[Title('Project')] class extends Component {
     <livewire:pages::projects.change-orders :project="$project" :key="'change-orders-'.$project->id" />
     <livewire:pages::projects.payments :project="$project" :key="'payments-'.$project->id" />
 
+    {{-- Job costing (slice 19): finance-sensitive, only for those who may see payouts. --}}
+    @can('viewPayouts', $project)
+        <livewire:pages::projects.job-costing :project="$project" :key="'job-costing-'.$project->id" />
+    @endcan
+
     <div class="grid gap-6 lg:grid-cols-2">
         <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-sale">
             <flux:heading size="lg" level="2">{{ __('What was sold') }}</flux:heading>

@@ -95,6 +95,27 @@ class ProjectPolicy
     }
 
     /**
+     * Determine whether the user can record and correct the Project's costs,
+     * and submit its job costing: its Production Manager, or a manager where
+     * it is, who may see payouts (docs/slice-19-job-costing-plan.md;
+     * decision 170).
+     */
+    public function manageCosts(User $user, Project $project): bool
+    {
+        return $this->managePayouts($user, $project);
+    }
+
+    /**
+     * Determine whether the user can reconcile the Project's job costing,
+     * approve its final gross margin, and close or reopen it: Finance at its
+     * Location (decision 170).
+     */
+    public function reconcileCosts(User $user, Project $project): bool
+    {
+        return $this->view($user, $project) && $user->hasPermissionAt(Permission::FinanceAccess, $project->location);
+    }
+
+    /**
      * Determine whether the user can draft, sign off and withdraw the
      * Project's change orders: its Production Manager, or a manager where it
      * is (docs/slice-18-change-orders-plan.md; decision 166). Lowering the

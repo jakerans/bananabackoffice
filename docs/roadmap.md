@@ -184,8 +184,9 @@ plan check after slice 17 found that what the customer owes, and what
 Banana owes a subcontractor, cannot yet change after the sale. Its plan is
 [slice-18-change-orders-plan.md](slice-18-change-orders-plan.md).
 
-**Slice 19, job costing and the financial close, is proposed (2026-10-24)
-and not approved.** The plan check after slice 18 found the internal,
+**Slice 19, job costing and the financial close, is approved (2026-10-24,
+decision 170) and being built straight through its three steps.** The plan
+check after slice 18 found the internal,
 financial close of a job (6.8, 6.9) the last part of closeout still
 unbuilt. Its plan is
 [slice-19-job-costing-plan.md](slice-19-job-costing-plan.md).

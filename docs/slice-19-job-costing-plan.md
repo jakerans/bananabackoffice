@@ -1,8 +1,9 @@
 # Slice 19 — Job Costing and the Financial Close: Plan
 
-Status: **proposed on 2026-10-24 for Jacob's review, after slice 18 was
-merged (decision 169). Nothing is built.** Written as what the implementation
-agent recommends from the plan check below.
+Status: **approved on 2026-10-24 (decision 170), with the recommendation on
+all eight questions, to be built straight through 19a, 19b and 19c and then
+reviewed. Being built.** Written as what the implementation agent
+recommended from the plan check below.
 
 ## Why this is next (the plan check)
 
@@ -101,3 +102,27 @@ Questions 6 to 8 are needed before 19b and 19c.
   QuickBooks or a supplier yet.
 - **The gross margin is before allocations,** which Finance adds at the
   monthly close.
+
+## Step 19a as built (2026-10-24)
+
+Built on `checkpoint-slice-19-job-costing` under decision 170.
+
+- **Costs** (`project_costs`, `App\Actions\Projects\RecordJobCosts`): each
+  direct cost with its kind (materials, equipment rental, permit, dump or
+  disposal, W-2 labour, warranty or callback, other), amount, who it was
+  paid to, day, purchase order and an optional note; its receipt attached
+  now or later. A cost without one reads "Missing its receipt". A wrong
+  cost is voided with why and stays on record; nothing is changed in place.
+- **The budget** (`App\Support\Projects\JobCosting`), in a **Job costing**
+  section on the job, below Payments: the contract (with signed change
+  orders), the target cost for the Location's target margin, committed
+  (every payout set and every cost recorded), the remaining budget (red
+  below zero), and the **projected gross margin** before allocations (red
+  below the target).
+- **The target gross margin:** 55% by default, set per Location in
+  Settings > Locations ("Target margin").
+- **Who:** only those who may see payouts see the section; the job's
+  Production Manager or a manager there records costs.
+- **History:** each cost recorded or voided is in the audit record, never
+  in the customer's Activity.
+- **Tests:** `tests/Feature/Projects/JobCostsTest.php`, 10 tests.

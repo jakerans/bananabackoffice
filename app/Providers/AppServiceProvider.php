@@ -19,6 +19,7 @@ use App\Models\MarketingSource;
 use App\Models\Objection;
 use App\Models\Project;
 use App\Models\ProjectChangeOrder;
+use App\Models\ProjectCost;
 use App\Models\ProjectPayment;
 use App\Models\ProjectSize;
 use App\Models\Property;
@@ -129,6 +130,7 @@ class AppServiceProvider extends ServiceProvider
             'punch_item' => PunchItem::class,
             'project_payment' => ProjectPayment::class,
             'project_change_order' => ProjectChangeOrder::class,
+            'project_cost' => ProjectCost::class,
             'insurance_deduction_rate' => InsuranceDeductionRate::class,
         ]);
     }

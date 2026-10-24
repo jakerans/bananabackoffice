@@ -3414,6 +3414,36 @@ this project has meant merge the step and go on.
 2. **Next:** the plan check after a slice, and a proposed next slice, for
    his approval.
 
+## 170. Slice 19, job costing and the financial close, is approved and built straight through (2026-10-24)
+
+**Decided by Jacob,** in reply to the plan check after slice 18 and the
+slice 19 plan: "approved continue. go all the way through 19 without
+stopping".
+
+1. **Slice 19 is approved** in three steps
+   ([slice-19-job-costing-plan.md](slice-19-job-costing-plan.md)), with the
+   recommendation on all eight questions taken as the answer, as under
+   decision 155:
+   - 19a, 19b, 19c, in that order;
+   - the kinds of cost: materials, equipment rental, permit, dump or
+     disposal, W-2 labour, warranty or callback, other; subcontractor
+     payouts from the Work Packages;
+   - a cost can be recorded without a receipt, and is listed as missing one
+     until it is attached;
+   - the target gross margin is 55%, set per Location;
+   - "Projected", "Provisional" and "Final" gross margin, each before
+     allocations;
+   - job costing is submitted once the customer has signed off;
+   - accuracy strikes are counted automatically; the third in a rolling 90
+     days tells the Location's managers and Leadership; nothing else
+     happens automatically;
+   - Finance closes a job once it is signed off, paid in full and its job
+     costing approved, and can reopen it with a reason; Brand Ambassador
+     obligations do not hold it.
+2. **Built without stopping between the steps,** on one branch, each step
+   committed and checked on both GitHub jobs. Nothing is merged until
+   Jacob reviews the slice.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

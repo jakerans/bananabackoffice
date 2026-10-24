@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property bool $is_active
  * @property string $timezone
+ * @property int $target_margin_percent The gross margin a job there aims for (slice 19): 55 by default.
  * @property int $deposit_percent The share of the sold price asked for as a deposit (slice 17, step 17b): 50 by default.
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -38,7 +39,11 @@ class Location extends Model
         'is_active' => true,
         'timezone' => LocationTimezones::DEFAULT,
         'deposit_percent' => self::DEFAULT_DEPOSIT_PERCENT,
+        'target_margin_percent' => self::DEFAULT_TARGET_MARGIN_PERCENT,
     ];
+
+    /** The gross margin a job aims for unless a Location sets its own (decision 170, question 4). */
+    public const int DEFAULT_TARGET_MARGIN_PERCENT = 55;
 
     /** The deposit asked for unless a Location sets its own (product-architecture.md, 10.4). */
     public const int DEFAULT_DEPOSIT_PERCENT = 50;
@@ -53,6 +58,7 @@ class Location extends Model
         return [
             'is_active' => 'boolean',
             'deposit_percent' => 'integer',
+            'target_margin_percent' => 'integer',
         ];
     }
 

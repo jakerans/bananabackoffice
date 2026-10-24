@@ -338,6 +338,16 @@ class Project extends Model implements HasPhotos
     }
 
     /**
+     * Its direct costs, voided ones too (slice 19).
+     *
+     * @return HasMany<ProjectCost, $this>
+     */
+    public function costs(): HasMany
+    {
+        return $this->hasMany(ProjectCost::class)->orderBy('spent_on')->orderBy('id');
+    }
+
+    /**
      * Its customer change orders, drafts and withdrawn ones too (slice 18).
      *
      * @return HasMany<ProjectChangeOrder, $this>
