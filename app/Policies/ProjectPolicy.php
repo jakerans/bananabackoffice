@@ -95,6 +95,17 @@ class ProjectPolicy
     }
 
     /**
+     * Determine whether the user can draft, sign off and withdraw the
+     * Project's change orders: its Production Manager, or a manager where it
+     * is (docs/slice-18-change-orders-plan.md; decision 166). Lowering the
+     * price also needs `update`, a manager's.
+     */
+    public function manageChangeOrders(User $user, Project $project): bool
+    {
+        return $this->managePreProduction($user, $project);
+    }
+
+    /**
      * Determine whether the user can lower or waive the Project's deposit: a
      * manager where it is, with a reason (decision 162, question 4).
      */

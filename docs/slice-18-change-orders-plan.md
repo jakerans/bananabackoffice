@@ -1,8 +1,10 @@
 # Slice 18 — Change Orders: Plan
 
-Status: **proposed on 2026-10-24 for Jacob's review, after slice 17 was
-merged (decision 165). Nothing is built.** Written as what the implementation
-agent recommends from the plan check below.
+Status: **approved on 2026-10-24 (decision 166) in three steps, each
+stopping for Jacob's review, with the recommendation on all eight
+questions. Step 18a is merged (decision 167); see "Step 18a as built". Step
+18b is being built.** Written as what the implementation
+agent recommended from the plan check below.
 
 ## Why this is next (the plan check)
 
@@ -98,3 +100,39 @@ Questions 7 and 8 are needed before 18b and 18c.
 - **Change orders on jobs already invoiced in full** are possible, and
   leave a balance owed: a new final invoice is recorded after voiding the
   old one (slice 17), as today.
+
+## Step 18a as built (2026-10-24)
+
+Built on `checkpoint-slice-18a-change-orders` under decision 166.
+
+- **Where:** a **Change orders** section on every job page, above
+  Payments: the price sold, the signed changes, and the **contract total**
+  before tax; each change order with its number, price change, what
+  changes, the days it adds, and who drafted, signed or withdrew it.
+- **Drafting** (`App\Actions\Projects\RecordChangeOrders`): what changes,
+  the price change in dollars before tax ("-" when it comes down, "0" for
+  none), and the working days it adds (0 to 60). Numbered 1, 2, 3 on its
+  job. A draft does not count.
+- **Lowering the price** is a manager's, with a reason (question 3). A
+  Production Manager who tries is told so on the field.
+- **Signing:** who signed, how (in person, by email or by text; not by
+  phone, as a signature needs a signed copy), the day, and the signed copy
+  attached (question 2). From then on it counts in the contract total and
+  is kept as it was.
+- **Withdrawing** a draft the customer will not sign, with why. A signed
+  one is never withdrawn: a mistake is put right by another change order.
+- **The final invoice** is suggested from the contract total less the
+  deposit invoice (question 4). The price sold, and so the Sales figures,
+  do not change (question 5).
+- **Who** (`ProjectPolicy::manageChangeOrders`): the job's Production
+  Manager or a manager there; everyone who may see the job reads them.
+- **History:** drafted, signed and withdrawn are each in the job's
+  activity, with the price change.
+- **Tests:** `tests/Feature/Projects/ChangeOrdersTest.php`, 18 tests.
+
+### Known limits
+
+- **The working days a change order adds are recorded, not scheduled:**
+  the dates move through the existing reschedule or "More days" (question
+  6).
+- **A subcontractor is not told yet:** that is step 18b.

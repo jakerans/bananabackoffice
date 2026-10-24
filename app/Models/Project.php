@@ -338,6 +338,16 @@ class Project extends Model implements HasPhotos
     }
 
     /**
+     * Its customer change orders, drafts and withdrawn ones too (slice 18).
+     *
+     * @return HasMany<ProjectChangeOrder, $this>
+     */
+    public function changeOrders(): HasMany
+    {
+        return $this->hasMany(ProjectChangeOrder::class)->orderBy('number');
+    }
+
+    /**
      * Each contact with the customer about the balance (slice 17, step 17c).
      *
      * @return HasMany<ProjectCollectionContact, $this>

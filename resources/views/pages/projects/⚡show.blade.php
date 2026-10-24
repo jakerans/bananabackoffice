@@ -52,7 +52,16 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectInvoiceRecorded, AuditAction::ProjectInvoiceVoided,
         AuditAction::ProjectPaymentRecorded, AuditAction::ProjectPaymentApproved, AuditAction::ProjectPaymentReversed,
         AuditAction::ProjectDepositChanged, AuditAction::ProjectCollectionContactRecorded,
+        AuditAction::ProjectChangeOrderDrafted, AuditAction::ProjectChangeOrderSigned, AuditAction::ProjectChangeOrderWithdrawn,
     ];
+
+    /**
+     * A change order's price change, as the activity says it: "+$1,200", "-$300".
+     */
+    private static function priceChange(int $cents): string
+    {
+        return $cents === 0 ? __('no price change') : ($cents > 0 ? '+' : '').Money::format($cents);
+    }
 
     #[Locked]
     public int $projectId;
@@ -141,6 +150,9 @@ new #[Title('Project')] class extends Component {
                 : __('Payment recorded: :amount by :method toward the :invoice', ['amount' => Money::format((int) ($event->values_after['amount_cents'] ?? 0)), 'method' => mb_strtolower((string) ($event->values_after['method'] ?? '')), 'invoice' => mb_strtolower((string) ($event->values_after['invoice'] ?? ''))])),
             AuditAction::ProjectPaymentApproved => __('Payment approved: :amount by :method', ['amount' => Money::format((int) ($event->values_after['amount_cents'] ?? 0)), 'method' => mb_strtolower((string) ($event->values_after['method'] ?? ''))]),
             AuditAction::ProjectCollectionContactRecorded => __('The customer was contacted about the balance'),
+            AuditAction::ProjectChangeOrderDrafted => __('Change order :number drafted: :price', ['number' => (string) ($event->values_after['number'] ?? ''), 'price' => self::priceChange((int) ($event->values_after['price_change_cents'] ?? 0))]),
+            AuditAction::ProjectChangeOrderSigned => __('Change order :number signed by :person: :price', ['number' => (string) ($event->values_after['number'] ?? ''), 'person' => (string) ($event->values_after['signed_by'] ?? ''), 'price' => self::priceChange((int) ($event->values_after['price_change_cents'] ?? 0))]),
+            AuditAction::ProjectChangeOrderWithdrawn => __('Change order :number withdrawn', ['number' => (string) ($event->values_before['number'] ?? '')]),
             AuditAction::ProjectDepositChanged => ((int) ($event->values_after['required_cents'] ?? 0)) === 0
                 ? __('Deposit waived')
                 : __('Deposit lowered to :amount', ['amount' => Money::format((int) ($event->values_after['required_cents'] ?? 0))]),
@@ -635,7 +647,8 @@ new #[Title('Project')] class extends Component {
         @endif
     @endunless
 
-    {{-- The customer's invoices and payments (slice 17, step 17a), kept in view on a cancelled job too. --}}
+    {{-- The customer's change orders (slice 18, step 18a), and their invoices and payments (slice 17), kept in view on a cancelled job too. --}}
+    <livewire:pages::projects.change-orders :project="$project" :key="'change-orders-'.$project->id" />
     <livewire:pages::projects.payments :project="$project" :key="'payments-'.$project->id" />
 
     <div class="grid gap-6 lg:grid-cols-2">

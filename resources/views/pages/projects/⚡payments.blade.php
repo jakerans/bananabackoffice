@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -71,6 +72,16 @@ new class extends Component {
 
     /** A note about a contact with the customer about the balance (step 17c). */
     public string $contactNote = '';
+
+    /**
+     * A change order was signed (slice 18): the final invoice's suggestion
+     * follows the contract total.
+     */
+    #[On('project-payments-changed')]
+    public function refresh(): void
+    {
+        unset($this->project, $this->standing, $this->invoices);
+    }
 
     public function mount(Project $project): void
     {
@@ -169,7 +180,8 @@ new class extends Component {
         $this->authorize('recordPayments', $this->project);
 
         $standing = $this->standing;
-        $sold = $this->project->sold_cents;
+        // The final invoice comes from the contract: the price sold and every signed change order (decision 166, question 4).
+        $sold = $standing->contractCents();
         // A suggestion only, before tax (decision 162): the person records the total QuickBooks shows.
         $suggested = $kind === ProjectInvoice::KIND_DEPOSIT
             ? $standing->requiredDepositCents()
@@ -543,7 +555,6 @@ new class extends Component {
                     <div class="flex flex-col gap-2">
                         <flux:input type="file" wire:model="paymentReceipt" accept=".pdf,.jpg,.jpeg,.png,.heic,application/pdf,image/jpeg,image/png,image/heic" :label="__('Photo or scan of the receipt')" :description="__('Cash and check count once Finance approves them, after seeing this.')" data-test="payment-receipt-file" />
                         <flux:text size="sm" wire:loading wire:target="paymentReceipt">{{ __('Uploading...') }}</flux:text>
-                        <flux:error name="paymentReceipt" />
                         <flux:error name="attachment" />
                     </div>
                 @endif
