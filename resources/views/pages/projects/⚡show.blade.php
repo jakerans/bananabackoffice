@@ -53,6 +53,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectPaymentRecorded, AuditAction::ProjectPaymentApproved, AuditAction::ProjectPaymentReversed,
         AuditAction::ProjectDepositChanged, AuditAction::ProjectCollectionContactRecorded,
         AuditAction::ProjectChangeOrderDrafted, AuditAction::ProjectChangeOrderSigned, AuditAction::ProjectChangeOrderWithdrawn,
+        AuditAction::ProjectWorkRevised,
     ];
 
     /**
@@ -152,6 +153,9 @@ new #[Title('Project')] class extends Component {
             AuditAction::ProjectCollectionContactRecorded => __('The customer was contacted about the balance'),
             AuditAction::ProjectChangeOrderDrafted => __('Change order :number drafted: :price', ['number' => (string) ($event->values_after['number'] ?? ''), 'price' => self::priceChange((int) ($event->values_after['price_change_cents'] ?? 0))]),
             AuditAction::ProjectChangeOrderSigned => __('Change order :number signed by :person: :price', ['number' => (string) ($event->values_after['number'] ?? ''), 'person' => (string) ($event->values_after['signed_by'] ?? ''), 'price' => self::priceChange((int) ($event->values_after['price_change_cents'] ?? 0))]),
+            AuditAction::ProjectWorkRevised => ($event->values_after['change_order'] ?? null) === null
+                ? __(':package revised: :what', ['package' => (string) ($event->values_after['package'] ?? ''), 'what' => ($event->values_after['kind'] ?? '') === 'scope' ? __('the scope') : __('the payout')])
+                : __(':package revised: :what, from change order :number', ['package' => (string) ($event->values_after['package'] ?? ''), 'what' => ($event->values_after['kind'] ?? '') === 'scope' ? __('the scope') : __('the payout'), 'number' => (string) $event->values_after['change_order']]),
             AuditAction::ProjectChangeOrderWithdrawn => __('Change order :number withdrawn', ['number' => (string) ($event->values_before['number'] ?? '')]),
             AuditAction::ProjectDepositChanged => ((int) ($event->values_after['required_cents'] ?? 0)) === 0
                 ? __('Deposit waived')

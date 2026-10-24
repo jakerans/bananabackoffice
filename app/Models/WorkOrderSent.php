@@ -22,6 +22,7 @@ use LogicException;
  * @property Carbon $first_day
  * @property Carbon $last_day
  * @property int $payout_cents
+ * @property string|null $scope What the work was, as the work order said (slice 18, step 18b).
  * @property int $deduction_cents
  * @property int $deduction_basis_points
  * @property int|null $sent_by

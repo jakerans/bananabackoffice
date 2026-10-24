@@ -205,6 +205,17 @@ class WorkPackage extends Model implements HasPhotos
         ];
     }
 
+    /**
+     * Each change of its scope or payout once it was given out, the latest
+     * first (slice 18, step 18b).
+     *
+     * @return HasMany<WorkPackageRevision, $this>
+     */
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(WorkPackageRevision::class)->orderByDesc('id');
+    }
+
     public function photoKinds(): array
     {
         return ['before' => 'Before', 'progress' => 'Progress', 'after' => 'After'];

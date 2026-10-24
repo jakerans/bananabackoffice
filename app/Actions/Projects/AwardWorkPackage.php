@@ -131,8 +131,8 @@ class AwardWorkPackage
             $award = $package->currentAward
                 ?? throw ValidationException::withMessages(['work' => __('Nobody has this work now. Reload the page.')]);
 
-            if ($award->payout_cents === $package->payout_cents) {
-                throw ValidationException::withMessages(['work' => __('They accepted the payout it has now. Nothing needs recording.')]);
+            if ($award->matches($package)) {
+                throw ValidationException::withMessages(['work' => __('They accepted the work as it is now. Nothing needs recording.')]);
             }
 
             $acceptance = self::acceptance($project, $acceptedBy, $method, $acceptedOn);
@@ -174,6 +174,7 @@ class AwardWorkPackage
             'work_package_id' => $package->id,
             'subcontractor_id' => $subcontractor->id,
             'payout_cents' => $package->payout_cents,
+            'accepted_scope' => $package->scope,
             'first_day' => $first,
             'last_day' => $last,
             'work_package_window_id' => $windowId,

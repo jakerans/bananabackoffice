@@ -219,7 +219,7 @@ test('a payout changed after the award needs a reason, and their acceptance is r
     expect(AuditEvent::query()->where('action', AuditAction::ProjectAwardAcceptedAgain)->count())->toBe(1);
 
     expect(fn () => app(AwardWorkPackage::class)->acceptAgain($this->project, $this->package->id, 'Rosa Alvarez', 'text', '2026-10-14', $this->pat))
-        ->toThrow(ValidationException::class, 'They accepted the payout it has now. Nothing needs recording.');
+        ->toThrow(ValidationException::class, 'They accepted the work as it is now. Nothing needs recording.');
 });
 
 test('taking the work back needs whose doing it was and why, keeps the award, and frees the work', function () {

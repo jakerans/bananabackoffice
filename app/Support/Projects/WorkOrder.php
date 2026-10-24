@@ -108,7 +108,8 @@ final readonly class WorkOrder
 
     /**
      * Whether what it says has changed since it was last sent: another
-     * subcontractor, another payout or deduction, or other days.
+     * subcontractor, another payout or deduction, other days, or another
+     * scope (slice 18, step 18b).
      */
     public function changedSinceSent(): bool
     {
@@ -116,6 +117,7 @@ final readonly class WorkOrder
 
         return $sent !== null && (
             $sent->work_package_award_id !== $this->award->id
+            || ($sent->scope !== null && $sent->scope !== $this->package->scope)
             || $sent->payout_cents !== $this->payoutCents
             || $sent->deduction_cents !== $this->deductionCents
             || ! $sent->first_day->isSameDay($this->firstDay)

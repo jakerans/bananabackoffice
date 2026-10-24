@@ -5,9 +5,10 @@ No secrets or customer information belong here.
 
 **Updated:** 2026-10-24 · **Branch:** `main`
 
-**State:** step 18a, customer change orders, is merged (decision 167). Step
-18b, subcontractor work order revisions, is being built; it will replace
-this page and is not merged without Jacob's word.
+**State:** step 18b, subcontractor work order revisions, is merged
+(decision 168). Step 18c, what the job brings in after subcontractor
+payouts, is being built; it will replace this page and is not merged
+without Jacob's word.
 
 ## Optional, for Jacob
 

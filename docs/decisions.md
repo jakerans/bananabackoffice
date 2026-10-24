@@ -3391,6 +3391,18 @@ this project has meant merge the step and go on.
 2. **Step 18b, subcontractor work order revisions, starts.** It stops for
    his review.
 
+## 168. Step 18b is merged; step 18c starts (2026-10-24)
+
+**Decided by Jacob,** in reply to the step 18b report: "continue", which in
+this project has meant merge the step and go on.
+
+1. **Step 18b is merged** as built
+   ([slice-18-change-orders-plan.md](slice-18-change-orders-plan.md),
+   "Step 18b as built"), with its deviation: one acceptance by the
+   subcontractor covers every revision made before it.
+2. **Step 18c, what the job brings in after subcontractor payouts,
+   starts.** It stops for his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

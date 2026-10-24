@@ -177,7 +177,8 @@ and who chases it) is merged (decision 165). Slice 17 is complete.**
 
 **Slice 18, change orders, is approved in three steps (2026-10-24, decision
 166); step 18a (customer change orders) is merged (decision 167); step 18b
-(subcontractor work order revisions) is being built.** The
+(subcontractor work order revisions) is merged (decision 168); step 18c
+(after subcontractor payouts) is being built.** The
 plan check after slice 17 found that what the customer owes, and what
 Banana owes a subcontractor, cannot yet change after the sale. Its plan is
 [slice-18-change-orders-plan.md](slice-18-change-orders-plan.md).

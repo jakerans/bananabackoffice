@@ -7,10 +7,12 @@ use App\Enums\AuditAction;
 use App\Enums\ColorApprovalMethod;
 use App\Enums\ProjectProductionState;
 use App\Models\Project;
+use App\Models\ProjectChangeOrder;
 use App\Models\User;
 use App\Models\WorkPackage;
 use App\Models\WorkPackageAward;
 use App\Models\WorkPackagePayout;
+use App\Models\WorkPackageRevision;
 use App\Models\WorkPackageSchedule;
 use App\Models\WorkPackageWindow;
 use App\Notifications\ProjectNotice;
@@ -75,7 +77,12 @@ class ChangeWorkPackages
     }
 
     /**
-     * Change a package's name, scope, working days or crew.
+     * Change a package's name, scope, working days or crew. Once the work is
+     * given to a subcontractor, a change of scope is a revision (slice 18,
+     * step 18b; decision 166, question 7): by someone who may see payouts,
+     * with why ("revisionReason") and, if it comes from one, the customer
+     * change order ("changeOrderId"); it waits for the subcontractor's
+     * acceptance and a new work order.
      *
      * @param  array<string, mixed>  $package
      *
@@ -87,6 +94,7 @@ class ChangeWorkPackages
         return $this->change($project, $actor, function (Project $project) use ($packageId, $package, $actor): WorkPackage {
             $existing = self::packageOf($project, $packageId);
             $before = $existing->summary();
+            $scopeBefore = $existing->scope;
 
             $existing->forceFill(self::readPackage($package));
 
@@ -94,7 +102,19 @@ class ChangeWorkPackages
                 return $existing;
             }
 
+            $revised = $existing->isDirty('scope') && $existing->currentAward()->exists();
+
+            if ($revised) {
+                Gate::forUser($actor)->authorize('managePayouts', $project);
+
+                [$reason, $changeOrderId] = self::readRevision($project, $package['revisionReason'] ?? null, $package['changeOrderId'] ?? null, 'package.revisionReason', 'package.changeOrderId', __('This work is given to a subcontractor. Say why the scope changes; they accept the revision, and the work order is sent again.'));
+            }
+
             $existing->save();
+
+            if ($revised) {
+                $this->revise($project, $existing, WorkPackageRevision::KIND_SCOPE, ['scope_before' => $scopeBefore, 'scope_after' => $existing->scope], $reason, $changeOrderId, $actor);
+            }
 
             $this->audit(AuditAction::ProjectWorkPackageChanged, $project, $actor, $before, $existing->summary());
 
@@ -284,9 +304,9 @@ class ChangeWorkPackages
      * @throws ValidationException
      * @throws AuthorizationException
      */
-    public function setPayout(Project $project, int $packageId, ?string $amount, ?string $reason, User $actor): WorkPackage
+    public function setPayout(Project $project, int $packageId, ?string $amount, ?string $reason, User $actor, ?int $changeOrderId = null): WorkPackage
     {
-        return $this->change($project, $actor, function (Project $project) use ($packageId, $amount, $reason, $actor): WorkPackage {
+        return $this->change($project, $actor, function (Project $project) use ($packageId, $amount, $reason, $actor, $changeOrderId): WorkPackage {
             Gate::forUser($actor)->authorize('managePayouts', $project);
 
             $package = self::packageOf($project, $packageId);
@@ -302,9 +322,11 @@ class ChangeWorkPackages
                 return $package;
             }
 
-            // Once the work is given out, a change needs a reason (decision 151, question 2).
-            if ($reason === '' && $package->currentAward()->exists()) {
-                throw ValidationException::withMessages(['payoutReason' => __('This work is given to a subcontractor. Say why the payout changes.')]);
+            // Once the work is given out, a change needs a reason (decision 151, question 2), and is a revision (decision 166).
+            $revised = $package->currentAward()->exists();
+
+            if ($revised) {
+                [$reason, $changeOrderId] = self::readRevision($project, $reason, $changeOrderId, 'payoutReason', 'payoutChangeOrderId', __('This work is given to a subcontractor. Say why the payout changes.'));
             }
 
             $before = $package->payout_cents;
@@ -331,8 +353,74 @@ class ChangeWorkPackages
                 reason: $payout->reason,
             );
 
+            if ($revised) {
+                $this->revise($project, $package, WorkPackageRevision::KIND_PAYOUT, ['payout_before_cents' => $before, 'payout_after_cents' => $cents], $reason, $changeOrderId, $actor);
+            }
+
             return $package;
         });
+    }
+
+    /**
+     * Read why a revision is made, and the customer change order it comes
+     * from: one of this job's, signed, or none.
+     *
+     * @return array{0: string, 1: int|null}
+     *
+     * @throws ValidationException
+     */
+    private static function readRevision(Project $project, mixed $reason, mixed $changeOrderId, string $reasonField, string $changeOrderField, string $missing): array
+    {
+        $reason = trim(is_scalar($reason) ? (string) $reason : '');
+
+        if ($reason === '') {
+            throw ValidationException::withMessages([$reasonField => $missing]);
+        }
+
+        if (mb_strlen($reason) > WorkPackageRevision::REASON_LENGTH) {
+            throw ValidationException::withMessages([$reasonField => __('Keep this to :max characters or fewer.', ['max' => WorkPackageRevision::REASON_LENGTH])]);
+        }
+
+        $changeOrderId = is_numeric($changeOrderId) ? (int) $changeOrderId : null;
+
+        if ($changeOrderId !== null && ! ProjectChangeOrder::query()->where('project_id', $project->id)->where('status', ProjectChangeOrder::STATUS_SIGNED)->whereKey($changeOrderId)->exists()) {
+            throw ValidationException::withMessages([$changeOrderField => __('Choose one of this job\'s signed change orders.')]);
+        }
+
+        return [$reason, $changeOrderId];
+    }
+
+    /**
+     * Keep a revision, and say so in the job's history; the payout itself
+     * stays in the audit record only.
+     *
+     * @param  array<string, mixed>  $change
+     */
+    private function revise(Project $project, WorkPackage $package, string $kind, array $change, string $reason, ?int $changeOrderId, User $actor): void
+    {
+        $revision = new WorkPackageRevision;
+        $revision->forceFill([
+            'work_package_id' => $package->id,
+            'kind' => $kind,
+            ...$change,
+            'reason' => $reason,
+            'project_change_order_id' => $changeOrderId,
+            'created_by' => $actor->id,
+            'created_by_name' => $actor->name,
+        ])->save();
+
+        $this->recordAuditEvent->handle(
+            AuditAction::ProjectWorkRevised,
+            $project,
+            actor: $actor,
+            after: [
+                'package' => $package->name,
+                'kind' => $kind,
+                'change_order' => $changeOrderId === null ? null : ProjectChangeOrder::query()->find($changeOrderId)?->number,
+            ],
+            location: $project->location,
+            reason: $reason,
+        );
     }
 
     /**
