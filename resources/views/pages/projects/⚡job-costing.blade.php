@@ -1,7 +1,9 @@
 <?php
 
 use App\Actions\Projects\RecordJobCosts;
+use App\Enums\ProjectProductionState;
 use App\Models\Project;
+use App\Models\ProjectAccuracyStrike;
 use App\Models\ProjectCost;
 use App\Support\Money;
 use App\Support\Projects\JobCosting;
@@ -132,6 +134,34 @@ new class extends Component {
         $this->done('job-cost', $receipt === null ? __('Cost recorded. Attach its receipt when you have it.') : __('Cost recorded.'));
     }
 
+    public function openSubmit(): void
+    {
+        $this->authorize('manageCosts', $this->project);
+        $this->resetValidation();
+
+        Flux::modal('submit-job-costing')->show();
+    }
+
+    public function submit(RecordJobCosts $recordJobCosts): void
+    {
+        $recordJobCosts->submit($this->project, Auth::user());
+
+        $this->done('submit-job-costing', __('Job costing submitted. Finance reconciles it next.'));
+    }
+
+    /**
+     * How many accuracy strikes the job's Production Manager has in the last
+     * 90 days (question 7).
+     */
+    #[Computed]
+    public function managerStrikes(): int
+    {
+        return $this->project->production_manager_id === null ? 0 : ProjectAccuracyStrike::query()
+            ->where('production_manager_id', $this->project->production_manager_id)
+            ->where('created_at', '>=', now()->subDays(ProjectAccuracyStrike::WINDOW_DAYS))
+            ->count();
+    }
+
     public function openReceipt(int $costId): void
     {
         $this->authorize('manageCosts', $this->project);
@@ -186,8 +216,9 @@ new class extends Component {
 
     private function done(string $modal, string $message): void
     {
-        unset($this->project, $this->costing, $this->allCosts);
+        unset($this->project, $this->costing, $this->allCosts, $this->managerStrikes);
 
+        $this->dispatch('project-job-costing-changed');
         Flux::modal($modal)->close();
         Flux::toast(variant: 'success', text: $message);
     }
@@ -199,6 +230,10 @@ new class extends Component {
         $mayRecord = $this->mayRecord;
         $percent = $costing->marginPercent();
         $missing = $costing->missingReceipts();
+        $state = $costing->state();
+        $mayChangeCosts = $mayRecord && ! $costing->isLocked();
+        $provisional = $costing->provisional();
+        $final = $costing->final();
     @endphp
 
     <div class="flex flex-wrap items-start justify-between gap-3">
@@ -207,10 +242,38 @@ new class extends Component {
             <flux:subheading>{{ __('The budget, and every direct cost with its receipt. Before allocations, which Finance adds at the monthly close.') }}</flux:subheading>
         </div>
 
-        @if ($mayRecord)
-            <flux:button size="sm" icon="plus" wire:click="openCost" data-test="add-job-cost">{{ __('Add a cost') }}</flux:button>
-        @endif
+        <div class="flex flex-wrap items-center gap-2">
+            <flux:badge :color="match ($state) { 'closed' => 'emerald', 'approved' => 'sky', 'submitted', 'reopened' => 'amber', default => 'zinc' }" data-test="job-costing-state">{{ __($costing->stateLabel()) }}</flux:badge>
+            @if ($mayChangeCosts)
+                <flux:button size="sm" icon="plus" wire:click="openCost" data-test="add-job-cost">{{ __('Add a cost') }}</flux:button>
+            @endif
+        </div>
     </div>
+
+    {{-- Submitted, approved and final (steps 19b and 19c). --}}
+    @if ($provisional !== null)
+        <div class="flex flex-col gap-1 rounded-lg bg-zinc-50 p-3 text-sm" data-test="job-costing-steps">
+            <span class="text-ink">{{ __('Provisional gross margin, as submitted by :name: :figure', ['name' => $provisional->recorded_by_name ?? __('Unknown'), 'figure' => $provisional->marginWords()]) }}</span>
+            @if ($final !== null)
+                <span class="font-semibold text-ink" data-test="job-final-margin">{{ __('Final gross margin, approved by :name: :figure', ['name' => $final->recorded_by_name ?? __('Unknown'), 'figure' => $final->marginWords()]) }}</span>
+            @endif
+            @foreach ($costing->steps->whereIn('kind', ['reopened', 'closed']) as $step)
+                <span wire:key="job-step-{{ $step->id }}" class="text-zinc-600">
+                    {{ $step->kind === 'closed' ? __('Financially closed by :name', ['name' => $step->recorded_by_name ?? __('Unknown')]) : __('Reopened by :name: ":reason"', ['name' => $step->recorded_by_name ?? __('Unknown'), 'reason' => $step->reason]) }}
+                    &middot; <x-local-time :at="$step->created_at" />
+                </span>
+            @endforeach
+        </div>
+    @endif
+
+    @if ($costing->strikes->isNotEmpty() || $this->managerStrikes > 0)
+        <div class="flex flex-col gap-1 text-sm" data-test="job-strikes">
+            @foreach ($costing->strikes as $strike)
+                <span wire:key="job-strike-{{ $strike->id }}" class="text-rose-700">{{ __('Accuracy strike: :cause, :amount', ['cause' => mb_strtolower(__($strike->causeLabel())), 'amount' => Money::format((int) $strike->amount_cents)]) }} &middot; <x-local-time :at="$strike->created_at" /></span>
+            @endforeach
+            <span class="text-zinc-600" data-test="job-manager-strikes">{{ trans_choice(':name has :count accuracy strike in the last 90 days.|:name has :count accuracy strikes in the last 90 days.', $this->managerStrikes, ['name' => $this->project->production_manager_name ?? __('The Production Manager')]) }}</span>
+        </div>
+    @endif
 
     {{-- The budget (product-architecture.md, 10.3). --}}
     <dl class="grid grid-cols-2 gap-3 sm:grid-cols-4" data-test="job-budget">
@@ -275,7 +338,9 @@ new class extends Component {
                             @if ($cost->receipts->isEmpty())
                                 <flux:button size="sm" variant="ghost" icon="paper-clip" wire:click="openReceipt({{ $cost->id }})" data-test="attach-cost-receipt">{{ __('Receipt') }}</flux:button>
                             @endif
-                            <flux:button size="sm" variant="ghost" wire:click="openVoid({{ $cost->id }})" data-test="void-job-cost">{{ __('Void') }}</flux:button>
+                            @if ($mayChangeCosts)
+                                <flux:button size="sm" variant="ghost" wire:click="openVoid({{ $cost->id }})" data-test="void-job-cost">{{ __('Void') }}</flux:button>
+                            @endif
                         </div>
                     @endif
                 </li>
@@ -283,7 +348,29 @@ new class extends Component {
         </ul>
     @endif
 
+    {{-- Submitting job costing (step 19b): once the customer has signed off. --}}
+    @if ($mayRecord && $state === 'open')
+        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-200 pt-3">
+            <flux:text class="text-sm">
+                {{ $this->project->production_state === ProjectProductionState::SignedOff ? __('When every cost is in, submit job costing. Changes after that are corrections, with why.') : __('Job costing is submitted once the customer has signed off.') }}
+            </flux:text>
+            @if ($this->project->production_state === ProjectProductionState::SignedOff)
+                <flux:button size="sm" variant="primary" wire:click="openSubmit" data-test="submit-job-costing">{{ __('Submit job costing') }}</flux:button>
+            @endif
+        </div>
+    @endif
+
     @if ($mayRecord)
+        <x-confirmation-modal
+            name="submit-job-costing"
+            :title="__('Submit job costing?')"
+            :description="__('The provisional gross margin is kept as it is now: :figure. A cost added or voided after this is a correction, with why; materials or rentals without a purchase order count as accuracy strikes.', ['figure' => $costing->marginWords()])"
+            action="submit"
+            :confirm-label="__('Submit')"
+            confirm-variant="primary"
+            :error="['jobCosting']"
+        />
+
         <flux:modal name="job-cost" class="w-full max-w-lg">
             <form wire:submit="saveCost" class="flex flex-col gap-5">
                 <flux:error name="cost" />
@@ -306,7 +393,7 @@ new class extends Component {
                     <flux:input wire:model="costPurchaseOrder" maxlength="{{ ProjectCost::PURCHASE_ORDER_LENGTH }}" :label="__('Purchase order')" :description="__('Materials and rentals need one.')" data-test="cost-purchase-order" />
                 </div>
 
-                <flux:textarea wire:model="costReason" rows="2" :label="__('Note (optional)')" data-test="cost-reason" />
+                <flux:textarea wire:model="costReason" rows="2" :label="$state === 'open' ? __('Note (optional)') : __('Why it is added now (required: job costing was submitted)')" data-test="cost-reason" />
 
                 <div class="flex flex-col gap-2">
                     <flux:input type="file" wire:model="costReceipt" accept=".pdf,.jpg,.jpeg,.png,.heic,application/pdf,image/jpeg,image/png,image/heic" :label="__('The receipt (attach it now or later)')" data-test="cost-receipt-file" />

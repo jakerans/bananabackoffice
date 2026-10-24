@@ -3,7 +3,9 @@
 namespace App\Support\Projects;
 
 use App\Models\Project;
+use App\Models\ProjectAccuracyStrike;
 use App\Models\ProjectCost;
+use App\Models\ProjectJobCostingStep;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -19,13 +21,36 @@ use Illuminate\Database\Eloquent\Collection;
  */
 final readonly class JobCosting
 {
+    public const string OPEN = 'open';
+
+    public const string SUBMITTED = 'submitted';
+
+    public const string APPROVED = 'approved';
+
+    public const string CLOSED = 'closed';
+
+    public const string REOPENED = 'reopened';
+
+    /** Where a job's costing stands, with how each is said, in English. */
+    public const array STATES = [
+        self::OPEN => 'Open',
+        self::SUBMITTED => 'Submitted',
+        self::APPROVED => 'Approved by Finance',
+        self::CLOSED => 'Financially closed',
+        self::REOPENED => 'Reopened',
+    ];
+
     /**
      * @param  Collection<int, ProjectCost>  $costs  Not voided, with their receipts.
+     * @param  Collection<int, ProjectJobCostingStep>  $steps  Every step, the earliest first.
+     * @param  Collection<int, ProjectAccuracyStrike>  $strikes  This job's accuracy strikes.
      */
     private function __construct(
         public Project $project,
         public AfterPayouts $afterPayouts,
         public Collection $costs,
+        public Collection $steps,
+        public Collection $strikes,
     ) {}
 
     public static function for(Project $project): self
@@ -36,7 +61,58 @@ final readonly class JobCosting
             $project,
             AfterPayouts::for($project),
             $project->costs()->whereNull('voided_at')->with('receipts')->get(),
+            ProjectJobCostingStep::query()->where('project_id', $project->id)->orderBy('id')->get(),
+            ProjectAccuracyStrike::query()->where('project_id', $project->id)->orderBy('id')->get(),
         );
+    }
+
+    /**
+     * Where the job's costing stands: open until the Production Manager
+     * submits it (step 19b), then as its latest step says (step 19c).
+     */
+    public function state(): string
+    {
+        return $this->steps->last()->kind ?? self::OPEN;
+    }
+
+    public function stateLabel(): string
+    {
+        return self::STATES[$this->state()] ?? $this->state();
+    }
+
+    /**
+     * Whether costs added or voided now are corrections: after submission,
+     * until Finance approves.
+     */
+    public function takesCorrections(): bool
+    {
+        return in_array($this->state(), [self::SUBMITTED, self::REOPENED], true);
+    }
+
+    /**
+     * Whether the Production Manager can no longer change a cost: approved
+     * or closed, until Finance reopens it.
+     */
+    public function isLocked(): bool
+    {
+        return in_array($this->state(), [self::APPROVED, self::CLOSED], true);
+    }
+
+    /**
+     * The Production Manager's latest submission: the provisional gross margin.
+     */
+    public function provisional(): ?ProjectJobCostingStep
+    {
+        return $this->steps->where('kind', ProjectJobCostingStep::KIND_SUBMITTED)->last();
+    }
+
+    /**
+     * Finance's approval in force: the final gross margin. None after a
+     * reopening until Finance approves again.
+     */
+    public function final(): ?ProjectJobCostingStep
+    {
+        return $this->isLocked() ? $this->steps->where('kind', ProjectJobCostingStep::KIND_APPROVED)->last() : null;
     }
 
     public function contractCents(): int

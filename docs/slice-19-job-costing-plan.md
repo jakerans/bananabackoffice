@@ -126,3 +126,34 @@ Built on `checkpoint-slice-19-job-costing` under decision 170.
 - **History:** each cost recorded or voided is in the audit record, never
   in the customer's Activity.
 - **Tests:** `tests/Feature/Projects/JobCostsTest.php`, 10 tests.
+
+## Step 19b as built (2026-10-24)
+
+- **Submitting** (`RecordJobCosts::submit`): "Submit job costing" on the
+  job, once the customer has signed off and every Work Package has its
+  payout, in a confirmation that shows the figure. It keeps a step
+  (`project_job_costing_steps`) with the contract, payouts, costs and the
+  **provisional gross margin** as they are then. The job's costing reads
+  Submitted.
+- **Corrections:** after submission, a cost added needs why ("Why it is
+  added now"); a cost voided needs why, as before. Both are kept, marked as
+  corrections.
+- **Accuracy strikes** (`project_accuracy_strikes`, decision 133), against
+  the job's Production Manager:
+  - at submission, each material or rental with no purchase order (other
+    kinds, such as W-2 labour, do not take one);
+  - after submission, a material or rental added with no purchase order,
+    and any cost added or voided above the larger of $250 or 2% of the
+    contract.
+  The job shows its strikes, and how many the Production Manager has in the
+  last 90 days. Their third in a rolling 90 days, and each third after,
+  tells the Location's managers and Leadership by the bell (question 7);
+  nothing else happens.
+- **Tests:** `tests/Feature/Projects/JobCostingSubmitTest.php`, 8 tests.
+
+### Deviation from the plan
+
+Decision 133 says "a missing PO" is a strike. As built, only materials and
+equipment rentals take a purchase order, so only those are struck for
+lacking one; permits, disposal, W-2 labour, warranty and other costs are
+not.
