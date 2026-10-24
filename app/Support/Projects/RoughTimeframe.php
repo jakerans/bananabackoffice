@@ -23,6 +23,9 @@ final class RoughTimeframe
     /** How many business days a job may wait for its welcome call before it is flagged (decision 141). */
     public const int WELCOME_CALL_BUSINESS_DAYS = 2;
 
+    /** How long the Production Manager has to call once the deposit is paid (decision 162, question 8). */
+    public const int DEPOSIT_CALL_HOURS = 24;
+
     /** The longest note or reason kept. */
     public const int NOTE_LENGTH = 1000;
 
@@ -73,15 +76,23 @@ final class RoughTimeframe
 
     /**
      * The moment a job that nobody has called starts to count as falling
-     * behind: two business days after its Production Manager took it or was
-     * given it, in the Location's time. Monday to Friday; public holidays are
-     * not known and count as working days. Nothing when it is not waiting
-     * for a call.
+     * behind. Once its deposit is paid: 24 hours after that, or after its
+     * Production Manager got it if that was later (slice 17, step 17b;
+     * product-architecture.md, 10.6). Before: two business days after its
+     * Production Manager took it or was given it, in the Location's time;
+     * Monday to Friday, and public holidays are not known and count as
+     * working days. Nothing when it is not waiting for a call.
      */
     public static function welcomeCallDueAt(Project $project): ?CarbonImmutable
     {
         if ($project->isCancelled() || $project->welcome_call_on !== null || $project->production_manager_id === null || $project->production_manager_assigned_at === null) {
             return null;
+        }
+
+        if ($project->deposit_paid_at !== null) {
+            return CarbonImmutable::instance($project->deposit_paid_at->max($project->production_manager_assigned_at))
+                ->addHours(self::DEPOSIT_CALL_HOURS)
+                ->utc();
         }
 
         return CarbonImmutable::instance($project->production_manager_assigned_at)

@@ -4,8 +4,8 @@ Status: **approved on 2026-10-22 (decision 162) in three steps, each stopping
 for Jacob's review, with the recommendation on all eight questions. Step 17a
 is being built.** Written as what the implementation agent recommended from
 the plan check below. **Step 17a is merged (decision 163); see "Step 17a as
-built". Step 17b waits for Jacob's word, and adds decision 163's approval
-rule.**
+built". Step 17b is built and awaiting Jacob's review; see "Step 17b as
+built".**
 
 ## Why this is next (the plan check)
 
@@ -150,3 +150,40 @@ Built on `checkpoint-slice-17a-payments` under decision 162.
   Finance. Decision 163: someone else approves, once they see the money in
   the bank; built in 17b.
 - **Existing jobs** read "Deposit due" until their invoices are recorded.
+
+## Step 17b as built (2026-10-23)
+
+Built on `checkpoint-slice-17b-deposit` under decisions 162 and 163.
+
+- **The deposit policy:** a percent of the sold price before tax for each
+  Location, 50 by default, in Settings > Locations ("Deposit"), set by
+  whoever manages Locations. A change applies to every job there whose
+  deposit a manager did not change; invoices already recorded stay as they
+  are.
+- **A smaller deposit, or none,** on one job: "Change the deposit" in its
+  Payments section, by a manager there (`projects.manage`), with a reason,
+  never above the policy's amount, and only until the deposit invoice is
+  recorded. Each change is kept; the latest counts. "0" waives it, and the
+  job then reads **No deposit**. The deposit invoice's suggested amount is
+  the deposit asked for.
+- **The full deposit** is recorded as collected only when what was paid on
+  the deposit invoice reaches the policy's amount, for the sales commission
+  advance later (5.7); a lowered or waived deposit is not a full one.
+- **Deposit paid:** the moment the deposit invoice is paid in full (after
+  Finance's approval, for cash and check), the job keeps when, and its
+  Production Manager is told by the bell, unless the customer was called
+  already. A reversal that leaves it unpaid clears it.
+- **The call within 24 hours** is the **welcome call** the Production
+  Manager already ticks (slice 10): once the deposit is paid, it is due 24
+  hours after that, or after the Production Manager got the job if that was
+  later, and shows as falling behind on the job and on Production >
+  Workspace once missed. Before the deposit is paid, the slice 10 rule of
+  two business days stands. *This is the agent's reading of decision 162,
+  question 8: one call, one tick, rather than a second tick for the same
+  call. Jacob can change it.*
+- **Approving cash and check** (decision 163): the confirmation asks "Is it
+  in the bank account?", and whoever recorded the payment cannot approve
+  it, unless they are the Owner.
+- **History:** a deposit lowered or waived is in the job's activity, with
+  the reason; a policy change is in the audit record.
+- **Tests:** `tests/Feature/Projects/DepositTest.php`, 22 tests.

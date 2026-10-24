@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Locations\ChangeDepositPolicy;
 use App\Actions\Locations\ChangeLocationTimezone;
 use App\Actions\Locations\DeactivateLocation;
 use App\Actions\Locations\UpdateServiceAreaPostalCodes;
@@ -29,6 +30,12 @@ new #[Title('Locations')] class extends Component {
     public ?int $editingId = null;
 
     public string $editingName = '';
+
+    /** The location whose deposit policy is open, and its percent as typed (slice 17, step 17b). */
+    #[Locked]
+    public ?int $depositLocationId = null;
+
+    public string $depositPercent = '';
 
     #[Locked]
     public ?int $timezoneLocationId = null;
@@ -191,6 +198,44 @@ new #[Title('Locations')] class extends Component {
     /**
      * Open the timezone dialog for a location.
      */
+    public function editDeposit(int $locationId): void
+    {
+        $location = Location::query()->findOrFail($locationId);
+
+        $this->authorize('update', $location);
+
+        $this->depositLocationId = $location->id;
+        $this->depositPercent = (string) $location->deposit_percent;
+        $this->resetValidation('depositPercent');
+
+        Flux::modal('location-deposit')->show();
+    }
+
+    /**
+     * Save the deposit policy of the location being edited.
+     */
+    public function saveDeposit(ChangeDepositPolicy $changeDepositPolicy): void
+    {
+        $location = Location::query()->findOrFail($this->depositLocationId);
+
+        $changeDepositPolicy->handle($location, $this->depositPercent, Auth::user());
+
+        $this->reset('depositLocationId', 'depositPercent');
+        unset($this->locations);
+
+        Flux::modal('location-deposit')->close();
+        Flux::toast(variant: 'success', text: __('Deposit policy saved.'));
+    }
+
+    /**
+     * The location whose deposit policy is being edited.
+     */
+    #[Computed]
+    public function depositLocation(): ?Location
+    {
+        return $this->depositLocationId === null ? null : Location::query()->find($this->depositLocationId);
+    }
+
     public function editTimezone(int $locationId): void
     {
         $location = Location::query()->findOrFail($locationId);
@@ -514,6 +559,7 @@ new #[Title('Locations')] class extends Component {
                     <flux:table.column>{{ __('Location') }}</flux:table.column>
                     <flux:table.column>{{ __('Status') }}</flux:table.column>
                     <flux:table.column>{{ __('Timezone') }}</flux:table.column>
+                    <flux:table.column align="end">{{ __('Deposit') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('ZIP codes served') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('Access grants') }}</flux:table.column>
                     <flux:table.column align="end"><span class="sr-only">{{ __('Actions') }}</span></flux:table.column>
@@ -533,6 +579,7 @@ new #[Title('Locations')] class extends Component {
                             </flux:table.cell>
 
                             <flux:table.cell data-test="location-timezone-{{ $location->id }}">{{ LocationTimezones::label($location->timezone) }}</flux:table.cell>
+                            <flux:table.cell align="end" class="tabular-nums" data-test="location-deposit-{{ $location->id }}">{{ $location->deposit_percent }}%</flux:table.cell>
 
                             <flux:table.cell align="end" class="tabular-nums">{{ $location->service_postal_codes_count }}</flux:table.cell>
                             <flux:table.cell align="end" class="tabular-nums">{{ $location->access_grants_count }}</flux:table.cell>
@@ -542,6 +589,7 @@ new #[Title('Locations')] class extends Component {
                                     <flux:button size="sm" wire:click="editServiceArea({{ $location->id }})">{{ __('Service area') }}</flux:button>
                                     <flux:button size="sm" wire:click="editRequirements({{ $location->id }})" data-test="subcontractor-requirements-{{ $location->id }}">{{ __('Subcontractor requirements') }}</flux:button>
                                     <flux:button size="sm" wire:click="editTimezone({{ $location->id }})">{{ __('Timezone') }}</flux:button>
+                                    <flux:button size="sm" wire:click="editDeposit({{ $location->id }})" data-test="deposit-policy-{{ $location->id }}">{{ __('Deposit') }}</flux:button>
                                     <flux:button size="sm" wire:click="edit({{ $location->id }})">{{ __('Rename') }}</flux:button>
 
                                     @if ($location->is_active)
@@ -644,6 +692,27 @@ new #[Title('Locations')] class extends Component {
                 </flux:modal.close>
 
                 <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="location-deposit" class="w-full max-w-md">
+        <form wire:submit="saveDeposit" class="flex flex-col gap-6">
+            <div>
+                <flux:heading size="lg">{{ __('Deposit: :location', ['location' => $this->depositLocation?->name]) }}</flux:heading>
+                <flux:subheading>
+                    {{ __('The share of the sold price, before tax, asked for as a deposit on every job here. A manager may lower or waive it on one job, with a reason. Invoices already recorded do not change.') }}
+                </flux:subheading>
+            </div>
+
+            <flux:input wire:model="depositPercent" inputmode="numeric" :label="__('Percent of the sold price')" icon-trailing="percent-badge" class="max-w-40" data-test="deposit-percent" />
+
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+
+                <flux:button type="submit" variant="primary" data-test="save-deposit-policy">{{ __('Save') }}</flux:button>
             </div>
         </form>
     </flux:modal>

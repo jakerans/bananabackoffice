@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property bool $is_active
  * @property string $timezone
+ * @property int $deposit_percent The share of the sold price asked for as a deposit (slice 17, step 17b): 50 by default.
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -36,7 +37,11 @@ class Location extends Model
     protected $attributes = [
         'is_active' => true,
         'timezone' => LocationTimezones::DEFAULT,
+        'deposit_percent' => self::DEFAULT_DEPOSIT_PERCENT,
     ];
+
+    /** The deposit asked for unless a Location sets its own (product-architecture.md, 10.4). */
+    public const int DEFAULT_DEPOSIT_PERCENT = 50;
 
     /**
      * Get the attributes that should be cast.
@@ -47,6 +52,7 @@ class Location extends Model
     {
         return [
             'is_active' => 'boolean',
+            'deposit_percent' => 'integer',
         ];
     }
 
