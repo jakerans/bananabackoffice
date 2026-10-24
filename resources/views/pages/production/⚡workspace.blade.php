@@ -7,11 +7,14 @@ use App\Enums\ProjectProductionState;
 use App\Enums\Role;
 use App\Models\Location;
 use App\Models\Project;
+use App\Models\ProjectInvoice;
 use App\Models\User;
 use App\Models\WorkPackage;
 use App\Models\WorkPackageWindow;
 use App\Support\Access\CurrentLocation;
+use App\Support\Money;
 use App\Support\Projects\NeedsDatesSoon;
+use App\Support\Projects\Payments;
 use App\Support\Projects\Readiness;
 use App\Support\Projects\RoughTimeframe;
 use Carbon\CarbonImmutable;
@@ -34,7 +37,8 @@ use Livewire\Component;
  * salesperson's handoff, which Production can see coming and cannot take yet
  * (decision 132); and pre-production in two parts, getting ready, each job
  * with what it still needs, and ready to schedule (slice 10, step 10c); and
- * scheduled, with its confirmed dates (slice 11, step 11b). A
+ * scheduled, with its confirmed dates (slice 11, step 11b); and the final
+ * balances to chase today (slice 17, step 17c). A
  * manager assigns the Production Manager; a Production Manager can take a
  * ready job themselves.
  *
@@ -97,6 +101,31 @@ new #[Title('Workspace')] class extends Component {
             ->standing()
             ->where('location_id', $this->location?->id ?? 0)
             ->with(['account', 'property', 'proposal']);
+    }
+
+    /**
+     * The final balances to chase today (slice 17, step 17c; product-architecture.md,
+     * 10.6): owed, not yet with Collections, on a chase day, and nobody has
+     * contacted the customer today. The signed-in person's own first, then
+     * the longest owed.
+     *
+     * @return \Illuminate\Support\Collection<int, Payments>
+     */
+    #[Computed]
+    public function toChase(): \Illuminate\Support\Collection
+    {
+        return $this->standing()
+            ->whereHas('invoices', fn (Builder $invoices) => $invoices->where('kind', ProjectInvoice::KIND_FINAL)->whereNull('voided_at'))
+            ->with('location')
+            ->get()
+            ->map(fn (Project $project): Payments => Payments::for($project))
+            ->filter(fn (Payments $payments): bool => $payments->isToChaseToday())
+            ->sortBy([
+                fn (Payments $a, Payments $b): int => ($a->project->production_manager_id === Auth::id() ? 0 : 1) <=> ($b->project->production_manager_id === Auth::id() ? 0 : 1),
+                fn (Payments $a, Payments $b): int => $b->daysSinceFinal() <=> $a->daysSinceFinal(),
+            ])
+            ->take(self::LIMIT)
+            ->values();
     }
 
     /**
@@ -337,7 +366,7 @@ new #[Title('Workspace')] class extends Component {
 
     private function changed(): void
     {
-        unset($this->location, $this->awaitingHandoff, $this->newFromSales, $this->gettingReady, $this->readyToSchedule, $this->scheduled, $this->inProgress, $this->workComplete, $this->inPreProductionSince, $this->productionManagers, $this->manages, $this->takes);
+        unset($this->location, $this->toChase, $this->awaitingHandoff, $this->newFromSales, $this->gettingReady, $this->readyToSchedule, $this->scheduled, $this->inProgress, $this->workComplete, $this->inPreProductionSince, $this->productionManagers, $this->manages, $this->takes);
     }
 }; ?>
 
@@ -412,6 +441,33 @@ new #[Title('Workspace')] class extends Component {
         @endif
 
         <flux:error name="productionManagerId" />
+
+        {{-- Final balances to chase today (slice 17, step 17c). Shown only when there are some. --}}
+        @if ($this->toChase->isNotEmpty())
+            <div class="flex flex-col gap-4 rounded-xl border border-amber-300 bg-card p-5" data-test="workspace-to-chase">
+                <div>
+                    <flux:heading size="lg" level="2">{{ __('Balances to chase today') }}</flux:heading>
+                    <flux:subheading>{{ __('Contact these customers about what they owe, then record the contact on the job. Yours come first.') }}</flux:subheading>
+                </div>
+
+                <ul class="flex flex-col divide-y divide-zinc-200">
+                    @foreach ($this->toChase as $owed)
+                        <li wire:key="workspace-chase-{{ $owed->project->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="workspace-chase-project">
+                            <div class="flex min-w-0 flex-1 flex-col">
+                                <flux:link :href="route('projects.show', $owed->project)" wire:navigate class="font-semibold">{{ $owed->project->title }}</flux:link>
+                                <span class="text-sm text-zinc-700">
+                                    {{ trans_choice('{0} :amount owed; the final invoice went out today.|{1} :amount owed; the final invoice went out yesterday.|[2,*] :amount owed; the final invoice went out :count days ago.', (int) $owed->daysSinceFinal(), ['amount' => $owed->balance()]) }}
+                                    @if ($owed->isLate())
+                                        <flux:badge size="sm" color="rose">{{ __('Late') }}</flux:badge>
+                                    @endif
+                                </span>
+                                <span class="text-sm text-zinc-500">{{ $owed->project->production_manager_name ?? __('No Production Manager yet') }}</span>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="workspace-new">
             <div>

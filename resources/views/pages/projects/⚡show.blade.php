@@ -51,7 +51,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::AttachmentAdded, AuditAction::AttachmentRemoved, AuditAction::AttachmentPurged,
         AuditAction::ProjectInvoiceRecorded, AuditAction::ProjectInvoiceVoided,
         AuditAction::ProjectPaymentRecorded, AuditAction::ProjectPaymentApproved, AuditAction::ProjectPaymentReversed,
-        AuditAction::ProjectDepositChanged,
+        AuditAction::ProjectDepositChanged, AuditAction::ProjectCollectionContactRecorded,
     ];
 
     #[Locked]
@@ -140,6 +140,7 @@ new #[Title('Project')] class extends Component {
                 ? __('Payment recorded, waiting for Finance\'s approval: :amount by :method toward the :invoice', ['amount' => Money::format((int) ($event->values_after['amount_cents'] ?? 0)), 'method' => mb_strtolower((string) ($event->values_after['method'] ?? '')), 'invoice' => mb_strtolower((string) ($event->values_after['invoice'] ?? ''))])
                 : __('Payment recorded: :amount by :method toward the :invoice', ['amount' => Money::format((int) ($event->values_after['amount_cents'] ?? 0)), 'method' => mb_strtolower((string) ($event->values_after['method'] ?? '')), 'invoice' => mb_strtolower((string) ($event->values_after['invoice'] ?? ''))])),
             AuditAction::ProjectPaymentApproved => __('Payment approved: :amount by :method', ['amount' => Money::format((int) ($event->values_after['amount_cents'] ?? 0)), 'method' => mb_strtolower((string) ($event->values_after['method'] ?? ''))]),
+            AuditAction::ProjectCollectionContactRecorded => __('The customer was contacted about the balance'),
             AuditAction::ProjectDepositChanged => ((int) ($event->values_after['required_cents'] ?? 0)) === 0
                 ? __('Deposit waived')
                 : __('Deposit lowered to :amount', ['amount' => Money::format((int) ($event->values_after['required_cents'] ?? 0))]),

@@ -69,6 +69,9 @@ new class extends Component {
 
     public string $depositReason = '';
 
+    /** A note about a contact with the customer about the balance (step 17c). */
+    public string $contactNote = '';
+
     public function mount(Project $project): void
     {
         $this->authorize('view', $project);
@@ -124,6 +127,23 @@ new class extends Component {
     public function mayChangeDeposit(): bool
     {
         return Gate::allows('changeDeposit', $this->project);
+    }
+
+    public function openContact(): void
+    {
+        $this->authorize('recordPayments', $this->project);
+
+        $this->contactNote = '';
+        $this->resetValidation();
+
+        Flux::modal('collection-contact')->show();
+    }
+
+    public function saveContact(RecordPayments $recordPayments): void
+    {
+        $recordPayments->recordContact($this->project, $this->contactNote, Auth::user());
+
+        $this->done('collection-contact', __('Contact recorded.'));
     }
 
     public function openDeposit(): void
@@ -341,6 +361,37 @@ new class extends Component {
         </div>
     </dl>
 
+    {{-- The final balance: when it is due, whether it is late or with Collections, and who contacted the customer (step 17c). --}}
+    @if ($standing->hasOpenBalance())
+        <div class="flex flex-wrap items-start justify-between gap-3 rounded-lg p-3 {{ $standing->isLate() ? 'bg-rose-50' : 'bg-zinc-50' }}" data-test="balance-due">
+            <div class="flex min-w-56 flex-1 flex-col gap-1 text-sm">
+                <span class="flex flex-wrap items-center gap-2 text-ink">
+                    @if ($standing->inCollections())
+                        <flux:badge size="sm" color="rose" data-test="balance-collections">{{ __('Collections') }}</flux:badge>
+                        {{ __('Still owed :days days after the final invoice: Finance chases it now.', ['days' => $standing->daysSinceFinal()]) }}
+                    @elseif ($standing->isLate())
+                        <flux:badge size="sm" color="rose" data-test="balance-late">{{ __('Late') }}</flux:badge>
+                        {{ __('The balance was due on :day. A late fee applies; add it to the invoice in QuickBooks.', ['day' => $standing->balanceDueOn()->format('M j, Y')]) }}
+                    @else
+                        {{ __('The balance is due on :day.', ['day' => $standing->balanceDueOn()->format('M j, Y')]) }}
+                    @endif
+                </span>
+                @if ($standing->isToChaseToday())
+                    <span class="text-amber-700" data-test="balance-chase-today">{{ __('Contact the customer about it today.') }}</span>
+                @endif
+                @foreach ($standing->contacts->take(5) as $contact)
+                    <span wire:key="contact-{{ $contact->id }}" class="text-zinc-600" data-test="balance-contact">
+                        {{ __('Contacted :day by :name', ['day' => $contact->contacted_on->format('M j'), 'name' => $contact->recorded_by_name ?? __('Unknown')]) }}@if ($contact->note !== null): &ldquo;{{ $contact->note }}&rdquo;@endif
+                    </span>
+                @endforeach
+            </div>
+
+            @if ($mayRecord)
+                <flux:button size="sm" variant="ghost" icon="phone" wire:click="openContact" data-test="record-contact">{{ __('Record a contact') }}</flux:button>
+            @endif
+        </div>
+    @endif
+
     @if ($awaiting > 0)
         <flux:text class="text-sm text-amber-700" data-test="payment-awaiting">{{ __(':amount in cash or check waits for Finance\'s approval.', ['amount' => Money::format($awaiting)]) }}</flux:text>
     @endif
@@ -503,6 +554,27 @@ new class extends Component {
                     </flux:modal.close>
 
                     <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="paymentReceipt" data-test="save-payment">{{ __('Record') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+    @endif
+
+    @if ($mayRecord)
+        <flux:modal name="collection-contact" class="w-full max-w-lg">
+            <form wire:submit="saveContact" class="flex flex-col gap-5">
+                <div>
+                    <flux:heading size="lg">{{ __('Record a contact') }}</flux:heading>
+                    <flux:subheading>{{ __('You contacted the customer about the balance today. It comes off today\'s list.') }}</flux:subheading>
+                </div>
+
+                <flux:textarea wire:model="contactNote" rows="2" :label="__('Note (optional)')" :placeholder="__('Left a voicemail, promised to pay Friday...')" data-test="contact-note" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-contact">{{ __('Record') }}</flux:button>
                 </div>
             </form>
         </flux:modal>

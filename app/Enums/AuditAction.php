@@ -121,6 +121,7 @@ enum AuditAction: string
     case ProjectPaymentApproved = 'project.payment_approved';
     case ProjectPaymentReversed = 'project.payment_reversed';
     case ProjectDepositChanged = 'project.deposit_changed';
+    case ProjectCollectionContactRecorded = 'project.collection_contact_recorded';
     case LocationDepositPolicyChanged = 'location.deposit_policy_changed';
     case AttachmentAdded = 'attachment.added';
     case AttachmentRemoved = 'attachment.removed';

@@ -57,6 +57,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('production/subcontractors', 'pages::production.subcontractors')->can(Permission::ViewSubcontractors)->name('production.subcontractors');
     Route::livewire('production/subcontractors/{subcontractor}', 'pages::production.subcontractor')->can('view', 'subcontractor')->name('production.subcontractors.show');
 
+    // Finance > Receivables: what customers still owe, at the Locations the person has Finance for (slice 17, step 17c).
+    Route::livewire('finance/receivables', 'pages::finance.receivables')->can(Permission::FinanceAccess)->name('finance.receivables');
+
     // An attached file opens by a five-minute link, given after checking the person may see
     // what it belongs to (slice 16; decision 33). Never a lasting address.
     Route::get('attachments/{attachment}', OpenAttachmentController::class)->name('attachments.open');

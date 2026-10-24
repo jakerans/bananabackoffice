@@ -3,10 +3,12 @@
 namespace App\Support\Projects;
 
 use App\Models\Project;
+use App\Models\ProjectCollectionContact;
 use App\Models\ProjectDepositChange;
 use App\Models\ProjectInvoice;
 use App\Models\ProjectPayment;
 use App\Support\Money;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -28,6 +30,15 @@ final class Payments
     /** A manager waived the deposit (step 17b). */
     public const string NO_DEPOSIT = 'no_deposit';
 
+    /** The final balance is due this many days after the final invoice was sent (product-architecture.md, 10.6). */
+    public const int DUE_DAYS = 7;
+
+    /** From this many days after the final invoice it moves to Collections, which is Finance (decision 162, question 6). */
+    public const int COLLECTIONS_DAYS = 30;
+
+    /** The days after the final invoice it is chased: daily for three days, on the due day and day 14, then weekly. */
+    public const array CHASE_DAYS = [1, 2, 3, 7, 14];
+
     /** The states, with how each is said, in English. */
     public const array STATES = [
         self::DEPOSIT_DUE => 'Deposit due',
@@ -41,12 +52,14 @@ final class Payments
      * @param  Collection<int, ProjectInvoice>  $invoices  Not voided.
      * @param  Collection<int, ProjectPayment>  $payments  Not reversed.
      * @param  ProjectDepositChange|null  $depositChange  The latest smaller deposit, or none, set by a manager.
+     * @param  Collection<int, ProjectCollectionContact>  $contacts  Each contact about the balance, the latest first.
      */
     private function __construct(
         public readonly Project $project,
         public readonly Collection $invoices,
         public readonly Collection $payments,
         public readonly ?ProjectDepositChange $depositChange,
+        public readonly Collection $contacts,
     ) {}
 
     public static function for(Project $project): self
@@ -56,8 +69,85 @@ final class Payments
         $invoices = $project->invoices()->whereNull('voided_at')->get();
         $payments = $project->payments()->whereNull('reversed_at')->get();
         $depositChange = $project->depositChanges()->reorder()->orderByDesc('id')->first();
+        $contacts = $project->collectionContacts()->reorder()->orderByDesc('contacted_on')->orderByDesc('id')->get();
 
-        return new self($project, $invoices, $payments, $depositChange);
+        return new self($project, $invoices, $payments, $depositChange, $contacts);
+    }
+
+    /**
+     * Whether the final balance is still owed: a final invoice, and less paid
+     * than everything invoiced.
+     */
+    public function hasOpenBalance(): bool
+    {
+        return $this->final() !== null && $this->balanceCents() > 0;
+    }
+
+    /**
+     * The day the final balance is due: seven days after the final invoice
+     * was sent.
+     */
+    public function balanceDueOn(): ?CarbonImmutable
+    {
+        $final = $this->final();
+
+        return $final === null ? null : CarbonImmutable::instance($final->sent_on)->addDays(self::DUE_DAYS);
+    }
+
+    /**
+     * How many days ago the final invoice was sent, where the job is.
+     */
+    public function daysSinceFinal(): ?int
+    {
+        $final = $this->final();
+
+        return $final === null ? null : (int) CarbonImmutable::instance($final->sent_on)->diffInDays(RoughTimeframe::today($this->project->location));
+    }
+
+    /**
+     * Whether the final balance is late: still owed on the day it was due or
+     * after. A late fee applies, added in QuickBooks (decision 162, question 5).
+     */
+    public function isLate(): bool
+    {
+        return $this->hasOpenBalance() && $this->daysSinceFinal() >= self::DUE_DAYS;
+    }
+
+    /**
+     * Whether the final balance is with Collections: still owed 30 days after
+     * the final invoice. It leaves the Production Manager's list.
+     */
+    public function inCollections(): bool
+    {
+        return $this->hasOpenBalance() && $this->daysSinceFinal() >= self::COLLECTIONS_DAYS;
+    }
+
+    /**
+     * Whether the customer is to be contacted about the balance today: on
+     * days 1, 2, 3, 7 and 14 after the final invoice, then every seven days,
+     * until Collections has it; and nobody has contacted them today yet.
+     */
+    public function isToChaseToday(): bool
+    {
+        $days = $this->daysSinceFinal();
+
+        if (! $this->hasOpenBalance() || $days === null || $days >= self::COLLECTIONS_DAYS) {
+            return false;
+        }
+
+        $chaseDay = in_array($days, self::CHASE_DAYS, true) || ($days > 14 && ($days - 14) % 7 === 0);
+        $today = RoughTimeframe::today($this->project->location)->toDateString();
+
+        return $chaseDay && ! $this->contacts->contains(fn (ProjectCollectionContact $contact): bool => $contact->contacted_on->toDateString() === $today);
+    }
+
+    /**
+     * Who owns chasing the balance: the Production Manager, or Collections
+     * from day 30.
+     */
+    public function chasedBy(): string
+    {
+        return $this->inCollections() ? 'Collections' : ($this->project->production_manager_name ?? 'Nobody yet');
     }
 
     /**

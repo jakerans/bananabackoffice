@@ -7,6 +7,7 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Enums\Role;
 use App\Models\Project;
+use App\Models\ProjectCollectionContact;
 use App\Models\ProjectDepositChange;
 use App\Models\ProjectInvoice;
 use App\Models\ProjectPayment;
@@ -121,6 +122,49 @@ class RecordPayments
             $this->settleDeposit($project);
 
             return $invoice;
+        });
+    }
+
+    /**
+     * Record that the customer was contacted today about the balance they
+     * owe, with an optional note (step 17c). It takes the job off today's
+     * list of balances to chase.
+     *
+     * @throws ValidationException
+     * @throws AuthorizationException
+     */
+    public function recordContact(Project $project, ?string $note, User $actor): ProjectCollectionContact
+    {
+        return $this->held($project, $actor, 'recordPayments', function (Project $project) use ($note, $actor): ProjectCollectionContact {
+            if (! Payments::for($project)->hasOpenBalance()) {
+                throw ValidationException::withMessages(['contactNote' => __('Nothing is owed on the final invoice.')]);
+            }
+
+            $note = trim((string) $note);
+
+            if (mb_strlen($note) > ProjectCollectionContact::NOTE_LENGTH) {
+                throw ValidationException::withMessages(['contactNote' => __('Keep this to :max characters or fewer.', ['max' => ProjectCollectionContact::NOTE_LENGTH])]);
+            }
+
+            $contact = new ProjectCollectionContact;
+            $contact->forceFill([
+                'project_id' => $project->id,
+                'contacted_on' => RoughTimeframe::today($project->location),
+                'note' => $note === '' ? null : $note,
+                'recorded_by' => $actor->id,
+                'recorded_by_name' => $actor->name,
+            ])->save();
+
+            $this->recordAuditEvent->handle(
+                AuditAction::ProjectCollectionContactRecorded,
+                $project,
+                actor: $actor,
+                after: ['contacted_on' => $contact->contacted_on->toDateString()],
+                location: $project->location,
+                reason: $contact->note,
+            );
+
+            return $contact;
         });
     }
 

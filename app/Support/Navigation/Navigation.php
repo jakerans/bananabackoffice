@@ -311,7 +311,7 @@ class Navigation
             children: [
                 new NavigationItem('finance.performance', 'Performance', $permissions, route: 'finance.performance'),
                 new NavigationItem('finance.cash', 'Cash Management', $permissions, primary: 'finance.cash.receivables', children: [
-                    new NavigationItem('finance.cash.receivables', 'Receivables', $permissions),
+                    new NavigationItem('finance.cash.receivables', 'Receivables', $permissions, NavigationState::Live, route: 'finance.receivables'),
                     new NavigationItem('finance.cash.payments', 'Payments', $permissions),
                     new NavigationItem('finance.cash.payouts', 'Payouts', $permissions),
                 ]),
