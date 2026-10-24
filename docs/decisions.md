@@ -3342,6 +3342,20 @@ and whether the 24-hour call is the welcome call: "awesome - continue".
 3. **Step 17c, the final balance and who chases it, starts.** It stops for
    his review.
 
+## 165. Step 17c is merged; slice 17 is complete (2026-10-24)
+
+**Decided by Jacob,** in reply to the step 17c report: "continue", which in
+this project has meant merge the step and go on.
+
+1. **Step 17c is merged** as built
+   ([slice-17-customer-payments-plan.md](slice-17-customer-payments-plan.md),
+   "Step 17c as built"), with its two departures from the plan's wording:
+   Receivables grouped by the collection timeline (days 7, 14, 30), and
+   Receivables as Finance's page, managers seeing balances on each job and
+   the Workspace. **Slice 17, customer payments, is complete.**
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

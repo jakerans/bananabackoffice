@@ -338,6 +338,16 @@ class Project extends Model implements HasPhotos
     }
 
     /**
+     * Each contact with the customer about the balance (slice 17, step 17c).
+     *
+     * @return HasMany<ProjectCollectionContact, $this>
+     */
+    public function collectionContacts(): HasMany
+    {
+        return $this->hasMany(ProjectCollectionContact::class)->orderBy('id');
+    }
+
+    /**
      * The customer's payments, reversed ones too (slice 17).
      *
      * @return HasMany<ProjectPayment, $this>

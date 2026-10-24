@@ -353,7 +353,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | `finance.home` | Shortcut: opens Performance Board | — |
 | `finance.performance` | Performance Board | CS, primary |
 | `finance.cash` | Cash Management | CS |
-| `finance.cash.receivables` | Receivables | CS |
+| `finance.cash.receivables` | Receivables | **Live (slice 17, step 17c):** `/finance/receivables`, route name `finance.receivables`, `finance.access` at the Locations shown |
 | `finance.cash.payments` | Payments | CS |
 | `finance.cash.payouts` | Payouts | CS |
 | `finance.job_costing` | Job Costing | CS |

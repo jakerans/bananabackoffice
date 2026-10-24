@@ -5,7 +5,7 @@ for Jacob's review, with the recommendation on all eight questions. Step 17a
 is being built.** Written as what the implementation agent recommended from
 the plan check below. **Step 17a is merged (decision 163); see "Step 17a as
 built". Step 17b is merged (decision 164); see "Step 17b as built". Step 17c
-is being built.**
+is merged (decision 165); see "Step 17c as built". Slice 17 is complete.**
 
 ## Why this is next (the plan check)
 
@@ -186,3 +186,51 @@ Built on `checkpoint-slice-17b-deposit` under decisions 162 and 163.
 - **History:** a deposit lowered or waived is in the job's activity, with
   the reason; a policy change is in the audit record.
 - **Tests:** `tests/Feature/Projects/DepositTest.php`, 22 tests.
+
+## Step 17c as built (2026-10-24)
+
+Built on `checkpoint-slice-17c-receivables` under decisions 162 and 164.
+
+- **When the final balance is due, and who chases it**
+  (`App\Support\Projects\Payments`), all counted in days since the final
+  invoice was sent, where the job is (product-architecture.md, 10.6):
+  - due on day 7; from then it is **late**, and the job says a late fee
+    applies, to be added to the invoice in QuickBooks (question 5);
+  - to be chased on days 1, 2 and 3, on days 7 and 14, then every seven
+    days (21, 28);
+  - from day 30 it is with **Collections**, which is Finance (question 6):
+    it leaves the Production Manager's list.
+- **Contacts** (`project_collection_contacts`): "Record a contact" on the
+  job's Payments section, with an optional note, by the Production Manager,
+  a manager or Finance. A contact takes the job off that day's list; the
+  latest five show on the job, and each is in the job's activity.
+- **Production > Workspace** shows **Balances to chase today**, only when
+  there are some: the jobs at the Location on a chase day that nobody has
+  contacted today, the person's own first, then the longest owed.
+- **Finance > Receivables** (`/finance/receivables`, now live in the
+  Finance menu), for those with `finance.access`, over the Locations where
+  they hold it, or one of them: the total owed; cash and check waiting for
+  approval, each linking to its job; every final balance owed, grouped Not
+  yet due, Late days 7 to 13, Late days 14 to 29, and Collections at 30 days
+  or more, with its total, who chases it and when the customer was last
+  contacted; and deposits invoiced and not yet paid. It only reads:
+  everything is recorded on each job.
+- **Tests:** `tests/Feature/Projects/ReceivablesTest.php`, 10 tests.
+
+### Deviations from the plan
+
+1. **The groups follow the collection timeline**, counted from the final
+   invoice (not yet due, days 7 to 13, 14 to 29, 30 and over), rather than
+   the plan's "current, 1–7, 8–14, 15–30, over 30 days", so each group
+   matches a step of 10.6: the late fee at day 7, the escalation at day 14,
+   Collections at day 30.
+2. **Receivables is Finance's.** The plan also named managers, who do not
+   have the Finance Center; they see each job's balance on the job and the
+   balances to chase on Production > Workspace.
+
+### Known limits
+
+- **Nothing is sent to the customer:** the notices of 10.6 (before the
+  late fee, the day-14 escalation) are the Production Manager's calls and
+  QuickBooks' own reminders. Backoffice says whom to contact and when.
+- **Business days are not counted:** the chase days fall on weekends too.

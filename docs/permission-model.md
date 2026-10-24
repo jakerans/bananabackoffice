@@ -121,7 +121,7 @@ always limited to what the person's grants allow, in every view.
 | `marketing.access` | Location | Open the Marketing Center |
 | `sales.access` | Location | Open the Sales Center |
 | `production.access` | Location | Open the Production Center |
-| `finance.access` | Location | Open the Finance Center; record a Project's invoices and payments there, approve cash and check payments, and reverse a payment (slice 17, step 17a) |
+| `finance.access` | Location | Open the Finance Center; record a Project's invoices and payments there, approve cash and check payments, and reverse a payment (slice 17, step 17a); see Finance > Receivables for the Locations where it is held (step 17c) |
 | `color_studio.access` | Location | Open Color Studio |
 | `settings.locations.manage` | Company | Manage locations, including each Location's deposit policy (slice 17, step 17b) |
 | `settings.users.manage` | Company | Manage staff and access grants |
