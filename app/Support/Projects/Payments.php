@@ -3,6 +3,7 @@
 namespace App\Support\Projects;
 
 use App\Models\Project;
+use App\Models\ProjectChangeOrder;
 use App\Models\ProjectCollectionContact;
 use App\Models\ProjectDepositChange;
 use App\Models\ProjectInvoice;
@@ -166,6 +167,17 @@ final class Payments
     public function requiredDepositCents(): int
     {
         return $this->depositChange === null ? $this->policyDepositCents() : $this->depositChange->required_cents;
+    }
+
+    /**
+     * What the customer agreed to pay before tax, in cents: the price sold
+     * and every signed change order (slice 18, step 18a).
+     */
+    public function contractCents(): int
+    {
+        return $this->project->sold_cents + (int) $this->project->changeOrders()
+            ->where('status', ProjectChangeOrder::STATUS_SIGNED)
+            ->sum('price_change_cents');
     }
 
     /**

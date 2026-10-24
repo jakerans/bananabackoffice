@@ -3356,6 +3356,30 @@ this project has meant merge the step and go on.
 2. **Next:** the plan check after a slice, and a proposed next slice, for
    his approval.
 
+## 166. Slice 18, change orders, is approved; step 18a starts (2026-10-24)
+
+**Decided by Jacob,** in reply to the plan check after slice 17 and the
+slice 18 plan: "Follow your recommendations. Continue."
+
+1. **Slice 18 is approved** in three steps
+   ([slice-18-change-orders-plan.md](slice-18-change-orders-plan.md)), each
+   stopping for his review, with the recommendation on all eight questions:
+   - 18a, 18b, 18c, in that order;
+   - a change order counts once the signed copy is attached, with who
+     signed, how and the day;
+   - only a manager lowers the price, with a reason;
+   - the final invoice is suggested from the price sold plus every signed
+     change order, less the deposit invoice, before tax;
+   - change orders do not change the sale's Sales figures; they count
+     toward the customer's lifetime value when that is built;
+   - a change order records the working days it adds; dates move only
+     through the existing reschedule or "More days";
+   - every change of scope or payout once work is given out is a revision
+     the subcontractor accepts, with the work order sent again;
+   - the figure in 18c is "After subcontractor payouts", never "gross
+     margin" until every cost is counted.
+2. **Step 18a, customer change orders, starts.** It stops for his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

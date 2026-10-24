@@ -3,31 +3,30 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-24 · **Branch:** `main`
+**Updated:** 2026-10-24 · **Branch:** `checkpoint-slice-18a-change-orders`
 
-**State:** slice 17, customer payments, is complete and merged (decision
-165). **Slice 18, change orders, is proposed and waits for Jacob's
-approval.** Nothing of it is built.
+**State:** step 18a, customer change orders, is built and waits for Jacob's
+review (decision 166). Not merged. What was built is in
+[../slice-18-change-orders-plan.md](../slice-18-change-orders-plan.md),
+"Step 18a as built".
 
-## The proposal
+## Browser review (done locally by the agent)
 
-Plan: [../slice-18-change-orders-plan.md](../slice-18-change-orders-plan.md).
+On a job sold for $2,400 with its $900 deposit paid:
 
-- **18a:** customer change orders on a job: what changes, the price up or
-  down, the days it adds, and the customer's signature with the signed copy
-  attached. The job shows the contract total, and the final invoice is
-  suggested from it.
-- **18b:** once work is given to a subcontractor, a change of its scope or
-  payout is a revision the subcontractor accepts, and the work order is
-  sent again.
-- **18c:** what the job brings in after subcontractor payouts, before and
-  after each change, for those who may see payouts.
+1. As its Production Manager, "New change order": +$400, one day. It is a
+   draft; the contract total stays $2,400.
+2. Lowering the price is refused for the Production Manager, with a
+   message: only a manager can.
+3. "The customer signed": refused without the signed copy; with it, the
+   contract total is $2,800.
+4. The final invoice is suggested at $1,900: $2,800 less the deposit.
+5. As a manager, a change order for -$100 with a reason.
+6. The job's activity names each change order. It reads well on a phone.
 
 ## Decisions needed
 
-The plan's eight questions, each with a recommendation. "Follow your
-recommendations" is a complete answer. To start, approve the plan or step
-18a alone.
+1. **Merge 18a.**
 
 ## Optional, for Jacob
 
