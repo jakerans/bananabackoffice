@@ -176,8 +176,8 @@ step 17b (the deposit) is merged (decision 164); step 17c (the final balance
 and who chases it) is merged (decision 165). Slice 17 is complete.**
 
 **Slice 18, change orders, is approved in three steps (2026-10-24, decision
-166); step 18a (customer change orders) is built and awaiting Jacob's
-review.** The
+166); step 18a (customer change orders) is merged (decision 167); step 18b
+(subcontractor work order revisions) is being built.** The
 plan check after slice 17 found that what the customer owes, and what
 Banana owes a subcontractor, cannot yet change after the sale. Its plan is
 [slice-18-change-orders-plan.md](slice-18-change-orders-plan.md).

@@ -3380,6 +3380,17 @@ slice 18 plan: "Follow your recommendations. Continue."
      margin" until every cost is counted.
 2. **Step 18a, customer change orders, starts.** It stops for his review.
 
+## 167. Step 18a is merged; step 18b starts (2026-10-24)
+
+**Decided by Jacob,** in reply to the step 18a report: "continue", which in
+this project has meant merge the step and go on.
+
+1. **Step 18a, customer change orders, is merged** as built
+   ([slice-18-change-orders-plan.md](slice-18-change-orders-plan.md),
+   "Step 18a as built").
+2. **Step 18b, subcontractor work order revisions, starts.** It stops for
+   his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

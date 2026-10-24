@@ -2,8 +2,8 @@
 
 Status: **approved on 2026-10-24 (decision 166) in three steps, each
 stopping for Jacob's review, with the recommendation on all eight
-questions. Step 18a is built and awaiting Jacob's review; see "Step 18a as
-built".** Written as what the implementation
+questions. Step 18a is merged (decision 167); see "Step 18a as built". Step
+18b is being built.** Written as what the implementation
 agent recommended from the plan check below.
 
 ## Why this is next (the plan check)
