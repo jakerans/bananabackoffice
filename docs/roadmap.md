@@ -173,7 +173,12 @@ Slice 16 is complete.
 **Slice 17, customer payments, is approved in three steps (2026-10-22,
 decision 162); step 17a (invoices and payments) is merged (decision 163);
 step 17b (the deposit) is merged (decision 164); step 17c (the final balance
-and who chases it) is built and awaiting Jacob's review.**
+and who chases it) is merged (decision 165). Slice 17 is complete.**
+
+**Slice 18, change orders, is proposed (2026-10-24) and not approved.** The
+plan check after slice 17 found that what the customer owes, and what
+Banana owes a subcontractor, cannot yet change after the sale. Its plan is
+[slice-18-change-orders-plan.md](slice-18-change-orders-plan.md).
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the
 customer still unbuilt. Its plan is

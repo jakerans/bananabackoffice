@@ -5,7 +5,7 @@ for Jacob's review, with the recommendation on all eight questions. Step 17a
 is being built.** Written as what the implementation agent recommended from
 the plan check below. **Step 17a is merged (decision 163); see "Step 17a as
 built". Step 17b is merged (decision 164); see "Step 17b as built". Step 17c
-is built and awaiting Jacob's review; see "Step 17c as built".**
+is merged (decision 165); see "Step 17c as built". Slice 17 is complete.**
 
 ## Why this is next (the plan check)
 

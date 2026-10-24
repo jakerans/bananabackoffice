@@ -3,32 +3,31 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-24 · **Branch:** `checkpoint-slice-17c-receivables`
+**Updated:** 2026-10-24 · **Branch:** `main`
 
-**State:** step 17c, the final balance and who chases it, is built and
-waits for Jacob's review (decision 164). Not merged. It is the last step of
-slice 17. What was built is in
-[../slice-17-customer-payments-plan.md](../slice-17-customer-payments-plan.md),
-"Step 17c as built".
+**State:** slice 17, customer payments, is complete and merged (decision
+165). **Slice 18, change orders, is proposed and waits for Jacob's
+approval.** Nothing of it is built.
 
-## Browser review (done locally by the agent)
+## The proposal
 
-1. As a Production Manager, Production > Workspace shows "Balances to chase
-   today" with a job whose final invoice went out two days ago.
-2. On the job: "The balance is due on Oct 29" and "Contact the customer
-   about it today". "Record a contact" with a note: it shows on the job and
-   the job leaves today's list.
-3. As Finance, the Finance menu's Receivables opens: the total owed, the
-   job under "Not yet due" with who chases it and when it was last
-   contacted, and the other groups empty. It reads well on a phone.
+Plan: [../slice-18-change-orders-plan.md](../slice-18-change-orders-plan.md).
+
+- **18a:** customer change orders on a job: what changes, the price up or
+  down, the days it adds, and the customer's signature with the signed copy
+  attached. The job shows the contract total, and the final invoice is
+  suggested from it.
+- **18b:** once work is given to a subcontractor, a change of its scope or
+  payout is a revision the subcontractor accepts, and the work order is
+  sent again.
+- **18c:** what the job brings in after subcontractor payouts, before and
+  after each change, for those who may see payouts.
 
 ## Decisions needed
 
-1. **Merge 17c.** Slice 17 is then complete.
-2. **Two departures from the plan's wording**, both in "Step 17c as built":
-   the Receivables groups follow the collection timeline (days 7, 14, 30)
-   rather than "1–7, 8–14, 15–30"; and Receivables is Finance's, while
-   managers see balances on each job and the Workspace.
+The plan's eight questions, each with a recommendation. "Follow your
+recommendations" is a complete answer. To start, approve the plan or step
+18a alone.
 
 ## Optional, for Jacob
 
