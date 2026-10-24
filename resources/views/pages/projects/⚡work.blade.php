@@ -66,6 +66,9 @@ new class extends Component {
 
     public string $payoutReason = '';
 
+    /** The signed customer change order a revision comes from, if any (slice 18, step 18b). */
+    public string $payoutChangeOrderId = '';
+
     /** Giving the work to a subcontractor (step 13b): who, which dates, and their acceptance. */
     public string $awardSubcontractorId = '';
 
@@ -97,7 +100,7 @@ new class extends Component {
     public string $awardEndReason = '';
 
     /** @var array<string, string> The package being added or changed. */
-    public array $package = ['name' => '', 'scope' => '', 'workingDays' => '', 'minimumCrew' => ''];
+    public array $package = ['name' => '', 'scope' => '', 'workingDays' => '', 'minimumCrew' => '', 'revisionReason' => '', 'changeOrderId' => ''];
 
     /** The window being offered, each a day as "2026-11-16". */
     public string $windowFirstDay = '';
@@ -123,7 +126,7 @@ new class extends Component {
     #[Computed]
     public function project(): Project
     {
-        return Project::query()->with(['location', 'handoff', 'proposal', 'contact', 'account', 'workPackages.windows', 'workPackages.schedules', 'workPackages.payouts', 'workPackages.awards.subcontractor', 'workPackages.extensions'])->findOrFail($this->projectId);
+        return Project::query()->with(['location', 'handoff', 'proposal', 'contact', 'account', 'workPackages.windows', 'workPackages.schedules', 'workPackages.payouts', 'workPackages.awards.subcontractor', 'workPackages.extensions', 'workPackages.revisions.changeOrder'])->findOrFail($this->projectId);
     }
 
     #[Computed]
@@ -277,7 +280,19 @@ new class extends Component {
 
         $awardWorkPackage->acceptAgain($this->project, $this->packageId ?? abort(409, __('Choose the work package again. Reload the page.')), $this->acceptedBy, $this->acceptanceMethod, $this->acceptedOn, Auth::user());
 
-        $this->saved('work-accept-again', __('Their acceptance of the new payout is recorded.'));
+        $this->saved('work-accept-again', __('Their acceptance of the revised work is recorded. Send them the work order again.'));
+    }
+
+    /**
+     * This job's signed customer change orders, which a revision can come
+     * from (slice 18, step 18b).
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProjectChangeOrder>
+     */
+    #[Computed]
+    public function signedChangeOrders(): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->project->changeOrders()->where('status', \App\Models\ProjectChangeOrder::STATUS_SIGNED)->get();
     }
 
     public function openPayout(int $packageId): void
@@ -289,6 +304,7 @@ new class extends Component {
         $this->packageId = $package->id;
         $this->payoutAmount = $package->payout_cents === null ? '' : number_format($package->payout_cents / 100, $package->payout_cents % 100 === 0 ? 0 : 2, '.', '');
         $this->payoutReason = '';
+        $this->payoutChangeOrderId = '';
         $this->resetValidation();
 
         Flux::modal('work-payout')->show();
@@ -299,7 +315,7 @@ new class extends Component {
         $this->authorize('managePayouts', $this->project);
         $this->resetValidation();
 
-        $changeWorkPackages->setPayout($this->project, $this->packageId ?? abort(409, __('Choose the work package again. Reload the page.')), $this->payoutAmount, $this->payoutReason, Auth::user());
+        $changeWorkPackages->setPayout($this->project, $this->packageId ?? abort(409, __('Choose the work package again. Reload the page.')), $this->payoutAmount, $this->payoutReason, Auth::user(), $this->payoutChangeOrderId === '' ? null : (int) $this->payoutChangeOrderId);
 
         $this->saved('work-payout', __('Payout saved.'));
     }
@@ -327,6 +343,8 @@ new class extends Component {
             'scope' => $first ? (string) $this->project->handoff?->included_scope : '',
             'workingDays' => '',
             'minimumCrew' => '',
+            'revisionReason' => '',
+            'changeOrderId' => '',
         ];
         $this->resetValidation();
 
@@ -345,6 +363,8 @@ new class extends Component {
             'scope' => $package->scope,
             'workingDays' => (string) $package->working_days,
             'minimumCrew' => (string) $package->minimum_crew,
+            'revisionReason' => '',
+            'changeOrderId' => '',
         ];
         $this->resetValidation();
 
@@ -732,8 +752,26 @@ new class extends Component {
                                         &middot; {{ __('accepted by :name, :how, on :day', ['name' => $award->accepted_by, 'how' => mb_strtolower(__($award->acceptance_method->label())), 'day' => $award->accepted_on->format('M j, Y')]) }}@if ($this->seesPayouts) &middot; {{ __('at :amount', ['amount' => \App\Support\Money::format($award->payout_cents)]) }}@endif
                                     </span>
                                     <span class="text-sm text-zinc-500">{{ __('Recorded by :name', ['name' => $award->recorded_by_name ?? __('Unknown')]) }} &middot; <x-local-time :at="$award->created_at" /></span>
-                                    @if ($this->seesPayouts && $award->payout_cents !== $shown->payout_cents)
-                                        <span class="mt-1 text-sm font-medium text-amber-700" data-test="work-award-payout-changed">{{ __('The payout changed since they accepted. Record their acceptance of :amount.', ['amount' => \App\Support\Money::format((int) $shown->payout_cents)]) }}</span>
+                                    @if (! $award->matches($shown))
+                                        {{-- A revision waits for their acceptance (slice 18, step 18b). The amount only for those who may see payouts. --}}
+                                        <span class="mt-1 text-sm font-medium text-amber-700" data-test="work-award-payout-changed">
+                                            @if ($award->payout_cents !== $shown->payout_cents && $this->seesPayouts)
+                                                {{ __('The work was revised since they accepted. Record their acceptance of it, at :amount, then send the work order again.', ['amount' => \App\Support\Money::format((int) $shown->payout_cents)]) }}
+                                            @else
+                                                {{ __('The work was revised since they accepted. Record their acceptance of it, then send the work order again.') }}
+                                            @endif
+                                        </span>
+                                    @endif
+                                    @if ($shown->revisions->isNotEmpty())
+                                        <ul class="mt-1 flex flex-col gap-0.5 text-sm text-zinc-600" data-test="work-revisions">
+                                            @foreach ($shown->revisions as $revision)
+                                                <li wire:key="work-revision-{{ $revision->id }}" data-test="work-revision">
+                                                    {{ __($revision->words($this->seesPayouts)) }}@if ($revision->changeOrder !== null) &middot; {{ __('from change order :number', ['number' => $revision->changeOrder->number]) }}@endif
+                                                    &middot; &ldquo;{{ $revision->reason }}&rdquo; &middot; {{ $revision->created_by_name ?? __('Unknown') }} &middot; <x-local-time :at="$revision->created_at" />
+                                                    &middot; {{ ! $award->matches($shown) && $revision->created_at->greaterThanOrEqualTo($award->created_at) ? __('waiting for their acceptance') : __('accepted') }}
+                                                </li>
+                                            @endforeach
+                                        </ul>
                                     @endif
                                 </div>
 
@@ -745,8 +783,8 @@ new class extends Component {
 
                                 @if ($this->mayPay)
                                     <div class="flex shrink-0 flex-wrap justify-end gap-1">
-                                        @if ($award->payout_cents !== $shown->payout_cents)
-                                            <flux:button size="sm" variant="primary" wire:click="openAcceptAgain({{ $shown->id }})" data-test="work-accept-again">{{ __('They accepted the new payout') }}</flux:button>
+                                        @if (! $award->matches($shown))
+                                            <flux:button size="sm" variant="primary" wire:click="openAcceptAgain({{ $shown->id }})" data-test="work-accept-again">{{ __('They accepted the revised work') }}</flux:button>
                                         @endif
                                         <flux:button size="sm" variant="ghost" wire:click="openTakeBack({{ $shown->id }})" data-test="work-take-back">{{ __('Take back') }}</flux:button>
                                     </div>
@@ -939,6 +977,25 @@ new class extends Component {
 
                 <flux:textarea wire:model="package.scope" rows="4" maxlength="{{ WorkPackage::SCOPE_LENGTH }}" :label="__('What the work is')" data-test="work-package-scope-input" />
 
+                {{-- Work given out: a change of scope is a revision they accept (slice 18, step 18b). --}}
+                @php
+                    $changingAward = $chosen?->awards->first(fn (WorkPackageAward $award): bool => $award->isCurrent());
+                @endphp
+                @if ($changingAward !== null && $this->seesPayouts)
+                    <flux:callout icon="information-circle" data-test="work-revision-note">
+                        <flux:callout.text>{{ __('This work is given to :name. If the scope changes, say why: they accept the revision, and the work order is sent again.', ['name' => $changingAward->subcontractor->business_name]) }}</flux:callout.text>
+                    </flux:callout>
+                    <flux:textarea wire:model="package.revisionReason" rows="2" maxlength="{{ \App\Models\WorkPackageRevision::REASON_LENGTH }}" :label="__('Why the scope changes')" data-test="work-revision-reason" />
+                    @if ($this->signedChangeOrders->isNotEmpty())
+                        <flux:select wire:model="package.changeOrderId" :label="__('From a customer change order (optional)')" data-test="work-revision-change-order">
+                            <flux:select.option value="">{{ __('None') }}</flux:select.option>
+                            @foreach ($this->signedChangeOrders as $order)
+                                <flux:select.option :value="$order->id" wire:key="revision-change-order-{{ $order->id }}">{{ __('Change order :number: :price', ['number' => $order->number, 'price' => $order->priceChange()]) }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    @endif
+                @endif
+
                 <div class="grid gap-4 sm:grid-cols-2">
                     <flux:input wire:model="package.workingDays" type="number" min="1" max="{{ WorkPackage::MAX_WORKING_DAYS }}" :label="__('Working days it takes')" data-test="work-package-days-input" />
                     <flux:input wire:model="package.minimumCrew" type="number" min="1" max="{{ WorkPackage::MAX_CREW }}" :label="__('Smallest crew (people)')" data-test="work-package-crew-input" />
@@ -973,7 +1030,15 @@ new class extends Component {
                     <flux:textarea wire:model="payoutReason" rows="2" maxlength="{{ WorkPackagePayout::REASON_LENGTH }}" :label="$payoutAwarded ? __('Why it changes (required: the work is given out)') : __('Why (optional)')" data-test="work-payout-reason" />
 
                     @if ($payoutAwarded)
-                        <flux:text class="text-sm">{{ __('Their acceptance will need recording again at the new payout.') }}</flux:text>
+                        <flux:text class="text-sm">{{ __('This is a revision: their acceptance will need recording again at the new payout, and the work order sending again.') }}</flux:text>
+                        @if ($this->signedChangeOrders->isNotEmpty())
+                            <flux:select wire:model="payoutChangeOrderId" :label="__('From a customer change order (optional)')" data-test="work-payout-change-order">
+                                <flux:select.option value="">{{ __('None') }}</flux:select.option>
+                                @foreach ($this->signedChangeOrders as $order)
+                                    <flux:select.option :value="$order->id" wire:key="payout-change-order-{{ $order->id }}">{{ __('Change order :number: :price', ['number' => $order->number, 'price' => $order->priceChange()]) }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
+                        @endif
                     @endif
 
                     <div class="flex justify-end gap-2">
@@ -1086,8 +1151,8 @@ new class extends Component {
                     <flux:error name="work" />
 
                     <div>
-                        <flux:heading size="lg">{{ __('They accepted the new payout') }}</flux:heading>
-                        <flux:subheading>{{ $chosen === null ? '' : __(':name is now :amount. The acceptance at the old payout is kept.', ['name' => $chosen->name, 'amount' => \App\Support\Money::format((int) $chosen->payout_cents)]) }}</flux:subheading>
+                        <flux:heading size="lg">{{ __('They accepted the revised work') }}</flux:heading>
+                        <flux:subheading>{{ $chosen === null ? '' : __(':name, as it is now, at :amount. Their earlier acceptance is kept.', ['name' => $chosen->name, 'amount' => \App\Support\Money::format((int) $chosen->payout_cents)]) }}</flux:subheading>
                     </div>
 
                     <flux:input wire:model="acceptedBy" maxlength="{{ Subcontractor::NAME_LENGTH }}" :label="__('Who accepted for them')" data-test="accept-again-by" />

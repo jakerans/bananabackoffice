@@ -3,7 +3,8 @@
 Status: **approved on 2026-10-24 (decision 166) in three steps, each
 stopping for Jacob's review, with the recommendation on all eight
 questions. Step 18a is merged (decision 167); see "Step 18a as built". Step
-18b is being built.** Written as what the implementation
+18b is built and awaiting Jacob's review; see "Step 18b as built".** Written
+as what the implementation
 agent recommended from the plan check below.
 
 ## Why this is next (the plan check)
@@ -136,3 +137,44 @@ Built on `checkpoint-slice-18a-change-orders` under decision 166.
   the dates move through the existing reschedule or "More days" (question
   6).
 - **A subcontractor is not told yet:** that is step 18b.
+
+## Step 18b as built (2026-10-24)
+
+Built on `checkpoint-slice-18b-revisions` under decisions 166 and 167.
+
+- **Built on what slice 13 already did for payouts.** There, changing the
+  payout of work given out needed a reason, the job said "the payout
+  changed since they accepted", "They accepted the new payout" recorded a
+  new award, and the work order asked to be sent again. Step 18b makes the
+  same true of the **scope**, and keeps every change as a revision.
+- **A revision** (`work_package_revisions`) is kept for each change of
+  scope or payout once the work is given out: what it was and is, why, who,
+  when, and the customer change order it comes from, if any (one of the
+  job's signed ones). Changing the name, the days or the crew, or anything
+  before the work is given out, is no revision.
+- **Changing the scope** of work given out (the package's "Change"
+  dialog) says the work is given to the subcontractor, asks why, and offers
+  the job's signed change orders. Only someone who may see payouts can.
+  The payout dialog offers the change orders the same way.
+- **Their acceptance:** each award now keeps the scope accepted. Until the
+  subcontractor accepts the work as it is now, the job says "The work was
+  revised since they accepted", each revision reads "waiting for their
+  acceptance", and "They accepted the revised work" records a new award
+  (the earlier one is kept). Awards made before this step read the scope
+  the work has now.
+- **The work order** says it changed since it was sent when the scope
+  changed too (each sent work order now keeps its scope), so it is sent
+  again.
+- **Who sees what:** everyone who may see the job sees the revisions;
+  the payout amounts only those who may see payouts.
+- **History:** each revision is in the job's activity, naming the package,
+  scope or payout, and the change order; never the amount.
+- **Tests:** `tests/Feature/Projects/RevisionsTest.php`, 8 tests.
+
+### Deviation from the plan
+
+The plan described a revision with its own "waiting" and "accepted"
+status. As built, a revision waits while the subcontractor's current
+acceptance does not match the work as it is now, and is accepted once a
+new acceptance does: one acceptance can cover several revisions, as it
+would in practice. Nothing else is recorded twice.

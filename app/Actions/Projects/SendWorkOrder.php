@@ -77,6 +77,7 @@ class SendWorkOrder
                 'first_day' => $order->firstDay,
                 'last_day' => $order->lastDay,
                 'payout_cents' => $order->payoutCents,
+                'scope' => $package->scope,
                 'deduction_cents' => $order->deductionCents,
                 'deduction_basis_points' => $order->rate->basis_points ?? 0,
                 'sent_by' => $actor->id,

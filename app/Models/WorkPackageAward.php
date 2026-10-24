@@ -20,6 +20,7 @@ use LogicException;
  * @property int $work_package_id
  * @property int $subcontractor_id
  * @property int $payout_cents The payout they accepted.
+ * @property string|null $accepted_scope The scope they accepted (slice 18, step 18b).
  * @property Carbon $first_day The days they took.
  * @property Carbon $last_day
  * @property int|null $work_package_window_id The offered window they picked, if it was one.
@@ -104,6 +105,16 @@ class WorkPackageAward extends Model
     public function isCurrent(): bool
     {
         return $this->ended_at === null;
+    }
+
+    /**
+     * Whether they accepted the work as it is now: its payout, and its scope
+     * (slice 18, step 18b). Otherwise a revision waits for their acceptance.
+     */
+    public function matches(WorkPackage $package): bool
+    {
+        return $this->payout_cents === $package->payout_cents
+            && ($this->accepted_scope === null || $this->accepted_scope === $package->scope);
     }
 
     /**
