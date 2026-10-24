@@ -1,9 +1,9 @@
 # Slice 19 — Job Costing and the Financial Close: Plan
 
 Status: **approved on 2026-10-24 (decision 170), with the recommendation on
-all eight questions, to be built straight through 19a, 19b and 19c and then
-reviewed. Being built.** Written as what the implementation agent
-recommended from the plan check below.
+all eight questions, and built straight through 19a, 19b and 19c. Awaiting
+Jacob's review; see each step "as built".** Written as what the
+implementation agent recommended from the plan check below.
 
 ## Why this is next (the plan check)
 
@@ -157,3 +157,41 @@ Decision 133 says "a missing PO" is a strike. As built, only materials and
 equipment rentals take a purchase order, so only those are struck for
 lacking one; permits, disposal, W-2 labour, warranty and other costs are
 not.
+
+## Step 19c as built (2026-10-24)
+
+- **Finance's reconciliation** (`App\Actions\Projects\ReconcileJobCosts`),
+  in the job's Job costing section, for Finance at the job's Location:
+  Finance adds a cost the Production Manager missed, or reclassifies one by
+  voiding it and recording it again, each with why once job costing was
+  submitted, and attaches receipts. Finance's own changes are never
+  accuracy strikes.
+- **Approving:** "Approve the final gross margin" on submitted (or
+  reopened) job costing, in a confirmation that shows the figure. It keeps
+  a step with the **final gross margin**; from then the Production Manager
+  can no longer add or void a cost.
+- **The financial close:** "Close financially" once the final gross margin
+  is approved, the customer signed off and the job is paid in full
+  (question 8); until then the section says what it waits for. A closed job
+  shows **Financially closed** in its header, for everyone who may see it.
+  Brand Ambassador obligations do not hold it.
+- **Reopening:** Finance reopens an approved or closed job with why; the
+  Production Manager can correct costs again (each a correction, with
+  strikes as in 19b), and Finance approves again.
+- **Finance > Job Costing** (`/finance/job-costing`, now live in the
+  Finance menu), over the Locations where the person has Finance, or one of
+  them: jobs waiting for reconciliation, with the provisional margin;
+  approved jobs waiting to close, with what each waits for; jobs with costs
+  missing receipts; and accuracy strikes of the last 90 days by Production
+  Manager.
+- **History:** submitted, approved, closed and reopened are in the job's
+  activity, without amounts.
+- **Tests:** `tests/Feature/Projects/FinancialCloseTest.php`, 7 tests.
+
+### Known limits of slice 19
+
+- **The gross margin is before allocations,** which Finance adds at the
+  monthly close (its own plan).
+- **Nothing reads the final gross margin yet:** the Production Bonus and
+  commissions are their own plans.
+- **Costs are typed in;** nothing comes from QuickBooks or suppliers.

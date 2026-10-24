@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Projects\ReconcileJobCosts;
 use App\Actions\Projects\RecordJobCosts;
 use App\Enums\ProjectProductionState;
 use App\Models\Project;
@@ -53,6 +54,9 @@ new class extends Component {
     public ?int $costId = null;
 
     public string $costVoidReason = '';
+
+    /** Why Finance reopens the job costing (step 19c). */
+    public string $reopenReason = '';
 
     public function mount(Project $project): void
     {
@@ -108,9 +112,65 @@ new class extends Component {
         return Gate::allows('manageCosts', $this->project);
     }
 
+    /**
+     * Whether this person reconciles, approves and closes: Finance (step 19c).
+     */
+    #[Computed]
+    public function mayReconcile(): bool
+    {
+        return Gate::allows('reconcileCosts', $this->project);
+    }
+
+    public function openApprove(): void
+    {
+        $this->authorize('reconcileCosts', $this->project);
+        $this->resetValidation();
+
+        Flux::modal('approve-job-costing')->show();
+    }
+
+    public function approve(ReconcileJobCosts $reconcileJobCosts): void
+    {
+        $reconcileJobCosts->approve($this->project, Auth::user());
+
+        $this->done('approve-job-costing', __('Final gross margin approved.'));
+    }
+
+    public function openClose(): void
+    {
+        $this->authorize('reconcileCosts', $this->project);
+        $this->resetValidation();
+
+        Flux::modal('close-job')->show();
+    }
+
+    public function close(ReconcileJobCosts $reconcileJobCosts): void
+    {
+        $reconcileJobCosts->close($this->project, Auth::user());
+
+        $this->done('close-job', __('The job is financially closed.'));
+    }
+
+    public function openReopen(): void
+    {
+        $this->authorize('reconcileCosts', $this->project);
+
+        $this->reopenReason = '';
+        $this->resetValidation();
+
+        Flux::modal('reopen-job-costing')->show();
+    }
+
+    public function reopen(ReconcileJobCosts $reconcileJobCosts): void
+    {
+        $reconcileJobCosts->reopen($this->project, $this->reopenReason, Auth::user());
+
+        $this->done('reopen-job-costing', __('Job costing reopened.'));
+    }
+
     public function openCost(): void
     {
-        $this->authorize('manageCosts', $this->project);
+        abort_unless($this->mayRecord || $this->mayReconcile, 403);
 
         $this->costKind = '';
         $this->costAmount = '';
@@ -128,7 +188,16 @@ new class extends Component {
     {
         $receipt = $this->costReceipt instanceof TemporaryUploadedFile ? $this->costReceipt : null;
 
-        $recordJobCosts->add($this->project, $this->costKind, $this->costAmount, $this->costVendor, $this->costSpentOn, $this->costPurchaseOrder, $this->costReason, $receipt, Auth::user());
+        if ($this->mayRecord) {
+            $recordJobCosts->add($this->project, $this->costKind, $this->costAmount, $this->costVendor, $this->costSpentOn, $this->costPurchaseOrder, $this->costReason, $receipt, Auth::user());
+        } else {
+            // Finance's own cost (step 19c): never an accuracy strike.
+            $cost = app(ReconcileJobCosts::class)->addCost($this->project, $this->costKind, $this->costAmount, $this->costVendor, $this->costSpentOn, $this->costPurchaseOrder, $this->costReason, Auth::user());
+
+            if ($receipt !== null) {
+                $recordJobCosts->attachReceipt($this->project, $cost->id, $receipt, Auth::user());
+            }
+        }
 
         $this->costReceipt = null;
         $this->done('job-cost', $receipt === null ? __('Cost recorded. Attach its receipt when you have it.') : __('Cost recorded.'));
@@ -164,7 +233,7 @@ new class extends Component {
 
     public function openReceipt(int $costId): void
     {
-        $this->authorize('manageCosts', $this->project);
+        abort_unless($this->mayRecord || $this->mayReconcile, 403);
 
         $this->costId = $this->costOf($costId)->id;
         $this->costReceipt = null;
@@ -192,7 +261,7 @@ new class extends Component {
 
     public function openVoid(int $costId): void
     {
-        $this->authorize('manageCosts', $this->project);
+        abort_unless($this->mayRecord || $this->mayReconcile, 403);
 
         $this->costId = $this->costOf($costId)->id;
         $this->costVoidReason = '';
@@ -203,7 +272,11 @@ new class extends Component {
 
     public function voidCost(RecordJobCosts $recordJobCosts): void
     {
-        $recordJobCosts->void($this->project, $this->costId ?? 0, $this->costVoidReason, Auth::user());
+        if ($this->mayRecord) {
+            $recordJobCosts->void($this->project, $this->costId ?? 0, $this->costVoidReason, Auth::user());
+        } else {
+            app(ReconcileJobCosts::class)->voidCostAsFinance($this->project, $this->costId ?? 0, $this->costVoidReason, Auth::user());
+        }
 
         $this->costId = null;
         $this->done('void-job-cost', __('Cost voided.'));
@@ -231,7 +304,9 @@ new class extends Component {
         $percent = $costing->marginPercent();
         $missing = $costing->missingReceipts();
         $state = $costing->state();
-        $mayChangeCosts = $mayRecord && ! $costing->isLocked();
+        $mayReconcile = $this->mayReconcile;
+        $mayChangeCosts = ($mayRecord || $mayReconcile) && ! $costing->isLocked();
+        $closeHolds = ReconcileJobCosts::whatHoldsTheClose($this->project, $costing);
         $provisional = $costing->provisional();
         $final = $costing->final();
     @endphp
@@ -333,7 +408,7 @@ new class extends Component {
                         @endforeach
                     </div>
 
-                    @if ($mayRecord && ! $cost->isVoided())
+                    @if (($mayRecord || $mayReconcile) && ! $cost->isVoided())
                         <div class="flex shrink-0 flex-wrap gap-1">
                             @if ($cost->receipts->isEmpty())
                                 <flux:button size="sm" variant="ghost" icon="paper-clip" wire:click="openReceipt({{ $cost->id }})" data-test="attach-cost-receipt">{{ __('Receipt') }}</flux:button>
@@ -348,6 +423,65 @@ new class extends Component {
         </ul>
     @endif
 
+    {{-- Finance's reconciliation and the close (step 19c). --}}
+    @if ($mayReconcile && $state !== 'open')
+        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-200 pt-3" data-test="job-reconcile">
+            <flux:text class="text-sm">
+                @if (in_array($state, ['submitted', 'reopened'], true))
+                    {{ __('Check the receipts and corrections, add or reclassify what is wrong, then approve the final gross margin.') }}
+                @elseif ($state === 'approved')
+                    {{ $closeHolds === [] ? __('Approved, signed off and paid in full: it can close.') : __('Approved. It closes once it has :things.', ['things' => implode(', ', $closeHolds)]) }}
+                @else
+                    {{ __('Financially closed.') }}
+                @endif
+            </flux:text>
+            <div class="flex flex-wrap gap-1">
+                @if (in_array($state, ['submitted', 'reopened'], true))
+                    <flux:button size="sm" variant="primary" wire:click="openApprove" data-test="approve-job-costing">{{ __('Approve the final gross margin') }}</flux:button>
+                @endif
+                @if ($state === 'approved' && $closeHolds === [])
+                    <flux:button size="sm" variant="primary" wire:click="openClose" data-test="close-job">{{ __('Close financially') }}</flux:button>
+                @endif
+                @if (in_array($state, ['approved', 'closed'], true))
+                    <flux:button size="sm" variant="ghost" wire:click="openReopen" data-test="reopen-job-costing">{{ __('Reopen') }}</flux:button>
+                @endif
+            </div>
+        </div>
+    @endif
+
+    @if ($mayReconcile)
+        <x-confirmation-modal
+            name="approve-job-costing"
+            :title="__('Approve the final gross margin?')"
+            :description="__('It is kept as it is now: :figure, before allocations. The Production Manager can no longer change a cost.', ['figure' => $costing->marginWords()])"
+            action="approve"
+            :confirm-label="__('Approve')"
+            confirm-variant="primary"
+            :error="['jobCosting']"
+        />
+
+        <x-confirmation-modal
+            name="close-job"
+            :title="__('Close this job financially?')"
+            :description="__('Approved, signed off and paid in full. Nothing more is changed unless Finance reopens it.')"
+            action="close"
+            :confirm-label="__('Close')"
+            confirm-variant="primary"
+            :error="['jobCosting']"
+        />
+
+        <x-confirmation-modal
+            name="reopen-job-costing"
+            :title="__('Reopen this job costing?')"
+            :description="__('The costs can be corrected again, and the final gross margin is approved again.')"
+            action="reopen"
+            :confirm-label="__('Reopen')"
+            :error="['jobCosting', 'reopenReason']"
+        >
+            <flux:textarea wire:model="reopenReason" rows="2" :label="__('Why (required)')" data-test="reopen-reason" />
+        </x-confirmation-modal>
+    @endif
+
     {{-- Submitting job costing (step 19b): once the customer has signed off. --}}
     @if ($mayRecord && $state === 'open')
         <div class="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-200 pt-3">
@@ -360,7 +494,7 @@ new class extends Component {
         </div>
     @endif
 
-    @if ($mayRecord)
+    @if ($mayRecord || $mayReconcile)
         <x-confirmation-modal
             name="submit-job-costing"
             :title="__('Submit job costing?')"

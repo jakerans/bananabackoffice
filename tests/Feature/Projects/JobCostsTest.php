@@ -128,9 +128,10 @@ test('the job shows the budget and costs only to those who may see payouts', fun
         ->assertSee('1 cost is missing its receipt.')
         ->assertSeeHtml('data-test="add-job-cost"');
 
+    // Finance sees it, and records costs of its own in its reconciliation (step 19c).
     Livewire::actingAs($this->fran)->test('pages::projects.job-costing', ['project' => $this->project])
         ->assertSee('$412.50')
-        ->assertDontSeeHtml('data-test="add-job-cost"');
+        ->assertSeeHtml('data-test="add-job-cost"');
 
     Livewire::actingAs($this->sam)->test('pages::projects.job-costing', ['project' => $this->project])->assertForbidden();
     Livewire::actingAs($this->sam)->test('pages::projects.show', ['project' => $this->project])->assertDontSeeLivewire('pages::projects.job-costing');

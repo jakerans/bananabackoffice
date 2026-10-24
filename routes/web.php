@@ -60,6 +60,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Finance > Receivables: what customers still owe, at the Locations the person has Finance for (slice 17, step 17c).
     Route::livewire('finance/receivables', 'pages::finance.receivables')->can(Permission::FinanceAccess)->name('finance.receivables');
 
+    // Finance > Job Costing: jobs to reconcile and to close, at the Locations the person has Finance for (slice 19, step 19c).
+    Route::livewire('finance/job-costing', 'pages::finance.job-costing')->can(Permission::FinanceAccess)->name('finance.job-costing');
+
     // An attached file opens by a five-minute link, given after checking the person may see
     // what it belongs to (slice 16; decision 33). Never a lasting address.
     Route::get('attachments/{attachment}', OpenAttachmentController::class)->name('attachments.open');
