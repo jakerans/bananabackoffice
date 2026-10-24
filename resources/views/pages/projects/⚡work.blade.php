@@ -1021,7 +1021,18 @@ new class extends Component {
                         <flux:subheading>{{ $chosen === null ? __('What Banana will pay for this work.') : __('What Banana will pay for :name. Every amount is kept.', ['name' => $chosen->name]) }}</flux:subheading>
                     </div>
 
-                    <flux:input wire:model="payoutAmount" inputmode="decimal" icon="currency-dollar" :label="__('Amount')" placeholder="4,250" data-test="work-payout-amount" />
+                    <flux:input wire:model.live.debounce.400ms="payoutAmount" inputmode="decimal" icon="currency-dollar" :label="__('Amount')" placeholder="4,250" data-test="work-payout-amount" />
+
+                    {{-- What the job brings in after payouts, now and with this payout (slice 18, step 18c). --}}
+                    @php
+                        $typedPayout = \App\Support\Money::toCents($payoutAmount);
+                        $afterPayouts = \App\Support\Projects\AfterPayouts::for($project);
+                    @endphp
+                    @if ($chosen !== null && $typedPayout !== null && $typedPayout !== $chosen->payout_cents)
+                        <flux:text class="text-sm" data-test="payout-after-payouts">
+                            {{ __('After subcontractor payouts: :now now; :then with this payout.', ['now' => $afterPayouts->words(), 'then' => $afterPayouts->withPayout($chosen->payout_cents, $typedPayout)->words()]) }}
+                        </flux:text>
+                    @endif
 
                     @php
                         $payoutAwarded = $chosen?->awards->contains(fn (WorkPackageAward $award): bool => $award->isCurrent()) ?? false;

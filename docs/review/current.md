@@ -5,10 +5,29 @@ No secrets or customer information belong here.
 
 **Updated:** 2026-10-24 · **Branch:** `main`
 
-**State:** step 18b, subcontractor work order revisions, is merged
-(decision 168). Step 18c, what the job brings in after subcontractor
-payouts, is being built; it will replace this page and is not merged
-without Jacob's word.
+**State:** slice 18, change orders, is complete and merged (decision 169).
+**Slice 19, job costing and the financial close, is proposed and waits for
+Jacob's approval.** Nothing of it is built.
+
+## The proposal
+
+Plan: [../slice-19-job-costing-plan.md](../slice-19-job-costing-plan.md).
+
+- **19a:** each direct cost on the job (materials, rentals, permits,
+  disposal, W-2 labour, warranty, other) with its receipt, the payouts from
+  the Work Packages, and a budget view: target and projected gross margin.
+- **19b:** the Production Manager submits job costing after the customer
+  signs off: the provisional gross margin. Later changes are corrections;
+  big ones, or a missing purchase order, are accuracy strikes.
+- **19c:** Finance reconciles, approves the final gross margin and closes
+  the job once it is signed off, paid in full and costed. Finance > Job
+  Costing lists what waits.
+
+## Decisions needed
+
+The plan's eight questions, each with a recommendation. "Follow your
+recommendations" is a complete answer. To start, approve the plan or step
+19a alone.
 
 ## Optional, for Jacob
 

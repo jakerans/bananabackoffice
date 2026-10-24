@@ -3403,6 +3403,17 @@ this project has meant merge the step and go on.
 2. **Step 18c, what the job brings in after subcontractor payouts,
    starts.** It stops for his review.
 
+## 169. Step 18c is merged; slice 18 is complete (2026-10-24)
+
+**Decided by Jacob,** in reply to the step 18c report: "continue", which in
+this project has meant merge the step and go on.
+
+1. **Step 18c is merged** as built
+   ([slice-18-change-orders-plan.md](slice-18-change-orders-plan.md),
+   "Step 18c as built"). **Slice 18, change orders, is complete.**
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
