@@ -3327,6 +3327,21 @@ bank account. Otherwise, go ahead and merge."
    Owner is the exception, as recommended and not changed by Jacob. Built in
    step 17b, which waits for his word.
 
+## 164. Step 17b is merged; step 17c starts (2026-10-24)
+
+**Decided by Jacob,** in reply to the step 17b report, which asked to merge
+and whether the 24-hour call is the welcome call: "awesome - continue".
+
+1. **Step 17b, the deposit, is merged** as built
+   ([slice-17-customer-payments-plan.md](slice-17-customer-payments-plan.md),
+   "Step 17b as built").
+2. **The call within 24 hours of the deposit is the welcome call:** one
+   call, one tick. Once the deposit is paid, the welcome call is due 24
+   hours after it (or after the Production Manager got the job, if later).
+   Jacob did not change the agent's reading, which stands.
+3. **Step 17c, the final balance and who chases it, starts.** It stops for
+   his review.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

@@ -4,8 +4,8 @@ Status: **approved on 2026-10-22 (decision 162) in three steps, each stopping
 for Jacob's review, with the recommendation on all eight questions. Step 17a
 is being built.** Written as what the implementation agent recommended from
 the plan check below. **Step 17a is merged (decision 163); see "Step 17a as
-built". Step 17b is built and awaiting Jacob's review; see "Step 17b as
-built".**
+built". Step 17b is merged (decision 164); see "Step 17b as built". Step 17c
+is being built.**
 
 ## Why this is next (the plan check)
 
@@ -178,9 +178,8 @@ Built on `checkpoint-slice-17b-deposit` under decisions 162 and 163.
   hours after that, or after the Production Manager got the job if that was
   later, and shows as falling behind on the job and on Production >
   Workspace once missed. Before the deposit is paid, the slice 10 rule of
-  two business days stands. *This is the agent's reading of decision 162,
-  question 8: one call, one tick, rather than a second tick for the same
-  call. Jacob can change it.*
+  two business days stands. One call, one tick: the agent's reading of
+  decision 162, question 8, which Jacob let stand (decision 164).
 - **Approving cash and check** (decision 163): the confirmation asks "Is it
   in the bank account?", and whoever recorded the payment cannot approve
   it, unless they are the Owner.
