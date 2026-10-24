@@ -3,8 +3,9 @@
 Status: **approved on 2026-10-24 (decision 166) in three steps, each
 stopping for Jacob's review, with the recommendation on all eight
 questions. Step 18a is merged (decision 167); see "Step 18a as built". Step
-18b is merged (decision 168); see "Step 18b as built". Step 18c is being
-built.** Written as what the implementation
+18b is merged (decision 168); see "Step 18b as built". Step 18c is built
+and awaiting Jacob's review; see "Step 18c as built".** Written as what the
+implementation
 agent recommended from the plan check below.
 
 ## Why this is next (the plan check)
@@ -178,3 +179,31 @@ status. As built, a revision waits while the subcontractor's current
 acceptance does not match the work as it is now, and is accepted once a
 new acceptance does: one acceptance can cover several revisions, as it
 would in practice. Nothing else is recorded twice.
+
+## Step 18c as built (2026-10-24)
+
+Built on `checkpoint-slice-18c-after-payouts` under decisions 166 and 168.
+
+- **The figure** (`App\Support\Projects\AfterPayouts`): the contract total
+  before tax (the price sold and every signed change order) less every Work
+  Package's payout, in dollars and as a share of the contract: "After
+  subcontractor payouts: $4,200 (49.7%)". Gross payouts; the insurance
+  deduction stays its own entry (decision 133). Never called gross margin
+  (question 8).
+- **On the job:** in the Change orders section, with the payouts total;
+  it says when a Work Package has no payout yet, so the figure is not
+  complete, and says plainly, in red, when the payouts are more than the
+  contract.
+- **Before a change is saved:** drafting a change order shows the figure
+  now and once it is signed, as the price is typed; the signing dialog
+  shows it once signed; the payout dialog shows it now and with the payout
+  typed.
+- **Who:** only those who may see payouts (`payouts.view`); the
+  salesperson does not see it.
+- **Tests:** `tests/Feature/Projects/AfterPayoutsTest.php`, 6 tests.
+
+### Known limits
+
+- **Not the job's margin:** materials, labour and every other cost come
+  with job costing (6.9).
+- **The figure is today's,** not kept month by month; reports come later.

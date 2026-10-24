@@ -4,6 +4,7 @@ use App\Actions\Projects\RecordChangeOrders;
 use App\Models\Project;
 use App\Models\ProjectChangeOrder;
 use App\Support\Money;
+use App\Support\Projects\AfterPayouts;
 use App\Support\Projects\RoughTimeframe;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
@@ -90,6 +91,22 @@ new class extends Component {
         return Gate::allows('manageChangeOrders', $this->project);
     }
 
+    /**
+     * Whether this person may see what the job brings in after payouts:
+     * finance-sensitive (slice 18, step 18c).
+     */
+    #[Computed]
+    public function seesPayouts(): bool
+    {
+        return Gate::allows('viewPayouts', $this->project);
+    }
+
+    #[Computed]
+    public function afterPayouts(): AfterPayouts
+    {
+        return AfterPayouts::for($this->project);
+    }
+
     public function openDraft(): void
     {
         $this->authorize('manageChangeOrders', $this->project);
@@ -167,7 +184,7 @@ new class extends Component {
      */
     private function done(string $modal, string $message): void
     {
-        unset($this->project, $this->changeOrders);
+        unset($this->project, $this->changeOrders, $this->afterPayouts);
 
         $this->dispatch('project-payments-changed');
         Flux::modal($modal)->close();
@@ -209,6 +226,26 @@ new class extends Component {
             <dd class="font-nav text-lg font-bold tabular-nums text-ink" data-test="contract-total">{{ Money::format($project->sold_cents + $signedCents) }}</dd>
         </div>
     </dl>
+
+    {{-- What the job brings in after subcontractor payouts (step 18c): never "gross margin" until every cost is counted. --}}
+    @if ($this->seesPayouts)
+        @php
+            $after = $this->afterPayouts;
+        @endphp
+        <div class="flex flex-col gap-1 rounded-lg bg-zinc-50 p-3 text-sm" data-test="after-payouts">
+            <span class="{{ $after->afterCents() < 0 ? 'text-rose-700' : 'text-ink' }}">
+                <span class="font-semibold">{{ __('After subcontractor payouts: :figure', ['figure' => $after->words()]) }}</span>
+                &middot; {{ __('payouts :amount', ['amount' => Money::format($after->payoutsCents)]) }}
+            </span>
+            @if ($after->afterCents() < 0)
+                <span class="font-medium text-rose-700" data-test="after-payouts-loss">{{ __('The payouts are more than the contract.') }}</span>
+            @endif
+            @if ($after->packagesWithoutPayout > 0)
+                <span class="text-amber-700" data-test="after-payouts-incomplete">{{ trans_choice(':count work package has no payout yet, so this is not complete.|:count work packages have no payout yet, so this is not complete.', $after->packagesWithoutPayout) }}</span>
+            @endif
+            <span class="text-zinc-500">{{ __('Before materials and every other cost, which come with job costing.') }}</span>
+        </div>
+    @endif
 
     @if ($orders->isEmpty())
         <flux:text class="text-sm" data-test="change-orders-none">{{ __('No change orders.') }}</flux:text>
@@ -272,9 +309,18 @@ new class extends Component {
                 <flux:textarea wire:model="changeDescription" rows="3" :label="__('What changes')" :placeholder="__('Add the back bedroom: walls and ceiling, two coats.')" data-test="change-description" />
 
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <flux:input wire:model="changePrice" inputmode="decimal" :label="__('Price change, before tax')" :description="__('Use - for a price that comes down; 0 for none.')" data-test="change-price" />
+                    <flux:input wire:model.live.debounce.400ms="changePrice" inputmode="decimal" :label="__('Price change, before tax')" :description="__('Use - for a price that comes down; 0 for none.')" data-test="change-price" />
                     <flux:input wire:model="changeDays" inputmode="numeric" :label="__('Working days it adds')" data-test="change-days" />
                 </div>
+
+                @php
+                    $typedChange = RecordChangeOrders::typedPrice($changePrice);
+                @endphp
+                @if ($this->seesPayouts && $typedChange !== null)
+                    <flux:text class="text-sm" data-test="change-after-payouts">
+                        {{ __('After subcontractor payouts: :now now; :then once this is signed, unless the payouts change too.', ['now' => $this->afterPayouts->words(), 'then' => $this->afterPayouts->withPriceChange($typedChange)->words()]) }}
+                    </flux:text>
+                @endif
 
                 <flux:textarea wire:model="changeReason" rows="2" :label="__('Why the price comes down (managers only, required then)')" data-test="change-reason" />
 
@@ -296,6 +342,12 @@ new class extends Component {
                     <flux:heading size="lg">{{ $chosen === null ? __('The customer signed') : __('Change order :number: signed', ['number' => $chosen->number]) }}</flux:heading>
                     <flux:subheading>{{ __('Who signed, how and when, with the signed copy. From then on it counts in the contract total.') }}</flux:subheading>
                 </div>
+
+                @if ($this->seesPayouts && $chosen !== null)
+                    <flux:text class="text-sm" data-test="sign-after-payouts">
+                        {{ __('After subcontractor payouts: :now now; :then once this is signed.', ['now' => $this->afterPayouts->words(), 'then' => $this->afterPayouts->withPriceChange($chosen->price_change_cents)->words()]) }}
+                    </flux:text>
+                @endif
 
                 <flux:input wire:model="signedBy" maxlength="{{ ProjectChangeOrder::PERSON_LENGTH }}" :label="__('Who signed')" data-test="signed-by" />
 

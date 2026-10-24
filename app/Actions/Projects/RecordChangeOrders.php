@@ -198,11 +198,10 @@ class RecordChangeOrders
     }
 
     /**
-     * Read a price change as typed: "1,200", "+1,200", "-300", "0".
-     *
-     * @throws ValidationException
+     * Read a price change as typed: "1,200", "+1,200", "-300", "0". Nothing
+     * when it is not plainly one.
      */
-    private static function readPrice(?string $typed): int
+    public static function typedPrice(?string $typed): ?int
     {
         $typed = str_replace(' ', '', trim((string) $typed));
         $negative = str_starts_with($typed, '-');
@@ -212,10 +211,18 @@ class RecordChangeOrders
             return 0;
         }
 
-        $cents = Money::toCents($amount)
-            ?? throw ValidationException::withMessages(['changePrice' => __('Give the price change in dollars before tax, like 1,200, or -300 if it comes down, or 0.')]);
+        $cents = Money::toCents($amount);
 
-        return $negative ? -$cents : $cents;
+        return $cents === null ? null : ($negative ? -$cents : $cents);
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private static function readPrice(?string $typed): int
+    {
+        return self::typedPrice($typed)
+            ?? throw ValidationException::withMessages(['changePrice' => __('Give the price change in dollars before tax, like 1,200, or -300 if it comes down, or 0.')]);
     }
 
     private function draftOf(Project $project, int $changeOrderId): ProjectChangeOrder
