@@ -178,10 +178,17 @@ and who chases it) is merged (decision 165). Slice 17 is complete.**
 **Slice 18, change orders, is approved in three steps (2026-10-24, decision
 166); step 18a (customer change orders) is merged (decision 167); step 18b
 (subcontractor work order revisions) is merged (decision 168); step 18c
-(after subcontractor payouts) is built and awaiting Jacob's review.** The
+(after subcontractor payouts) is merged (decision 169). Slice 18 is
+complete.** The
 plan check after slice 17 found that what the customer owes, and what
 Banana owes a subcontractor, cannot yet change after the sale. Its plan is
 [slice-18-change-orders-plan.md](slice-18-change-orders-plan.md).
+
+**Slice 19, job costing and the financial close, is proposed (2026-10-24)
+and not approved.** The plan check after slice 18 found the internal,
+financial close of a job (6.8, 6.9) the last part of closeout still
+unbuilt. Its plan is
+[slice-19-job-costing-plan.md](slice-19-job-costing-plan.md).
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the
 customer still unbuilt. Its plan is

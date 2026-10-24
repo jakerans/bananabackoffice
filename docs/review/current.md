@@ -3,30 +3,31 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-24 · **Branch:** `checkpoint-slice-18c-after-payouts`
+**Updated:** 2026-10-24 · **Branch:** `main`
 
-**State:** step 18c, what the job brings in after subcontractor payouts, is
-built and waits for Jacob's review (decision 168). Not merged. It is the
-last step of slice 18. What was built is in
-[../slice-18-change-orders-plan.md](../slice-18-change-orders-plan.md),
-"Step 18c as built".
+**State:** slice 18, change orders, is complete and merged (decision 169).
+**Slice 19, job costing and the financial close, is proposed and waits for
+Jacob's approval.** Nothing of it is built.
 
-## Browser review (done locally by the agent)
+## The proposal
 
-On a sample job sold for $1,750 whose payouts total $3,900.50:
+Plan: [../slice-19-job-costing-plan.md](../slice-19-job-costing-plan.md).
 
-1. As its Production Manager, the Change orders section reads "After
-   subcontractor payouts: -$2,150.50 (-122.9%)", now in red with "The
-   payouts are more than the contract."
-2. Typing a +$500 change order shows the figure now and once signed.
-3. Typing a $600 payout in the payout dialog shows it with that payout.
-4. As the salesperson, the figure is not shown.
-
-Nothing was saved in this review.
+- **19a:** each direct cost on the job (materials, rentals, permits,
+  disposal, W-2 labour, warranty, other) with its receipt, the payouts from
+  the Work Packages, and a budget view: target and projected gross margin.
+- **19b:** the Production Manager submits job costing after the customer
+  signs off: the provisional gross margin. Later changes are corrections;
+  big ones, or a missing purchase order, are accuracy strikes.
+- **19c:** Finance reconciles, approves the final gross margin and closes
+  the job once it is signed off, paid in full and costed. Finance > Job
+  Costing lists what waits.
 
 ## Decisions needed
 
-1. **Merge 18c.** Slice 18 is then complete.
+The plan's eight questions, each with a recommendation. "Follow your
+recommendations" is a complete answer. To start, approve the plan or step
+19a alone.
 
 ## Optional, for Jacob
 

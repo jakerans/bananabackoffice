@@ -1,0 +1,103 @@
+# Slice 19 — Job Costing and the Financial Close: Plan
+
+Status: **proposed on 2026-10-24 for Jacob's review, after slice 18 was
+merged (decision 169). Nothing is built.** Written as what the implementation
+agent recommends from the plan check below.
+
+## Why this is next (the plan check)
+
+Checked against [product-architecture.md](product-architecture.md) after
+slice 18:
+
+1. **Every customer-facing step of a job is built,** from the first call to
+   the last payment, with change orders. What is left of closeout is the
+   **internal, financial close** (6.8): job costing complete, Finance
+   reconciliation, the final gross margin, the Project financially closed.
+   "PM cannot financially close before job costing is complete."
+2. **Slice 18 brought the first piece:** what the job brings in after
+   subcontractor payouts. It cannot be called gross margin until the other
+   direct costs (10.1) are on the job: materials, rentals, permits,
+   disposal, W-2 labour, warranty and others.
+3. **Much waits on it:** the Production Manager's bonus is on final
+   approved gross margin (6.1, 6.9); a job is complete for it only when work
+   is closed, final payment is collected and job costing is complete; the
+   sales commission's final amount comes from the actual final gross margin
+   (5.7); Finance's "projects awaiting financial close" (9.1).
+4. **The rules are already written** (6.9, decision 133): the Production
+   Manager prepares, Finance validates; a submission is the provisional
+   margin and Finance's reconciliation the final one; every correction is
+   kept, and one above the larger of $250 or 2% of revenue, or a missing
+   purchase order, is an accuracy strike, with GM/Ops told on the third in
+   90 days.
+
+What else could be next, and why not first: Brand Ambassador closeout
+(6.10) is separate from the financial close and smaller; refunds and
+credits (10.5) and bad debt (10.7) are rarer; commissions (5.7) and the
+Production Bonus (6.1) need the final gross margin this slice produces.
+
+## What slice 19 is, and is not
+
+Three reviewed steps. Each stops for Jacob's review.
+
+| Step | Delivers |
+| --- | --- |
+| 19a | **Costs on the job, and the budget.** The Production Manager records each direct cost: its kind (materials, equipment rental, permit, dump or disposal, W-2 labour, warranty, other), amount, vendor, day, purchase order or reference, and a photo of the receipt. Subcontractor payouts come in from the Work Packages. A **budget view** on the job, for those who may see payouts: contract, target gross margin, target cost, committed costs (payouts and costs recorded), remaining budget, projected gross margin. |
+| 19b | **Submitting job costing.** Once the customer has signed off, the Production Manager submits job costing: the **provisional gross margin**, kept as it was submitted. A cost added or changed after that is a **correction**, with a reason, kept; one above the larger of $250 or 2% of revenue, or a cost with no purchase order, is an **accuracy strike** for the Production Manager (decision 133). |
+| 19c | **Finance's reconciliation and the financial close.** Finance reviews a submitted job: receipts, missing purchase orders, corrections. It may reclassify a cost or add one, each kept with why, and approves the **final gross margin**. A job is **financially closed** once the customer signed off, it is paid in full and its job costing is approved. **Finance > Job Costing** lists jobs waiting for reconciliation and for close. On the third strike in 90 days, the GM/Ops managers are told. |
+
+Not in slice 19:
+
+- **Allocations** (insurance, payroll tax, vehicles, shop rent, 10.1 added
+  2026-10-13): Finance's at the monthly close, its own plan.
+- **QuickBooks**, and **commissions and the Production Bonus**: each its
+  own plan; they read the final gross margin this slice produces.
+- **The Brand Ambassador floor price** (10.2): the budget starts from the
+  contract until Brand Ambassador tiers are built.
+
+## Who may do what
+
+| What | Who |
+| --- | --- |
+| Record and correct costs, submit job costing | The Project's Production Manager, or a manager there, who may see payouts. |
+| See costs, the budget and gross margin | Those who may see payouts (`payouts.view`). |
+| Reconcile, reclassify, approve the final gross margin, close | Finance (`finance.access` at the Project's Location). |
+| Be told of a third strike | The managers at the Location, and Leadership. |
+
+## Decisions needed
+
+Each has a recommendation. "Follow your recommendations" is a complete answer.
+
+1. **The steps and their order.** *Recommended:* 19a, 19b, 19c, each
+   reviewed.
+2. **The kinds of cost.** *Recommended:* materials, equipment rental,
+   permit, dump or disposal, W-2 labour, warranty or callback, other; with
+   subcontractor payouts from the Work Packages.
+3. **Receipts.** *Recommended:* a cost can be recorded without one, but it
+   is listed as "missing a receipt" until one is attached, and Finance sees
+   the list (9.3).
+4. **The target gross margin.** *Recommended:* 55% (the Production Bonus
+   threshold, 6.1), set per Location in Settings like the deposit.
+5. **The name of the figure.** *Recommended:* "Projected gross margin" once
+   the job's costs are recorded, "Provisional" once submitted, "Final" once
+   Finance approves; each noting it is before allocations.
+6. **When job costing can be submitted.** *Recommended:* once the customer
+   has signed off; a later warranty cost belongs to the month it happens
+   (6.1), not the closed job.
+7. **The accuracy strike** (decision 133). *Recommended:* counted
+   automatically and shown to the Production Manager and their managers;
+   the third in a rolling 90 days tells the Location's managers and
+   Leadership by the bell; nothing else happens automatically.
+8. **The financial close.** *Recommended:* closed by Finance once signed
+   off, paid in full and job costing approved; it can be reopened by
+   Finance with a reason. Brand Ambassador obligations do not hold it
+   (6.10).
+
+To start, Jacob approves the plan, or step 19a alone, and answers 1 to 5.
+Questions 6 to 8 are needed before 19b and 19c.
+
+## Known limits of this plan
+
+- **Costs are typed in** from receipts and invoices; nothing comes from
+  QuickBooks or a supplier yet.
+- **The gross margin is before allocations,** which Finance adds at the
+  monthly close.
