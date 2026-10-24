@@ -3,6 +3,7 @@
 namespace App\Support\Projects;
 
 use App\Models\Project;
+use App\Models\ProjectDepositChange;
 use App\Models\ProjectInvoice;
 use App\Models\ProjectPayment;
 use App\Support\Money;
@@ -24,9 +25,13 @@ final class Payments
 
     public const string PAID_IN_FULL = 'paid_in_full';
 
+    /** A manager waived the deposit (step 17b). */
+    public const string NO_DEPOSIT = 'no_deposit';
+
     /** The states, with how each is said, in English. */
     public const array STATES = [
         self::DEPOSIT_DUE => 'Deposit due',
+        self::NO_DEPOSIT => 'No deposit',
         self::DEPOSIT_PAID => 'Deposit paid',
         self::BALANCE_DUE => 'Balance due',
         self::PAID_IN_FULL => 'Paid in full',
@@ -35,18 +40,65 @@ final class Payments
     /**
      * @param  Collection<int, ProjectInvoice>  $invoices  Not voided.
      * @param  Collection<int, ProjectPayment>  $payments  Not reversed.
+     * @param  ProjectDepositChange|null  $depositChange  The latest smaller deposit, or none, set by a manager.
      */
     private function __construct(
+        public readonly Project $project,
         public readonly Collection $invoices,
         public readonly Collection $payments,
+        public readonly ?ProjectDepositChange $depositChange,
     ) {}
 
     public static function for(Project $project): self
     {
+        $project->loadMissing('location');
+
         $invoices = $project->invoices()->whereNull('voided_at')->get();
         $payments = $project->payments()->whereNull('reversed_at')->get();
+        $depositChange = $project->depositChanges()->reorder()->orderByDesc('id')->first();
 
-        return new self($invoices, $payments);
+        return new self($project, $invoices, $payments, $depositChange);
+    }
+
+    /**
+     * The deposit the Location's policy asks for, before tax, in cents
+     * (product-architecture.md, 10.4): its percent of the sold price.
+     */
+    public function policyDepositCents(): int
+    {
+        return intdiv($this->project->sold_cents * $this->project->location->deposit_percent, 100);
+    }
+
+    /**
+     * The deposit asked for on this job, before tax, in cents: the policy's,
+     * unless a manager set a smaller one or none.
+     */
+    public function requiredDepositCents(): int
+    {
+        return $this->depositChange === null ? $this->policyDepositCents() : $this->depositChange->required_cents;
+    }
+
+    /**
+     * Whether the deposit invoice is paid in full.
+     */
+    public function depositIsPaid(): bool
+    {
+        $deposit = $this->deposit();
+
+        return $deposit !== null && $this->paidOnCents($deposit) >= $deposit->amount_cents;
+    }
+
+    /**
+     * Whether the full deposit the policy asks for was actually collected,
+     * kept for the sales commission advance (product-architecture.md, 5.7):
+     * a smaller or waived deposit is not a full one.
+     */
+    public function fullDepositCollected(): bool
+    {
+        $deposit = $this->deposit();
+        $policy = $this->policyDepositCents();
+
+        return $deposit !== null && $policy > 0 && $this->paidOnCents($deposit) >= $policy;
     }
 
     public function deposit(): ?ProjectInvoice
@@ -104,20 +156,21 @@ final class Payments
     }
 
     /**
-     * Deposit due until the deposit invoice is paid; then Deposit paid until
-     * the final invoice; then Balance due until everything invoiced is paid.
+     * Deposit due until the deposit invoice is paid, or No deposit when a
+     * manager waived it; then Deposit paid until the final invoice; then
+     * Balance due until everything invoiced is paid.
      */
     public function state(): string
     {
-        $final = $this->final();
-
-        if ($final !== null) {
+        if ($this->final() !== null) {
             return $this->balanceCents() <= 0 ? self::PAID_IN_FULL : self::BALANCE_DUE;
         }
 
-        $deposit = $this->deposit();
+        if ($this->depositIsPaid()) {
+            return self::DEPOSIT_PAID;
+        }
 
-        return $deposit !== null && $this->paidOnCents($deposit) >= $deposit->amount_cents ? self::DEPOSIT_PAID : self::DEPOSIT_DUE;
+        return $this->deposit() === null && $this->requiredDepositCents() === 0 ? self::NO_DEPOSIT : self::DEPOSIT_DUE;
     }
 
     public function stateLabel(): string

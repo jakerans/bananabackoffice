@@ -66,6 +66,7 @@ use LogicException;
  * @property Carbon|null $timeframe_latest
  * @property string|null $timeframe_note
  * @property ColorReadiness $color_readiness Where its colors stand: a state of its own (slice 10, step 10b).
+ * @property Carbon|null $deposit_paid_at When its deposit invoice was paid in full (slice 17, step 17b). Empty again if a payment is reversed.
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Proposal $proposal
@@ -122,6 +123,7 @@ class Project extends Model implements HasPhotos
             'welcome_call_recorded_at' => 'datetime',
             'timeframe_earliest' => 'date',
             'timeframe_latest' => 'date',
+            'deposit_paid_at' => 'datetime',
             'project_size_min_value' => 'integer',
             'project_size_max_value' => 'integer',
         ];
@@ -322,6 +324,17 @@ class Project extends Model implements HasPhotos
     public function invoices(): HasMany
     {
         return $this->hasMany(ProjectInvoice::class)->orderBy('id');
+    }
+
+    /**
+     * Each smaller deposit, or none, set by a manager; the latest counts
+     * (slice 17, step 17b).
+     *
+     * @return HasMany<ProjectDepositChange, $this>
+     */
+    public function depositChanges(): HasMany
+    {
+        return $this->hasMany(ProjectDepositChange::class)->orderBy('id');
     }
 
     /**

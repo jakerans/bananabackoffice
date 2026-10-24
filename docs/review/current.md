@@ -3,19 +3,11 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-22 · **Branch:** `main`
+**Updated:** 2026-10-24 · **Branch:** `main`
 
-**State:** step 17a, invoices and payments, is merged (decision 163).
-Nothing waits for review.
-
-## Next, on Jacob's word
-
-**Step 17b, the deposit**
-([../slice-17-customer-payments-plan.md](../slice-17-customer-payments-plan.md)):
-the deposit percent per Location (50% by default), a smaller deposit only by
-a manager with a reason, and the deposit-paid call within 24 hours. With
-decision 163: someone other than who recorded a cash or check payment
-approves it, once they see it in the bank account.
+**State:** step 17b, the deposit, is merged (decision 164). Step 17c, the
+final balance and who chases it, is being built; it will replace this page
+and is not merged without Jacob's word.
 
 ## Optional, for Jacob
 

@@ -5,10 +5,13 @@ namespace App\Actions\Projects;
 use App\Actions\Attachments\AttachFile;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
+use App\Enums\Role;
 use App\Models\Project;
+use App\Models\ProjectDepositChange;
 use App\Models\ProjectInvoice;
 use App\Models\ProjectPayment;
 use App\Models\User;
+use App\Notifications\ProjectNotice;
 use App\Support\Money;
 use App\Support\Projects\Payments;
 use App\Support\Projects\RoughTimeframe;
@@ -115,7 +118,61 @@ class RecordPayments
                 reason: $reason,
             );
 
+            $this->settleDeposit($project);
+
             return $invoice;
+        });
+    }
+
+    /**
+     * A manager lowers or waives this job's deposit, with why (decision 162,
+     * question 4): never above what the Location's policy asks for. Typed in
+     * dollars before tax; "0" waives it.
+     *
+     * @throws ValidationException
+     * @throws AuthorizationException
+     */
+    public function changeDeposit(Project $project, ?string $amount, ?string $reason, User $actor): ProjectDepositChange
+    {
+        return $this->held($project, $actor, 'changeDeposit', function (Project $project) use ($amount, $reason, $actor): ProjectDepositChange {
+            $payments = Payments::for($project);
+            $cents = trim((string) $amount) === '0' ? 0 : Money::toCents($amount);
+
+            if ($cents === null) {
+                throw ValidationException::withMessages(['depositAmount' => __('Give the deposit in dollars before tax, like 2,000, or 0 for none.')]);
+            }
+
+            if ($cents > $payments->policyDepositCents()) {
+                throw ValidationException::withMessages(['depositAmount' => __('The deposit can only be lowered: the policy asks for :amount.', ['amount' => Money::format($payments->policyDepositCents())])]);
+            }
+
+            if ($cents === $payments->requiredDepositCents()) {
+                throw ValidationException::withMessages(['depositAmount' => __('That is the deposit asked for already.')]);
+            }
+
+            $reason = $this->reason($reason, 'depositReason', __('Say why the deposit is changed.'), ProjectDepositChange::REASON_LENGTH);
+            $before = $payments->requiredDepositCents();
+
+            $change = new ProjectDepositChange;
+            $change->forceFill([
+                'project_id' => $project->id,
+                'required_cents' => $cents,
+                'reason' => $reason,
+                'set_by' => $actor->id,
+                'set_by_name' => $actor->name,
+            ])->save();
+
+            $this->recordAuditEvent->handle(
+                AuditAction::ProjectDepositChanged,
+                $project,
+                actor: $actor,
+                before: ['required_cents' => $before],
+                after: ['required_cents' => $cents],
+                location: $project->location,
+                reason: $reason,
+            );
+
+            return $change;
         });
     }
 
@@ -197,13 +254,16 @@ class RecordPayments
                 $this->attachFile->handle($payment, ProjectPayment::RECEIPT, $receipt, 'recordPayments', $actor);
             }
 
+            $this->settleDeposit($project);
+
             return $payment;
         });
     }
 
     /**
-     * Finance approves a cash or check payment, after seeing its receipt: it
-     * counts from then on.
+     * Finance approves a cash or check payment once they see it in the bank
+     * account (decision 163): it counts from then on. Someone other than
+     * who recorded it approves it; the Owner is the exception.
      *
      * @throws ValidationException
      * @throws AuthorizationException
@@ -217,6 +277,10 @@ class RecordPayments
                 throw ValidationException::withMessages(['payment' => __('This payment does not wait for approval.')]);
             }
 
+            if ($payment->recorded_by === $actor->id && ! $actor->holdsRole(Role::Owner)) {
+                throw ValidationException::withMessages(['payment' => __('You recorded this payment. Someone else in Finance approves it once they see it in the bank account.')]);
+            }
+
             $payment->forceFill(['approved_at' => now(), 'approved_by' => $actor->id, 'approved_by_name' => $actor->name])->save();
 
             $this->recordAuditEvent->handle(
@@ -226,6 +290,8 @@ class RecordPayments
                 after: ['invoice' => $payment->invoice->label(), 'amount_cents' => $payment->amount_cents, 'method' => $payment->methodLabel()],
                 location: $project->location,
             );
+
+            $this->settleDeposit($project);
 
             return $payment;
         });
@@ -255,8 +321,30 @@ class RecordPayments
                 reason: $reason,
             );
 
+            $this->settleDeposit($project);
+
             return $payment;
         });
+    }
+
+    /**
+     * Keep when the deposit was paid in full (step 17b): the moment it is,
+     * the Production Manager is told and has 24 hours to call the customer
+     * (decision 162, question 8). A reversal that leaves it unpaid clears it.
+     */
+    private function settleDeposit(Project $project): void
+    {
+        $paid = Payments::for($project)->depositIsPaid();
+
+        if ($paid && $project->deposit_paid_at === null) {
+            $project->forceFill(['deposit_paid_at' => now()])->save();
+
+            if ($project->production_manager_id !== null && $project->welcome_call_on === null) {
+                User::query()->find($project->production_manager_id)?->notify(new ProjectNotice($project->id, ProjectNotice::DEPOSIT_PAID));
+            }
+        } elseif (! $paid && $project->deposit_paid_at !== null) {
+            $project->forceFill(['deposit_paid_at' => null])->save();
+        }
     }
 
     private function paymentOf(Project $project, int $paymentId): ProjectPayment

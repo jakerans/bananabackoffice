@@ -123,14 +123,14 @@ always limited to what the person's grants allow, in every view.
 | `production.access` | Location | Open the Production Center |
 | `finance.access` | Location | Open the Finance Center; record a Project's invoices and payments there, approve cash and check payments, and reverse a payment (slice 17, step 17a) |
 | `color_studio.access` | Location | Open Color Studio |
-| `settings.locations.manage` | Company | Manage locations |
+| `settings.locations.manage` | Company | Manage locations, including each Location's deposit policy (slice 17, step 17b) |
 | `settings.users.manage` | Company | Manage staff and access grants |
 | `settings.lists.manage` | Company | Manage the Lead & Sales Lists page (added in step B2; held by Owner and Leadership) |
 | `projects.view` | Location | See the Projects at the location (added in slice 8 step 8a, decision 130; held by Owner, Leadership, Location Manager, Sales Consultant, Production Manager and Finance) |
 | `payouts.view` | Location | See what Banana will pay subcontractors for a Project's work; with the pre-production rule, set it (added in slice 13 step 13a, decision 151; held by Owner, Leadership, Location Manager, Production Manager and Finance; never Sales or the Contact Center) |
 | `subcontractors.view` | Location | See the subcontractors who work at the location, their page and their history, and open their compliance documents (step 16b) (added in slice 12 step 12a, decision 148; held by Owner, Leadership, Location Manager and Production Manager) |
 | `subcontractors.manage` | Location | Add subcontractors there; change their details, where they stand and the VIP mark; record their compliance items (step 12b) and attach or remove their documents (step 16b) (added in slice 12 step 12a, decision 148; held by the same roles) |
-| `projects.manage` | Location | Edit a Project's title and description; in step 8b, assign its Production Manager; with the Project's own Production Manager, add and remove photos of the work (step 16c), and record its invoices and payments (step 17a) (added in slice 8 step 8a, decision 130; held by Owner, Leadership and Location Manager) |
+| `projects.manage` | Location | Edit a Project's title and description; in step 8b, assign its Production Manager; with the Project's own Production Manager, add and remove photos of the work (step 16c), and record its invoices and payments (step 17a); lower or waive a job's deposit, with a reason (step 17b) (added in slice 8 step 8a, decision 130; held by Owner, Leadership and Location Manager) |
 | `settings.contact_center.manage` | Company | Manage the Contact Center settings page: call cadence, calling hours and days, hold length (added in step 4a; held by Owner and Leadership) |
 | `leads.work_queue` | Location | Work the Call Queue. **Held by Owner, Leadership, Location Manager and Call Center Agent since step 4a (decision 74), but guards nothing: no route, navigation item, policy or action reads it until step 4b.** |
 

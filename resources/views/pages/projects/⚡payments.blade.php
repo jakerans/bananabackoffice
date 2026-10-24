@@ -64,6 +64,11 @@ new class extends Component {
 
     public string $paymentReason = '';
 
+    /** A smaller deposit, or none, and why (step 17b). */
+    public string $depositAmount = '';
+
+    public string $depositReason = '';
+
     public function mount(Project $project): void
     {
         $this->authorize('view', $project);
@@ -115,6 +120,30 @@ new class extends Component {
         return Gate::allows('approvePayments', $this->project);
     }
 
+    #[Computed]
+    public function mayChangeDeposit(): bool
+    {
+        return Gate::allows('changeDeposit', $this->project);
+    }
+
+    public function openDeposit(): void
+    {
+        $this->authorize('changeDeposit', $this->project);
+
+        $this->depositAmount = number_format($this->standing->requiredDepositCents() / 100, 2, '.', '');
+        $this->depositReason = '';
+        $this->resetValidation();
+
+        Flux::modal('project-deposit')->show();
+    }
+
+    public function saveDeposit(RecordPayments $recordPayments): void
+    {
+        $recordPayments->changeDeposit($this->project, $this->depositAmount, $this->depositReason, Auth::user());
+
+        $this->done('project-deposit', __('Deposit changed.'));
+    }
+
     public function openInvoice(string $kind): void
     {
         $this->authorize('recordPayments', $this->project);
@@ -123,7 +152,7 @@ new class extends Component {
         $sold = $this->project->sold_cents;
         // A suggestion only, before tax (decision 162): the person records the total QuickBooks shows.
         $suggested = $kind === ProjectInvoice::KIND_DEPOSIT
-            ? intdiv($sold, 2)
+            ? $standing->requiredDepositCents()
             : max(0, $sold - ($standing->deposit()?->amount_cents ?? 0));
 
         $this->invoiceKind = $kind;
@@ -263,7 +292,38 @@ new class extends Component {
             <flux:subheading>{{ __('The deposit and final invoices as QuickBooks sent them, and what the customer paid against each.') }}</flux:subheading>
         </div>
 
-        <flux:badge :color="match ($state) { Payments::PAID_IN_FULL => 'emerald', Payments::DEPOSIT_PAID => 'sky', default => 'amber' }" data-test="payment-state">{{ __(Payments::STATES[$state]) }}</flux:badge>
+        <flux:badge :color="match ($state) { Payments::PAID_IN_FULL => 'emerald', Payments::DEPOSIT_PAID, Payments::NO_DEPOSIT => 'sky', default => 'amber' }" data-test="payment-state">{{ __(Payments::STATES[$state]) }}</flux:badge>
+    </div>
+
+    {{-- The deposit asked for (step 17b): the Location's policy, unless a manager lowered or waived it. --}}
+    <div class="flex flex-wrap items-start justify-between gap-3 rounded-lg bg-zinc-50 p-3" data-test="deposit-asked">
+        <div class="flex min-w-56 flex-1 flex-col text-sm">
+            @php
+                $change = $standing->depositChange;
+            @endphp
+            <span class="text-ink">
+                @if ($change === null)
+                    {{ __('Deposit asked for: :amount, :percent% of the sold price before tax.', ['amount' => Money::format($standing->policyDepositCents()), 'percent' => $this->project->location->deposit_percent]) }}
+                @elseif ($change->required_cents === 0)
+                    {{ __('No deposit: waived by :name.', ['name' => $change->set_by_name ?? __('Unknown')]) }}
+                @else
+                    {{ __('Deposit asked for: :amount, lowered from :policy by :name.', ['amount' => $change->amount(), 'policy' => Money::format($standing->policyDepositCents()), 'name' => $change->set_by_name ?? __('Unknown')]) }}
+                @endif
+            </span>
+            @if ($change !== null)
+                <span class="text-zinc-500">&ldquo;{{ $change->reason }}&rdquo;</span>
+            @endif
+            @if ($standing->fullDepositCollected())
+                <span class="text-emerald-700" data-test="full-deposit">{{ __('The full deposit was collected.') }}</span>
+            @endif
+            @if ($this->project->deposit_paid_at !== null)
+                <span class="text-zinc-500" data-test="deposit-paid-at">{{ __('Deposit paid') }} <x-local-time :at="$this->project->deposit_paid_at" /></span>
+            @endif
+        </div>
+
+        @if ($this->mayChangeDeposit && $standing->deposit() === null)
+            <flux:button size="sm" variant="ghost" wire:click="openDeposit" data-test="change-deposit">{{ __('Change the deposit') }}</flux:button>
+        @endif
     </div>
 
     <dl class="grid grid-cols-3 gap-3" data-test="payment-totals">
@@ -448,11 +508,33 @@ new class extends Component {
         </flux:modal>
     @endif
 
+    @if ($this->mayChangeDeposit)
+        <flux:modal name="project-deposit" class="w-full max-w-lg">
+            <form wire:submit="saveDeposit" class="flex flex-col gap-5">
+                <div>
+                    <flux:heading size="lg">{{ __('Change the deposit') }}</flux:heading>
+                    <flux:subheading>{{ __('Lower this job\'s deposit, or give 0 for none, with why. The policy asks for :amount; it cannot be raised above that.', ['amount' => Money::format($standing->policyDepositCents())]) }}</flux:subheading>
+                </div>
+
+                <flux:input wire:model="depositAmount" inputmode="decimal" :label="__('Deposit, before tax')" icon="currency-dollar" data-test="deposit-amount" />
+                <flux:textarea wire:model="depositReason" rows="2" :label="__('Why (required)')" data-test="deposit-reason" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-deposit">{{ __('Save') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+    @endif
+
     @if ($mayApprove)
         <x-confirmation-modal
             name="approve-payment"
-            :title="__('Approve this payment?')"
-            :description="$chosenPayment === null ? '' : __(':amount in :method, received :day. Check the receipt first; it counts from now on.', ['amount' => $chosenPayment->amount(), 'method' => mb_strtolower(__($chosenPayment->methodLabel())), 'day' => $chosenPayment->received_on->format('M j, Y')])"
+            :title="__('Is it in the bank account?')"
+            :description="$chosenPayment === null ? '' : __(':amount in :method, received :day. Approve it once you see it in the bank account; it counts from then on.', ['amount' => $chosenPayment->amount(), 'method' => mb_strtolower(__($chosenPayment->methodLabel())), 'day' => $chosenPayment->received_on->format('M j, Y')])"
             action="approvePayment"
             :confirm-label="__('Approve')"
             confirm-variant="primary"

@@ -51,6 +51,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::AttachmentAdded, AuditAction::AttachmentRemoved, AuditAction::AttachmentPurged,
         AuditAction::ProjectInvoiceRecorded, AuditAction::ProjectInvoiceVoided,
         AuditAction::ProjectPaymentRecorded, AuditAction::ProjectPaymentApproved, AuditAction::ProjectPaymentReversed,
+        AuditAction::ProjectDepositChanged,
     ];
 
     #[Locked]
@@ -139,6 +140,9 @@ new #[Title('Project')] class extends Component {
                 ? __('Payment recorded, waiting for Finance\'s approval: :amount by :method toward the :invoice', ['amount' => Money::format((int) ($event->values_after['amount_cents'] ?? 0)), 'method' => mb_strtolower((string) ($event->values_after['method'] ?? '')), 'invoice' => mb_strtolower((string) ($event->values_after['invoice'] ?? ''))])
                 : __('Payment recorded: :amount by :method toward the :invoice', ['amount' => Money::format((int) ($event->values_after['amount_cents'] ?? 0)), 'method' => mb_strtolower((string) ($event->values_after['method'] ?? '')), 'invoice' => mb_strtolower((string) ($event->values_after['invoice'] ?? ''))])),
             AuditAction::ProjectPaymentApproved => __('Payment approved: :amount by :method', ['amount' => Money::format((int) ($event->values_after['amount_cents'] ?? 0)), 'method' => mb_strtolower((string) ($event->values_after['method'] ?? ''))]),
+            AuditAction::ProjectDepositChanged => ((int) ($event->values_after['required_cents'] ?? 0)) === 0
+                ? __('Deposit waived')
+                : __('Deposit lowered to :amount', ['amount' => Money::format((int) ($event->values_after['required_cents'] ?? 0))]),
             AuditAction::ProjectPaymentReversed => __('Payment reversed: :amount by :method', ['amount' => Money::format((int) ($event->values_before['amount_cents'] ?? 0)), 'method' => mb_strtolower((string) ($event->values_before['method'] ?? ''))]),
             AuditAction::AttachmentAdded => __('Photo added: :what (:name)', ['what' => (string) ($event->values_after['for'] ?? ''), 'name' => (string) ($event->values_after['name'] ?? '')]),
             AuditAction::AttachmentRemoved => __('Photo removed: :what (:name)', ['what' => (string) ($event->values_before['for'] ?? ''), 'name' => (string) ($event->values_before['name'] ?? '')]),
@@ -558,7 +562,12 @@ new #[Title('Project')] class extends Component {
                             </div>
                             @if ($callDueAt !== null)
                                 <div class="text-sm text-zinc-500" data-test="welcome-call-due">
-                                    {{ $callIsBehind ? __('It was due within two business days of the job being taken, by') : __('Due within two business days of the job being taken, by') }} <x-local-time :at="$callDueAt" />
+                                    @if ($project->deposit_paid_at !== null)
+                                        {{-- Once the deposit is paid, the call is due within 24 hours (slice 17, step 17b). --}}
+                                        {{ $callIsBehind ? __('It was due within 24 hours of the deposit being paid, by') : __('The deposit is paid: call within 24 hours, by') }} <x-local-time :at="$callDueAt" />
+                                    @else
+                                        {{ $callIsBehind ? __('It was due within two business days of the job being taken, by') : __('Due within two business days of the job being taken, by') }} <x-local-time :at="$callDueAt" />
+                                    @endif
                                 </div>
                             @endif
                         @endif

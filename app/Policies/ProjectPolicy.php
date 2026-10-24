@@ -95,6 +95,15 @@ class ProjectPolicy
     }
 
     /**
+     * Determine whether the user can lower or waive the Project's deposit: a
+     * manager where it is, with a reason (decision 162, question 4).
+     */
+    public function changeDeposit(User $user, Project $project): bool
+    {
+        return $this->update($user, $project);
+    }
+
+    /**
      * Determine whether the user can approve a cash or check payment, or
      * reverse a payment: Finance at the Project's Location (decision 133;
      * decision 162).
