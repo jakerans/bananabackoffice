@@ -309,7 +309,7 @@ class Navigation
             description: 'Cash management, job costing, payroll and financial reporting.',
             primary: 'finance.performance',
             children: [
-                new NavigationItem('finance.performance', 'Performance', $permissions, route: 'finance.performance'),
+                new NavigationItem('finance.performance', 'Performance', $permissions, NavigationState::Live, route: 'finance.performance'),
                 new NavigationItem('finance.cash', 'Cash Management', $permissions, primary: 'finance.cash.receivables', children: [
                     new NavigationItem('finance.cash.receivables', 'Receivables', $permissions, NavigationState::Live, route: 'finance.receivables'),
                     new NavigationItem('finance.cash.payments', 'Payments', $permissions),

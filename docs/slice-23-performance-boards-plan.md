@@ -104,6 +104,21 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 - **Jobs at risk now,** each with why and linked to its job (question 3);
   and the signed-off jobs whose job costing is not submitted after 7 days.
 
+## Step 23b as built
+
+- **Finance > Performance is live,** the page the Finance Center opens on,
+  for one Location or all of those where the person has Finance access, and
+  a chosen month.
+- **The month:** completed revenue and its gross margin, as on Production >
+  Performance; warranty cost recorded; cash collected, the payments that
+  count (approved, not reversed) by the day received (question 6).
+- **Now:** what customers owe on final invoices, split into not due yet,
+  late, and with Collections, linked to Receivables; the jobs waiting on
+  Finance to reconcile and to close, linked to Job Costing.
+- **Variable pay owed,** company-wide, for those with `compensation.manage`
+  only: due in open periods, and scheduled for payroll but not yet paid,
+  linked to Payroll.
+
 ## Known limits of this plan
 
 - **Before allocations,** gross margin reads higher than it will once
