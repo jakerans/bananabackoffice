@@ -1,10 +1,10 @@
 # Slice 20 — Variable Compensation: Plan
 
 Status: **approved on 2026-10-24 (decision 172), with the recommendation on
-all eight questions, and built straight through 20a, 20b and 20c on
-`checkpoint-slice-20-compensation`. Waiting for Jacob's review; not
-merged.** Written as what the implementation agent recommended from the plan
-check below; what was built is under "as built".
+all eight questions, built straight through 20a, 20b and 20c, and merged on
+2026-10-25 (decisions 173 and 174). Slice 20 is complete.** Written as what
+the implementation agent recommended from the plan check below; what was
+built is under "as built".
 
 ## Why this is next (the plan check)
 

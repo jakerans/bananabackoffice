@@ -192,8 +192,8 @@ unbuilt. Its plan is
 [slice-19-job-costing-plan.md](slice-19-job-costing-plan.md).
 
 **Slice 20, variable compensation, is approved (2026-10-24, decision 172),
-built straight through its three steps on
-`checkpoint-slice-20-compensation`, and waiting for Jacob's review.** The
+built straight through its three steps, and merged (2026-10-25, decisions 173
+and 174). Slice 20 is complete.** The
 plan check after slice 19 found the sales commission and the
 Production Bonus waiting on the final gross margin slice 19 produces. Its
 plan is [slice-20-compensation-plan.md](slice-20-compensation-plan.md).

@@ -3499,6 +3499,17 @@ stopping".
    shows it beside each person, or that it is missing, and the download
    gives it first on every line.
 
+## 174. Slice 20 is merged (2026-10-25)
+
+**Decided by Jacob,** in reply to the payroll ID report: "merge it and
+continue".
+
+1. **Slice 20, variable compensation, is merged** as built
+   ([slice-20-compensation-plan.md](slice-20-compensation-plan.md), "Step 20a
+   as built" to "Step 20c as built", with decision 173).
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
