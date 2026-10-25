@@ -263,7 +263,7 @@ class Navigation
                 ]),
                 new NavigationItem('sales.calendar', 'Calendar', $permissions, NavigationState::Live, route: 'sales.calendar'),
                 new NavigationItem('sales.commissions', 'Commissions', $permissions),
-                new NavigationItem('sales.leaderboard', 'Leaderboard', $permissions),
+                new NavigationItem('sales.leaderboard', 'Leaderboard', $permissions, NavigationState::Live, route: 'sales.leaderboard'),
                 $this->customers(),
                 new NavigationItem('sales.reports', 'Reports', $permissions),
             ],

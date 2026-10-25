@@ -1,9 +1,10 @@
 # Slice 23 — Performance Boards: Plan
 
 Status: **approved on 2026-10-25 (decision 179), with the recommendation on
-all eight questions, to be built straight through 23a, 23b and 23c and then
-reviewed. Being built.** Written as what the implementation agent
-recommended from the plan check below.
+all eight questions, and built straight through 23a, 23b and 23c on
+`checkpoint-slice-23-performance-boards`. Waiting for Jacob's review; not
+merged.** Written as what the implementation agent recommended from the plan
+check below; what was built is under "as built".
 
 ## Why this is next (the plan check)
 
@@ -118,6 +119,19 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 - **Variable pay owed,** company-wide, for those with `compensation.manage`
   only: due in open periods, and scheduled for payroll but not yet paid,
   linked to Payroll.
+
+## Step 23c as built
+
+- **Sales > Leaderboard is live,** its own page in the Sales menu, where the
+  navigation already had it, rather than a part of Sales > Performance.
+  Everyone with Sales access sees it (question 8).
+- **The standings:** company-wide sold revenue by salesperson for the month,
+  quarter or year to date, in the company's time, counted from the same sale
+  records as Sales > Performance, a correction taken off in the period it is
+  made (question 7). The person's own line is in bold.
+- **Champions:** the last finished period's champions are named and marked
+  "Defending champion" in the standings; a tie shares it. **Winners** lists
+  the champions of the last 12 months, 4 quarters or 2 years.
 
 ## Known limits of this plan
 
