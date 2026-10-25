@@ -1,9 +1,8 @@
 # Slice 23 — Performance Boards: Plan
 
 Status: **approved on 2026-10-25 (decision 179), with the recommendation on
-all eight questions, and built straight through 23a, 23b and 23c on
-`checkpoint-slice-23-performance-boards`. Waiting for Jacob's review; not
-merged.** Written as what the implementation agent recommended from the plan
+all eight questions, built straight through 23a, 23b and 23c, and merged on
+2026-10-25 (decision 180). Slice 23 is complete.** Written as what the implementation agent recommended from the plan
 check below; what was built is under "as built".
 
 ## Why this is next (the plan check)

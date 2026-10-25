@@ -3615,6 +3615,17 @@ recommendations, do the entire slice in one go".
    committed and checked on both GitHub jobs. Nothing is merged until
    Jacob reviews the slice.
 
+## 180. Slice 23 is merged (2026-10-25)
+
+**Decided by Jacob,** in reply to the slice 23 report: "continue".
+
+1. **Slice 23, Performance Boards, is merged** as built
+   ([slice-23-performance-boards-plan.md](slice-23-performance-boards-plan.md),
+   "Step 23a as built" to "Step 23c as built"), with the leaderboard on its
+   own page in the Sales menu.
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
