@@ -6,6 +6,7 @@ use App\Support\Attachments\HasPhotos;
 use App\Support\Attachments\KeepsPhotos;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use LogicException;
@@ -126,6 +127,24 @@ class WarrantyCase extends Model implements HasPhotos
     public function subcontractor(): BelongsTo
     {
         return $this->belongsTo(Subcontractor::class);
+    }
+
+    /**
+     * Its costs, voided ones too, in the order recorded (step 22c).
+     *
+     * @return HasMany<WarrantyCost, $this>
+     */
+    public function costs(): HasMany
+    {
+        return $this->hasMany(WarrantyCost::class)->orderBy('id');
+    }
+
+    /**
+     * What it has cost so far: every cost not voided.
+     */
+    public function costCents(): int
+    {
+        return (int) $this->costs()->whereNull('voided_at')->sum('amount_cents');
     }
 
     public function hasBudget(): bool

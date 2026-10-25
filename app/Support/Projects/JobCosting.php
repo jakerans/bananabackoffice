@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\ProjectAccuracyStrike;
 use App\Models\ProjectCost;
 use App\Models\ProjectJobCostingStep;
+use App\Models\WarrantyCost;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -151,6 +152,24 @@ final readonly class JobCosting
     public function targetCostCents(): int
     {
         return intdiv($this->floorCents() * (100 - $this->targetPercent()), 100);
+    }
+
+    /**
+     * What its warranty cases have cost: every warranty cost not voided
+     * (slice 22, step 22c).
+     */
+    public function warrantyCents(): int
+    {
+        return (int) WarrantyCost::query()->where('project_id', $this->project->id)->whereNull('voided_at')->sum('amount_cents');
+    }
+
+    /**
+     * The lifetime gross margin: the final one, or the projection before
+     * it, less its warranty costs (product-architecture.md, 16).
+     */
+    public function lifetimeMarginCents(): int
+    {
+        return ($this->final()->margin_cents ?? $this->marginCents()) - $this->warrantyCents();
     }
 
     public function payoutsCents(): int

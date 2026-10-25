@@ -8,6 +8,7 @@ use App\Models\ProductionBonusMonth;
 use App\Models\Project;
 use App\Models\ProjectJobCostingStep;
 use App\Models\User;
+use App\Models\WarrantyCost;
 use App\Support\Compensation\PayPeriods;
 use App\Support\Compensation\ProductionBonus;
 use App\Support\Money;
@@ -38,7 +39,7 @@ class RecordProductionBonus
             return;
         }
 
-        $earlier = ProductionBonusCredit::query()->where('project_id', $project->id)->get(['revenue_cents', 'margin_cents']);
+        $earlier = ProductionBonusCredit::query()->where('project_id', $project->id)->whereNull('warranty_cost_id')->get(['revenue_cents', 'margin_cents']);
         $revenue = $close->revenue_cents - (int) $earlier->sum('revenue_cents');
         $margin = $close->margin_cents - (int) $earlier->sum('margin_cents');
 
@@ -55,6 +56,30 @@ class RecordProductionBonus
             'month' => PayPeriods::now($project->location),
             'revenue_cents' => $revenue,
             'margin_cents' => $margin,
+        ])->save();
+    }
+
+    /**
+     * Count a warranty cost against the job's Production Manager, in the
+     * month it is recorded, without reopening the job (slice 22, step 22c;
+     * product-architecture.md, 6.1). Below zero when recorded; back again
+     * when voided. Part of the cost, saved with it or not at all.
+     */
+    public function warrantyCost(Project $project, WarrantyCost $cost, int $marginCents): void
+    {
+        if ($project->production_manager_id === null || $marginCents === 0) {
+            return;
+        }
+
+        $credit = new ProductionBonusCredit;
+        $credit->forceFill([
+            'user_id' => $project->production_manager_id,
+            'user_name' => (string) $project->production_manager_name,
+            'project_id' => $project->id,
+            'warranty_cost_id' => $cost->id,
+            'month' => PayPeriods::now($project->location),
+            'revenue_cents' => 0,
+            'margin_cents' => $marginCents,
         ])->save();
     }
 

@@ -1,9 +1,10 @@
 # Slice 22 — Warranty: Plan
 
 Status: **approved on 2026-10-25 (decision 177), with the recommendation on
-all eight questions, to be built straight through 22a, 22b and 22c and then
-reviewed. Being built.** Written as what the implementation agent
-recommended from the plan check below.
+all eight questions, and built straight through 22a, 22b and 22c on
+`checkpoint-slice-22-warranty`. Waiting for Jacob's review; not merged.**
+Written as what the implementation agent recommended from the plan check
+below; what was built is under "as built".
 
 ## Why this is next (the plan check)
 
@@ -128,6 +129,26 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 - **Completing** a scheduled case records what was done; photos after the
   work are added on the case's page. Each step is audited and shown in the
   job's activity.
+
+## Step 22c as built
+
+- **Warranty costs** (`warranty_costs`) are recorded on the case by its
+  owner or a manager there who may also see payouts: materials, a
+  subcontractor's payout (which alone may be $0), W-2 labour in dollars, or
+  other, with who it was paid to, the day and its receipt. A wrong one is
+  voided with why. Not on a case closed without work. Each is audited.
+- **The case shows what it cost** against the approved budget, in red and
+  marked "Over budget" when above it. Costs are finance-sensitive: those who
+  cannot see payouts do not see them.
+- **The lifetime gross margin:** the job's costing card says "Lifetime gross
+  margin, after $X of warranty", from the final gross margin (or the
+  projection before it) less its warranty cost. Finance > Job Costing lists
+  the jobs with warranty cost recorded in the last 90 days, with their
+  lifetime gross margin.
+- **The Production Bonus:** each warranty cost counts below zero for the
+  job's Production Manager in the month it is recorded; a void gives it back
+  in the month it is voided. The job is never reopened. Sales commission
+  does not change.
 
 ## Known limits of this plan
 

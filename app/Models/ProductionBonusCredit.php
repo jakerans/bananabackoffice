@@ -13,13 +13,15 @@ use LogicException;
  * its revenue and final gross margin, in the month it was financially
  * closed, in its Location's time. A job closed again counts the difference,
  * in the month it closes again, so a cost found after the close is an
- * adjustment in the month it is found (6.1). Kept as it was.
+ * adjustment in the month it is found (6.1). A warranty cost counts below
+ * zero in the month it is recorded (slice 22). Kept as it was.
  *
  * @property int $id
  * @property int $user_id The Production Manager on the job when it closed.
  * @property string $user_name
  * @property int $project_id
- * @property int $project_job_costing_step_id The close it came from.
+ * @property int|null $project_job_costing_step_id The close it came from.
+ * @property int|null $warranty_cost_id The warranty cost it came from, instead (slice 22, step 22c).
  * @property string $month "2026-11".
  * @property int $revenue_cents
  * @property int $margin_cents

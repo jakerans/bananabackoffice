@@ -142,6 +142,8 @@ enum AuditAction: string
     case WarrantyBudgetApproved = 'warranty.budget_approved';
     case WarrantyVisitScheduled = 'warranty.visit_scheduled';
     case WarrantyCaseCompleted = 'warranty.case_completed';
+    case WarrantyCostRecorded = 'warranty.cost_recorded';
+    case WarrantyCostVoided = 'warranty.cost_voided';
     case PayPlanSet = 'compensation.plan_set';
     case CompensationAdjusted = 'compensation.adjusted';
     case PayrollFinalized = 'compensation.payroll_finalized';

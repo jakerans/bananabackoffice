@@ -33,7 +33,7 @@ use Illuminate\Validation\ValidationException;
  */
 class ManageWarrantyCases
 {
-    public function __construct(private RecordAuditEvent $recordAuditEvent) {}
+    public function __construct(protected RecordAuditEvent $recordAuditEvent) {}
 
     /**
      * Open a case: what the customer reported, and who reported it.

@@ -59,6 +59,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectAmbassadorPackageRecorded, AuditAction::ProjectAmbassadorObligationHandled,
         AuditAction::WarrantyCaseOpened, AuditAction::WarrantyCaseAssigned, AuditAction::WarrantyCaseClosed,
         AuditAction::WarrantyBudgetApproved, AuditAction::WarrantyVisitScheduled, AuditAction::WarrantyCaseCompleted,
+        AuditAction::WarrantyCostRecorded, AuditAction::WarrantyCostVoided,
     ];
 
     /**
@@ -169,6 +170,8 @@ new #[Title('Project')] class extends Component {
             AuditAction::WarrantyBudgetApproved => __('Warranty budget approved: :amount', ['amount' => Money::format((int) ($event->values_after['budget_cents'] ?? 0))]),
             AuditAction::WarrantyVisitScheduled => __('Warranty visit scheduled: :day', ['day' => (string) ($event->values_after['visit_on'] ?? '')]),
             AuditAction::WarrantyCaseCompleted => __('Warranty case completed'),
+            AuditAction::WarrantyCostRecorded => __('Warranty cost recorded'),
+            AuditAction::WarrantyCostVoided => __('Warranty cost voided'),
             AuditAction::ProjectAmbassadorObligationHandled => __('Brand Ambassador: :item, :state', [
                 'item' => __((string) ($event->values_after['item'] ?? '')),
                 'state' => mb_strtolower(__(ProjectAmbassadorObligation::STATES[(string) ($event->values_after['state'] ?? '')] ?? '')),

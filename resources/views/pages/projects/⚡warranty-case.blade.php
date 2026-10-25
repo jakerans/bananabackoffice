@@ -1,11 +1,13 @@
 <?php
 
 use App\Actions\Projects\ManageWarrantyCases;
+use App\Actions\Projects\RecordWarrantyCosts;
 use App\Enums\Role;
 use App\Models\Project;
 use App\Models\Subcontractor;
 use App\Models\User;
 use App\Models\WarrantyCase;
+use App\Models\WarrantyCost;
 use App\Support\Money;
 use App\Support\Projects\RoughTimeframe;
 use Flux\Flux;
@@ -16,6 +18,8 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
 /**
  * A warranty case (docs/slice-22-warranty-plan.md; decision 177;
@@ -24,8 +28,28 @@ use Livewire\Component;
  * works it; a manager gives it to someone.
  */
 new #[Title('Warranty case')] class extends Component {
+    use WithFileUploads;
+
     #[Locked]
     public int $caseId;
+
+    public string $warrantyCostKind = '';
+
+    public string $warrantyCostAmount = '';
+
+    public string $warrantyCostPaidTo = '';
+
+    public string $warrantyCostSpentOn = '';
+
+    public string $warrantyCostNote = '';
+
+    /** @var TemporaryUploadedFile|null The receipt. */
+    public $warrantyCostReceipt = null;
+
+    #[Locked]
+    public ?int $warrantyCostId = null;
+
+    public string $warrantyCostVoidReason = '';
 
     public ?int $warrantyOwner = null;
 
@@ -83,6 +107,75 @@ new #[Title('Warranty case')] class extends Component {
     public function mayApproveBudget(): bool
     {
         return Gate::allows('approveBudget', $this->case);
+    }
+
+    /**
+     * Whether this person sees what it cost: those who may see payouts (step 22c).
+     */
+    #[Computed]
+    public function maySeeCosts(): bool
+    {
+        return Gate::allows('viewPayouts', $this->case->project);
+    }
+
+    #[Computed]
+    public function mayRecordCosts(): bool
+    {
+        return $this->maySeeCosts && $this->mayManage && $this->case->state !== WarrantyCase::CLOSED;
+    }
+
+    /**
+     * Every cost, voided ones too, with its receipts.
+     *
+     * @return Collection<int, WarrantyCost>
+     */
+    #[Computed]
+    public function costs(): Collection
+    {
+        return $this->case->costs()->with('receipts')->get();
+    }
+
+    public function openCost(): void
+    {
+        abort_unless($this->mayRecordCosts, 403);
+
+        $this->warrantyCostKind = '';
+        $this->warrantyCostAmount = '';
+        $this->warrantyCostPaidTo = '';
+        $this->warrantyCostSpentOn = RoughTimeframe::today($this->case->project->location)->toDateString();
+        $this->warrantyCostNote = '';
+        $this->warrantyCostReceipt = null;
+        $this->resetValidation();
+
+        Flux::modal('warranty-cost')->show();
+    }
+
+    public function saveCost(RecordWarrantyCosts $recordWarrantyCosts): void
+    {
+        $receipt = $this->warrantyCostReceipt instanceof TemporaryUploadedFile ? $this->warrantyCostReceipt : null;
+
+        $recordWarrantyCosts->add($this->case, $this->warrantyCostKind, $this->warrantyCostAmount, $this->warrantyCostPaidTo, $this->warrantyCostSpentOn, $this->warrantyCostNote, $receipt, Auth::user());
+
+        $this->warrantyCostReceipt = null;
+        $this->done('warranty-cost', __('Cost recorded.'));
+    }
+
+    public function openVoidCost(int $costId): void
+    {
+        abort_unless($this->mayRecordCosts, 403);
+
+        $this->warrantyCostId = $costId;
+        $this->warrantyCostVoidReason = '';
+        $this->resetValidation();
+
+        Flux::modal('warranty-cost-void')->show();
+    }
+
+    public function voidCost(RecordWarrantyCosts $recordWarrantyCosts): void
+    {
+        $recordWarrantyCosts->void($this->case, (int) $this->warrantyCostId, $this->warrantyCostVoidReason, Auth::user());
+
+        $this->done('warranty-cost-void', __('Cost voided.'));
     }
 
     /**
@@ -218,7 +311,7 @@ new #[Title('Warranty case')] class extends Component {
 
     private function done(string $modal, string $message): void
     {
-        unset($this->case, $this->mayManage, $this->mayAssign, $this->mayApproveBudget);
+        unset($this->case, $this->mayManage, $this->mayAssign, $this->mayApproveBudget, $this->mayRecordCosts, $this->costs);
 
         Flux::modal($modal)->close();
         Flux::toast(variant: 'success', text: $message);
@@ -326,6 +419,61 @@ new #[Title('Warranty case')] class extends Component {
         @endif
     </div>
 
+    {{-- What it cost (step 22c): finance-sensitive, for those who may see payouts. --}}
+    @if ($this->maySeeCosts)
+        @php
+            $spent = (int) $this->costs->whereNull('voided_at')->sum('amount_cents');
+            $over = $case->hasBudget() && $spent > $case->budget_cents;
+        @endphp
+        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="warranty-costs">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <flux:heading size="lg" level="2">{{ __('What it cost') }}</flux:heading>
+                    <flux:subheading>{{ __('Counted in the job\'s lifetime gross margin, and against its Production Manager\'s Production Bonus in the month each is recorded.') }}</flux:subheading>
+                </div>
+                @if ($this->mayRecordCosts)
+                    <flux:button size="sm" icon="plus" wire:click="openCost" data-test="add-warranty-cost">{{ __('Add a cost') }}</flux:button>
+                @endif
+            </div>
+
+            <div class="flex flex-wrap items-baseline gap-2 text-sm" data-test="warranty-cost-total">
+                <span class="font-nav font-bold tabular-nums {{ $over ? 'text-rose-700' : 'text-ink' }}">{{ Money::format($spent) }}</span>
+                <span class="text-zinc-500">{{ $case->hasBudget() ? __('of a :budget budget', ['budget' => Money::format((int) $case->budget_cents)]) : __('no budget approved yet') }}</span>
+                @if ($over)
+                    <flux:badge size="sm" color="rose">{{ __('Over budget') }}</flux:badge>
+                @endif
+            </div>
+
+            @if ($this->costs->isNotEmpty())
+                <ul class="flex flex-col divide-y divide-zinc-200">
+                    @foreach ($this->costs as $cost)
+                        <li wire:key="warranty-cost-{{ $cost->id }}" class="flex flex-wrap items-start justify-between gap-3 py-2 first:pt-0 last:pb-0 {{ $cost->isVoided() ? 'opacity-60' : '' }}" data-test="warranty-cost">
+                            <div class="flex min-w-0 flex-1 flex-col text-sm">
+                                <span class="font-semibold text-ink {{ $cost->isVoided() ? 'line-through' : '' }}">{{ __($cost->kindLabel()) }} &middot; {{ $cost->paid_to }}</span>
+                                <span class="text-zinc-500">{{ $cost->spent_on->format('M j, Y') }} &middot; {{ __('recorded by :name', ['name' => $cost->recorded_by_name ?? __('Unknown')]) }}</span>
+                                @if ($cost->note !== null)
+                                    <span class="text-zinc-700">{{ $cost->note }}</span>
+                                @endif
+                                @if ($cost->isVoided())
+                                    <span class="text-zinc-700">{{ __('Voided by :name: :reason', ['name' => $cost->voided_by_name ?? __('Unknown'), 'reason' => $cost->voided_reason]) }}</span>
+                                @endif
+                                @foreach ($cost->receipts as $receipt)
+                                    <a wire:key="warranty-receipt-{{ $receipt->id }}" href="{{ route('attachments.open', $receipt) }}" target="_blank" rel="noopener" class="font-medium text-ink underline decoration-zinc-300 underline-offset-2 hover:decoration-ink" data-test="warranty-cost-receipt">{{ __('Receipt: :name', ['name' => $receipt->original_name]) }}</a>
+                                @endforeach
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-nav font-bold tabular-nums text-ink">{{ $cost->amount() }}</span>
+                                @if ($this->mayRecordCosts && ! $cost->isVoided())
+                                    <flux:button size="xs" variant="ghost" wire:click="openVoidCost({{ $cost->id }})" data-test="void-warranty-cost">{{ __('Void') }}</flux:button>
+                                @endif
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </div>
+    @endif
+
     <livewire:pages::projects.photos :attachable="$case" title="Photos" :key="'photos-warranty-'.$case->id" />
 
     @if ($this->mayAssign)
@@ -352,6 +500,52 @@ new #[Title('Warranty case')] class extends Component {
                 </div>
             </form>
         </flux:modal>
+    @endif
+
+    @if ($this->mayRecordCosts)
+        <flux:modal name="warranty-cost" class="w-full max-w-lg">
+            <form wire:submit="saveCost" class="flex flex-col gap-5">
+                <flux:error name="warrantyCost" />
+
+                <div>
+                    <flux:heading size="lg">{{ __('Add a cost') }}</flux:heading>
+                    <flux:subheading>{{ __('A subcontractor returning to correct their own work may be paid $0.') }}</flux:subheading>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <flux:select wire:model="warrantyCostKind" :label="__('Kind')" data-test="warranty-cost-kind">
+                        <flux:select.option value="">{{ __('Choose') }}</flux:select.option>
+                        @foreach (WarrantyCost::KINDS as $key => $label)
+                            <flux:select.option :value="$key" wire:key="warranty-cost-kind-{{ $key }}">{{ __($label) }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:input wire:model="warrantyCostAmount" inputmode="decimal" icon="currency-dollar" :label="__('Amount')" data-test="warranty-cost-amount" />
+                    <flux:input wire:model="warrantyCostPaidTo" maxlength="{{ WarrantyCost::PAID_TO_LENGTH }}" :label="__('Paid to')" data-test="warranty-cost-paid-to" />
+                    <flux:input wire:model="warrantyCostSpentOn" type="date" :label="__('Day')" data-test="warranty-cost-spent-on" />
+                </div>
+                <flux:textarea wire:model="warrantyCostNote" rows="2" :label="__('Note (optional)')" data-test="warranty-cost-note" />
+                <flux:input type="file" wire:model="warrantyCostReceipt" accept=".pdf,.jpg,.jpeg,.png,.heic,application/pdf,image/jpeg,image/png,image/heic" :label="__('The receipt (optional)')" data-test="warranty-cost-receipt-file" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="warrantyCostReceipt" data-test="save-warranty-cost">{{ __('Record') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        <x-confirmation-modal
+            name="warranty-cost-void"
+            :title="__('Void this cost?')"
+            :description="__('It stops counting and is kept, with why. The Production Bonus gets it back this month.')"
+            action="voidCost"
+            :confirmLabel="__('Void')"
+            :error="['warrantyCost']"
+        >
+            <flux:textarea wire:model="warrantyCostVoidReason" rows="2" :label="__('Why (required)')" data-test="warranty-cost-void-reason" />
+        </x-confirmation-modal>
     @endif
 
     @if ($this->mayApproveBudget)

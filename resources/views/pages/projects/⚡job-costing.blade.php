@@ -381,6 +381,11 @@ new class extends Component {
         @endif
     </div>
 
+    {{-- After warranty (slice 22, step 22c). --}}
+    @if ($costing->warrantyCents() > 0)
+        <flux:text class="text-sm" data-test="job-lifetime-margin">{{ __('Lifetime gross margin, after :warranty of warranty: :margin', ['warranty' => Money::format($costing->warrantyCents()), 'margin' => Money::format($costing->lifetimeMarginCents())]) }}</flux:text>
+    @endif
+
     @if ($missing->isNotEmpty())
         <flux:text class="text-sm text-amber-700" data-test="job-missing-receipts">{{ trans_choice(':count cost is missing its receipt.|:count costs are missing their receipts.', $missing->count()) }}</flux:text>
     @endif
