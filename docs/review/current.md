@@ -3,34 +3,31 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-25 · **Branch:** `checkpoint-slice-21-brand-ambassador`
+**Updated:** 2026-10-25 · **Branch:** `main`
 
-**State:** slice 21, Brand Ambassador, is built straight through (decision
-175) and **waits for Jacob's review. Not merged.**
+**State:** slice 21, Brand Ambassador, is complete and merged (decision
+176). **Slice 22, Warranty, is proposed and waits for Jacob's approval.**
+Nothing of it is built.
 
-## What to review
+## The proposal
 
-Plan and "as built": [../slice-21-brand-ambassador-plan.md](../slice-21-brand-ambassador-plan.md).
+Plan: [../slice-22-warranty-plan.md](../slice-22-warranty-plan.md).
 
-- **21a:** the package chosen when a proposal is marked Sold (none, Bronze,
-  Silver, Gold or Custom), kept on the job with the retail price before the
-  discount; the Brand Ambassador card on the job.
-- **21b:** each item the customer promised, marked completed, partial,
-  deferred or waived; the yard sign up for 30 days; morning reminders; the
-  list on Production > Workspace; the financial close waits until each is
-  handled.
-- **21c:** the budget from the floor price, the retail price less 25%.
+- **22a:** the Warranty Case on a job: what the customer reports, photos,
+  its owner, open to scheduled to completed (or closed without work, with
+  why); Production > Warranty.
+- **22b:** a manager approves a warranty budget; the visit is scheduled
+  with who does it and shows on Production > Schedule; completing it
+  records what was done.
+- **22c:** warranty costs, with receipts; the original job's lifetime gross
+  margin; the cost counts against its Production Manager's Production Bonus
+  in the month it is recorded.
 
-## Decisions
+## Decisions needed
 
-None open.
-
-## Browser review (local, fictitious data)
-
-Done with Playwright: Sam sold a proposal on a custom package (refused
-until the discount, items and why were given); a manager recorded Silver on
-sample job 3; Remy put the yard sign up, waived one item with why and
-completed another; job 3's budget now comes from its floor price.
+The plan's eight questions, each with a recommendation. "Follow your
+recommendations" is a complete answer. Question 5, where warranty cost
+counts, is the one most likely to need your word.
 
 ## Optional, for Jacob
 

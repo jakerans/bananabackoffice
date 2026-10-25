@@ -206,6 +206,11 @@ unbuilt item of closeout (6.8, 6.10), and the floor-price budget (10.2)
 waiting on the package sold. Its plan is
 [slice-21-brand-ambassador-plan.md](slice-21-brand-ambassador-plan.md).
 
+**Slice 22, Warranty, is proposed (2026-10-25) and not approved.** The plan
+check after slice 21 found closeout complete and warranty the next gap: the
+end of the ownership chain (20) and Production's last Coming Soon item (6,
+16). Its plan is [slice-22-warranty-plan.md](slice-22-warranty-plan.md).
+
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the
 customer still unbuilt. Its plan is
