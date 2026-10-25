@@ -1,9 +1,8 @@
 # Slice 21 — Brand Ambassador: Plan
 
 Status: **approved on 2026-10-25 (decision 175), with the recommendation on
-all eight questions, and built straight through 21a, 21b and 21c on
-`checkpoint-slice-21-brand-ambassador`. Waiting for Jacob's review; not
-merged.** Written as what the implementation agent recommended from the plan
+all eight questions, built straight through 21a, 21b and 21c, and merged on
+2026-10-25 (decision 176). Slice 21 is complete.** Written as what the implementation agent recommended from the plan
 check below; what was built is under "as built".
 
 ## Why this is next (the plan check)

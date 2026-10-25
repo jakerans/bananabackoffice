@@ -3539,6 +3539,17 @@ one go".
    committed and checked on both GitHub jobs. Nothing is merged until
    Jacob reviews the slice.
 
+## 176. Slice 21 is merged (2026-10-25)
+
+**Decided by Jacob,** in reply to the slice 21 report: "continue".
+
+1. **Slice 21, Brand Ambassador, is merged** as built
+   ([slice-21-brand-ambassador-plan.md](slice-21-brand-ambassador-plan.md),
+   "Step 21a as built" to "Step 21c as built"), with the sale dialog
+   starting on "No package".
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

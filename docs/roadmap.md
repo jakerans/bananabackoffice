@@ -199,8 +199,8 @@ Production Bonus waiting on the final gross margin slice 19 produces. Its
 plan is [slice-20-compensation-plan.md](slice-20-compensation-plan.md).
 
 **Slice 21, Brand Ambassador, is approved (2026-10-25, decision 175), built
-straight through its three steps on `checkpoint-slice-21-brand-ambassador`,
-and waiting for Jacob's review.**
+straight through its three steps, and merged (2026-10-25, decision 176).
+Slice 21 is complete.**
 The plan check after slice 20 found Brand Ambassador obligations the last
 unbuilt item of closeout (6.8, 6.10), and the floor-price budget (10.2)
 waiting on the package sold. Its plan is
