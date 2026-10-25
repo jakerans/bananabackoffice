@@ -27,6 +27,9 @@
             <flux:error :name="$errorPrefix.'soldAmount'" />
         @endunless
     </div>
+
+    {{-- The Brand Ambassador package, recorded with the sale (slice 21, step 21a). --}}
+    <x-proposal.ambassador-fields :model="$model" :errorPrefix="$errorPrefix" :values="$values" />
 @endif
 
 @if ($result === 'lost')

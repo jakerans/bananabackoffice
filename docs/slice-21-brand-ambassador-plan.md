@@ -1,8 +1,9 @@
 # Slice 21 — Brand Ambassador: Plan
 
-Status: **proposed on 2026-10-25 for Jacob's review, after slice 20 was
-merged (decision 174). Nothing is built.** Written as what the
-implementation agent recommends from the plan check below.
+Status: **approved on 2026-10-25 (decision 175), with the recommendation on
+all eight questions, built straight through 21a, 21b and 21c, and merged on
+2026-10-25 (decision 176). Slice 21 is complete.** Written as what the implementation agent recommended from the plan
+check below; what was built is under "as built".
 
 ## Why this is next (the plan check)
 
@@ -95,6 +96,59 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 8. **The 30-day yard sign.** *Recommended:* one item, "Yard sign, 30
    days": the Production Manager records the day it went up, and it is due
    to come down 30 days later, with a reminder.
+
+## Step 21a as built
+
+- **The package goes with the sale.** Marking a proposal Sold, on the
+  Proposals card or in the after-action report, asks for the Brand
+  Ambassador package: no package (the default), Bronze 10%, Silver 15%,
+  Gold 25%, or Custom. Custom asks for a discount from 1% to 25%, the items
+  promised and why, and tells the Location's managers.
+- **The job keeps** the tier, the discount, the items, why, the largest
+  discount then (25%) and the retail price before the discount: the price
+  sold ÷ (100% − the discount). A job sold before slice 21 says "No package
+  recorded" until someone records one.
+- **The Brand Ambassador card** on the job shows the package, the retail
+  price, who recorded it and what the customer promised. The salesperson
+  records or corrects it there until the handoff is complete; a manager at
+  any time, saying why once the handoff is complete. Each change is audited
+  and shown in the job's activity. The handoff page shows the package.
+
+## Step 21b as built
+
+- **Each item promised is listed on the job** to be handled
+  (`project_ambassador_obligations`), from the package as recorded. A
+  corrected package adds new items and drops those nobody has handled yet;
+  an item already handled stays.
+- **The Production Manager or a manager there marks each item:**
+  completed (with who physically did it, if someone else), partial (with
+  what is done), deferred to a later day, or waived (with why). The yard
+  sign is marked up on a day, and is then due to come down 30 days later.
+  Each change is audited and shown in the job's activity.
+- **Reminders:** at 07:00 each morning, company time,
+  `backoffice:ambassador-reminders` tells the Production Manager of each
+  item whose day has come, once for each due day.
+- **Production > Workspace** lists the Brand Ambassador items due: those
+  whose day has come, and those not handled yet on a job the customer has
+  signed off. The person's own come first.
+- **The financial close** now also waits for every item to be handled
+  (decision 175, question 5). A deferred item, such as a yard sign still
+  up, does not hold it. Finance > Job Costing says so among what holds a job.
+
+## Step 21c as built
+
+- **The budget is set from the floor price** (10.2; decision 175): the
+  retail price, plus every signed change order, less the largest discount
+  kept on the job (25%), times (100% − the Location's target margin).
+  Selling above the floor is margin, never budget.
+- **A job with no package recorded** has a retail price equal to the price
+  sold, so its budget is 75% of what it was before slice 21. On Gold, the
+  floor is the price sold, so the budget is unchanged.
+- **The job costing card** says "Budget, for a 55% margin at the floor
+  price" and shows the floor and the retail price it comes from.
+- **Closed jobs keep the gross margins they closed with:** the margin,
+  commission and Production Bonus never depended on the budget. Only the
+  budget shown on the card changes.
 
 ## Known limits of this plan
 

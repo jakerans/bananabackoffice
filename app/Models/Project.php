@@ -7,6 +7,7 @@ use App\Enums\ProjectProductionState;
 use App\Support\Attachments\HasPhotos;
 use App\Support\Attachments\KeepsPhotos;
 use App\Support\Money;
+use App\Support\Projects\AmbassadorPackage;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -67,6 +68,14 @@ use LogicException;
  * @property string|null $timeframe_note
  * @property ColorReadiness $color_readiness Where its colors stand: a state of its own (slice 10, step 10b).
  * @property Carbon|null $deposit_paid_at When its deposit invoice was paid in full (slice 17, step 17b). Empty again if a payment is reversed.
+ * @property string|null $ambassador_tier Its Brand Ambassador package: an AmbassadorPackage::TIERS key; empty until recorded (slice 21).
+ * @property int|null $ambassador_discount_percent
+ * @property list<string>|null $ambassador_items What the customer promised: AmbassadorPackage::ITEMS keys.
+ * @property string|null $ambassador_reason Why, when the package is custom or was corrected.
+ * @property int|null $ambassador_max_discount_percent The largest discount when it was sold: the floor is the retail price less it.
+ * @property int|null $retail_cents The price before the Brand Ambassador discount.
+ * @property Carbon|null $ambassador_recorded_at
+ * @property string|null $ambassador_recorded_by_name
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Proposal $proposal
@@ -124,6 +133,11 @@ class Project extends Model implements HasPhotos
             'timeframe_earliest' => 'date',
             'timeframe_latest' => 'date',
             'deposit_paid_at' => 'datetime',
+            'ambassador_discount_percent' => 'integer',
+            'ambassador_items' => 'array',
+            'ambassador_max_discount_percent' => 'integer',
+            'retail_cents' => 'integer',
+            'ambassador_recorded_at' => 'datetime',
             'project_size_min_value' => 'integer',
             'project_size_max_value' => 'integer',
         ];
@@ -268,6 +282,47 @@ class Project extends Model implements HasPhotos
         $last = $packages->max('scheduled_last_day');
 
         return [$first, $last];
+    }
+
+    /**
+     * What the customer promised for the Brand Ambassador discount, item by
+     * item, in the order of the list (slice 21, step 21b).
+     *
+     * @return HasMany<ProjectAmbassadorObligation, $this>
+     */
+    public function ambassadorObligations(): HasMany
+    {
+        return $this->hasMany(ProjectAmbassadorObligation::class)->orderBy('id');
+    }
+
+    /**
+     * Its Brand Ambassador package, once recorded (slice 21).
+     */
+    public function ambassadorPackage(): ?AmbassadorPackage
+    {
+        return $this->ambassador_tier === null ? null : new AmbassadorPackage(
+            $this->ambassador_tier,
+            (int) $this->ambassador_discount_percent,
+            $this->ambassador_items ?? [],
+            $this->ambassador_reason,
+        );
+    }
+
+    /**
+     * The price before the Brand Ambassador discount: the price sold when no
+     * package is recorded (slice 21, step 21c).
+     */
+    public function retailCents(): int
+    {
+        return $this->retail_cents ?? $this->sold_cents;
+    }
+
+    /**
+     * The largest discount the floor price is set by, as it was when sold.
+     */
+    public function floorDiscountPercent(): int
+    {
+        return $this->ambassador_max_discount_percent ?? AmbassadorPackage::MAX_DISCOUNT_PERCENT;
     }
 
     /**

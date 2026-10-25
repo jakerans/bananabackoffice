@@ -21,3 +21,7 @@ Schedule::command('backoffice:files-purge')->dailyAt('03:15')->withoutOverlappin
 // (docs/slice-20-compensation-plan.md, step 20b). Shortly after midnight in the
 // company's time, so the first of the month already has last month's result.
 Schedule::command('backoffice:production-bonus')->dailyAt('00:30')->timezone(config('app.display_timezone'))->withoutOverlapping(30);
+
+// Reminds each Production Manager of the Brand Ambassador items due on their
+// jobs, such as a yard sign to take down (docs/slice-21-brand-ambassador-plan.md, step 21b).
+Schedule::command('backoffice:ambassador-reminders')->dailyAt('07:00')->timezone(config('app.display_timezone'))->withoutOverlapping(30);

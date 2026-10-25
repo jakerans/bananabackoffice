@@ -6,6 +6,7 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Leads\ChangeLeadLifecycle;
 use App\Actions\Leads\RecordLeadStatusChange;
 use App\Actions\Projects\CreateProjectForSoldProposal;
+use App\Actions\Projects\RecordAmbassadorPackage;
 use App\Enums\AuditAction;
 use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
@@ -15,6 +16,7 @@ use App\Models\Proposal;
 use App\Models\User;
 use App\Notifications\AppointmentChanged;
 use App\Support\Money;
+use App\Support\Projects\AmbassadorPackage;
 use App\Support\Proposals\ProposalInput;
 use App\Support\Proposals\ResultDetails;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -29,6 +31,7 @@ class RecordProposalResult
         private RecordAuditEvent $recordAuditEvent,
         private CreateProjectForSoldProposal $createProjectForSoldProposal,
         private RecordSaleEntry $recordSaleEntry,
+        private RecordAmbassadorPackage $recordAmbassadorPackage,
     ) {}
 
     /**
@@ -40,7 +43,8 @@ class RecordProposalResult
      *   can differ. The Lead then shows Sold (answer 6 and 9). Its other
      *   proposals stay as they are. A Project is made for the proposal in the
      *   same save (decision 130), and the sale is written to the record the
-     *   Sales figures count from (decision 134).
+     *   Sales figures count from (decision 134). Its Brand Ambassador
+     *   package goes with it (slice 21, step 21a).
      * - Lost: with a reason from Sales Loss Reasons and the primary objection.
      *   The Lead does not change; marking the Lead lost is MarkLeadLost.
      * - Still pending: with the main objection, so the reason it is open is
@@ -50,7 +54,7 @@ class RecordProposalResult
      * CorrectProposalResult. All of it is saved together or not at all.
      *
      * @param  string|null  $result  A ProposalResult, as its value.
-     * @param  array<string, mixed>  $details  Any of: soldAmount, lossReasonId, lostTo, objectionId, note.
+     * @param  array<string, mixed>  $details  Any of: soldAmount, lossReasonId, lostTo, objectionId, note, and the Brand Ambassador package (ambassadorTier, ambassadorDiscount, ambassadorItems, ambassadorReason).
      *
      * @throws ValidationException
      * @throws AuthorizationException
@@ -121,11 +125,16 @@ class RecordProposalResult
             $typed = trim((string) ($details['soldAmount'] ?? ''));
             $cents = $typed === '' ? $proposal->price_cents : ProposalInput::cents($typed, $prefix.'soldAmount', __('Enter the sold amount in dollars, like 8450 or 8,450.50.'));
             $with = ResultDetails::forSold($details);
+            $package = AmbassadorPackage::fromInput($details, $prefix);
 
             $proposal->forceFill([...$recorded, 'result' => ProposalResult::Sold, 'sold_cents' => $cents, 'result_note' => $with->note])->save();
 
             // A sold proposal has a Project of its own from this moment (rulebook, rule 13; decision 130).
             $project = $this->createProjectForSoldProposal->apply($lead, $proposal, $actor);
+
+            if ($package !== null) {
+                $this->recordAmbassadorPackage->apply($project, $package, null, $actor);
+            }
 
             // The line the Sales figures count from: this salesperson's, in this month (decisions 133 and 134).
             $this->recordSaleEntry->sale($lead, $proposal, $project, firstForLead: $from !== LeadStatus::Sold, actor: $actor);

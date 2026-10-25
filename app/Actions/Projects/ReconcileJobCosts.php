@@ -9,6 +9,7 @@ use App\Actions\Compensation\RecordProductionBonus;
 use App\Enums\AuditAction;
 use App\Enums\ProjectProductionState;
 use App\Models\Project;
+use App\Models\ProjectAmbassadorObligation;
 use App\Models\ProjectCost;
 use App\Models\ProjectJobCostingStep;
 use App\Models\User;
@@ -85,8 +86,9 @@ class ReconcileJobCosts extends RecordJobCosts
     }
 
     /**
-     * Close the job financially: approved, signed off and paid in full
-     * (question 8). Brand Ambassador obligations do not hold it.
+     * Close the job financially: approved, signed off, paid in full, and
+     * every Brand Ambassador item handled (question 8; decision 175). A
+     * deferred item does not hold it.
      *
      * @throws ValidationException
      * @throws AuthorizationException
@@ -155,6 +157,11 @@ class ReconcileJobCosts extends RecordJobCosts
 
         if (Payments::for($project)->state() !== Payments::PAID_IN_FULL) {
             $missing[] = __('payment in full');
+        }
+
+        // Every Brand Ambassador item handled; a deferred one may stay open (slice 21, decision 175).
+        if ($project->ambassadorObligations()->where('state', ProjectAmbassadorObligation::OPEN)->exists()) {
+            $missing[] = __('every Brand Ambassador item handled');
         }
 
         return $missing;

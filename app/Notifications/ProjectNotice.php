@@ -47,6 +47,12 @@ class ProjectNotice extends Notification
     /** A Production Manager has a third job-costing accuracy strike in 90 days (slice 19, step 19b; decision 133). */
     public const string ACCURACY_STRIKES = 'project_accuracy_strikes';
 
+    /** A job at the manager's Location was sold with a custom Brand Ambassador package (slice 21, step 21a). */
+    public const string AMBASSADOR_CUSTOM = 'project_ambassador_custom';
+
+    /** A Brand Ambassador item of the Production Manager's job is due today (slice 21, step 21b). */
+    public const string AMBASSADOR_DUE = 'project_ambassador_due';
+
     /**
      * Tell someone about a Project: that its handoff is waiting or done, or
      * that it has changed hands (docs/slice-8-projects-plan.md, step 8b;
@@ -58,7 +64,7 @@ class ProjectNotice extends Notification
      * happened and links to the Project, which the person must be signed in
      * and allowed to open.
      *
-     * @param  self::HANDOFF_REMINDER|self::READY_FOR_PRODUCTION|self::ASSIGNED_TO_YOU|self::GIVEN_TO_ANOTHER|self::HAS_PRODUCTION_MANAGER|self::HANDOFF_CHANGED|self::CANCELLED|self::SCHEDULED|self::RESCHEDULED|self::DEPOSIT_PAID|self::ACCURACY_STRIKES  $kind
+     * @param  self::HANDOFF_REMINDER|self::READY_FOR_PRODUCTION|self::ASSIGNED_TO_YOU|self::GIVEN_TO_ANOTHER|self::HAS_PRODUCTION_MANAGER|self::HANDOFF_CHANGED|self::CANCELLED|self::SCHEDULED|self::RESCHEDULED|self::DEPOSIT_PAID|self::ACCURACY_STRIKES|self::AMBASSADOR_CUSTOM|self::AMBASSADOR_DUE  $kind
      * @param  self::IN_APP|self::EMAIL  $channel
      * @param  string|null  $name  A staff member, a Location or the days of the work to name, where the message has one.
      */
@@ -117,6 +123,8 @@ class ProjectNotice extends Notification
             self::RESCHEDULED => __('A job you sold was rescheduled: it is now :days.', ['days' => (string) $this->name]),
             self::DEPOSIT_PAID => __('The deposit for a job of yours is paid. Call the customer within 24 hours.'),
             self::ACCURACY_STRIKES => __(':name has a third job-costing accuracy strike in 90 days.', ['name' => (string) $this->name]),
+            self::AMBASSADOR_CUSTOM => __(':name recorded a custom Brand Ambassador package on a job.', ['name' => (string) $this->name]),
+            self::AMBASSADOR_DUE => __('A Brand Ambassador item on a job of yours is due: :item.', ['item' => (string) $this->name]),
         };
     }
 

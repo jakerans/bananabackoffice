@@ -126,11 +126,31 @@ final readonly class JobCosting
     }
 
     /**
-     * The most the job can cost and still make the target margin.
+     * The retail price before any Brand Ambassador discount, with every
+     * signed change order (slice 21, step 21c).
+     */
+    public function retailCents(): int
+    {
+        return $this->project->retailCents() + ($this->contractCents() - $this->project->sold_cents);
+    }
+
+    /**
+     * The floor price the budget is set from: the retail price less the
+     * largest Brand Ambassador discount, never the higher price it sold for
+     * (product-architecture.md, 10.2; decision 175).
+     */
+    public function floorCents(): int
+    {
+        return intdiv($this->retailCents() * (100 - $this->project->floorDiscountPercent()), 100);
+    }
+
+    /**
+     * The budget: the most the job can cost and still make the target margin
+     * at the floor price. Selling above the floor is margin, not budget.
      */
     public function targetCostCents(): int
     {
-        return intdiv($this->contractCents() * (100 - $this->targetPercent()), 100);
+        return intdiv($this->floorCents() * (100 - $this->targetPercent()), 100);
     }
 
     public function payoutsCents(): int

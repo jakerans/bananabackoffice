@@ -3,31 +3,34 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-25 · **Branch:** `main`
+**Updated:** 2026-10-25 · **Branch:** `checkpoint-slice-21-brand-ambassador`
 
-**State:** slice 20, variable compensation, is complete and merged
-(decisions 173 and 174). **Slice 21, Brand Ambassador, is proposed and
-waits for Jacob's approval.** Nothing of it is built.
+**State:** slice 21, Brand Ambassador, is built straight through (decision
+175) and **waits for Jacob's review. Not merged.**
 
-## The proposal
+## What to review
 
-Plan: [../slice-21-brand-ambassador-plan.md](../slice-21-brand-ambassador-plan.md).
+Plan and "as built": [../slice-21-brand-ambassador-plan.md](../slice-21-brand-ambassador-plan.md).
 
-- **21a:** the Brand Ambassador package recorded with the sale (none,
-  Bronze, Silver, Gold or Custom), and the retail price before the
-  discount.
-- **21b:** what the customer promised, item by item, marked completed,
-  partial, deferred to a day or waived, with reminders and a list on
-  Production > Workspace.
-- **21c:** the job's budget from the floor price (retail less 25%), never
-  the higher price it sold for.
+- **21a:** the package chosen when a proposal is marked Sold (none, Bronze,
+  Silver, Gold or Custom), kept on the job with the retail price before the
+  discount; the Brand Ambassador card on the job.
+- **21b:** each item the customer promised, marked completed, partial,
+  deferred or waived; the yard sign up for 30 days; morning reminders; the
+  list on Production > Workspace; the financial close waits until each is
+  handled.
+- **21c:** the budget from the floor price, the retail price less 25%.
 
-## Decisions needed
+## Decisions
 
-The plan's eight questions, each with a recommendation. "Follow your
-recommendations" is a complete answer. Question 6, the floor budget, is the
-one most likely to need your word: it lowers every job's budget from
-today's, as the plan's section 10.2 intends.
+None open.
+
+## Browser review (local, fictitious data)
+
+Done with Playwright: Sam sold a proposal on a custom package (refused
+until the discount, items and why were given); a manager recorded Silver on
+sample job 3; Remy put the yard sign up, waived one item with why and
+completed another; job 3's budget now comes from its floor price.
 
 ## Optional, for Jacob
 
