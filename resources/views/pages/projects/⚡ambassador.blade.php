@@ -229,7 +229,7 @@ new class extends Component {
                             @endif
                         </div>
                         <div class="flex items-center gap-2">
-                            <flux:badge size="sm" :color="match (true) { $due => 'rose', $obligation->state === ProjectAmbassadorObligation::OPEN => 'amber', $obligation->state === ProjectAmbassadorObligation::COMPLETED => 'emerald', default => 'zinc' }" data-test="ambassador-obligation-state">{{ $due ? __('Due') : __($obligation->stateLabel()) }}</flux:badge>
+                            <flux:badge size="sm" :color="match (true) { $due => 'rose', $obligation->state === ProjectAmbassadorObligation::OPEN => 'amber', $obligation->state === ProjectAmbassadorObligation::COMPLETED => 'emerald', default => 'zinc' }" data-test="ambassador-obligation-state">{{ match (true) { $due => __('Due'), $obligation->state === ProjectAmbassadorObligation::DEFERRED && $obligation->sign_up_on !== null => __('Up'), default => __($obligation->stateLabel()) } }}</flux:badge>
                             @if ($this->mayHandle)
                                 <flux:button size="xs" variant="ghost" wire:click="openObligation({{ $obligation->id }})" data-test="handle-ambassador-obligation">{{ __('Update') }}</flux:button>
                             @endif
