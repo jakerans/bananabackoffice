@@ -3444,6 +3444,20 @@ stopping".
    committed and checked on both GitHub jobs. Nothing is merged until
    Jacob reviews the slice.
 
+## 171. Slice 19 is merged; only materials and rentals need a purchase order (2026-10-24)
+
+**Decided by Jacob,** in reply to the slice 19 report, which asked to merge
+and to confirm one reading of decision 133: "sounds good. continue".
+
+1. **Slice 19, job costing and the financial close, is merged** as built
+   ([slice-19-job-costing-plan.md](slice-19-job-costing-plan.md), "Step 19a
+   as built" to "Step 19c as built").
+2. **Only materials and equipment rentals take a purchase order,** so only
+   they are accuracy strikes for lacking one (decision 133, as read in
+   "Step 19b as built").
+3. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

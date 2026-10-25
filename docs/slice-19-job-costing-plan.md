@@ -1,8 +1,9 @@
 # Slice 19 — Job Costing and the Financial Close: Plan
 
 Status: **approved on 2026-10-24 (decision 170), with the recommendation on
-all eight questions, and built straight through 19a, 19b and 19c. Awaiting
-Jacob's review; see each step "as built".** Written as what the
+all eight questions, built straight through 19a, 19b and 19c, and merged
+(decision 171); see each step "as built". Slice 19 is complete.** Written
+as what the
 implementation agent recommended from the plan check below.
 
 ## Why this is next (the plan check)
@@ -156,7 +157,7 @@ Built on `checkpoint-slice-19-job-costing` under decision 170.
 Decision 133 says "a missing PO" is a strike. As built, only materials and
 equipment rentals take a purchase order, so only those are struck for
 lacking one; permits, disposal, W-2 labour, warranty and other costs are
-not.
+not. Confirmed by Jacob (decision 171).
 
 ## Step 19c as built (2026-10-24)
 
