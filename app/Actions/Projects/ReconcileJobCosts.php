@@ -5,6 +5,7 @@ namespace App\Actions\Projects;
 use App\Actions\Attachments\AttachFile;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Compensation\RecordCommission;
+use App\Actions\Compensation\RecordProductionBonus;
 use App\Enums\AuditAction;
 use App\Enums\ProjectProductionState;
 use App\Models\Project;
@@ -30,7 +31,7 @@ use Illuminate\Validation\ValidationException;
  */
 class ReconcileJobCosts extends RecordJobCosts
 {
-    public function __construct(RecordAuditEvent $recordAuditEvent, AttachFile $attachFile, private RecordCommission $recordCommission)
+    public function __construct(RecordAuditEvent $recordAuditEvent, AttachFile $attachFile, private RecordCommission $recordCommission, private RecordProductionBonus $recordProductionBonus)
     {
         parent::__construct($recordAuditEvent, $attachFile);
     }
@@ -101,8 +102,10 @@ class ReconcileJobCosts extends RecordJobCosts
 
             $close = $this->step($project, $costing, ProjectJobCostingStep::KIND_CLOSED, null, $actor, AuditAction::ProjectFinanciallyClosed);
 
-            // The final commission is worked out from it (slice 20, step 20a).
+            // The final commission is worked out from it, and it counts toward
+            // its Production Manager's Production Bonus (slice 20, steps 20a and 20b).
             $this->recordCommission->closed($project, $close, $actor);
+            $this->recordProductionBonus->credit($project, $close);
 
             return $close;
         });

@@ -36,7 +36,15 @@ final class PayPeriods
      */
     public static function open(?Location $location = null): string
     {
-        return self::now($location);
+        return self::openFrom(self::now($location));
+    }
+
+    /**
+     * The pay period an entry due in a month is paid in.
+     */
+    public static function openFrom(string $period): string
+    {
+        return $period;
     }
 
     public static function next(string $period): string

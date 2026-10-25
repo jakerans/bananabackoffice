@@ -3,9 +3,12 @@
 use App\Actions\Compensation\ManagePay;
 use App\Models\CompensationEntry;
 use App\Models\PayPlan;
+use App\Models\ProductionBonusCredit;
+use App\Models\ProductionBonusMonth;
 use App\Models\Project;
 use App\Models\User;
 use App\Support\Compensation\PayPeriods;
+use App\Support\Compensation\ProductionBonus;
 use App\Support\Money;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
@@ -119,6 +122,48 @@ new #[Title('Pay')] class extends Component {
             ->with('project.location')
             ->orderByDesc('id')
             ->get();
+    }
+
+    /**
+     * Their Production Bonus by month, the latest first (step 20b): this
+     * month while they are on the plan, and each month a job of theirs
+     * closed in the last year, with where it stands.
+     *
+     * @return list<array{month: string, revenue: int, margin: int, words: string}>
+     */
+    #[Computed]
+    public function bonusMonths(): array
+    {
+        $now = PayPeriods::now();
+        $months = ProductionBonusCredit::query()
+            ->where('user_id', $this->personId)
+            ->where('month', '>', PayPeriods::start($now)->subYear()->format('Y-m'))
+            ->distinct()
+            ->pluck('month')
+            ->all();
+
+        if (ProductionBonus::planAtEndOf($this->personId, $now) !== null) {
+            $months[] = $now;
+        }
+
+        $settled = ProductionBonusMonth::query()->where('user_id', $this->personId)->whereIn('month', $months)->get()->keyBy('month');
+        $rows = [];
+
+        foreach (array_unique($months) as $month) {
+            $figures = ProductionBonus::figures($this->personId, $month);
+            $plan = $settled->get($month)?->payPlan ?? ProductionBonus::planAtEndOf($this->personId, $month);
+
+            $rows[] = [
+                'month' => $month,
+                'revenue' => $figures['revenue'],
+                'margin' => $figures['margin'],
+                'words' => $plan === null ? 'No Production Bonus plan that month.' : ProductionBonus::standing($plan, $month, $figures['revenue'], $figures['margin'], $settled->get($month)),
+            ];
+        }
+
+        usort($rows, fn (array $one, array $other): int => strcmp($other['month'], $one['month']));
+
+        return $rows;
     }
 
     /**
@@ -243,6 +288,30 @@ new #[Title('Pay')] class extends Component {
             <flux:text class="text-sm">{{ __('No pay plan is set in Backoffice.') }}</flux:text>
         @endif
     </div>
+
+    @if ($this->bonusMonths !== [])
+        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="pay-bonus">
+            <div>
+                <flux:heading size="lg" level="2">{{ __('Production Bonus') }}</flux:heading>
+                <flux:subheading>{{ __('Each month, on the jobs financially closed that month: 10% of the gross-margin dollars above $37,500, at a margin of 55% or more, paid at the end of the next month if it also finishes at 55% or more.') }}</flux:subheading>
+            </div>
+
+            <ul class="flex flex-col divide-y divide-zinc-200">
+                @foreach ($this->bonusMonths as $row)
+                    <li wire:key="pay-bonus-{{ $row['month'] }}" class="flex flex-wrap items-start justify-between gap-3 py-2 first:pt-0 last:pb-0" data-test="pay-bonus-month">
+                        <div class="flex min-w-0 flex-1 flex-col text-sm">
+                            <span class="font-semibold text-ink">{{ PayPeriods::words($row['month']) }}</span>
+                            <span class="text-zinc-700">{{ __($row['words']) }}</span>
+                        </div>
+                        <div class="flex flex-col items-end text-sm">
+                            <span class="font-nav font-bold tabular-nums text-ink">{{ Money::format($row['margin']) }}</span>
+                            <span class="text-xs text-zinc-500">{{ ProductionBonus::marginPercent($row['revenue'], $row['margin']) === null ? __('No job closed') : __(':percent% of :revenue', ['percent' => ProductionBonus::marginPercent($row['revenue'], $row['margin']), 'revenue' => Money::format($row['revenue'])]) }}</span>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="pay-entries">
         <flux:heading size="lg" level="2">{{ __('Ledger') }}</flux:heading>

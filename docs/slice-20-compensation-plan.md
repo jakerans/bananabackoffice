@@ -126,6 +126,30 @@ To start, Jacob approves the plan, or step 20a alone, and answers 1 to 4 and
   plans and their ledger by month, and is where Finance sets a plan or adds
   an adjustment. Everyone sees their own at "My pay" in the account menu.
 
+## Step 20b as built
+
+- **Each financial close counts** toward the Production Bonus of the
+  Production Manager on the job then, in the month it closed in the job's
+  Location's time (question 8): its revenue and final gross margin
+  (`production_bonus_credits`). A job closed again after a reopening counts
+  only the difference, in the month it closes again, so a cost found after
+  the close is an adjustment in the month it is found.
+- **A month's bonus** is 10% of its gross-margin dollars above $37,500,
+  earned only at a margin of 55% or more, on the plan the person is on at
+  the end of the month. The rate, floor and margin are kept on the plan.
+- **Each month is settled** once the month after it is over: what it
+  earned, and whether that next month also finished at 55% or more
+  (`production_bonus_months`, kept as it was). A payable bonus is a
+  **Production Bonus** entry due in that next month's pay period. A month
+  with no job closed has no margin, so it does not hold an earlier month's
+  bonus.
+- **Nightly at 00:30** in the company's time, `backoffice:production-bonus`
+  settles each month whose following month is over, looking back three
+  months so a missed night is caught up.
+- **The person's pay page** shows each month with a job closed in the last
+  year, and this month while they are on the plan: its gross-margin dollars
+  and margin, and where it stands, in plain English.
+
 ## Known limits of this plan
 
 - **Pay is calculated, not paid:** Backoffice gives Finance the amounts;
