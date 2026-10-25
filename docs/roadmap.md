@@ -213,6 +213,13 @@ check after slice 21 found closeout complete and warranty the next gap: the
 end of the ownership chain (20) and Production's last Coming Soon item (6,
 16). Its plan is [slice-22-warranty-plan.md](slice-22-warranty-plan.md).
 
+**Slice 23, Performance Boards, is proposed (2026-10-25) and not
+approved.** The plan check after slice 22 found the Production and Finance
+Centers still opening on Coming Soon pages where their Performance boards
+belong (6.1, 9.1, 17), with the numbers for them now recorded, and the Sales
+leaderboard (5.8) unbuilt. Its plan is
+[slice-23-performance-boards-plan.md](slice-23-performance-boards-plan.md).
+
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the
 customer still unbuilt. Its plan is

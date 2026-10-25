@@ -3,38 +3,30 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-25 · **Branch:** `checkpoint-slice-22-warranty`
+**Updated:** 2026-10-25 · **Branch:** `main`
 
-**State:** slice 22, Warranty, is built straight through (decision 177) and
-**waits for Jacob's review. Not merged.**
+**State:** slice 22, Warranty, is complete and merged (decision 178).
+**Slice 23, Performance Boards, is proposed and waits for Jacob's
+approval.** Nothing of it is built.
 
-## What to review
+## The proposal
 
-Plan and "as built": [../slice-22-warranty-plan.md](../slice-22-warranty-plan.md).
+Plan: [../slice-23-performance-boards-plan.md](../slice-23-performance-boards-plan.md).
 
-- **22a:** a warranty case opened from the job; its owner (the job's
-  Production Manager, or a manager gives it to someone); its own page with
-  photos; closing without work, with why; Production > Warranty.
-- **22b:** a manager approves the warranty budget ($0 allowed); the visit
-  is scheduled with who does it and shows on Production > Schedule;
-  completing records what was done.
-- **22c:** warranty costs with receipts, against the budget; the job's
-  lifetime gross margin, also on Finance > Job Costing; each cost counts
-  against the job's Production Manager's Production Bonus in the month it
-  is recorded.
+- **23a:** Production > Performance: completed revenue and gross margin,
+  on time and running over, what is owed, job-costing timeliness and
+  strikes, warranty, jobs at risk, and each Production Manager's month.
+- **23b:** Finance > Performance: completed revenue and gross margin, cash
+  collected, what is owed by age, jobs waiting to close, warranty cost, and
+  variable pay owed.
+- **23c:** the Sales leaderboard: sold revenue by salesperson for the
+  month, quarter and year, with champions.
 
-## Decisions
+## Decisions needed
 
-None open.
-
-## Browser review (local, fictitious data)
-
-Done with Playwright on sample job 1: Sam opened a case (it went to Remy,
-with Sandia Brush Co. as the original subcontractor); Morgan approved a $250
-budget; Remy scheduled a warranty technician for today, recorded $300 of
-materials (shown over budget) and completed it. The visit showed on
-Production > Schedule, the case on Production > Warranty, and the job's
-lifetime gross margin dropped by the $300.
+The plan's eight questions, each with a recommendation. "Follow your
+recommendations" is a complete answer. Question 4, what managers see of
+each Production Manager's month, is the one most likely to need your word.
 
 ## Optional, for Jacob
 
