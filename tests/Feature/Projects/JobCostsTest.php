@@ -2,6 +2,7 @@
 
 use App\Actions\Locations\ChangeTargetMargin;
 use App\Actions\Projects\ChangeWorkPackages;
+use App\Actions\Projects\RecordAmbassadorPackage;
 use App\Actions\Projects\RecordJobCosts;
 use App\Actions\Projects\RecordWelcomeCall;
 use App\Actions\Projects\SetProjectTimeframe;
@@ -58,18 +59,20 @@ function costingOf($test): JobCosting
     return JobCosting::for($test->project->fresh());
 }
 
-test('the budget runs from the contract and the target margin, and commits every payout and cost', function () {
+test('the budget runs from the floor price and the target margin, and commits every payout and cost', function () {
     costRecorded($this, receipt: UploadedFile::fake()->image('Receipt.jpg'));
     costRecorded($this, 'rental', '150', 'R-77');
 
     $costing = costingOf($this);
     expect($costing->contractCents())->toBe(845000)
         ->and($costing->targetPercent())->toBe(55)
-        ->and($costing->targetCostCents())->toBe(380250)
+        // No package recorded: the retail price is the $8,450 sold; the floor is 75% of it (slice 21, step 21c).
+        ->and($costing->floorCents())->toBe(633750)
+        ->and($costing->targetCostCents())->toBe(285187)
         ->and($costing->payoutsCents())->toBe(425000)
         ->and($costing->costsCents())->toBe(56250)
         ->and($costing->committedCents())->toBe(481250)
-        ->and($costing->remainingCents())->toBe(-101000)
+        ->and($costing->remainingCents())->toBe(-196063)
         ->and($costing->marginWords())->toBe('$3,637.50 (43%)')
         ->and($costing->missingReceipts())->toHaveCount(1);
 });
@@ -77,7 +80,7 @@ test('the budget runs from the contract and the target margin, and commits every
 test('the target margin is set per Location', function () {
     app(ChangeTargetMargin::class)->handle($this->lakeview, '40', $this->owner);
 
-    expect(costingOf($this)->targetCostCents())->toBe(507000);
+    expect(costingOf($this)->targetCostCents())->toBe(380250);
     expect(fn () => app(ChangeTargetMargin::class)->handle($this->lakeview, '100', $this->owner))->toThrow(ValidationException::class, 'Give a whole percent from 1 to 99.');
     expect(fn () => app(ChangeTargetMargin::class)->handle($this->lakeview, '50', $this->manager))->toThrow(AuthorizationException::class);
 });
@@ -122,8 +125,9 @@ test('the job shows the budget and costs only to those who may see payouts', fun
     costRecorded($this);
 
     Livewire::actingAs($this->pat)->test('pages::projects.job-costing', ['project' => $this->project])
-        ->assertSee('Target cost, for a 55% margin')
-        ->assertSee('$3,802.50')
+        ->assertSee('Budget, for a 55% margin at the floor price')
+        ->assertSee('$2,851.87')
+        ->assertSee('Floor $6,337.50: retail $8,450 less 25%')
         ->assertSee('Projected gross margin')
         ->assertSee('1 cost is missing its receipt.')
         ->assertSeeHtml('data-test="add-job-cost"');
@@ -149,4 +153,16 @@ test('recording a cost from the page, with its receipt', function () {
         ->assertSee('City dump');
 
     expect(ProjectCost::query()->sole()->receipts()->count())->toBe(1);
+});
+
+test('a job sold on a Brand Ambassador package budgets from its retail price less 25%, never the higher sale price', function () {
+    // Gold: $8,450 sold at 25% off is $11,266.67 retail; the floor is back at $8,450.
+    app(RecordAmbassadorPackage::class)->correct($this->project, ['ambassadorTier' => 'gold'], 'Recorded late.', $this->manager);
+    expect(costingOf($this)->floorCents())->toBe(845000)->and(costingOf($this)->targetCostCents())->toBe(380250);
+
+    // Bronze: $9,388.89 retail; the floor is $7,041.66, so the budget is lower and the upside is margin.
+    app(RecordAmbassadorPackage::class)->correct($this->project, ['ambassadorTier' => 'bronze'], 'Corrected.', $this->manager);
+    expect(costingOf($this)->retailCents())->toBe(938889)
+        ->and(costingOf($this)->floorCents())->toBe(704166)
+        ->and(costingOf($this)->targetCostCents())->toBe(316874);
 });

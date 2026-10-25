@@ -357,8 +357,9 @@ new class extends Component {
             <dd class="font-nav font-bold tabular-nums text-ink">{{ Money::format($costing->contractCents()) }}</dd>
         </div>
         <div>
-            <dt class="text-sm text-zinc-500">{{ __('Target cost, for a :percent% margin', ['percent' => $costing->targetPercent()]) }}</dt>
-            <dd class="font-nav font-bold tabular-nums text-ink">{{ Money::format($costing->targetCostCents()) }}</dd>
+            <dt class="text-sm text-zinc-500">{{ __('Budget, for a :percent% margin at the floor price', ['percent' => $costing->targetPercent()]) }}</dt>
+            <dd class="font-nav font-bold tabular-nums text-ink" data-test="job-target-cost">{{ Money::format($costing->targetCostCents()) }}</dd>
+            <dd class="text-xs text-zinc-500" data-test="job-floor">{{ __('Floor :floor: retail :retail less :percent%', ['floor' => Money::format($costing->floorCents()), 'retail' => Money::format($costing->retailCents()), 'percent' => $costing->project->floorDiscountPercent()]) }}</dd>
         </div>
         <div>
             <dt class="text-sm text-zinc-500">{{ __('Committed') }}</dt>

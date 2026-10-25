@@ -1,9 +1,10 @@
 # Slice 21 — Brand Ambassador: Plan
 
 Status: **approved on 2026-10-25 (decision 175), with the recommendation on
-all eight questions, to be built straight through 21a, 21b and 21c and then
-reviewed. Being built.** Written as what the implementation agent
-recommended from the plan check below.
+all eight questions, and built straight through 21a, 21b and 21c on
+`checkpoint-slice-21-brand-ambassador`. Waiting for Jacob's review; not
+merged.** Written as what the implementation agent recommended from the plan
+check below; what was built is under "as built".
 
 ## Why this is next (the plan check)
 
@@ -134,6 +135,21 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 - **The financial close** now also waits for every item to be handled
   (decision 175, question 5). A deferred item, such as a yard sign still
   up, does not hold it. Finance > Job Costing says so among what holds a job.
+
+## Step 21c as built
+
+- **The budget is set from the floor price** (10.2; decision 175): the
+  retail price, plus every signed change order, less the largest discount
+  kept on the job (25%), times (100% − the Location's target margin).
+  Selling above the floor is margin, never budget.
+- **A job with no package recorded** has a retail price equal to the price
+  sold, so its budget is 75% of what it was before slice 21. On Gold, the
+  floor is the price sold, so the budget is unchanged.
+- **The job costing card** says "Budget, for a 55% margin at the floor
+  price" and shows the floor and the retail price it comes from.
+- **Closed jobs keep the gross margins they closed with:** the margin,
+  commission and Production Bonus never depended on the budget. Only the
+  budget shown on the card changes.
 
 ## Known limits of this plan
 
