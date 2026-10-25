@@ -3,32 +3,29 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-25 · **Branch:** `checkpoint-slice-23-performance-boards`
+**Updated:** 2026-10-25 · **Branch:** `main`
 
-**State:** slice 23, Performance Boards, is built straight through
-(decision 179) and **waits for Jacob's review. Not merged.**
+**State:** slice 23, Performance Boards, is complete and merged (decision
+180). **Slice 24, Refunds, Credits and Write-offs, is proposed and waits
+for Jacob's approval.** Nothing of it is built.
 
-## What to review
+## The proposal
 
-Plan and "as built": [../slice-23-performance-boards-plan.md](../slice-23-performance-boards-plan.md).
+Plan: [../slice-24-refunds-credits-plan.md](../slice-24-refunds-credits-plan.md).
 
-- **23a:** Production > Performance, the page the Production Center now
-  opens on.
-- **23b:** Finance > Performance, the page the Finance Center now opens on.
-- **23c:** Sales > Leaderboard, its own page in the Sales menu.
+- **24a:** credits against a job's final balance, requested and approved
+  by two different people; they lower revenue, so margin and pay follow.
+- **24b:** refunds, up to what was collected, approved and then recorded
+  paid by Finance.
+- **24c:** bad-debt write-offs after Collections, proposed by Finance and
+  approved by a manager, so the job can finally close; below gross margin.
 
-## Decisions
+## Decisions needed
 
-None open.
-
-## Browser review (local, fictitious data)
-
-Done with Playwright: as Remy, the Production Center opened on its new
-board; as Finley, the Finance Center opened on its board, with variable pay
-owed; as Sam, the leaderboard showed him as defending champion. A
-Production Manager's month includes warranty cost recorded in it, as the
-Production Bonus does; the company's completed gross margin counts the
-financial closes only, with warranty cost shown beside it on Finance.
+The plan's eight questions, each with a recommendation. "Follow your
+recommendations" is a complete answer. Questions 6 and 7, where bad debt
+counts and what it does to commission, are the ones most likely to need
+your word.
 
 ## Optional, for Jacob
 

@@ -221,6 +221,12 @@ belong (6.1, 9.1, 17), with the numbers for them now recorded, and the Sales
 leaderboard (5.8) unbuilt. Its plan is
 [slice-23-performance-boards-plan.md](slice-23-performance-boards-plan.md).
 
+**Slice 24, Refunds, Credits and Write-offs, is proposed (2026-10-25) and
+not approved.** The plan check after slice 23 found that a job whose customer
+never pays can never be financially closed, and refunds, credits and
+write-offs (10.5, 10.7) unbuilt. Its plan is
+[slice-24-refunds-credits-plan.md](slice-24-refunds-credits-plan.md).
+
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the
 customer still unbuilt. Its plan is
