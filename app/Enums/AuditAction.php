@@ -126,6 +126,14 @@ enum AuditAction: string
     case ProjectChangeOrderSigned = 'project.change_order_signed';
     case ProjectChangeOrderWithdrawn = 'project.change_order_withdrawn';
     case ProjectWorkRevised = 'project.work_revised';
+    case ProjectCostRecorded = 'project.cost_recorded';
+    case ProjectCostVoided = 'project.cost_voided';
+    case ProjectJobCostingSubmitted = 'project.job_costing_submitted';
+    case ProjectJobCostingApproved = 'project.job_costing_approved';
+    case ProjectFinanciallyClosed = 'project.financially_closed';
+    case ProjectFinancialCloseReopened = 'project.financial_close_reopened';
+    case ProjectAccuracyStrike = 'project.accuracy_strike';
+    case LocationTargetMarginChanged = 'location.target_margin_changed';
     case LocationDepositPolicyChanged = 'location.deposit_policy_changed';
     case AttachmentAdded = 'attachment.added';
     case AttachmentRemoved = 'attachment.removed';

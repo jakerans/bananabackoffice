@@ -356,7 +356,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | `finance.cash.receivables` | Receivables | **Live (slice 17, step 17c):** `/finance/receivables`, route name `finance.receivables`, `finance.access` at the Locations shown |
 | `finance.cash.payments` | Payments | CS |
 | `finance.cash.payouts` | Payouts | CS |
-| `finance.job_costing` | Job Costing | CS |
+| `finance.job_costing` | Job Costing | **Live (slice 19, step 19c):** `/finance/job-costing`, route name `finance.job-costing`, `finance.access` at the Locations shown |
 | `finance.payroll` | Payroll | CS |
 | `finance.commission_approvals` | Commission Approvals | CS |
 | `finance.reports` | Reports | CS |

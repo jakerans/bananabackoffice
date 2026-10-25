@@ -1,8 +1,10 @@
 # Slice 19 — Job Costing and the Financial Close: Plan
 
-Status: **proposed on 2026-10-24 for Jacob's review, after slice 18 was
-merged (decision 169). Nothing is built.** Written as what the implementation
-agent recommends from the plan check below.
+Status: **approved on 2026-10-24 (decision 170), with the recommendation on
+all eight questions, built straight through 19a, 19b and 19c, and merged
+(decision 171); see each step "as built". Slice 19 is complete.** Written
+as what the
+implementation agent recommended from the plan check below.
 
 ## Why this is next (the plan check)
 
@@ -101,3 +103,96 @@ Questions 6 to 8 are needed before 19b and 19c.
   QuickBooks or a supplier yet.
 - **The gross margin is before allocations,** which Finance adds at the
   monthly close.
+
+## Step 19a as built (2026-10-24)
+
+Built on `checkpoint-slice-19-job-costing` under decision 170.
+
+- **Costs** (`project_costs`, `App\Actions\Projects\RecordJobCosts`): each
+  direct cost with its kind (materials, equipment rental, permit, dump or
+  disposal, W-2 labour, warranty or callback, other), amount, who it was
+  paid to, day, purchase order and an optional note; its receipt attached
+  now or later. A cost without one reads "Missing its receipt". A wrong
+  cost is voided with why and stays on record; nothing is changed in place.
+- **The budget** (`App\Support\Projects\JobCosting`), in a **Job costing**
+  section on the job, below Payments: the contract (with signed change
+  orders), the target cost for the Location's target margin, committed
+  (every payout set and every cost recorded), the remaining budget (red
+  below zero), and the **projected gross margin** before allocations (red
+  below the target).
+- **The target gross margin:** 55% by default, set per Location in
+  Settings > Locations ("Target margin").
+- **Who:** only those who may see payouts see the section; the job's
+  Production Manager or a manager there records costs.
+- **History:** each cost recorded or voided is in the audit record, never
+  in the customer's Activity.
+- **Tests:** `tests/Feature/Projects/JobCostsTest.php`, 10 tests.
+
+## Step 19b as built (2026-10-24)
+
+- **Submitting** (`RecordJobCosts::submit`): "Submit job costing" on the
+  job, once the customer has signed off and every Work Package has its
+  payout, in a confirmation that shows the figure. It keeps a step
+  (`project_job_costing_steps`) with the contract, payouts, costs and the
+  **provisional gross margin** as they are then. The job's costing reads
+  Submitted.
+- **Corrections:** after submission, a cost added needs why ("Why it is
+  added now"); a cost voided needs why, as before. Both are kept, marked as
+  corrections.
+- **Accuracy strikes** (`project_accuracy_strikes`, decision 133), against
+  the job's Production Manager:
+  - at submission, each material or rental with no purchase order (other
+    kinds, such as W-2 labour, do not take one);
+  - after submission, a material or rental added with no purchase order,
+    and any cost added or voided above the larger of $250 or 2% of the
+    contract.
+  The job shows its strikes, and how many the Production Manager has in the
+  last 90 days. Their third in a rolling 90 days, and each third after,
+  tells the Location's managers and Leadership by the bell (question 7);
+  nothing else happens.
+- **Tests:** `tests/Feature/Projects/JobCostingSubmitTest.php`, 8 tests.
+
+### Deviation from the plan
+
+Decision 133 says "a missing PO" is a strike. As built, only materials and
+equipment rentals take a purchase order, so only those are struck for
+lacking one; permits, disposal, W-2 labour, warranty and other costs are
+not. Confirmed by Jacob (decision 171).
+
+## Step 19c as built (2026-10-24)
+
+- **Finance's reconciliation** (`App\Actions\Projects\ReconcileJobCosts`),
+  in the job's Job costing section, for Finance at the job's Location:
+  Finance adds a cost the Production Manager missed, or reclassifies one by
+  voiding it and recording it again, each with why once job costing was
+  submitted, and attaches receipts. Finance's own changes are never
+  accuracy strikes.
+- **Approving:** "Approve the final gross margin" on submitted (or
+  reopened) job costing, in a confirmation that shows the figure. It keeps
+  a step with the **final gross margin**; from then the Production Manager
+  can no longer add or void a cost.
+- **The financial close:** "Close financially" once the final gross margin
+  is approved, the customer signed off and the job is paid in full
+  (question 8); until then the section says what it waits for. A closed job
+  shows **Financially closed** in its header, for everyone who may see it.
+  Brand Ambassador obligations do not hold it.
+- **Reopening:** Finance reopens an approved or closed job with why; the
+  Production Manager can correct costs again (each a correction, with
+  strikes as in 19b), and Finance approves again.
+- **Finance > Job Costing** (`/finance/job-costing`, now live in the
+  Finance menu), over the Locations where the person has Finance, or one of
+  them: jobs waiting for reconciliation, with the provisional margin;
+  approved jobs waiting to close, with what each waits for; jobs with costs
+  missing receipts; and accuracy strikes of the last 90 days by Production
+  Manager.
+- **History:** submitted, approved, closed and reopened are in the job's
+  activity, without amounts.
+- **Tests:** `tests/Feature/Projects/FinancialCloseTest.php`, 7 tests.
+
+### Known limits of slice 19
+
+- **The gross margin is before allocations,** which Finance adds at the
+  monthly close (its own plan).
+- **Nothing reads the final gross margin yet:** the Production Bonus and
+  commissions are their own plans.
+- **Costs are typed in;** nothing comes from QuickBooks or suppliers.

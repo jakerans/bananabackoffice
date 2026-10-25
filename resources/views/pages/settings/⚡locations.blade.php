@@ -3,6 +3,7 @@
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Locations\ChangeDepositPolicy;
 use App\Actions\Locations\ChangeLocationTimezone;
+use App\Actions\Locations\ChangeTargetMargin;
 use App\Actions\Locations\DeactivateLocation;
 use App\Actions\Locations\UpdateServiceAreaPostalCodes;
 use App\Actions\Projects\ChangeInsuranceDeduction;
@@ -36,6 +37,12 @@ new #[Title('Locations')] class extends Component {
     public ?int $depositLocationId = null;
 
     public string $depositPercent = '';
+
+    /** The location whose target gross margin is open, and its percent as typed (slice 19, step 19a). */
+    #[Locked]
+    public ?int $marginLocationId = null;
+
+    public string $targetMarginPercent = '';
 
     #[Locked]
     public ?int $timezoneLocationId = null;
@@ -198,6 +205,35 @@ new #[Title('Locations')] class extends Component {
     /**
      * Open the timezone dialog for a location.
      */
+    public function editTargetMargin(int $locationId): void
+    {
+        $location = Location::query()->findOrFail($locationId);
+
+        $this->authorize('update', $location);
+
+        $this->marginLocationId = $location->id;
+        $this->targetMarginPercent = (string) $location->target_margin_percent;
+        $this->resetValidation('targetMarginPercent');
+
+        Flux::modal('location-target-margin')->show();
+    }
+
+    /**
+     * Save the target gross margin of the location being edited.
+     */
+    public function saveTargetMargin(ChangeTargetMargin $changeTargetMargin): void
+    {
+        $location = Location::query()->findOrFail($this->marginLocationId);
+
+        $changeTargetMargin->handle($location, $this->targetMarginPercent, Auth::user());
+
+        $this->reset('marginLocationId', 'targetMarginPercent');
+        unset($this->locations);
+
+        Flux::modal('location-target-margin')->close();
+        Flux::toast(variant: 'success', text: __('Target gross margin saved.'));
+    }
+
     public function editDeposit(int $locationId): void
     {
         $location = Location::query()->findOrFail($locationId);
@@ -560,6 +596,7 @@ new #[Title('Locations')] class extends Component {
                     <flux:table.column>{{ __('Status') }}</flux:table.column>
                     <flux:table.column>{{ __('Timezone') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('Deposit') }}</flux:table.column>
+                    <flux:table.column align="end">{{ __('Target margin') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('ZIP codes served') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('Access grants') }}</flux:table.column>
                     <flux:table.column align="end"><span class="sr-only">{{ __('Actions') }}</span></flux:table.column>
@@ -580,6 +617,7 @@ new #[Title('Locations')] class extends Component {
 
                             <flux:table.cell data-test="location-timezone-{{ $location->id }}">{{ LocationTimezones::label($location->timezone) }}</flux:table.cell>
                             <flux:table.cell align="end" class="tabular-nums" data-test="location-deposit-{{ $location->id }}">{{ $location->deposit_percent }}%</flux:table.cell>
+                            <flux:table.cell align="end" class="tabular-nums" data-test="location-target-margin-{{ $location->id }}">{{ $location->target_margin_percent }}%</flux:table.cell>
 
                             <flux:table.cell align="end" class="tabular-nums">{{ $location->service_postal_codes_count }}</flux:table.cell>
                             <flux:table.cell align="end" class="tabular-nums">{{ $location->access_grants_count }}</flux:table.cell>
@@ -590,6 +628,7 @@ new #[Title('Locations')] class extends Component {
                                     <flux:button size="sm" wire:click="editRequirements({{ $location->id }})" data-test="subcontractor-requirements-{{ $location->id }}">{{ __('Subcontractor requirements') }}</flux:button>
                                     <flux:button size="sm" wire:click="editTimezone({{ $location->id }})">{{ __('Timezone') }}</flux:button>
                                     <flux:button size="sm" wire:click="editDeposit({{ $location->id }})" data-test="deposit-policy-{{ $location->id }}">{{ __('Deposit') }}</flux:button>
+                                    <flux:button size="sm" wire:click="editTargetMargin({{ $location->id }})" data-test="target-margin-{{ $location->id }}">{{ __('Target margin') }}</flux:button>
                                     <flux:button size="sm" wire:click="edit({{ $location->id }})">{{ __('Rename') }}</flux:button>
 
                                     @if ($location->is_active)
@@ -692,6 +731,27 @@ new #[Title('Locations')] class extends Component {
                 </flux:modal.close>
 
                 <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="location-target-margin" class="w-full max-w-md">
+        <form wire:submit="saveTargetMargin" class="flex flex-col gap-6">
+            <div>
+                <flux:heading size="lg">{{ __('Target gross margin') }}</flux:heading>
+                <flux:subheading>
+                    {{ __('The share of the contract a job here aims to keep after its direct costs. Every job\'s budget reads it as it is now.') }}
+                </flux:subheading>
+            </div>
+
+            <flux:input wire:model="targetMarginPercent" inputmode="numeric" :label="__('Percent of the contract')" class="max-w-40" data-test="target-margin-percent" />
+
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+
+                <flux:button type="submit" variant="primary" data-test="save-target-margin">{{ __('Save') }}</flux:button>
             </div>
         </form>
     </flux:modal>

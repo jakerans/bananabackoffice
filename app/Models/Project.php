@@ -338,6 +338,26 @@ class Project extends Model implements HasPhotos
     }
 
     /**
+     * The steps of its job costing, the earliest first (slice 19).
+     *
+     * @return HasMany<ProjectJobCostingStep, $this>
+     */
+    public function jobCostingSteps(): HasMany
+    {
+        return $this->hasMany(ProjectJobCostingStep::class)->orderBy('id');
+    }
+
+    /**
+     * Its direct costs, voided ones too (slice 19).
+     *
+     * @return HasMany<ProjectCost, $this>
+     */
+    public function costs(): HasMany
+    {
+        return $this->hasMany(ProjectCost::class)->orderBy('spent_on')->orderBy('id');
+    }
+
+    /**
      * Its customer change orders, drafts and withdrawn ones too (slice 18).
      *
      * @return HasMany<ProjectChangeOrder, $this>

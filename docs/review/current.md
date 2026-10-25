@@ -5,29 +5,28 @@ No secrets or customer information belong here.
 
 **Updated:** 2026-10-24 · **Branch:** `main`
 
-**State:** slice 18, change orders, is complete and merged (decision 169).
-**Slice 19, job costing and the financial close, is proposed and waits for
-Jacob's approval.** Nothing of it is built.
+**State:** slice 19, job costing and the financial close, is complete and
+merged (decision 171). **Slice 20, variable compensation, is proposed and
+waits for Jacob's approval.** Nothing of it is built.
 
 ## The proposal
 
-Plan: [../slice-19-job-costing-plan.md](../slice-19-job-costing-plan.md).
+Plan: [../slice-20-compensation-plan.md](../slice-20-compensation-plan.md).
 
-- **19a:** each direct cost on the job (materials, rentals, permits,
-  disposal, W-2 labour, warranty, other) with its receipt, the payouts from
-  the Work Packages, and a budget view: target and projected gross margin.
-- **19b:** the Production Manager submits job costing after the customer
-  signs off: the provisional gross margin. Later changes are corrections;
-  big ones, or a missing purchase order, are accuracy strikes.
-- **19c:** Finance reconciles, approves the final gross margin and closes
-  the job once it is signed off, paid in full and costed. Finance > Job
-  Costing lists what waits.
+- **20a:** pay plans for each salesperson and Production Manager, effective
+  from a day; the sales commission ledger on each job: projected, the
+  advance on straight commission, the final from the final gross margin,
+  clawbacks and adjustments.
+- **20b:** the Production Bonus, month by month, on the jobs each
+  Production Manager closed.
+- **20c:** Finance > Payroll: Finance finalizes each month's amounts for
+  payroll; each person sees their own ledger.
 
 ## Decisions needed
 
 The plan's eight questions, each with a recommendation. "Follow your
-recommendations" is a complete answer. To start, approve the plan or step
-19a alone.
+recommendations" is a complete answer. The pay period (question 3) is the
+one most likely to need your word: monthly is assumed.
 
 ## Optional, for Jacob
 

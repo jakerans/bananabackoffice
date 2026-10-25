@@ -44,6 +44,9 @@ class ProjectNotice extends Notification
     /** The deposit of the Production Manager's job is paid: call the customer within 24 hours (slice 17, step 17b). */
     public const string DEPOSIT_PAID = 'project_deposit_paid';
 
+    /** A Production Manager has a third job-costing accuracy strike in 90 days (slice 19, step 19b; decision 133). */
+    public const string ACCURACY_STRIKES = 'project_accuracy_strikes';
+
     /**
      * Tell someone about a Project: that its handoff is waiting or done, or
      * that it has changed hands (docs/slice-8-projects-plan.md, step 8b;
@@ -55,7 +58,7 @@ class ProjectNotice extends Notification
      * happened and links to the Project, which the person must be signed in
      * and allowed to open.
      *
-     * @param  self::HANDOFF_REMINDER|self::READY_FOR_PRODUCTION|self::ASSIGNED_TO_YOU|self::GIVEN_TO_ANOTHER|self::HAS_PRODUCTION_MANAGER|self::HANDOFF_CHANGED|self::CANCELLED|self::SCHEDULED|self::RESCHEDULED|self::DEPOSIT_PAID  $kind
+     * @param  self::HANDOFF_REMINDER|self::READY_FOR_PRODUCTION|self::ASSIGNED_TO_YOU|self::GIVEN_TO_ANOTHER|self::HAS_PRODUCTION_MANAGER|self::HANDOFF_CHANGED|self::CANCELLED|self::SCHEDULED|self::RESCHEDULED|self::DEPOSIT_PAID|self::ACCURACY_STRIKES  $kind
      * @param  self::IN_APP|self::EMAIL  $channel
      * @param  string|null  $name  A staff member, a Location or the days of the work to name, where the message has one.
      */
@@ -113,6 +116,7 @@ class ProjectNotice extends Notification
             self::SCHEDULED => __('A job you sold is scheduled: :days. The customer confirmed the dates.', ['days' => (string) $this->name]),
             self::RESCHEDULED => __('A job you sold was rescheduled: it is now :days.', ['days' => (string) $this->name]),
             self::DEPOSIT_PAID => __('The deposit for a job of yours is paid. Call the customer within 24 hours.'),
+            self::ACCURACY_STRIKES => __(':name has a third job-costing accuracy strike in 90 days.', ['name' => (string) $this->name]),
         };
     }
 

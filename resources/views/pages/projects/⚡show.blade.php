@@ -54,6 +54,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectDepositChanged, AuditAction::ProjectCollectionContactRecorded,
         AuditAction::ProjectChangeOrderDrafted, AuditAction::ProjectChangeOrderSigned, AuditAction::ProjectChangeOrderWithdrawn,
         AuditAction::ProjectWorkRevised,
+        AuditAction::ProjectJobCostingSubmitted, AuditAction::ProjectJobCostingApproved, AuditAction::ProjectFinanciallyClosed, AuditAction::ProjectFinancialCloseReopened,
     ];
 
     /**
@@ -153,6 +154,10 @@ new #[Title('Project')] class extends Component {
             AuditAction::ProjectCollectionContactRecorded => __('The customer was contacted about the balance'),
             AuditAction::ProjectChangeOrderDrafted => __('Change order :number drafted: :price', ['number' => (string) ($event->values_after['number'] ?? ''), 'price' => self::priceChange((int) ($event->values_after['price_change_cents'] ?? 0))]),
             AuditAction::ProjectChangeOrderSigned => __('Change order :number signed by :person: :price', ['number' => (string) ($event->values_after['number'] ?? ''), 'person' => (string) ($event->values_after['signed_by'] ?? ''), 'price' => self::priceChange((int) ($event->values_after['price_change_cents'] ?? 0))]),
+            AuditAction::ProjectJobCostingSubmitted => __('Job costing submitted'),
+            AuditAction::ProjectJobCostingApproved => __('Final gross margin approved by Finance'),
+            AuditAction::ProjectFinanciallyClosed => __('Financially closed'),
+            AuditAction::ProjectFinancialCloseReopened => __('Job costing reopened by Finance'),
             AuditAction::ProjectWorkRevised => ($event->values_after['change_order'] ?? null) === null
                 ? __(':package revised: :what', ['package' => (string) ($event->values_after['package'] ?? ''), 'what' => ($event->values_after['kind'] ?? '') === 'scope' ? __('the scope') : __('the payout')])
                 : __(':package revised: :what, from change order :number', ['package' => (string) ($event->values_after['package'] ?? ''), 'what' => ($event->values_after['kind'] ?? '') === 'scope' ? __('the scope') : __('the payout'), 'number' => (string) $event->values_after['change_order']]),
@@ -224,6 +229,16 @@ new #[Title('Project')] class extends Component {
      */
     #[On('project-completion-changed')]
     public function completionChanged(): void
+    {
+        unset($this->project, $this->activity);
+    }
+
+    /**
+     * The job costing changed (slice 19): the financial close and the
+     * activity say so.
+     */
+    #[On('project-job-costing-changed')]
+    public function jobCostingChanged(): void
     {
         unset($this->project, $this->activity);
     }
@@ -402,6 +417,10 @@ new #[Title('Project')] class extends Component {
                     {{-- Colors are a state of their own, beside the production state (product-architecture.md, 2). --}}
                     @if ($project->production_manager_id !== null)
                         <flux:badge size="sm" :color="$project->color_readiness->color()" data-test="project-color-readiness">{{ __('Colors: :state', ['state' => mb_strtolower(__($project->color_readiness->label()))]) }}</flux:badge>
+                    @endif
+                    {{-- Financially closed (slice 19, step 19c): the last step of a job. --}}
+                    @if (\App\Support\Projects\JobCosting::for($project)->state() === \App\Support\Projects\JobCosting::CLOSED)
+                        <flux:badge size="sm" color="emerald" data-test="project-financially-closed">{{ __('Financially closed') }}</flux:badge>
                     @endif
                     {{-- The customer's payments are a state of their own too (slice 17). --}}
                     <flux:badge size="sm" color="zinc" data-test="project-payment-state">{{ __('Payment: :state', ['state' => mb_strtolower(__(Payments::for($project)->stateLabel()))]) }}</flux:badge>
@@ -654,6 +673,11 @@ new #[Title('Project')] class extends Component {
     {{-- The customer's change orders (slice 18, step 18a), and their invoices and payments (slice 17), kept in view on a cancelled job too. --}}
     <livewire:pages::projects.change-orders :project="$project" :key="'change-orders-'.$project->id" />
     <livewire:pages::projects.payments :project="$project" :key="'payments-'.$project->id" />
+
+    {{-- Job costing (slice 19): finance-sensitive, only for those who may see payouts. --}}
+    @can('viewPayouts', $project)
+        <livewire:pages::projects.job-costing :project="$project" :key="'job-costing-'.$project->id" />
+    @endcan
 
     <div class="grid gap-6 lg:grid-cols-2">
         <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-sale">
