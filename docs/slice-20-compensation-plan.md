@@ -168,20 +168,22 @@ To start, Jacob approves the plan, or step 20a alone, and answers 1 to 4 and
   paid, each confirmed in the app's own dialog.
 - **Each person's ledger** shows each month as Open, Scheduled for payroll,
   or Paid.
+- **Payroll IDs** (decision 173): Finance or the Owner keeps each
+  person's payroll ID on their pay page, one person to each, audited.
+  Finance > Payroll shows it beside each person, or that it is missing, and
+  the download gives it first on every line.
 
 ## Known limits of this plan
 
 - **Pay is calculated, not paid:** Backoffice gives Finance the amounts;
   payroll pays them.
 - **A month with no job closed** has no margin, so it does not hold the
-  previous month's Production Bonus, which is then not paid. Jacob may want
-  it held instead.
+  previous month's Production Bonus, which is then not paid (decision 173).
 - **An advance stands** if a deposit payment is reversed after it; the
-  final commission or a clawback settles it.
+  final commission or a clawback settles it (decision 173).
 - **A reopened job changes nothing** until it closes again; then the final
   commission and the Production Bonus count the difference.
-- **The download has names, not payroll IDs:** payroll matches people by
-  name until Backoffice keeps their payroll ID.
+
 - **The plans' rates live in the code,** kept on each plan as it was set: a
   new rate is a new plan in the list, then effective from a day.
 - **Before allocations** the gross margin is higher than the full one, so

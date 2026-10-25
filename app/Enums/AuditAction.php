@@ -138,6 +138,7 @@ enum AuditAction: string
     case CompensationAdjusted = 'compensation.adjusted';
     case PayrollFinalized = 'compensation.payroll_finalized';
     case PayrollPaid = 'compensation.payroll_paid';
+    case PayrollIdChanged = 'compensation.payroll_id_changed';
     case LocationDepositPolicyChanged = 'location.deposit_policy_changed';
     case AttachmentAdded = 'attachment.added';
     case AttachmentRemoved = 'attachment.removed';

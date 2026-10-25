@@ -19,11 +19,13 @@ use Illuminate\Validation\ValidationException;
 /**
  * What Finance and the Owner do to a person's pay
  * (docs/slice-20-compensation-plan.md, step 20a; decision 172, question 4):
- * set the plan they are on from a day, and record a manual adjustment with
- * why. Nobody manages their own pay.
+ * set the plan they are on from a day, record a manual adjustment with why,
+ * and keep their payroll ID. Nobody manages their own pay.
  */
 class ManagePay
 {
+    public const int PAYROLL_ID_LENGTH = 50;
+
     public function __construct(private RecordAuditEvent $recordAuditEvent, private RecordLedgerEntry $recordLedgerEntry) {}
 
     /**
@@ -80,6 +82,51 @@ class ManagePay
             );
 
             return $payPlan;
+        });
+    }
+
+    /**
+     * Set or clear a person's ID in payroll, so payroll matches what
+     * Backoffice sends without going by name (decision 173). At most one
+     * person has each.
+     *
+     * @throws ValidationException
+     * @throws AuthorizationException
+     */
+    public function setPayrollId(User $person, ?string $payrollId, User $actor): User
+    {
+        Gate::forUser($actor)->authorize('managePay', $person);
+
+        $payrollId = trim((string) $payrollId);
+
+        if (mb_strlen($payrollId) > self::PAYROLL_ID_LENGTH) {
+            throw ValidationException::withMessages(['payrollId' => __('Keep this to :max characters or fewer.', ['max' => self::PAYROLL_ID_LENGTH])]);
+        }
+
+        return DB::transaction(function () use ($person, $payrollId, $actor): User {
+            $person = User::query()->lockForUpdate()->findOrFail($person->id);
+            $before = $person->payroll_id;
+            $after = $payrollId === '' ? null : $payrollId;
+
+            if ($after !== null && User::query()->where('payroll_id', $after)->whereKeyNot($person->id)->exists()) {
+                throw ValidationException::withMessages(['payrollId' => __('Another person has this payroll ID.')]);
+            }
+
+            if ($before === $after) {
+                return $person;
+            }
+
+            $person->forceFill(['payroll_id' => $after])->save();
+
+            $this->recordAuditEvent->handle(
+                AuditAction::PayrollIdChanged,
+                $person,
+                actor: $actor,
+                before: ['payroll_id' => $before],
+                after: ['payroll_id' => $after],
+            );
+
+            return $person;
         });
     }
 

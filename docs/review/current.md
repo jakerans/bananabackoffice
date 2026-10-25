@@ -21,16 +21,12 @@ Plan and "as built": [../slice-20-compensation-plan.md](../slice-20-compensation
 - **20c:** Finance finalizes each month that is over for payroll, downloads
   it, and marks it paid with payroll's reference.
 
-## Decisions for Jacob
+## Decisions
 
-1. **A month with no job closed:** it has no margin, so the month before
-   it does not get its Production Bonus paid. Should such a month hold the
-   bonus instead?
-2. **A reversed deposit after an advance:** the advance stays until the
-   final commission or a clawback settles it. Should it be taken back at
-   once?
-3. **Payroll IDs:** the download names people; add each person's payroll
-   ID later if payroll needs it.
+Answered (decision 173): a month with no job closed does not hold the
+Production Bonus; an advance stands after a reversed deposit until the
+final commission or a clawback; payroll IDs are added now. Nothing else is
+open.
 
 ## Browser review (local, fictitious data)
 

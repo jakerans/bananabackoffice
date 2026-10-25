@@ -82,6 +82,42 @@ test('a finalized period is marked paid with payroll\'s reference, once', functi
     expect(fn () => $paid->fresh()->delete())->toThrow(LogicException::class);
 });
 
+test('Finance keeps each person\'s payroll ID, one person to each, and it goes to payroll', function () {
+    app(ManagePay::class)->setPayrollId($this->sam, ' GUSTO-0042 ', $this->finley);
+
+    expect($this->sam->fresh()->payroll_id)->toBe('GUSTO-0042')
+        ->and(AuditEvent::query()->where('action', AuditAction::PayrollIdChanged)->count())->toBe(1);
+    expect(fn () => app(ManagePay::class)->setPayrollId($this->pat, 'GUSTO-0042', $this->finley))->toThrow(ValidationException::class, 'Another person has this payroll ID.');
+    expect(fn () => app(ManagePay::class)->setPayrollId($this->pat, 'GUSTO-7', $this->fran))->toThrow(AuthorizationException::class);
+    expect(fn () => app(ManagePay::class)->setPayrollId($this->finley, 'GUSTO-1', $this->finley))->toThrow(AuthorizationException::class);
+
+    Livewire::actingAs($this->finley)->test('pages::finance.payroll')
+        ->assertSeeInOrder(['Pat Production', 'No payroll ID', 'Sam Sales', 'Payroll ID GUSTO-0042']);
+
+    $this->travelTo('2026-11-02 15:00:00');
+    app(RunPayroll::class)->finalize('2026-10', $this->finley);
+
+    $csv = Livewire::actingAs($this->finley)->test('pages::finance.payroll', ['period' => '2026-10'])->call('download');
+    $csv->assertFileDownloaded('payroll-2026-10.csv', '"Payroll ID",Person,Kind,Job,Amount,"How it was worked out",Why'."\n"
+        .',"Pat Production","Manual adjustment",,75.00,"Added by Finley Finance.","Weekend callback."'."\n"
+        .'GUSTO-0042,"Sam Sales","Manual adjustment",,250.00,"Added by Finley Finance.","Spiff for the home show."'."\n");
+});
+
+test('Finance sets a payroll ID from the person\'s page, and clears it', function () {
+    Livewire::actingAs($this->finley)->test('pages::pay.ledger', ['user' => $this->sam])
+        ->call('openPayrollId')
+        ->set('payrollId', 'GUSTO-0042')
+        ->call('savePayrollId')
+        ->assertHasNoErrors()
+        ->assertSee('GUSTO-0042')
+        ->call('openPayrollId')
+        ->set('payrollId', '')
+        ->call('savePayrollId')
+        ->assertSee('Not set');
+
+    expect($this->sam->fresh()->payroll_id)->toBeNull();
+});
+
 test('only Finance for every Location, and the Owner, run payroll', function () {
     $this->travelTo('2026-11-02 15:00:00');
 

@@ -89,18 +89,20 @@ new #[Title('Payroll')] class extends Component {
     /**
      * What each person has due in the period, by name.
      *
-     * @return \Illuminate\Support\Collection<int, array{id: int, name: string, entries: int, total: int}>
+     * @return \Illuminate\Support\Collection<int, array{id: int, name: string, payrollId: string|null, entries: int, total: int}>
      */
     #[Computed]
     public function dues(): \Illuminate\Support\Collection
     {
-        return CompensationEntry::query()
-            ->where('period', $this->period)
-            ->get(['user_id', 'user_name', 'amount_cents'])
+        $entries = CompensationEntry::query()->where('period', $this->period)->get(['user_id', 'user_name', 'amount_cents']);
+        $payrollIds = User::query()->whereIn('id', $entries->pluck('user_id')->unique())->pluck('payroll_id', 'id');
+
+        return $entries
             ->groupBy('user_id')
             ->map(fn ($entries, int $userId): array => [
                 'id' => $userId,
                 'name' => (string) $entries->last()?->user_name,
+                'payrollId' => $payrollIds->get($userId),
                 'entries' => $entries->count(),
                 'total' => (int) $entries->sum('amount_cents'),
             ])
@@ -196,14 +198,14 @@ new #[Title('Payroll')] class extends Component {
         $payrollPeriod = $this->payrollPeriod;
         abort_if($payrollPeriod === null, 404);
 
-        $entries = CompensationEntry::query()->where('period', $payrollPeriod->period)->with('project')->orderBy('user_name')->orderBy('id')->get();
+        $entries = CompensationEntry::query()->where('period', $payrollPeriod->period)->with(['project', 'user'])->orderBy('user_name')->orderBy('id')->get();
 
         return response()->streamDownload(function () use ($entries): void {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Person', 'Kind', 'Job', 'Amount', 'How it was worked out', 'Why'], escape: '');
+            fputcsv($out, ['Payroll ID', 'Person', 'Kind', 'Job', 'Amount', 'How it was worked out', 'Why'], escape: '');
 
             foreach ($entries as $entry) {
-                fputcsv($out, [$entry->user_name, $entry->kindLabel(), $entry->project?->title ?? '', number_format($entry->amount_cents / 100, 2, '.', ''), $entry->explanation, $entry->reason ?? ''], escape: '');
+                fputcsv($out, [$entry->user->payroll_id ?? '', $entry->user_name, $entry->kindLabel(), $entry->project?->title ?? '', number_format($entry->amount_cents / 100, 2, '.', ''), $entry->explanation, $entry->reason ?? ''], escape: '');
             }
 
             fclose($out);
@@ -274,7 +276,14 @@ new #[Title('Payroll')] class extends Component {
                     <li wire:key="payroll-due-{{ $due['id'] }}" class="flex flex-wrap items-center justify-between gap-3 py-2 first:pt-0 last:pb-0" data-test="payroll-due">
                         <div class="flex min-w-0 flex-1 flex-col">
                             <flux:link :href="route('finance.payroll.person', $due['id'])" wire:navigate class="font-semibold">{{ $due['name'] }}</flux:link>
-                            <span class="text-sm text-zinc-500">{{ trans_choice(':count entry|:count entries', $due['entries']) }}</span>
+                            <span class="text-sm text-zinc-500">
+                                {{ trans_choice(':count entry|:count entries', $due['entries']) }} &middot;
+                                @if ($due['payrollId'] === null)
+                                    <span class="text-amber-700" data-test="payroll-id-missing">{{ __('No payroll ID') }}</span>
+                                @else
+                                    {{ __('Payroll ID :id', ['id' => $due['payrollId']]) }}
+                                @endif
+                            </span>
                         </div>
                         <span class="font-nav font-bold tabular-nums {{ $due['total'] < 0 ? 'text-rose-700' : 'text-ink' }}">{{ Money::format($due['total']) }}</span>
                     </li>

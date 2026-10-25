@@ -3485,6 +3485,20 @@ stopping".
    committed and checked on both GitHub jobs. Nothing is merged until
    Jacob reviews the slice.
 
+## 173. Slice 20's three open questions are answered; payroll IDs are added (2026-10-25)
+
+**Decided by Jacob,** in reply to the slice 20 report.
+
+1. **A month with no job closed does not hold the Production Bonus:** "if
+   they produce no jobs that's their problem". The month before it is not
+   paid, as built.
+2. **An advance stands if a deposit payment is reversed afterwards:** the
+   final commission or a clawback settles it, as built.
+3. **Payroll IDs, now:** Finance or the Owner keeps each person's payroll
+   ID on their pay page, one person to each, audited. Finance > Payroll
+   shows it beside each person, or that it is missing, and the download
+   gives it first on every line.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

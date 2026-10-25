@@ -51,6 +51,8 @@ new #[Title('Pay')] class extends Component {
 
     public string $adjustmentReason = '';
 
+    public string $payrollId = '';
+
     public function mount(?User $user = null): void
     {
         $person = $user ?? Auth::user();
@@ -213,6 +215,24 @@ new #[Title('Pay')] class extends Component {
         $this->done('pay-plan', __('Pay plan set.'));
     }
 
+    public function openPayrollId(): void
+    {
+        $this->authorize('managePay', $this->person);
+
+        $this->payrollId = (string) $this->person->payroll_id;
+        $this->resetValidation();
+
+        Flux::modal('payroll-id')->show();
+    }
+
+    public function savePayrollId(ManagePay $managePay): void
+    {
+        $managePay->setPayrollId($this->person, $this->payrollId, Auth::user());
+
+        unset($this->person);
+        $this->done('payroll-id', __('Payroll ID saved.'));
+    }
+
     public function openAdjustment(): void
     {
         $this->authorize('managePay', $this->person);
@@ -270,7 +290,20 @@ new #[Title('Pay')] class extends Component {
     </div>
 
     <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="pay-plans">
-        <flux:heading size="lg" level="2">{{ __('Pay plans') }}</flux:heading>
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <flux:heading size="lg" level="2">{{ __('Pay plans') }}</flux:heading>
+            <div class="flex items-center gap-2 text-sm" data-test="pay-payroll-id">
+                <span class="text-zinc-500">{{ __('Payroll ID') }}</span>
+                @if ($person->payroll_id === null)
+                    <span class="text-amber-700">{{ __('Not set') }}</span>
+                @else
+                    <span class="font-semibold text-ink">{{ $person->payroll_id }}</span>
+                @endif
+                @if ($this->mayManage)
+                    <flux:button size="xs" variant="ghost" wire:click="openPayrollId" data-test="set-payroll-id">{{ $person->payroll_id === null ? __('Set') : __('Change') }}</flux:button>
+                @endif
+            </div>
+        </div>
 
         <dl class="grid gap-3 sm:grid-cols-2">
             @foreach ([PayPlan::FAMILY_SALES => __('Sales'), PayPlan::FAMILY_PRODUCTION => __('Production')] as $family => $familyLabel)
@@ -396,6 +429,25 @@ new #[Title('Pay')] class extends Component {
                     </flux:modal.close>
 
                     <flux:button type="submit" variant="primary" data-test="save-pay-plan">{{ __('Set') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        <flux:modal name="payroll-id" class="w-full max-w-md">
+            <form wire:submit="savePayrollId" class="flex flex-col gap-5">
+                <div>
+                    <flux:heading size="lg">{{ __('Payroll ID') }}</flux:heading>
+                    <flux:subheading>{{ __(':name\'s ID in payroll, so payroll matches what Backoffice sends. Leave it empty to clear it.', ['name' => $person->name]) }}</flux:subheading>
+                </div>
+
+                <flux:input wire:model="payrollId" maxlength="{{ ManagePay::PAYROLL_ID_LENGTH }}" :label="__('Payroll ID')" data-test="payroll-id-input" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-payroll-id">{{ __('Save') }}</flux:button>
                 </div>
             </form>
         </flux:modal>
