@@ -197,6 +197,13 @@ and 174). Slice 20 is complete.** The
 plan check after slice 19 found the sales commission and the
 Production Bonus waiting on the final gross margin slice 19 produces. Its
 plan is [slice-20-compensation-plan.md](slice-20-compensation-plan.md).
+
+**Slice 21, Brand Ambassador, is proposed (2026-10-25) and not approved.**
+The plan check after slice 20 found Brand Ambassador obligations the last
+unbuilt item of closeout (6.8, 6.10), and the floor-price budget (10.2)
+waiting on the package sold. Its plan is
+[slice-21-brand-ambassador-plan.md](slice-21-brand-ambassador-plan.md).
+
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the
 customer still unbuilt. Its plan is
