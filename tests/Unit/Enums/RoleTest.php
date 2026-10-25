@@ -38,6 +38,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ViewSubcontractors,
         Permission::ManageSubcontractors,
         Permission::ViewPayouts,
+        Permission::ManageCompensation,
     ]],
     'leadership' => [Role::Leadership, [
         Permission::ViewProjects,
@@ -74,6 +75,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ViewProjects,
         Permission::FinanceAccess,
         Permission::ViewAccounts,
+        Permission::ManageCompensation,
     ]],
     'location manager' => [Role::LocationManager, [
         Permission::ViewProjects,
@@ -160,6 +162,7 @@ test('company overview and settings are company-level permissions', function (Pe
     'view accounts' => [Permission::ViewAccounts, false],
     'manage accounts' => [Permission::ManageAccounts, false],
     'archive accounts' => [Permission::ArchiveAccounts, true],
+    'manage compensation' => [Permission::ManageCompensation, true],
     'manage contact center settings' => [Permission::ManageContactCenterSettings, true],
     'work the lead queue' => [Permission::WorkLeadQueue, false],
     'book appointments' => [Permission::BookAppointments, false],

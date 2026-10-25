@@ -46,6 +46,25 @@ class UserPolicy
     }
 
     /**
+     * Determine whether the user can see a person's pay plans and ledger:
+     * their own, or anyone's with compensation.manage (slice 20; decision
+     * 172, question 4).
+     */
+    public function viewPay(User $user, User $person): bool
+    {
+        return $user->is($person) || $user->hasPermissionAcrossAllLocations(Permission::ManageCompensation);
+    }
+
+    /**
+     * Determine whether the user can set a person's pay plan or adjust their
+     * pay. Nobody manages their own.
+     */
+    public function managePay(User $user, User $person): bool
+    {
+        return $user->hasPermissionAcrossAllLocations(Permission::ManageCompensation) && $user->isNot($person);
+    }
+
+    /**
      * Determine whether the user can view Backoffice as a staff member.
      *
      * This belongs to the Owner role itself, not to a permission another role

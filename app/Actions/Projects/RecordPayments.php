@@ -4,6 +4,7 @@ namespace App\Actions\Projects;
 
 use App\Actions\Attachments\AttachFile;
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Compensation\RecordCommission;
 use App\Enums\AuditAction;
 use App\Enums\Role;
 use App\Models\Project;
@@ -38,7 +39,7 @@ use Illuminate\Validation\ValidationException;
  */
 class RecordPayments
 {
-    public function __construct(private RecordAuditEvent $recordAuditEvent, private AttachFile $attachFile) {}
+    public function __construct(private RecordAuditEvent $recordAuditEvent, private AttachFile $attachFile, private RecordCommission $recordCommission) {}
 
     /**
      * Record the deposit or the final invoice: its QuickBooks number, its
@@ -119,7 +120,7 @@ class RecordPayments
                 reason: $reason,
             );
 
-            $this->settleDeposit($project);
+            $this->settleDeposit($project, $actor);
 
             return $invoice;
         });
@@ -298,7 +299,7 @@ class RecordPayments
                 $this->attachFile->handle($payment, ProjectPayment::RECEIPT, $receipt, 'recordPayments', $actor);
             }
 
-            $this->settleDeposit($project);
+            $this->settleDeposit($project, $actor);
 
             return $payment;
         });
@@ -335,7 +336,7 @@ class RecordPayments
                 location: $project->location,
             );
 
-            $this->settleDeposit($project);
+            $this->settleDeposit($project, $actor);
 
             return $payment;
         });
@@ -365,7 +366,7 @@ class RecordPayments
                 reason: $reason,
             );
 
-            $this->settleDeposit($project);
+            $this->settleDeposit($project, $actor);
 
             return $payment;
         });
@@ -376,9 +377,14 @@ class RecordPayments
      * the Production Manager is told and has 24 hours to call the customer
      * (decision 162, question 8). A reversal that leaves it unpaid clears it.
      */
-    private function settleDeposit(Project $project): void
+    private function settleDeposit(Project $project, User $actor): void
     {
         $paid = Payments::for($project)->depositIsPaid();
+
+        if ($paid) {
+            // The full deposit collected is one of the advance's conditions (slice 20, step 20a).
+            $this->recordCommission->considerAdvance($project, $actor);
+        }
 
         if ($paid && $project->deposit_paid_at === null) {
             $project->forceFill(['deposit_paid_at' => now()])->save();

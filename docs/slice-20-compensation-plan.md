@@ -1,8 +1,10 @@
 # Slice 20 — Variable Compensation: Plan
 
-Status: **proposed on 2026-10-24 for Jacob's review, after slice 19 was
-merged (decision 171). Nothing is built.** Written as what the implementation
-agent recommends from the plan check below.
+Status: **approved on 2026-10-24 (decision 172), with the recommendation on
+all eight questions, built straight through 20a, 20b and 20c, and merged on
+2026-10-25 (decisions 173 and 174). Slice 20 is complete.** Written as what
+the implementation agent recommended from the plan check below; what was
+built is under "as built".
 
 ## Why this is next (the plan check)
 
@@ -86,9 +88,103 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 To start, Jacob approves the plan, or step 20a alone, and answers 1 to 4 and
 6 and 7. Questions 5 and 8 are needed before 20b and 20c.
 
+## Step 20a as built
+
+- **Pay plans** (`pay_plans`): each person's plan, effective from a day,
+  with its yearly base and its rate kept as they were set. Sales: $45,000 +
+  2%, $35,000 + 6%, straight 15%, or no commission; Production: the
+  Production Bonus plan, or none. A change is a new plan from a day, with
+  why; the first needs no reason. Kept as it was.
+- **The ledger** (`compensation_entries`): each entry keeps its person, its
+  job, its kind, its amount, the pay period it is due in (a calendar month)
+  and how it was worked out in plain English. Kept as it was; a change is a
+  new entry.
+- **The commission follows the job,** for the salesperson on the sale, on
+  the plan they were on the day it sold (questions 6 and 7):
+  - at the sale, the **projection**: the rate on half the price sold. Never
+    paid;
+  - on straight commission, the **advance**, half the projection (3.75% of
+    the contract), as soon as the full deposit the policy asks for is
+    collected and the handoff is complete, whichever comes last;
+  - at the financial close, the **final** commission: the rate on the final
+    gross margin Finance approved, less what the ledger already holds for
+    the job. It is never below zero before that deduction, so a job that lost
+    money takes the advance back. A job closed again after a reopening is a
+    **gross-margin adjustment** for the difference, in the month it closes
+    again;
+  - when the sale is corrected and the job cancelled, a **clawback** of what
+    the ledger holds for it, in the month it is cancelled (question 5). Sold
+    again, it is projected and advanced again.
+- **Manual adjustments:** Finance or the Owner adds to or deducts from a
+  person's pay in this month, with why, for a job or not. A split is a
+  deduction for one and an addition for the other (question 7).
+- **Who sees it:** the new permission `compensation.manage`, for Finance and
+  the Owner, counts only through an all-locations grant: pay is one company
+  payroll, so Finance at a single Location does not see it. Nobody manages
+  their own pay.
+- **Pages:** Finance > Payroll is live, listing everyone with variable pay,
+  their plan and what is due this month; each person's page shows their
+  plans and their ledger by month, and is where Finance sets a plan or adds
+  an adjustment. Everyone sees their own at "My pay" in the account menu.
+
+## Step 20b as built
+
+- **Each financial close counts** toward the Production Bonus of the
+  Production Manager on the job then, in the month it closed in the job's
+  Location's time (question 8): its revenue and final gross margin
+  (`production_bonus_credits`). A job closed again after a reopening counts
+  only the difference, in the month it closes again, so a cost found after
+  the close is an adjustment in the month it is found.
+- **A month's bonus** is 10% of its gross-margin dollars above $37,500,
+  earned only at a margin of 55% or more, on the plan the person is on at
+  the end of the month. The rate, floor and margin are kept on the plan.
+- **Each month is settled** once the month after it is over: what it
+  earned, and whether that next month also finished at 55% or more
+  (`production_bonus_months`, kept as it was). A payable bonus is a
+  **Production Bonus** entry due in that next month's pay period. A month
+  with no job closed has no margin, so it does not hold an earlier month's
+  bonus.
+- **Nightly at 00:30** in the company's time, `backoffice:production-bonus`
+  settles each month whose following month is over, looking back three
+  months so a missed night is caught up.
+- **The person's pay page** shows each month with a job closed in the last
+  year, and this month while they are on the plan: its gross-margin dollars
+  and margin, and where it stands, in plain English.
+
+## Step 20c as built
+
+- **Each pay period is open, then scheduled, then paid**
+  (`payroll_periods`). Finance or the Owner finalizes a month once it is
+  over, and after every earlier month with entries: its total and number of
+  entries are kept, and its entries are scheduled. Then it is marked paid,
+  with payroll's reference. Each is audited.
+- **A finalized period is kept as it was:** anything due in it or an
+  earlier month from then on, such as a bonus settled late, is due in the
+  month after the latest finalized period.
+- **Finance > Payroll** opens on the earliest month that is over and not
+  finalized, or else this month. It shows what each person has due in the
+  period, the total, where the period stands, and the buttons to finalize
+  it, download it for payroll (a spreadsheet of every entry) and mark it
+  paid, each confirmed in the app's own dialog.
+- **Each person's ledger** shows each month as Open, Scheduled for payroll,
+  or Paid.
+- **Payroll IDs** (decision 173): Finance or the Owner keeps each
+  person's payroll ID on their pay page, one person to each, audited.
+  Finance > Payroll shows it beside each person, or that it is missing, and
+  the download gives it first on every line.
+
 ## Known limits of this plan
 
 - **Pay is calculated, not paid:** Backoffice gives Finance the amounts;
   payroll pays them.
+- **A month with no job closed** has no margin, so it does not hold the
+  previous month's Production Bonus, which is then not paid (decision 173).
+- **An advance stands** if a deposit payment is reversed after it; the
+  final commission or a clawback settles it (decision 173).
+- **A reopened job changes nothing** until it closes again; then the final
+  commission and the Production Bonus count the difference.
+
+- **The plans' rates live in the code,** kept on each plan as it was set: a
+  new rate is a new plan in the list, then effective from a day.
 - **Before allocations** the gross margin is higher than the full one, so
   commission and bonus read high until allocations exist (question 2).

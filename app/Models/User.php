@@ -29,6 +29,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property int $id
  * @property string $name
  * @property string $email
+ * @property string|null $payroll_id Their ID in payroll, set by Finance (decision 173).
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property bool $is_active
@@ -246,6 +247,34 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return $this->authorizedLocations()
             ->filter(fn (Location $location): bool => $this->hasPermissionAt($permission, $location))
             ->values();
+    }
+
+    /**
+     * The pay plans this staff member has been on (slice 20).
+     *
+     * @return HasMany<PayPlan, $this>
+     */
+    public function payPlans(): HasMany
+    {
+        return $this->hasMany(PayPlan::class);
+    }
+
+    /**
+     * Their variable-compensation ledger (slice 20).
+     *
+     * @return HasMany<CompensationEntry, $this>
+     */
+    public function compensationEntries(): HasMany
+    {
+        return $this->hasMany(CompensationEntry::class);
+    }
+
+    /**
+     * Whether they have pay in Backoffice to see: a pay plan or a ledger entry.
+     */
+    public function hasPay(): bool
+    {
+        return $this->payPlans()->exists() || $this->compensationEntries()->exists();
     }
 
     /**

@@ -2,6 +2,10 @@
 
 namespace App\Actions\Projects;
 
+use App\Actions\Attachments\AttachFile;
+use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Compensation\RecordCommission;
+use App\Actions\Compensation\RecordProductionBonus;
 use App\Enums\AuditAction;
 use App\Enums\ProjectProductionState;
 use App\Models\Project;
@@ -27,6 +31,11 @@ use Illuminate\Validation\ValidationException;
  */
 class ReconcileJobCosts extends RecordJobCosts
 {
+    public function __construct(RecordAuditEvent $recordAuditEvent, AttachFile $attachFile, private RecordCommission $recordCommission, private RecordProductionBonus $recordProductionBonus)
+    {
+        parent::__construct($recordAuditEvent, $attachFile);
+    }
+
     /**
      * Finance records a cost: one the Production Manager missed, or the
      * reclassified form of one it voided. Not once approved or closed.
@@ -91,7 +100,14 @@ class ReconcileJobCosts extends RecordJobCosts
                 throw ValidationException::withMessages(['jobCosting' => __('It cannot close yet: :things.', ['things' => implode(', ', $missing)])]);
             }
 
-            return $this->step($project, $costing, ProjectJobCostingStep::KIND_CLOSED, null, $actor, AuditAction::ProjectFinanciallyClosed);
+            $close = $this->step($project, $costing, ProjectJobCostingStep::KIND_CLOSED, null, $actor, AuditAction::ProjectFinanciallyClosed);
+
+            // The final commission is worked out from it, and it counts toward
+            // its Production Manager's Production Bonus (slice 20, steps 20a and 20b).
+            $this->recordCommission->closed($project, $close, $actor);
+            $this->recordProductionBonus->credit($project, $close);
+
+            return $close;
         });
     }
 

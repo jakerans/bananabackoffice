@@ -3,6 +3,7 @@
 namespace App\Actions\Projects;
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Compensation\RecordCommission;
 use App\Enums\AuditAction;
 use App\Models\Lead;
 use App\Models\Project;
@@ -13,7 +14,7 @@ use App\Support\Addresses\AddressKey;
 
 class CreateProjectForSoldProposal
 {
-    public function __construct(private RecordAuditEvent $recordAuditEvent) {}
+    public function __construct(private RecordAuditEvent $recordAuditEvent, private RecordCommission $recordCommission) {}
 
     /**
      * Make the Project for a proposal that has just been marked Sold
@@ -28,6 +29,9 @@ class CreateProjectForSoldProposal
      *
      * If this proposal was sold before and that sale was corrected, its
      * Project is brought back with the new amount and day, not made again.
+     *
+     * Either way its salesperson's commission is projected (slice 20, step
+     * 20a).
      */
     public function apply(Lead $lead, Proposal $proposal, User $actor): Project
     {
@@ -72,6 +76,8 @@ class CreateProjectForSoldProposal
             location: $lead->location,
         );
 
+        $this->recordCommission->sold($project, $actor);
+
         return $project;
     }
 
@@ -112,6 +118,8 @@ class CreateProjectForSoldProposal
             after: ['cancelled' => false, 'title' => $project->title, 'sold_for' => $project->soldFor()],
             location: $project->location,
         );
+
+        $this->recordCommission->sold($project, $actor);
 
         return $project;
     }

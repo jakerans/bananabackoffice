@@ -3458,6 +3458,58 @@ and to confirm one reading of decision 133: "sounds good. continue".
 3. **Next:** the plan check after a slice, and a proposed next slice, for
    his approval.
 
+## 172. Slice 20, variable compensation, is approved and built straight through (2026-10-24)
+
+**Decided by Jacob,** in reply to the plan check after slice 19 and the
+slice 20 plan: "approved continue. go all the way through 20 without
+stopping".
+
+1. **Slice 20 is approved** in three steps
+   ([slice-20-compensation-plan.md](slice-20-compensation-plan.md)), with
+   the recommendation on all eight questions taken as the answer, as under
+   decisions 155 and 170:
+   - 20a, 20b, 20c, in that order;
+   - pay is on the final gross margin Finance approves, before allocations,
+     until allocations are built;
+   - the pay period is the calendar month;
+   - each person sees their own pay; Finance and the Owner see everyone's,
+     through a new permission, `compensation.manage`;
+   - a cancelled job claws back an advance, in the next period, linked to
+     the job;
+   - the 2% and 6% plans earn the final commission only, with no advance;
+   - the commission is for the salesperson recorded on the sale; a split is
+     a manual adjustment;
+   - the Production Bonus month is the month a job is financially closed,
+     in the Location's time, for the job's Production Manager then.
+2. **Built without stopping between the steps,** on one branch, each step
+   committed and checked on both GitHub jobs. Nothing is merged until
+   Jacob reviews the slice.
+
+## 173. Slice 20's three open questions are answered; payroll IDs are added (2026-10-25)
+
+**Decided by Jacob,** in reply to the slice 20 report.
+
+1. **A month with no job closed does not hold the Production Bonus:** "if
+   they produce no jobs that's their problem". The month before it is not
+   paid, as built.
+2. **An advance stands if a deposit payment is reversed afterwards:** the
+   final commission or a clawback settles it, as built.
+3. **Payroll IDs, now:** Finance or the Owner keeps each person's payroll
+   ID on their pay page, one person to each, audited. Finance > Payroll
+   shows it beside each person, or that it is missing, and the download
+   gives it first on every line.
+
+## 174. Slice 20 is merged (2026-10-25)
+
+**Decided by Jacob,** in reply to the payroll ID report: "merge it and
+continue".
+
+1. **Slice 20, variable compensation, is merged** as built
+   ([slice-20-compensation-plan.md](slice-20-compensation-plan.md), "Step 20a
+   as built" to "Step 20c as built", with decision 173).
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

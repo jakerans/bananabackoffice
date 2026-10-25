@@ -39,6 +39,7 @@ enum Permission: string
     case ViewSubcontractors = 'subcontractors.view';
     case ManageSubcontractors = 'subcontractors.manage';
     case ViewPayouts = 'payouts.view';
+    case ManageCompensation = 'compensation.manage';
 
     /**
      * Company-level permissions only count when held through an all-locations grant.
@@ -53,7 +54,9 @@ enum Permission: string
             self::ManageContactCenterSettings,
             self::ViewUnroutedLeads,
             self::RouteLeads,
-            self::ArchiveAccounts => true,
+            self::ArchiveAccounts,
+            // Pay is one company payroll across every Location (slice 20; decision 172, question 4).
+            self::ManageCompensation => true,
             default => false,
         };
     }

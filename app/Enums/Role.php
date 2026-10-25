@@ -79,6 +79,8 @@ enum Role: string
                 Permission::ViewProjects,
                 Permission::ViewAccounts,
                 Permission::ViewPayouts,
+                // Finance sees and manages everyone's pay, through an all-locations grant (decision 172, question 4).
+                Permission::ManageCompensation,
             ],
             self::LocationManager => [
                 Permission::MarketingAccess,

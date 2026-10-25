@@ -25,6 +25,12 @@
                     {{ __('My account') }}
                 </flux:menu.item>
             @endunless
+            {{-- A person's own pay plans and ledger, once they have any (slice 20). --}}
+            @if (auth()->user()->hasPay())
+                <flux:menu.item :href="route('pay')" icon="banknotes" wire:navigate data-test="my-pay">
+                    {{ __('My pay') }}
+                </flux:menu.item>
+            @endif
             <form method="POST" action="{{ route('logout') }}" class="w-full">
                 @csrf
                 <flux:menu.item
