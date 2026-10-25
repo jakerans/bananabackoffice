@@ -357,7 +357,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | `finance.cash.payments` | Payments | CS |
 | `finance.cash.payouts` | Payouts | CS |
 | `finance.job_costing` | Job Costing | **Live (slice 19, step 19c):** `/finance/job-costing`, route name `finance.job-costing`, `finance.access` at the Locations shown |
-| `finance.payroll` | Payroll | CS |
+| `finance.payroll` | Payroll | **Live (slice 20, step 20a):** `/finance/payroll`, route name `finance.payroll`, `compensation.manage`; each person's page at `/finance/payroll/people/{user}`. Everyone's own pay is "My pay" in the account menu, `/pay`, shown once they have a pay plan or a ledger entry |
 | `finance.commission_approvals` | Commission Approvals | CS |
 | `finance.reports` | Reports | CS |
 

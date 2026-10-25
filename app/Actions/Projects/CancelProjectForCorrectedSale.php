@@ -3,6 +3,7 @@
 namespace App\Actions\Projects;
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Compensation\RecordCommission;
 use App\Enums\AuditAction;
 use App\Models\Project;
 use App\Models\Proposal;
@@ -11,7 +12,7 @@ use App\Notifications\ProjectNotice;
 
 class CancelProjectForCorrectedSale
 {
-    public function __construct(private RecordAuditEvent $recordAuditEvent) {}
+    public function __construct(private RecordAuditEvent $recordAuditEvent, private RecordCommission $recordCommission) {}
 
     /**
      * Cancel the Project of a proposal whose sale a manager has just
@@ -22,6 +23,9 @@ class CancelProjectForCorrectedSale
      * The Project keeps its row, marked "Cancelled: sale corrected" with who,
      * when and the manager's note. If the proposal is sold again the same
      * Project is brought back. Jacob accepted this rule "for now".
+     *
+     * Commission already in the ledger for it is clawed back (slice 20,
+     * question 5).
      */
     public function apply(Proposal $proposal, string $note, User $actor): ?Project
     {
@@ -47,6 +51,8 @@ class CancelProjectForCorrectedSale
             location: $project->location,
             reason: $note,
         );
+
+        $this->recordCommission->cancelled($project, $actor);
 
         // Its Production Manager is told (docs/slice-8-projects-plan.md, question 4).
         if ($project->production_manager_id !== null && $project->production_manager_id !== $actor->id) {

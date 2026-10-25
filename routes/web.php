@@ -63,6 +63,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Finance > Job Costing: jobs to reconcile and to close, at the Locations the person has Finance for (slice 19, step 19c).
     Route::livewire('finance/job-costing', 'pages::finance.job-costing')->can(Permission::FinanceAccess)->name('finance.job-costing');
 
+    // Finance > Payroll: everyone's variable pay, for Finance and the Owner; and each person's own (slice 20, step 20a).
+    Route::livewire('finance/payroll', 'pages::finance.payroll')->can(Permission::ManageCompensation)->name('finance.payroll');
+    Route::livewire('finance/payroll/people/{user}', 'pages::pay.ledger')->can('viewPay', 'user')->name('finance.payroll.person');
+    Route::livewire('pay', 'pages::pay.ledger')->name('pay');
+
     // An attached file opens by a five-minute link, given after checking the person may see
     // what it belongs to (slice 16; decision 33). Never a lasting address.
     Route::get('attachments/{attachment}', OpenAttachmentController::class)->name('attachments.open');

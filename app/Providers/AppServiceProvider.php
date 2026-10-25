@@ -7,6 +7,7 @@ use App\Enums\ImpersonationEndReason;
 use App\Enums\Permission;
 use App\Models\Account;
 use App\Models\AppointmentCancellationReason;
+use App\Models\CompensationEntry;
 use App\Models\Contact;
 use App\Models\ContactCenterSettings;
 use App\Models\InsuranceDeductionRate;
@@ -17,6 +18,7 @@ use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
 use App\Models\Objection;
+use App\Models\PayPlan;
 use App\Models\Project;
 use App\Models\ProjectChangeOrder;
 use App\Models\ProjectCost;
@@ -131,6 +133,8 @@ class AppServiceProvider extends ServiceProvider
             'project_payment' => ProjectPayment::class,
             'project_change_order' => ProjectChangeOrder::class,
             'project_cost' => ProjectCost::class,
+            'pay_plan' => PayPlan::class,
+            'compensation_entry' => CompensationEntry::class,
             'insurance_deduction_rate' => InsuranceDeductionRate::class,
         ]);
     }

@@ -316,7 +316,7 @@ class Navigation
                     new NavigationItem('finance.cash.payouts', 'Payouts', $permissions),
                 ]),
                 new NavigationItem('finance.job_costing', 'Job Costing', $permissions, NavigationState::Live, route: 'finance.job-costing'),
-                new NavigationItem('finance.payroll', 'Payroll', $permissions),
+                new NavigationItem('finance.payroll', 'Payroll', [Permission::ManageCompensation], NavigationState::Live, route: 'finance.payroll'),
                 new NavigationItem(
                     id: 'finance.people_access',
                     label: 'People & Access',

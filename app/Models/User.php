@@ -249,6 +249,34 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * The pay plans this staff member has been on (slice 20).
+     *
+     * @return HasMany<PayPlan, $this>
+     */
+    public function payPlans(): HasMany
+    {
+        return $this->hasMany(PayPlan::class);
+    }
+
+    /**
+     * Their variable-compensation ledger (slice 20).
+     *
+     * @return HasMany<CompensationEntry, $this>
+     */
+    public function compensationEntries(): HasMany
+    {
+        return $this->hasMany(CompensationEntry::class);
+    }
+
+    /**
+     * Whether they have pay in Backoffice to see: a pay plan or a ledger entry.
+     */
+    public function hasPay(): bool
+    {
+        return $this->payPlans()->exists() || $this->compensationEntries()->exists();
+    }
+
+    /**
      * The Leads this staff member is responsible for working now.
      *
      * @return HasMany<Lead, $this>

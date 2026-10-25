@@ -1,8 +1,9 @@
 # Slice 20 — Variable Compensation: Plan
 
-Status: **proposed on 2026-10-24 for Jacob's review, after slice 19 was
-merged (decision 171). Nothing is built.** Written as what the implementation
-agent recommends from the plan check below.
+Status: **approved on 2026-10-24 (decision 172), with the recommendation on
+all eight questions, to be built straight through 20a, 20b and 20c and then
+reviewed. Being built.** Written as what the implementation agent
+recommended from the plan check below.
 
 ## Why this is next (the plan check)
 
@@ -85,6 +86,45 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 
 To start, Jacob approves the plan, or step 20a alone, and answers 1 to 4 and
 6 and 7. Questions 5 and 8 are needed before 20b and 20c.
+
+## Step 20a as built
+
+- **Pay plans** (`pay_plans`): each person's plan, effective from a day,
+  with its yearly base and its rate kept as they were set. Sales: $45,000 +
+  2%, $35,000 + 6%, straight 15%, or no commission; Production: the
+  Production Bonus plan, or none. A change is a new plan from a day, with
+  why; the first needs no reason. Kept as it was.
+- **The ledger** (`compensation_entries`): each entry keeps its person, its
+  job, its kind, its amount, the pay period it is due in (a calendar month)
+  and how it was worked out in plain English. Kept as it was; a change is a
+  new entry.
+- **The commission follows the job,** for the salesperson on the sale, on
+  the plan they were on the day it sold (questions 6 and 7):
+  - at the sale, the **projection**: the rate on half the price sold. Never
+    paid;
+  - on straight commission, the **advance**, half the projection (3.75% of
+    the contract), as soon as the full deposit the policy asks for is
+    collected and the handoff is complete, whichever comes last;
+  - at the financial close, the **final** commission: the rate on the final
+    gross margin Finance approved, less what the ledger already holds for
+    the job. It is never below zero before that deduction, so a job that lost
+    money takes the advance back. A job closed again after a reopening is a
+    **gross-margin adjustment** for the difference, in the month it closes
+    again;
+  - when the sale is corrected and the job cancelled, a **clawback** of what
+    the ledger holds for it, in the month it is cancelled (question 5). Sold
+    again, it is projected and advanced again.
+- **Manual adjustments:** Finance or the Owner adds to or deducts from a
+  person's pay in this month, with why, for a job or not. A split is a
+  deduction for one and an addition for the other (question 7).
+- **Who sees it:** the new permission `compensation.manage`, for Finance and
+  the Owner, counts only through an all-locations grant: pay is one company
+  payroll, so Finance at a single Location does not see it. Nobody manages
+  their own pay.
+- **Pages:** Finance > Payroll is live, listing everyone with variable pay,
+  their plan and what is due this month; each person's page shows their
+  plans and their ledger by month, and is where Finance sets a plan or adds
+  an adjustment. Everyone sees their own at "My pay" in the account menu.
 
 ## Known limits of this plan
 

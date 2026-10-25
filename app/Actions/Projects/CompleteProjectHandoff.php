@@ -3,6 +3,7 @@
 namespace App\Actions\Projects;
 
 use App\Actions\Audit\RecordAuditEvent;
+use App\Actions\Compensation\RecordCommission;
 use App\Enums\AuditAction;
 use App\Enums\HandoffColors;
 use App\Enums\Role;
@@ -17,7 +18,7 @@ use Illuminate\Validation\ValidationException;
 
 class CompleteProjectHandoff
 {
-    public function __construct(private RecordAuditEvent $recordAuditEvent) {}
+    public function __construct(private RecordAuditEvent $recordAuditEvent, private RecordCommission $recordCommission) {}
 
     /**
      * Save the salesperson's answers to the handoff questions for a Project
@@ -79,6 +80,8 @@ class CompleteProjectHandoff
 
             if ($first) {
                 $this->tellProduction($project, $actor);
+                // A completed handoff is one of the advance's conditions (slice 20, step 20a).
+                $this->recordCommission->considerAdvance($project, $actor);
             } elseif ($project->production_manager_id !== null && $project->production_manager_id !== $actor->id) {
                 User::query()->find($project->production_manager_id)?->notify(new ProjectNotice($project->id, ProjectNotice::HANDOFF_CHANGED));
             }
