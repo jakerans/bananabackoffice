@@ -1,8 +1,9 @@
 # Slice 23 — Performance Boards: Plan
 
-Status: **proposed on 2026-10-25 for Jacob's review, after slice 22 was
-merged (decision 178). Nothing is built.** Written as what the
-implementation agent recommends from the plan check below.
+Status: **approved on 2026-10-25 (decision 179), with the recommendation on
+all eight questions, to be built straight through 23a, 23b and 23c and then
+reviewed. Being built.** Written as what the implementation agent
+recommended from the plan check below.
 
 ## Why this is next (the plan check)
 
@@ -83,6 +84,25 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
    count as Sales > Performance counts them.
 8. **Who sees the leaderboard.** *Recommended:* everyone with Sales access,
    company-wide, with every salesperson's name and total (5.8).
+
+## Step 23a as built
+
+- **Production > Performance is live,** the page the Production Center opens
+  on. A person sees it for one Location or all of those where they have
+  Production access, for this month or any of the eleven before it.
+- **The month:** completed revenue and its gross margin, from the jobs
+  financially closed in it, as the Production Bonus counts them (question
+  2); work finished on time out of all finished; job costing submitted and
+  the average days from the customer's signoff (question 5); warranty cases
+  opened.
+- **Now:** what customers owe on final invoices, how many are late and with
+  Collections; work running over; accuracy strikes in the last 90 days;
+  warranty cases open.
+- **Each Production Manager's month:** gross-margin dollars, margin and
+  **on track**, **at risk** or **below the floor**, by their plan's floor
+  and margin (question 4). No bonus amount.
+- **Jobs at risk now,** each with why and linked to its job (question 3);
+  and the signed-off jobs whose job costing is not submitted after 7 days.
 
 ## Known limits of this plan
 

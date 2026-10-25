@@ -337,7 +337,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | ID | Label | State |
 | --- | --- | --- |
 | `production.home` | Shortcut: opens Performance Board | — |
-| `production.performance` | Performance Board | CS, primary |
+| `production.performance` | Performance Board | **Live (slice 23, step 23a), primary:** `/production/performance-board`, route name `production.performance`, `production.access` at the Locations shown |
 | `production.projects` | Projects | CS |
 | `production.projects.ready` | Ready to Schedule | CS |
 | `production.projects.pre_production` | Pre-Production | CS |

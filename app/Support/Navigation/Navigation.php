@@ -284,7 +284,7 @@ class Navigation
             description: 'Performance, project delivery, scheduling and subcontractors.',
             primary: 'production.performance',
             children: [
-                new NavigationItem('production.performance', 'Performance', $permissions, route: 'production.performance'),
+                new NavigationItem('production.performance', 'Performance', $permissions, NavigationState::Live, route: 'production.performance'),
                 new NavigationItem('production.workspace', 'Workspace', $permissions, NavigationState::Live, route: 'production.workspace'),
                 new NavigationItem('production.schedule', 'Schedule', $permissions, NavigationState::Live, route: 'production.schedule'),
                 new NavigationItem('production.crews', 'Subcontractors', [Permission::ViewSubcontractors], NavigationState::Live, route: 'production.subcontractors'),

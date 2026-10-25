@@ -100,7 +100,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Primary sections that are not built yet. Each becomes a real page when its feature is built.
     Route::get('company/performance', SectionController::class)->defaults('section', 'company.performance')->name('company.performance');
     Route::get('marketing/performance-board', SectionController::class)->defaults('section', 'marketing.performance')->name('marketing.performance');
-    Route::get('production/performance-board', SectionController::class)->defaults('section', 'production.performance')->name('production.performance');
+    // Production > Performance (slice 23, step 23a).
+    Route::livewire('production/performance-board', 'pages::production.performance')->can(Permission::ProductionAccess)->name('production.performance');
     Route::get('finance/performance-board', SectionController::class)->defaults('section', 'finance.performance')->name('finance.performance');
     Route::get('color-studio/color-projects', SectionController::class)->defaults('section', 'color_studio.projects')->name('color_studio.projects');
 });

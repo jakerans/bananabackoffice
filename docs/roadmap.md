@@ -213,8 +213,8 @@ check after slice 21 found closeout complete and warranty the next gap: the
 end of the ownership chain (20) and Production's last Coming Soon item (6,
 16). Its plan is [slice-22-warranty-plan.md](slice-22-warranty-plan.md).
 
-**Slice 23, Performance Boards, is proposed (2026-10-25) and not
-approved.** The plan check after slice 22 found the Production and Finance
+**Slice 23, Performance Boards, is approved (2026-10-25, decision 179) and
+being built straight through its three steps.** The plan check after slice 22 found the Production and Finance
 Centers still opening on Coming Soon pages where their Performance boards
 belong (6.1, 9.1, 17), with the numbers for them now recorded, and the Sales
 leaderboard (5.8) unbuilt. Its plan is

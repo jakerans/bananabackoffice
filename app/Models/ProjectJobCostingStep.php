@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\Projects\JobCosting;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use LogicException;
 
@@ -25,6 +26,7 @@ use LogicException;
  * @property string|null $recorded_by_name
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read Project $project
  */
 class ProjectJobCostingStep extends Model
 {
@@ -61,6 +63,14 @@ class ProjectJobCostingStep extends Model
             'costs_cents' => 'integer',
             'margin_cents' => 'integer',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Project, $this>
+     */
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 
     public function marginPercent(): ?float
