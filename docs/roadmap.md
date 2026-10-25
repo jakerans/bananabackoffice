@@ -191,8 +191,10 @@ financial close of a job (6.8, 6.9) the last part of closeout still
 unbuilt. Its plan is
 [slice-19-job-costing-plan.md](slice-19-job-costing-plan.md).
 
-**Slice 20, variable compensation, is approved (2026-10-24, decision 172)
-and being built straight through its three steps.** The plan check after slice 19 found the sales commission and the
+**Slice 20, variable compensation, is approved (2026-10-24, decision 172),
+built straight through its three steps on
+`checkpoint-slice-20-compensation`, and waiting for Jacob's review.** The
+plan check after slice 19 found the sales commission and the
 Production Bonus waiting on the final gross margin slice 19 produces. Its
 plan is [slice-20-compensation-plan.md](slice-20-compensation-plan.md).
 The plan check after slice 16 found the last customer-facing step of

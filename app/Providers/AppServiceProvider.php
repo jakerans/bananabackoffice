@@ -19,6 +19,7 @@ use App\Models\Location;
 use App\Models\MarketingSource;
 use App\Models\Objection;
 use App\Models\PayPlan;
+use App\Models\PayrollPeriod;
 use App\Models\Project;
 use App\Models\ProjectChangeOrder;
 use App\Models\ProjectCost;
@@ -135,6 +136,7 @@ class AppServiceProvider extends ServiceProvider
             'project_cost' => ProjectCost::class,
             'pay_plan' => PayPlan::class,
             'compensation_entry' => CompensationEntry::class,
+            'payroll_period' => PayrollPeriod::class,
             'insurance_deduction_rate' => InsuranceDeductionRate::class,
         ]);
     }

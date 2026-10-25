@@ -3,6 +3,7 @@
 use App\Actions\Compensation\ManagePay;
 use App\Models\CompensationEntry;
 use App\Models\PayPlan;
+use App\Models\PayrollPeriod;
 use App\Models\ProductionBonusCredit;
 use App\Models\ProductionBonusMonth;
 use App\Models\Project;
@@ -125,6 +126,17 @@ new #[Title('Pay')] class extends Component {
     }
 
     /**
+     * The pay periods Finance has finalized, by month (step 20c).
+     *
+     * @return \Illuminate\Support\Collection<string, PayrollPeriod>
+     */
+    #[Computed]
+    public function payrollPeriods(): \Illuminate\Support\Collection
+    {
+        return PayrollPeriod::query()->whereIn('period', $this->entries->pluck('period')->filter()->unique())->get()->keyBy('period');
+    }
+
+    /**
      * Their Production Bonus by month, the latest first (step 20b): this
      * month while they are on the plan, and each month a job of theirs
      * closed in the last year, with where it stands.
@@ -225,7 +237,7 @@ new #[Title('Pay')] class extends Component {
 
     private function done(string $modal, string $message): void
     {
-        unset($this->plans, $this->currentPlans, $this->entries);
+        unset($this->plans, $this->currentPlans, $this->entries, $this->payrollPeriods);
 
         Flux::modal($modal)->close();
         Flux::toast(variant: 'success', text: $message);
@@ -322,8 +334,18 @@ new #[Title('Pay')] class extends Component {
 
         @foreach ($payable as $period => $periodEntries)
             <div wire:key="pay-period-{{ $period }}" class="flex flex-col gap-2" data-test="pay-period">
+                @php($finalized = $this->payrollPeriods->get($period))
                 <div class="flex flex-wrap items-baseline justify-between gap-2 border-b border-zinc-200 pb-1">
-                    <flux:heading size="md" level="3">{{ PayPeriods::words((string) $period) }}</flux:heading>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <flux:heading size="md" level="3">{{ PayPeriods::words((string) $period) }}</flux:heading>
+                        @if ($finalized === null)
+                            <flux:badge size="sm" color="zinc" data-test="pay-period-state">{{ __('Open') }}</flux:badge>
+                        @elseif ($finalized->paid_at === null)
+                            <flux:badge size="sm" color="amber" data-test="pay-period-state">{{ __('Scheduled for payroll') }}</flux:badge>
+                        @else
+                            <flux:badge size="sm" color="emerald" data-test="pay-period-state">{{ __('Paid') }}</flux:badge>
+                        @endif
+                    </div>
                     <span class="font-nav font-bold tabular-nums text-ink" data-test="pay-period-total">{{ Money::format((int) $periodEntries->sum('amount_cents')) }}</span>
                 </div>
 
@@ -382,7 +404,7 @@ new #[Title('Pay')] class extends Component {
             <form wire:submit="saveAdjustment" class="flex flex-col gap-5">
                 <div>
                     <flux:heading size="lg">{{ __('Add an adjustment') }}</flux:heading>
-                    <flux:subheading>{{ __('Due in this month\'s pay period. A split commission is a deduction for one person and an addition for the other.') }}</flux:subheading>
+                    <flux:subheading>{{ __('Due in this month\'s pay period, or the next open one. A split commission is a deduction for one person and an addition for the other.') }}</flux:subheading>
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">

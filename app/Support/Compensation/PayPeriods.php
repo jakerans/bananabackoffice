@@ -3,6 +3,7 @@
 namespace App\Support\Compensation;
 
 use App\Models\Location;
+use App\Models\PayrollPeriod;
 use App\Support\Queue\CallingHours;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -40,11 +41,15 @@ final class PayPeriods
     }
 
     /**
-     * The pay period an entry due in a month is paid in.
+     * The pay period an entry due in a month is paid in: that month, unless
+     * Finance has finalized it or a later one (step 20c); then the month
+     * after the latest finalized. A finalized period is kept as it was.
      */
     public static function openFrom(string $period): string
     {
-        return $period;
+        $latest = PayrollPeriod::query()->max('period');
+
+        return is_string($latest) && $period <= $latest ? self::next($latest) : $period;
     }
 
     public static function next(string $period): string

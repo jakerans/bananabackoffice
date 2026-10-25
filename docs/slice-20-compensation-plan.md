@@ -1,9 +1,10 @@
 # Slice 20 — Variable Compensation: Plan
 
 Status: **approved on 2026-10-24 (decision 172), with the recommendation on
-all eight questions, to be built straight through 20a, 20b and 20c and then
-reviewed. Being built.** Written as what the implementation agent
-recommended from the plan check below.
+all eight questions, and built straight through 20a, 20b and 20c on
+`checkpoint-slice-20-compensation`. Waiting for Jacob's review; not
+merged.** Written as what the implementation agent recommended from the plan
+check below; what was built is under "as built".
 
 ## Why this is next (the plan check)
 
@@ -150,9 +151,38 @@ To start, Jacob approves the plan, or step 20a alone, and answers 1 to 4 and
   year, and this month while they are on the plan: its gross-margin dollars
   and margin, and where it stands, in plain English.
 
+## Step 20c as built
+
+- **Each pay period is open, then scheduled, then paid**
+  (`payroll_periods`). Finance or the Owner finalizes a month once it is
+  over, and after every earlier month with entries: its total and number of
+  entries are kept, and its entries are scheduled. Then it is marked paid,
+  with payroll's reference. Each is audited.
+- **A finalized period is kept as it was:** anything due in it or an
+  earlier month from then on, such as a bonus settled late, is due in the
+  month after the latest finalized period.
+- **Finance > Payroll** opens on the earliest month that is over and not
+  finalized, or else this month. It shows what each person has due in the
+  period, the total, where the period stands, and the buttons to finalize
+  it, download it for payroll (a spreadsheet of every entry) and mark it
+  paid, each confirmed in the app's own dialog.
+- **Each person's ledger** shows each month as Open, Scheduled for payroll,
+  or Paid.
+
 ## Known limits of this plan
 
 - **Pay is calculated, not paid:** Backoffice gives Finance the amounts;
   payroll pays them.
+- **A month with no job closed** has no margin, so it does not hold the
+  previous month's Production Bonus, which is then not paid. Jacob may want
+  it held instead.
+- **An advance stands** if a deposit payment is reversed after it; the
+  final commission or a clawback settles it.
+- **A reopened job changes nothing** until it closes again; then the final
+  commission and the Production Bonus count the difference.
+- **The download has names, not payroll IDs:** payroll matches people by
+  name until Backoffice keeps their payroll ID.
+- **The plans' rates live in the code,** kept on each plan as it was set: a
+  new rate is a new plan in the list, then effective from a day.
 - **Before allocations** the gross margin is higher than the full one, so
   commission and bonus read high until allocations exist (question 2).

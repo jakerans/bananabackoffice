@@ -136,6 +136,8 @@ enum AuditAction: string
     case LocationTargetMarginChanged = 'location.target_margin_changed';
     case PayPlanSet = 'compensation.plan_set';
     case CompensationAdjusted = 'compensation.adjusted';
+    case PayrollFinalized = 'compensation.payroll_finalized';
+    case PayrollPaid = 'compensation.payroll_paid';
     case LocationDepositPolicyChanged = 'location.deposit_policy_changed';
     case AttachmentAdded = 'attachment.added';
     case AttachmentRemoved = 'attachment.removed';

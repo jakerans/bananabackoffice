@@ -109,7 +109,7 @@ test('Finance > Payroll lists the people with variable pay, their plans and what
     app(ManagePay::class)->adjust($this->sam, 'add', '250', null, 'Spiff.', $this->finley);
 
     $this->actingAs($this->finley)->get(route('finance.payroll'))->assertOk()
-        ->assertSeeInOrder(['Pat Production', 'No pay plan', 'Sam Sales', 'Straight commission: 15% of gross-margin dollars', '$250']);
+        ->assertSeeInOrder(['Sam Sales', '1 entry', '$250', 'People and pay plans', 'Pat Production', 'No pay plan', 'Sam Sales', 'Straight commission: 15% of gross-margin dollars']);
 
     $this->actingAs($this->fran)->get(route('finance.payroll'))->assertForbidden();
     $this->actingAs($this->sam)->get(route('finance.payroll'))->assertForbidden();
