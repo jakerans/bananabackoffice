@@ -31,7 +31,7 @@ use Livewire\Component;
  */
 new #[Title('After-action report')] class extends Component {
     /** What a proposal in the report starts with. */
-    private const array BLANK = ['name' => '', 'price' => '', 'propertyId' => null, 'result' => '', 'soldAmount' => '', 'lossReasonId' => '', 'lostTo' => '', 'objectionId' => '', 'note' => ''];
+    private const array BLANK = ['name' => '', 'price' => '', 'propertyId' => null, 'result' => '', 'soldAmount' => '', 'ambassadorTier' => 'none', 'ambassadorDiscount' => '', 'ambassadorItems' => [], 'ambassadorReason' => '', 'lossReasonId' => '', 'lostTo' => '', 'objectionId' => '', 'note' => ''];
 
     #[Locked]
     public int $leadId;

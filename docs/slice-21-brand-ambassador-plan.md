@@ -1,8 +1,9 @@
 # Slice 21 — Brand Ambassador: Plan
 
-Status: **proposed on 2026-10-25 for Jacob's review, after slice 20 was
-merged (decision 174). Nothing is built.** Written as what the
-implementation agent recommends from the plan check below.
+Status: **approved on 2026-10-25 (decision 175), with the recommendation on
+all eight questions, to be built straight through 21a, 21b and 21c and then
+reviewed. Being built.** Written as what the implementation agent
+recommended from the plan check below.
 
 ## Why this is next (the plan check)
 
@@ -95,6 +96,23 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 8. **The 30-day yard sign.** *Recommended:* one item, "Yard sign, 30
    days": the Production Manager records the day it went up, and it is due
    to come down 30 days later, with a reminder.
+
+## Step 21a as built
+
+- **The package goes with the sale.** Marking a proposal Sold, on the
+  Proposals card or in the after-action report, asks for the Brand
+  Ambassador package: no package (the default), Bronze 10%, Silver 15%,
+  Gold 25%, or Custom. Custom asks for a discount from 1% to 25%, the items
+  promised and why, and tells the Location's managers.
+- **The job keeps** the tier, the discount, the items, why, the largest
+  discount then (25%) and the retail price before the discount: the price
+  sold ÷ (100% − the discount). A job sold before slice 21 says "No package
+  recorded" until someone records one.
+- **The Brand Ambassador card** on the job shows the package, the retail
+  price, who recorded it and what the customer promised. The salesperson
+  records or corrects it there until the handoff is complete; a manager at
+  any time, saying why once the handoff is complete. Each change is audited
+  and shown in the job's activity. The handoff page shows the package.
 
 ## Known limits of this plan
 

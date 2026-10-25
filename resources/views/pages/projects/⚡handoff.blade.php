@@ -125,6 +125,10 @@ new #[Title('Handoff to Production')] class extends Component {
         <div class="font-semibold text-ink">{{ $project->title }}</div>
         <div class="text-ink">{{ $project->account->display_name }} &middot; {{ $project->property->summary() }}</div>
         <div class="text-sm text-zinc-700">{{ $project->proposal->name }} &middot; {{ __('Sold for :amount', ['amount' => $project->soldFor()]) }}</div>
+        {{-- The Brand Ambassador package, corrected on the job until the handoff is complete (slice 21). --}}
+        <div class="text-sm text-zinc-700" data-test="handoff-ambassador">
+            {{ __('Brand Ambassador: :package', ['package' => $project->ambassadorPackage() === null ? __('No package recorded') : __($project->ambassadorPackage()->label())]) }}
+        </div>
     </div>
 
     <form wire:submit="save" class="flex flex-col gap-6">

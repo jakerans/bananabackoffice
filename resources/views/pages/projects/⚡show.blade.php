@@ -55,6 +55,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectChangeOrderDrafted, AuditAction::ProjectChangeOrderSigned, AuditAction::ProjectChangeOrderWithdrawn,
         AuditAction::ProjectWorkRevised,
         AuditAction::ProjectJobCostingSubmitted, AuditAction::ProjectJobCostingApproved, AuditAction::ProjectFinanciallyClosed, AuditAction::ProjectFinancialCloseReopened,
+        AuditAction::ProjectAmbassadorPackageRecorded,
     ];
 
     /**
@@ -158,6 +159,7 @@ new #[Title('Project')] class extends Component {
             AuditAction::ProjectJobCostingApproved => __('Final gross margin approved by Finance'),
             AuditAction::ProjectFinanciallyClosed => __('Financially closed'),
             AuditAction::ProjectFinancialCloseReopened => __('Job costing reopened by Finance'),
+            AuditAction::ProjectAmbassadorPackageRecorded => __('Brand Ambassador package: :package', ['package' => __((string) ($event->values_after['package'] ?? ''))]),
             AuditAction::ProjectWorkRevised => ($event->values_after['change_order'] ?? null) === null
                 ? __(':package revised: :what', ['package' => (string) ($event->values_after['package'] ?? ''), 'what' => ($event->values_after['kind'] ?? '') === 'scope' ? __('the scope') : __('the payout')])
                 : __(':package revised: :what, from change order :number', ['package' => (string) ($event->values_after['package'] ?? ''), 'what' => ($event->values_after['kind'] ?? '') === 'scope' ? __('the scope') : __('the payout'), 'number' => (string) $event->values_after['change_order']]),
@@ -673,6 +675,9 @@ new #[Title('Project')] class extends Component {
     {{-- The customer's change orders (slice 18, step 18a), and their invoices and payments (slice 17), kept in view on a cancelled job too. --}}
     <livewire:pages::projects.change-orders :project="$project" :key="'change-orders-'.$project->id" />
     <livewire:pages::projects.payments :project="$project" :key="'payments-'.$project->id" />
+
+    {{-- The Brand Ambassador package (slice 21). --}}
+    <livewire:pages::projects.ambassador :project="$project" :key="'ambassador-'.$project->id" />
 
     {{-- Job costing (slice 19): finance-sensitive, only for those who may see payouts. --}}
     @can('viewPayouts', $project)

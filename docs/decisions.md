@@ -3510,6 +3510,35 @@ continue".
 2. **Next:** the plan check after a slice, and a proposed next slice, for
    his approval.
 
+## 175. Slice 21, Brand Ambassador, is approved and built straight through (2026-10-25)
+
+**Decided by Jacob,** in reply to the slice 21 plan: "q6: correct - anything
+above floor is pure profit. 5: follow recommended. do the entire slice in
+one go".
+
+1. **Slice 21 is approved** in three steps
+   ([slice-21-brand-ambassador-plan.md](slice-21-brand-ambassador-plan.md)),
+   with the recommendation on all eight questions taken as the answer:
+   - 21a, 21b, 21c, in that order;
+   - the package is recorded with the sale; the salesperson corrects it
+     until the handoff is complete, a manager afterwards, with why;
+   - Custom is items from the list and a discount of up to 25%, with why,
+     and the Location's managers are told;
+   - the job's Production Manager or a manager there handles the
+     obligations, and can say who physically did each;
+   - the financial close waits until every obligation is handled
+     (completed, partial, deferred or waived); a deferred one may stay open
+     after the close;
+   - **the budget comes from the floor price** for every job: (retail
+     price + signed change orders) × 75% × (100% − the target margin).
+     "Anything above floor is pure profit";
+   - the largest discount, 25%, is kept on each job as sold;
+   - the yard sign is one item: the day it went up, and a reminder when it
+     is due to come down 30 days later.
+2. **Built without stopping between the steps,** on one branch, each step
+   committed and checked on both GitHub jobs. Nothing is merged until
+   Jacob reviews the slice.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

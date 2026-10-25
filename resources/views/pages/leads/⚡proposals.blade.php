@@ -43,7 +43,7 @@ use Livewire\Component;
  */
 new class extends Component {
     /** What a result dialog starts with. */
-    private const array NO_RESULT = ['soldAmount' => '', 'lossReasonId' => '', 'lostTo' => '', 'objectionId' => '', 'note' => ''];
+    private const array NO_RESULT = ['soldAmount' => '', 'ambassadorTier' => 'none', 'ambassadorDiscount' => '', 'ambassadorItems' => [], 'ambassadorReason' => '', 'lossReasonId' => '', 'lostTo' => '', 'objectionId' => '', 'note' => ''];
 
     #[Locked]
     public int $leadId;
