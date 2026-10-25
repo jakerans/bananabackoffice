@@ -3577,6 +3577,16 @@ recommendations, do the entire slice in one go".
    committed and checked on both GitHub jobs. Nothing is merged until
    Jacob reviews the slice.
 
+## 178. Slice 22 is merged (2026-10-25)
+
+**Decided by Jacob,** in reply to the slice 22 report: "continue".
+
+1. **Slice 22, Warranty, is merged** as built
+   ([slice-22-warranty-plan.md](slice-22-warranty-plan.md), "Step 22a as
+   built" to "Step 22c as built").
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

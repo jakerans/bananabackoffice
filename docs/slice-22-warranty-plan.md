@@ -1,8 +1,8 @@
 # Slice 22 — Warranty: Plan
 
 Status: **approved on 2026-10-25 (decision 177), with the recommendation on
-all eight questions, and built straight through 22a, 22b and 22c on
-`checkpoint-slice-22-warranty`. Waiting for Jacob's review; not merged.**
+all eight questions, built straight through 22a, 22b and 22c, and merged on
+2026-10-25 (decision 178). Slice 22 is complete.**
 Written as what the implementation agent recommended from the plan check
 below; what was built is under "as built".
 
