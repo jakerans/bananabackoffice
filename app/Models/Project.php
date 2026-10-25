@@ -285,6 +285,17 @@ class Project extends Model implements HasPhotos
     }
 
     /**
+     * What the customer promised for the Brand Ambassador discount, item by
+     * item, in the order of the list (slice 21, step 21b).
+     *
+     * @return HasMany<ProjectAmbassadorObligation, $this>
+     */
+    public function ambassadorObligations(): HasMany
+    {
+        return $this->hasMany(ProjectAmbassadorObligation::class)->orderBy('id');
+    }
+
+    /**
      * Its Brand Ambassador package, once recorded (slice 21).
      */
     public function ambassadorPackage(): ?AmbassadorPackage

@@ -58,6 +58,16 @@ class ProjectPolicy
     }
 
     /**
+     * Determine whether the user can mark what the customer promised for the
+     * Brand Ambassador discount (slice 21, decision 175): the job's
+     * Production Manager or a manager there.
+     */
+    public function handleAmbassador(User $user, Project $project): bool
+    {
+        return $this->managePreProduction($user, $project);
+    }
+
+    /**
      * Determine whether the user can choose or change the Project's
      * Production Manager (decision 130, answer 7): a manager where it is.
      */

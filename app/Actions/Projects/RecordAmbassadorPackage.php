@@ -6,6 +6,7 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Enums\Role;
 use App\Models\Project;
+use App\Models\ProjectAmbassadorObligation;
 use App\Models\User;
 use App\Notifications\ProjectNotice;
 use App\Support\Projects\AmbassadorPackage;
@@ -22,8 +23,9 @@ use Illuminate\Validation\ValidationException;
  * It is recorded with the sale. The salesperson can correct it until the
  * handoff is complete, a manager at any time, and after the handoff with
  * why. The job keeps the tier, the discount, the items, the largest discount
- * then and the retail price before the discount. A custom package tells the
- * Location's managers.
+ * then and the retail price before the discount, and lists each item
+ * promised to be handled (step 21b). A custom package tells the Location's
+ * managers.
  */
 class RecordAmbassadorPackage
 {
@@ -92,6 +94,8 @@ class RecordAmbassadorPackage
             reason: $correction ?? $package->reason,
         );
 
+        $this->keepObligationsInStep($project, $package);
+
         if ($package->tier === AmbassadorPackage::CUSTOM && $before != $package) {
             User::query()
                 ->where('is_active', true)
@@ -101,5 +105,26 @@ class RecordAmbassadorPackage
                 ->filter(fn (User $user): bool => $user->holdsRoleAt(Role::LocationManager, $project->location))
                 ->each(fn (User $user) => $user->notify(new ProjectNotice($project->id, ProjectNotice::AMBASSADOR_CUSTOM, name: $actor->name)));
         }
+    }
+
+    /**
+     * Each item of the package is on the job to be handled (step 21b): a new
+     * one is added, and one no longer in the package goes if nobody has
+     * handled it yet. One already handled stays, as it was.
+     */
+    private function keepObligationsInStep(Project $project, AmbassadorPackage $package): void
+    {
+        $existing = $project->ambassadorObligations()->get()->keyBy('item');
+
+        foreach ($package->items as $item) {
+            if (! $existing->has($item)) {
+                $obligation = new ProjectAmbassadorObligation;
+                $obligation->forceFill(['project_id' => $project->id, 'item' => $item, 'state' => ProjectAmbassadorObligation::OPEN])->save();
+            }
+        }
+
+        $existing
+            ->reject(fn (ProjectAmbassadorObligation $obligation): bool => $obligation->isHandled() || in_array($obligation->item, $package->items, true))
+            ->each(fn (ProjectAmbassadorObligation $obligation) => $obligation->delete());
     }
 }

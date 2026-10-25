@@ -7,6 +7,7 @@ use App\Enums\ProjectProductionState;
 use App\Enums\Role;
 use App\Models\Location;
 use App\Models\Project;
+use App\Models\ProjectAmbassadorObligation;
 use App\Models\ProjectInvoice;
 use App\Models\User;
 use App\Models\WorkPackage;
@@ -123,6 +124,33 @@ new #[Title('Workspace')] class extends Component {
             ->sortBy([
                 fn (Payments $a, Payments $b): int => ($a->project->production_manager_id === Auth::id() ? 0 : 1) <=> ($b->project->production_manager_id === Auth::id() ? 0 : 1),
                 fn (Payments $a, Payments $b): int => $b->daysSinceFinal() <=> $a->daysSinceFinal(),
+            ])
+            ->take(self::LIMIT)
+            ->values();
+    }
+
+    /**
+     * The Brand Ambassador items due (slice 21, step 21b): deferred to a day
+     * that has come, or not handled yet on a job the customer has signed
+     * off. The signed-in person's own first, then the longest due.
+     *
+     * @return Collection<int, ProjectAmbassadorObligation>
+     */
+    #[Computed]
+    public function ambassadorDue(): Collection
+    {
+        $today = RoughTimeframe::today($this->location)->toDateString();
+
+        return ProjectAmbassadorObligation::query()
+            ->whereHas('project', fn (Builder $project) => $project->standing()->where('location_id', $this->location?->id ?? 0))
+            ->where(fn (Builder $query) => $query
+                ->where(fn (Builder $deferred) => $deferred->where('state', ProjectAmbassadorObligation::DEFERRED)->whereDate('deferred_until', '<=', $today))
+                ->orWhere(fn (Builder $open) => $open->where('state', ProjectAmbassadorObligation::OPEN)->whereHas('project', fn (Builder $project) => $project->where('production_state', ProjectProductionState::SignedOff->value))))
+            ->with('project')
+            ->get()
+            ->sortBy([
+                fn (ProjectAmbassadorObligation $a, ProjectAmbassadorObligation $b): int => ($a->project->production_manager_id === Auth::id() ? 0 : 1) <=> ($b->project->production_manager_id === Auth::id() ? 0 : 1),
+                fn (ProjectAmbassadorObligation $a, ProjectAmbassadorObligation $b): int => ($a->deferred_until?->toDateString() ?? '') <=> ($b->deferred_until?->toDateString() ?? ''),
             ])
             ->take(self::LIMIT)
             ->values();
@@ -462,6 +490,31 @@ new #[Title('Workspace')] class extends Component {
                                     @endif
                                 </span>
                                 <span class="text-sm text-zinc-500">{{ $owed->project->production_manager_name ?? __('No Production Manager yet') }}</span>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        {{-- Brand Ambassador items due (slice 21, step 21b). Shown only when there are some. --}}
+        @if ($this->ambassadorDue->isNotEmpty())
+            <div class="flex flex-col gap-4 rounded-xl border border-amber-300 bg-card p-5" data-test="workspace-ambassador-due">
+                <div>
+                    <flux:heading size="lg" level="2">{{ __('Brand Ambassador items due') }}</flux:heading>
+                    <flux:subheading>{{ __('What customers promised for their discount: due today or before, or not handled yet on a signed-off job. Yours come first.') }}</flux:subheading>
+                </div>
+
+                <ul class="flex flex-col divide-y divide-zinc-200">
+                    @foreach ($this->ambassadorDue as $obligation)
+                        <li wire:key="workspace-ambassador-{{ $obligation->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="workspace-ambassador-item">
+                            <div class="flex min-w-0 flex-1 flex-col">
+                                <flux:link :href="route('projects.show', $obligation->project)" wire:navigate class="font-semibold">{{ $obligation->project->title }}</flux:link>
+                                <span class="text-sm text-zinc-700">
+                                    {{ __($obligation->label()) }}:
+                                    {{ $obligation->state === ProjectAmbassadorObligation::OPEN ? __('not handled yet') : __('due :day', ['day' => $obligation->deferred_until?->format('M j')]) }}
+                                </span>
+                                <span class="text-sm text-zinc-500">{{ $obligation->project->production_manager_name ?? __('No Production Manager yet') }}</span>
                             </div>
                         </li>
                     @endforeach

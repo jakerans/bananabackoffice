@@ -114,6 +114,27 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
   any time, saying why once the handoff is complete. Each change is audited
   and shown in the job's activity. The handoff page shows the package.
 
+## Step 21b as built
+
+- **Each item promised is listed on the job** to be handled
+  (`project_ambassador_obligations`), from the package as recorded. A
+  corrected package adds new items and drops those nobody has handled yet;
+  an item already handled stays.
+- **The Production Manager or a manager there marks each item:**
+  completed (with who physically did it, if someone else), partial (with
+  what is done), deferred to a later day, or waived (with why). The yard
+  sign is marked up on a day, and is then due to come down 30 days later.
+  Each change is audited and shown in the job's activity.
+- **Reminders:** at 07:00 each morning, company time,
+  `backoffice:ambassador-reminders` tells the Production Manager of each
+  item whose day has come, once for each due day.
+- **Production > Workspace** lists the Brand Ambassador items due: those
+  whose day has come, and those not handled yet on a job the customer has
+  signed off. The person's own come first.
+- **The financial close** now also waits for every item to be handled
+  (decision 175, question 5). A deferred item, such as a yard sign still
+  up, does not hold it. Finance > Job Costing says so among what holds a job.
+
 ## Known limits of this plan
 
 - **Online reviews are taken on the Production Manager's word.**
