@@ -27,6 +27,15 @@ Plan and "as built": [../slice-22-warranty-plan.md](../slice-22-warranty-plan.md
 
 None open.
 
+## Browser review (local, fictitious data)
+
+Done with Playwright on sample job 1: Sam opened a case (it went to Remy,
+with Sandia Brush Co. as the original subcontractor); Morgan approved a $250
+budget; Remy scheduled a warranty technician for today, recorded $300 of
+materials (shown over budget) and completed it. The visit showed on
+Production > Schedule, the case on Production > Warranty, and the job's
+lifetime gross margin dropped by the $300.
+
 ## Optional, for Jacob
 
 Staging's upload limit is 20 MB per upload. Raising it to 100 in Forge
