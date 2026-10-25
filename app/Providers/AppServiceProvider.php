@@ -32,6 +32,7 @@ use App\Models\Service;
 use App\Models\Subcontractor;
 use App\Models\SubcontractorComplianceRecord;
 use App\Models\User;
+use App\Models\WarrantyCase;
 use App\Models\WorkPackage;
 use App\Support\Access\CurrentLocation;
 use App\Support\Access\Impersonation;
@@ -137,6 +138,7 @@ class AppServiceProvider extends ServiceProvider
             'pay_plan' => PayPlan::class,
             'compensation_entry' => CompensationEntry::class,
             'payroll_period' => PayrollPeriod::class,
+            'warranty_case' => WarrantyCase::class,
             'insurance_deduction_rate' => InsuranceDeductionRate::class,
         ]);
     }

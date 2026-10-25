@@ -1,8 +1,9 @@
 # Slice 22 — Warranty: Plan
 
-Status: **proposed on 2026-10-25 for Jacob's review, after slice 21 was
-merged (decision 176). Nothing is built.** Written as what the
-implementation agent recommends from the plan check below.
+Status: **approved on 2026-10-25 (decision 177), with the recommendation on
+all eight questions, to be built straight through 22a, 22b and 22c and then
+reviewed. Being built.** Written as what the implementation agent
+recommended from the plan check below.
 
 ## Why this is next (the plan check)
 
@@ -90,6 +91,26 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
    (7.11, VIP eligibility) can be counted later; it is not shown yet.
 8. **Telling the customer.** *Recommended:* nothing is sent to the
    customer; the owner calls them, as today.
+
+## Step 22a as built
+
+- **A warranty case** (`warranty_cases`) is opened from the job's new
+  Warranty card by anyone who can see the job: what the customer reports,
+  and who reported it and how. It keeps the subcontractors who did the
+  original work (question 7).
+- **Its owner** is the job's Production Manager while they are an active
+  Production Manager at the Location; they are told. Otherwise every
+  manager there is told, and a manager gives it to a Production Manager or
+  keeps it, from the case's page.
+- **Its page** (`/projects/{job}/warranty/{case}`) shows what was reported,
+  the owner, the original subcontractors and its photos, as reported and
+  after the work. Its owner or a manager closes it without work, with why,
+  in the app's own dialog.
+- **Production > Warranty** is live: the cases at the Location, open and
+  scheduled first (nobody's, then the person's own), then those finished in
+  the last 30 days.
+- Opening, giving and closing a case are audited and shown in the job's
+  activity. Nothing is sent to the customer.
 
 ## Known limits of this plan
 

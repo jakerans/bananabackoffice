@@ -57,6 +57,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::ProjectWorkRevised,
         AuditAction::ProjectJobCostingSubmitted, AuditAction::ProjectJobCostingApproved, AuditAction::ProjectFinanciallyClosed, AuditAction::ProjectFinancialCloseReopened,
         AuditAction::ProjectAmbassadorPackageRecorded, AuditAction::ProjectAmbassadorObligationHandled,
+        AuditAction::WarrantyCaseOpened, AuditAction::WarrantyCaseAssigned, AuditAction::WarrantyCaseClosed,
     ];
 
     /**
@@ -161,6 +162,9 @@ new #[Title('Project')] class extends Component {
             AuditAction::ProjectFinanciallyClosed => __('Financially closed'),
             AuditAction::ProjectFinancialCloseReopened => __('Job costing reopened by Finance'),
             AuditAction::ProjectAmbassadorPackageRecorded => __('Brand Ambassador package: :package', ['package' => __((string) ($event->values_after['package'] ?? ''))]),
+            AuditAction::WarrantyCaseOpened => __('Warranty case opened: :what', ['what' => (string) ($event->values_after['description'] ?? '')]),
+            AuditAction::WarrantyCaseAssigned => __('Warranty case given to :name', ['name' => (string) ($event->values_after['owner'] ?? '')]),
+            AuditAction::WarrantyCaseClosed => __('Warranty case closed without work'),
             AuditAction::ProjectAmbassadorObligationHandled => __('Brand Ambassador: :item, :state', [
                 'item' => __((string) ($event->values_after['item'] ?? '')),
                 'state' => mb_strtolower(__(ProjectAmbassadorObligation::STATES[(string) ($event->values_after['state'] ?? '')] ?? '')),
@@ -683,6 +687,9 @@ new #[Title('Project')] class extends Component {
 
     {{-- The Brand Ambassador package (slice 21). --}}
     <livewire:pages::projects.ambassador :project="$project" :key="'ambassador-'.$project->id" />
+
+    {{-- Warranty cases (slice 22). --}}
+    <livewire:pages::projects.warranty :project="$project" :key="'warranty-'.$project->id" />
 
     {{-- Job costing (slice 19): finance-sensitive, only for those who may see payouts. --}}
     @can('viewPayouts', $project)

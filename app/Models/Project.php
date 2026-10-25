@@ -285,6 +285,16 @@ class Project extends Model implements HasPhotos
     }
 
     /**
+     * Its warranty cases, the latest first (slice 22).
+     *
+     * @return HasMany<WarrantyCase, $this>
+     */
+    public function warrantyCases(): HasMany
+    {
+        return $this->hasMany(WarrantyCase::class)->orderByDesc('id');
+    }
+
+    /**
      * What the customer promised for the Brand Ambassador discount, item by
      * item, in the order of the list (slice 21, step 21b).
      *

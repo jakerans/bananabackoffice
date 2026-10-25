@@ -52,6 +52,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('projects/{project}/work-orders/{workPackage}', 'pages::projects.work-order')->can('viewPayouts', 'project')->scopeBindings()->name('projects.work-order');
     Route::livewire('production/workspace', 'pages::production.workspace')->can(Permission::ProductionAccess)->name('production.workspace');
     Route::livewire('production/schedule', 'pages::production.schedule')->can(Permission::ProductionAccess)->name('production.schedule');
+    // Warranty (slice 22): the cases at the Location, and each case on its job.
+    Route::livewire('production/warranty', 'pages::production.warranty')->can(Permission::ProductionAccess)->name('production.warranty');
+    Route::livewire('projects/{project}/warranty/{warrantyCase}', 'pages::projects.warranty-case')->can('view', 'warrantyCase')->scopeBindings()->name('projects.warranty-case');
 
     // Subcontractors are seen by Production and managers only (slice 12; decision 148, question 9).
     Route::livewire('production/subcontractors', 'pages::production.subcontractors')->can(Permission::ViewSubcontractors)->name('production.subcontractors');

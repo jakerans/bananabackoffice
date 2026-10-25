@@ -126,7 +126,7 @@ always limited to what the person's grants allow, in every view.
 | `settings.locations.manage` | Company | Manage locations, including each Location's deposit policy (slice 17, step 17b) |
 | `settings.users.manage` | Company | Manage staff and access grants |
 | `settings.lists.manage` | Company | Manage the Lead & Sales Lists page (added in step B2; held by Owner and Leadership) |
-| `projects.view` | Location | See the Projects at the location (added in slice 8 step 8a, decision 130; held by Owner, Leadership, Location Manager, Sales Consultant, Production Manager and Finance) |
+| `projects.view` | Location | See the Projects at the location, and open a warranty case on one (slice 22, decision 177; its owner or a manager there works it, and a manager gives it to someone) (added in slice 8 step 8a, decision 130; held by Owner, Leadership, Location Manager, Sales Consultant, Production Manager and Finance) |
 | `payouts.view` | Location | See what Banana will pay subcontractors for a Project's work; with the pre-production rule, set it (added in slice 13 step 13a, decision 151; held by Owner, Leadership, Location Manager, Production Manager and Finance; never Sales or the Contact Center) |
 | `subcontractors.view` | Location | See the subcontractors who work at the location, their page and their history, and open their compliance documents (step 16b) (added in slice 12 step 12a, decision 148; held by Owner, Leadership, Location Manager and Production Manager) |
 | `subcontractors.manage` | Location | Add subcontractors there; change their details, where they stand and the VIP mark; record their compliance items (step 12b) and attach or remove their documents (step 16b) (added in slice 12 step 12a, decision 148; held by the same roles) |
