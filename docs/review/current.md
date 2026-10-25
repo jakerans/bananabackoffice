@@ -21,6 +21,15 @@ Plan and "as built": [../slice-23-performance-boards-plan.md](../slice-23-perfor
 
 None open.
 
+## Browser review (local, fictitious data)
+
+Done with Playwright: as Remy, the Production Center opened on its new
+board; as Finley, the Finance Center opened on its board, with variable pay
+owed; as Sam, the leaderboard showed him as defending champion. A
+Production Manager's month includes warranty cost recorded in it, as the
+Production Bonus does; the company's completed gross margin counts the
+financial closes only, with warranty cost shown beside it on Finance.
+
 ## Optional, for Jacob
 
 Staging's upload limit is 20 MB per upload. Raising it to 100 in Forge
