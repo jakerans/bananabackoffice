@@ -1,8 +1,10 @@
 # Slice 22 — Warranty: Plan
 
-Status: **proposed on 2026-10-25 for Jacob's review, after slice 21 was
-merged (decision 176). Nothing is built.** Written as what the
-implementation agent recommends from the plan check below.
+Status: **approved on 2026-10-25 (decision 177), with the recommendation on
+all eight questions, built straight through 22a, 22b and 22c, and merged on
+2026-10-25 (decision 178). Slice 22 is complete.**
+Written as what the implementation agent recommended from the plan check
+below; what was built is under "as built".
 
 ## Why this is next (the plan check)
 
@@ -90,6 +92,63 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
    (7.11, VIP eligibility) can be counted later; it is not shown yet.
 8. **Telling the customer.** *Recommended:* nothing is sent to the
    customer; the owner calls them, as today.
+
+## Step 22a as built
+
+- **A warranty case** (`warranty_cases`) is opened from the job's new
+  Warranty card by anyone who can see the job: what the customer reports,
+  and who reported it and how. It keeps the subcontractors who did the
+  original work (question 7).
+- **Its owner** is the job's Production Manager while they are an active
+  Production Manager at the Location; they are told. Otherwise every
+  manager there is told, and a manager gives it to a Production Manager or
+  keeps it, from the case's page.
+- **Its page** (`/projects/{job}/warranty/{case}`) shows what was reported,
+  the owner, the original subcontractors and its photos, as reported and
+  after the work. Its owner or a manager closes it without work, with why,
+  in the app's own dialog.
+- **Production > Warranty** is live: the cases at the Location, open and
+  scheduled first (nobody's, then the person's own), then those finished in
+  the last 30 days.
+- Opening, giving and closing a case are audited and shown in the job's
+  activity. Nothing is sent to the customer.
+
+## Step 22b as built
+
+- **The warranty budget:** a manager at the Location approves it on the
+  case, with why; $0 is allowed, as for a subcontractor correcting their own
+  work. It can be changed while the case is open or scheduled. Who approved
+  it and when is kept.
+- **The visit:** once the budget is approved, the case's owner or a manager
+  schedules the day (today or later) and who does it: the original
+  subcontractor (one of those who did the work), another subcontractor who
+  works at the Location, a W-2 painter, a warranty technician, a Production
+  Manager, or someone else, by name. It can be moved while scheduled.
+- **Production > Schedule** shows each warranty visit in its week, with the
+  job, what was reported, who does it and the owner, linked to the case.
+- **Completing** a scheduled case records what was done; photos after the
+  work are added on the case's page. Each step is audited and shown in the
+  job's activity.
+
+## Step 22c as built
+
+- **Warranty costs** (`warranty_costs`) are recorded on the case by its
+  owner or a manager there who may also see payouts: materials, a
+  subcontractor's payout (which alone may be $0), W-2 labour in dollars, or
+  other, with who it was paid to, the day and its receipt. A wrong one is
+  voided with why. Not on a case closed without work. Each is audited.
+- **The case shows what it cost** against the approved budget, in red and
+  marked "Over budget" when above it. Costs are finance-sensitive: those who
+  cannot see payouts do not see them.
+- **The lifetime gross margin:** the job's costing card says "Lifetime gross
+  margin, after $X of warranty", from the final gross margin (or the
+  projection before it) less its warranty cost. Finance > Job Costing lists
+  the jobs with warranty cost recorded in the last 90 days, with their
+  lifetime gross margin.
+- **The Production Bonus:** each warranty cost counts below zero for the
+  job's Production Manager in the month it is recorded; a void gives it back
+  in the month it is voided. The job is never reopened. Sales commission
+  does not change.
 
 ## Known limits of this plan
 

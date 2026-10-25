@@ -5,6 +5,8 @@ use App\Enums\Permission;
 use App\Models\Location;
 use App\Models\Project;
 use App\Models\ProjectAccuracyStrike;
+use App\Models\WarrantyCost;
+use App\Support\Money;
 use App\Support\Projects\JobCosting;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -62,6 +64,24 @@ new #[Title('Job Costing')] class extends Component {
         return Project::query()
             ->whereIn('location_id', $this->shownLocationIds())
             ->where(fn (Builder $query) => $query->whereHas('costs')->orWhereHas('jobCostingSteps'))
+            ->with('location')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (Project $project): JobCosting => JobCosting::for($project));
+    }
+
+    /**
+     * Jobs with warranty cost recorded in the last 90 days, with their
+     * lifetime gross margin (slice 22, step 22c; decision 177, question 5).
+     *
+     * @return \Illuminate\Support\Collection<int, JobCosting>
+     */
+    #[Computed]
+    public function warranty(): \Illuminate\Support\Collection
+    {
+        return Project::query()
+            ->whereIn('location_id', $this->shownLocationIds())
+            ->whereIn('id', WarrantyCost::query()->where('created_at', '>=', now()->subDays(ProjectAccuracyStrike::WINDOW_DAYS))->select('project_id'))
             ->with('location')
             ->orderBy('id')
             ->get()
@@ -149,6 +169,30 @@ new #[Title('Job Costing')] class extends Component {
             @endif
         </div>
     @endforeach
+
+    <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="job-costing-warranty">
+        <div>
+            <flux:heading size="lg" level="2">{{ __('Warranty cost, last 90 days') }}</flux:heading>
+            <flux:subheading>{{ __('Jobs with warranty cost recorded lately, and their lifetime gross margin after it.') }}</flux:subheading>
+        </div>
+
+        @if ($this->warranty->isEmpty())
+            <flux:text class="text-sm">{{ __('No warranty cost lately.') }}</flux:text>
+        @else
+            <ul class="flex flex-col divide-y divide-zinc-200">
+                @foreach ($this->warranty as $costing)
+                    <li wire:key="job-costing-warranty-{{ $costing->project->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="job-costing-warranty-item">
+                        <div class="flex min-w-0 flex-1 flex-col">
+                            <flux:link :href="route('projects.show', $costing->project)" wire:navigate class="font-semibold">{{ $costing->project->title }}</flux:link>
+                            <span class="text-sm text-zinc-700">{{ __(':warranty of warranty cost', ['warranty' => Money::format($costing->warrantyCents())]) }}</span>
+                            <span class="text-sm text-zinc-500">{{ $costing->project->location->name }} &middot; {{ $costing->project->production_manager_name ?? __('No Production Manager') }}</span>
+                        </div>
+                        <span class="font-nav font-bold tabular-nums text-ink">{{ __('Lifetime :margin', ['margin' => Money::format($costing->lifetimeMarginCents())]) }}</span>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </div>
 
     <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="job-costing-strikes">
         <div>

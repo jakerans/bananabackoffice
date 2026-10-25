@@ -136,6 +136,14 @@ enum AuditAction: string
     case LocationTargetMarginChanged = 'location.target_margin_changed';
     case ProjectAmbassadorPackageRecorded = 'project.ambassador_package_recorded';
     case ProjectAmbassadorObligationHandled = 'project.ambassador_obligation_handled';
+    case WarrantyCaseOpened = 'warranty.case_opened';
+    case WarrantyCaseAssigned = 'warranty.case_assigned';
+    case WarrantyCaseClosed = 'warranty.case_closed';
+    case WarrantyBudgetApproved = 'warranty.budget_approved';
+    case WarrantyVisitScheduled = 'warranty.visit_scheduled';
+    case WarrantyCaseCompleted = 'warranty.case_completed';
+    case WarrantyCostRecorded = 'warranty.cost_recorded';
+    case WarrantyCostVoided = 'warranty.cost_voided';
     case PayPlanSet = 'compensation.plan_set';
     case CompensationAdjusted = 'compensation.adjusted';
     case PayrollFinalized = 'compensation.payroll_finalized';

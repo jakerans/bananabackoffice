@@ -49,7 +49,7 @@ explicitly maps it to an existing working route.
 | *(no menu item)* A Project's handoff | `/projects/{project}/handoff`, route name `projects.handoff`. | **Built (slice 8 step 8b, 2026-10-13).** The salesperson who sold it, or `projects.manage`. Reached from the prompt under the header, the Lead's Proposals card and the Project page. |
 | Production → Schedule | Add `production.schedule`; no route. | Coming soon; `production.access`. |
 | Production → Subcontractors | Keep `production.crews` and change only its label. | Coming soon; `production.access`. |
-| Production → Warranty | Add `production.warranty`; no route. | Coming soon; `production.access`. |
+| Production → Warranty | `production.warranty`; route name `production.warranty`; `/production/warranty`. | **Built (slice 22, step 22a).** Live; `production.access`. The warranty cases at one Location: open and scheduled, then those finished in the last 30 days. Each case has its own page on its job, `/projects/{project}/warranty/{case}`. |
 | Production → Customers | Keep `shared.customers` and `/customers`. | Live; existing `accounts.view`. |
 | Production → Reports | Keep `production.reports`; no route. | Coming soon; `production.access`. |
 | Finance → Performance, Cash Management, Job Costing, Payroll | Keep the current IDs, hierarchy and working `/finance/performance-board` route. | Existing states and `finance.access`. |

@@ -3550,6 +3550,43 @@ one go".
 2. **Next:** the plan check after a slice, and a proposed next slice, for
    his approval.
 
+## 177. Slice 22, Warranty, is approved and built straight through (2026-10-25)
+
+**Decided by Jacob,** in reply to the slice 22 plan: "approved, follow
+recommendations, do the entire slice in one go".
+
+1. **Slice 22 is approved** in three steps
+   ([slice-22-warranty-plan.md](slice-22-warranty-plan.md)), with the
+   recommendation on all eight questions taken as the answer:
+   - 22a, 22b, 22c, in that order;
+   - anyone who can see a job opens a warranty case on it;
+   - it belongs to the job's Production Manager while they are an active
+     Production Manager at the Location; otherwise the Location's managers
+     are told, and one of them gives it to a Production Manager or keeps it;
+   - a manager approves the warranty budget, with why, before the visit is
+     scheduled; $0 is allowed, and costs above it are shown in red;
+   - warranty cost counts in the original job's lifetime gross margin, on
+     the job and on Finance > Job Costing, and against that job's Production
+     Manager's Production Bonus in the month it is recorded; sales
+     commission does not change;
+   - the visit shows on Production > Schedule on its day;
+   - the case records which subcontractors did the original work, for
+     their warranty-call rate later;
+   - nothing is sent to the customer.
+2. **Built without stopping between the steps,** on one branch, each step
+   committed and checked on both GitHub jobs. Nothing is merged until
+   Jacob reviews the slice.
+
+## 178. Slice 22 is merged (2026-10-25)
+
+**Decided by Jacob,** in reply to the slice 22 report: "continue".
+
+1. **Slice 22, Warranty, is merged** as built
+   ([slice-22-warranty-plan.md](slice-22-warranty-plan.md), "Step 22a as
+   built" to "Step 22c as built").
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

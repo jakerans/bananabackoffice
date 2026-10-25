@@ -3,31 +3,38 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-25 · **Branch:** `main`
+**Updated:** 2026-10-25 · **Branch:** `checkpoint-slice-22-warranty`
 
-**State:** slice 21, Brand Ambassador, is complete and merged (decision
-176). **Slice 22, Warranty, is proposed and waits for Jacob's approval.**
-Nothing of it is built.
+**State:** slice 22, Warranty, is built straight through (decision 177) and
+**waits for Jacob's review. Not merged.**
 
-## The proposal
+## What to review
 
-Plan: [../slice-22-warranty-plan.md](../slice-22-warranty-plan.md).
+Plan and "as built": [../slice-22-warranty-plan.md](../slice-22-warranty-plan.md).
 
-- **22a:** the Warranty Case on a job: what the customer reports, photos,
-  its owner, open to scheduled to completed (or closed without work, with
-  why); Production > Warranty.
-- **22b:** a manager approves a warranty budget; the visit is scheduled
-  with who does it and shows on Production > Schedule; completing it
-  records what was done.
-- **22c:** warranty costs, with receipts; the original job's lifetime gross
-  margin; the cost counts against its Production Manager's Production Bonus
-  in the month it is recorded.
+- **22a:** a warranty case opened from the job; its owner (the job's
+  Production Manager, or a manager gives it to someone); its own page with
+  photos; closing without work, with why; Production > Warranty.
+- **22b:** a manager approves the warranty budget ($0 allowed); the visit
+  is scheduled with who does it and shows on Production > Schedule;
+  completing records what was done.
+- **22c:** warranty costs with receipts, against the budget; the job's
+  lifetime gross margin, also on Finance > Job Costing; each cost counts
+  against the job's Production Manager's Production Bonus in the month it
+  is recorded.
 
-## Decisions needed
+## Decisions
 
-The plan's eight questions, each with a recommendation. "Follow your
-recommendations" is a complete answer. Question 5, where warranty cost
-counts, is the one most likely to need your word.
+None open.
+
+## Browser review (local, fictitious data)
+
+Done with Playwright on sample job 1: Sam opened a case (it went to Remy,
+with Sandia Brush Co. as the original subcontractor); Morgan approved a $250
+budget; Remy scheduled a warranty technician for today, recorded $300 of
+materials (shown over budget) and completed it. The visit showed on
+Production > Schedule, the case on Production > Warranty, and the job's
+lifetime gross margin dropped by the $300.
 
 ## Optional, for Jacob
 

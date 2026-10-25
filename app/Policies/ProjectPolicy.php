@@ -58,6 +58,15 @@ class ProjectPolicy
     }
 
     /**
+     * Determine whether the user can open a warranty case on the job (slice
+     * 22, decision 177): anyone who can see it.
+     */
+    public function openWarranty(User $user, Project $project): bool
+    {
+        return $this->view($user, $project) && ! $project->isCancelled();
+    }
+
+    /**
      * Determine whether the user can mark what the customer promised for the
      * Brand Ambassador discount (slice 21, decision 175): the job's
      * Production Manager or a manager there.
