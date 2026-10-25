@@ -122,6 +122,13 @@ Status: **Approved** (2026-10-04).
     action. Application templates do not use native `wire:confirm`,
     `window.confirm`, `alert` or `prompt`. Browser- and operating-system-owned
     permission prompts are not application UI and are never bypassed.
+16. **Nothing in the shell is wider than a phone** (2026-10-25). Below the `sm`
+    breakpoint (640px) the header keeps the logo, the bell and the user menu on
+    its first row and moves the center and location switchers to a second row,
+    with a 16px gutter; a long center or location name is cut short with an
+    ellipsis. From `sm` up the header is one row, as before. The center and
+    section rows scroll sideways on their own and are positioned, so their
+    hidden "coming soon" text cannot widen the page.
 
 ## Assets noted on inspection
 

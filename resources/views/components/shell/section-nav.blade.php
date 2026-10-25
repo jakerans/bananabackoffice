@@ -12,7 +12,8 @@
 
 {{-- The pages inside the current section. Shown only for a section that has them. --}}
 <nav aria-label="{{ $section->label }}" class="border-b border-zinc-200 bg-cream">
-    <div class="flex items-center gap-1 overflow-x-auto px-4 py-1.5 lg:px-8">
+    {{-- Relative, so the hidden "coming soon" text stays inside the scrolling row instead of widening the page. --}}
+    <div class="relative flex items-center gap-1 overflow-x-auto px-4 py-1.5 lg:px-8">
         @foreach ($section->children as $page)
             @continue(! $shell->user()->canAny($page->permissions))
 

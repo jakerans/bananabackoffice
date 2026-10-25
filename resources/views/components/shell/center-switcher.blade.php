@@ -6,7 +6,8 @@
 
 @if (count($centers) + count($externalSurfaces) > 0)
     <flux:dropdown position="bottom" align="start">
-        <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" data-test="center-switcher">
+        {{-- On a phone a long name is cut short rather than pushing past the screen's edge. --}}
+        <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" class="max-w-full [&>span]:truncate" data-test="center-switcher">
             {{ $current?->label ?? __('Centers') }}
         </flux:button>
 

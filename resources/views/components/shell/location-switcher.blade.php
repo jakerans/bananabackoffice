@@ -9,7 +9,7 @@
 @if ($context !== null)
     @if ($shell->canSwitchLocation())
         <flux:dropdown position="bottom" align="end">
-            <flux:button variant="ghost" size="sm" icon="map-pin" icon:trailing="chevron-down" data-test="location-switcher">
+            <flux:button variant="ghost" size="sm" icon="map-pin" icon:trailing="chevron-down" class="max-w-full [&>span]:truncate" data-test="location-switcher">
                 {{ $context->label() }}
             </flux:button>
 
@@ -54,8 +54,8 @@
         </flux:dropdown>
     @else
         <span class="flex items-center gap-1.5 px-2 font-nav text-sm font-medium text-white/80" data-test="location-label">
-            <flux:icon.map-pin variant="micro" />
-            {{ $context->label() }}
+            <flux:icon.map-pin variant="micro" class="shrink-0" />
+            <span class="truncate">{{ $context->label() }}</span>
         </span>
     @endif
 @endif

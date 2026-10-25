@@ -12,7 +12,8 @@
 
 {{-- The sections of the current center, and nothing else. --}}
 <nav aria-label="{{ $center->label }}" class="border-b border-zinc-200 bg-card">
-    <div class="flex items-center gap-1 overflow-x-auto px-4 lg:px-8">
+    {{-- Relative, so the hidden "coming soon" text stays inside the scrolling row instead of widening the page. --}}
+    <div class="relative flex items-center gap-1 overflow-x-auto px-4 lg:px-8">
         @foreach ($center->children as $section)
             @continue(! $shell->user()->canAny($section->permissions))
 
