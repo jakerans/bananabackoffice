@@ -3,30 +3,32 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-25 · **Branch:** `main`
+**Updated:** 2026-10-25 · **Branch:** `checkpoint-slice-23-performance-boards`
 
-**State:** slice 22, Warranty, is complete and merged (decision 178).
-**Slice 23, Performance Boards, is proposed and waits for Jacob's
-approval.** Nothing of it is built.
+**State:** slice 23, Performance Boards, is built straight through
+(decision 179) and **waits for Jacob's review. Not merged.**
 
-## The proposal
+## What to review
 
-Plan: [../slice-23-performance-boards-plan.md](../slice-23-performance-boards-plan.md).
+Plan and "as built": [../slice-23-performance-boards-plan.md](../slice-23-performance-boards-plan.md).
 
-- **23a:** Production > Performance: completed revenue and gross margin,
-  on time and running over, what is owed, job-costing timeliness and
-  strikes, warranty, jobs at risk, and each Production Manager's month.
-- **23b:** Finance > Performance: completed revenue and gross margin, cash
-  collected, what is owed by age, jobs waiting to close, warranty cost, and
-  variable pay owed.
-- **23c:** the Sales leaderboard: sold revenue by salesperson for the
-  month, quarter and year, with champions.
+- **23a:** Production > Performance, the page the Production Center now
+  opens on.
+- **23b:** Finance > Performance, the page the Finance Center now opens on.
+- **23c:** Sales > Leaderboard, its own page in the Sales menu.
 
-## Decisions needed
+## Decisions
 
-The plan's eight questions, each with a recommendation. "Follow your
-recommendations" is a complete answer. Question 4, what managers see of
-each Production Manager's month, is the one most likely to need your word.
+None open.
+
+## Browser review (local, fictitious data)
+
+Done with Playwright: as Remy, the Production Center opened on its new
+board; as Finley, the Finance Center opened on its board, with variable pay
+owed; as Sam, the leaderboard showed him as defending champion. A
+Production Manager's month includes warranty cost recorded in it, as the
+Production Bonus does; the company's completed gross margin counts the
+financial closes only, with warranty cost shown beside it on Finance.
 
 ## Optional, for Jacob
 

@@ -263,7 +263,7 @@ class Navigation
                 ]),
                 new NavigationItem('sales.calendar', 'Calendar', $permissions, NavigationState::Live, route: 'sales.calendar'),
                 new NavigationItem('sales.commissions', 'Commissions', $permissions),
-                new NavigationItem('sales.leaderboard', 'Leaderboard', $permissions),
+                new NavigationItem('sales.leaderboard', 'Leaderboard', $permissions, NavigationState::Live, route: 'sales.leaderboard'),
                 $this->customers(),
                 new NavigationItem('sales.reports', 'Reports', $permissions),
             ],
@@ -284,7 +284,7 @@ class Navigation
             description: 'Performance, project delivery, scheduling and subcontractors.',
             primary: 'production.performance',
             children: [
-                new NavigationItem('production.performance', 'Performance', $permissions, route: 'production.performance'),
+                new NavigationItem('production.performance', 'Performance', $permissions, NavigationState::Live, route: 'production.performance'),
                 new NavigationItem('production.workspace', 'Workspace', $permissions, NavigationState::Live, route: 'production.workspace'),
                 new NavigationItem('production.schedule', 'Schedule', $permissions, NavigationState::Live, route: 'production.schedule'),
                 new NavigationItem('production.crews', 'Subcontractors', [Permission::ViewSubcontractors], NavigationState::Live, route: 'production.subcontractors'),
@@ -309,7 +309,7 @@ class Navigation
             description: 'Cash management, job costing, payroll and financial reporting.',
             primary: 'finance.performance',
             children: [
-                new NavigationItem('finance.performance', 'Performance', $permissions, route: 'finance.performance'),
+                new NavigationItem('finance.performance', 'Performance', $permissions, NavigationState::Live, route: 'finance.performance'),
                 new NavigationItem('finance.cash', 'Cash Management', $permissions, primary: 'finance.cash.receivables', children: [
                     new NavigationItem('finance.cash.receivables', 'Receivables', $permissions, NavigationState::Live, route: 'finance.receivables'),
                     new NavigationItem('finance.cash.payments', 'Payments', $permissions),

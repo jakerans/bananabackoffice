@@ -80,6 +80,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('marketing/contact-center/queue', 'pages::marketing.call-queue')->can(Permission::WorkLeadQueue)->name('marketing.call_center.queue');
     Route::livewire('sales/calendar', 'pages::sales.calendar')->can(Permission::SalesAccess)->name('sales.calendar');
     Route::livewire('sales/performance-board', 'pages::sales.performance')->can(Permission::SalesAccess)->name('sales.performance');
+    // Sales > Leaderboard: company-wide, for everyone with Sales access (slice 23, step 23c).
+    Route::livewire('sales/leaderboard', 'pages::sales.leaderboard')->can(Permission::SalesAccess)->name('sales.leaderboard');
 
     // Customers is one shared page too. A customer has no location: each one is authorized by
     // what the person can already see of it, never by the location that happens to be selected.
@@ -100,8 +102,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Primary sections that are not built yet. Each becomes a real page when its feature is built.
     Route::get('company/performance', SectionController::class)->defaults('section', 'company.performance')->name('company.performance');
     Route::get('marketing/performance-board', SectionController::class)->defaults('section', 'marketing.performance')->name('marketing.performance');
-    Route::get('production/performance-board', SectionController::class)->defaults('section', 'production.performance')->name('production.performance');
-    Route::get('finance/performance-board', SectionController::class)->defaults('section', 'finance.performance')->name('finance.performance');
+    // Production > Performance (slice 23, step 23a).
+    Route::livewire('production/performance-board', 'pages::production.performance')->can(Permission::ProductionAccess)->name('production.performance');
+    // Finance > Performance (slice 23, step 23b).
+    Route::livewire('finance/performance-board', 'pages::finance.performance')->can(Permission::FinanceAccess)->name('finance.performance');
     Route::get('color-studio/color-projects', SectionController::class)->defaults('section', 'color_studio.projects')->name('color_studio.projects');
 });
 

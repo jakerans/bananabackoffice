@@ -3587,6 +3587,45 @@ recommendations, do the entire slice in one go".
 2. **Next:** the plan check after a slice, and a proposed next slice, for
    his approval.
 
+## 179. Slice 23, Performance Boards, is approved and built straight through (2026-10-25)
+
+**Decided by Jacob,** in reply to the slice 23 plan: "approved, follow
+recommendations, do the entire slice in one go".
+
+1. **Slice 23 is approved** in three steps
+   ([slice-23-performance-boards-plan.md](slice-23-performance-boards-plan.md)),
+   with the recommendation on all eight questions taken as the answer:
+   - 23a, 23b, 23c, in that order;
+   - "completed" means financially closed in the month, in the Location's
+     time, at the final gross margin, as the Production Bonus counts;
+   - a job is at risk when its work runs past its last day, it is over its
+     budget, its final balance is past due, or it has an open warranty case;
+   - Production and the Location's managers see each Production Manager's
+     gross-margin dollars, margin and status (on track, at risk, below the
+     floor), never the bonus amount;
+   - job-costing timeliness is the days from the customer's signoff to
+     submission, with signed-off jobs not submitted after 7 days listed;
+   - cash collected is the payments that count, by the day received;
+   - the leaderboard runs by calendar month, quarter and year in the
+     company's time; a champion has the most sold revenue in a finished
+     period, a tie shares it, and corrections count as on Sales >
+     Performance;
+   - everyone with Sales access sees the leaderboard, company-wide.
+2. **Built without stopping between the steps,** on one branch, each step
+   committed and checked on both GitHub jobs. Nothing is merged until
+   Jacob reviews the slice.
+
+## 180. Slice 23 is merged (2026-10-25)
+
+**Decided by Jacob,** in reply to the slice 23 report: "continue".
+
+1. **Slice 23, Performance Boards, is merged** as built
+   ([slice-23-performance-boards-plan.md](slice-23-performance-boards-plan.md),
+   "Step 23a as built" to "Step 23c as built"), with the leaderboard on its
+   own page in the Sales menu.
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

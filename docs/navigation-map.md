@@ -41,7 +41,7 @@ explicitly maps it to an existing working route.
 | Sales → Workspace | Add `sales.workspace`, with `shared.leads` at `/leads` as its live interim child/landing destination. | Existing Sales and Lead permissions; no selling workflow is added. |
 | Sales → Calendar | `sales.calendar`; route name `sales.calendar`; `/sales/calendar`. | **Built (slice 6, steps 6a and 6b, 2026-10-10).** Live; `sales.access`. A plain list of upcoming appointments: a person's own, or every one at the Locations where they hold `appointments.manage`. Under it, "To rebook": Leads whose appointment was cancelled and that still wait for a new one, with the days left, under the same rule. Since step 6c a third list: Leads released to the Contact Center that can still be taken back. Since slice 7 step 7a, at the top: "To close out", appointments whose time has come and that nobody has marked run or no-show. Since decision 126 a salesperson with one that is over and unanswered also sees a bar under the header on every page, linking to the oldest. Since step 7c that link, and one on each "To close out" row, open the after-action report: `/leads/{lead}/appointments/{appointment}/report`, route name `leads.report`, a page of the Lead and not a menu item. |
 | Sales → Commissions | Keep `sales.commissions`; no route. | Coming soon; `sales.access`. |
-| Sales → Leaderboard | Add `sales.leaderboard`; no route. | Coming soon; `sales.access`. |
+| Sales → Leaderboard | `sales.leaderboard`; route name `sales.leaderboard`; `/sales/leaderboard`. | **Built (slice 23, step 23c).** Live; `sales.access`. Company-wide sold revenue by salesperson, month, quarter and year to date, with champions and winners. |
 | Sales → Customers | Keep `shared.customers` and `/customers`. | Live; existing `accounts.view`. |
 | Sales → Reports | Keep `sales.reports`; no route. | Coming soon; `sales.access`. |
 | Production → Performance | Keep `production.performance` and `/production/performance-board`. | Existing state and `production.access`. |
@@ -337,7 +337,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | ID | Label | State |
 | --- | --- | --- |
 | `production.home` | Shortcut: opens Performance Board | — |
-| `production.performance` | Performance Board | CS, primary |
+| `production.performance` | Performance Board | **Live (slice 23, step 23a), primary:** `/production/performance-board`, route name `production.performance`, `production.access` at the Locations shown |
 | `production.projects` | Projects | CS |
 | `production.projects.ready` | Ready to Schedule | CS |
 | `production.projects.pre_production` | Pre-Production | CS |
@@ -351,7 +351,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | ID | Label | State |
 | --- | --- | --- |
 | `finance.home` | Shortcut: opens Performance Board | — |
-| `finance.performance` | Performance Board | CS, primary |
+| `finance.performance` | Performance Board | **Live (slice 23, step 23b), primary:** `/finance/performance-board`, route name `finance.performance`, `finance.access` at the Locations shown; variable pay owed with `compensation.manage` |
 | `finance.cash` | Cash Management | CS |
 | `finance.cash.receivables` | Receivables | **Live (slice 17, step 17c):** `/finance/receivables`, route name `finance.receivables`, `finance.access` at the Locations shown |
 | `finance.cash.payments` | Payments | CS |
