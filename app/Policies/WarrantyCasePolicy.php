@@ -41,6 +41,14 @@ class WarrantyCasePolicy
         return $this->view($user, $case) && $case->isActive() && $this->isManagerThere($user, $case);
     }
 
+    /**
+     * Approve its warranty budget: a manager there (question 4).
+     */
+    public function approveBudget(User $user, WarrantyCase $case): bool
+    {
+        return $this->assign($user, $case);
+    }
+
     private function isManagerThere(User $user, WarrantyCase $case): bool
     {
         return $user->hasPermissionAt(Permission::ManageProjects, $case->project->location);

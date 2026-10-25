@@ -30,6 +30,18 @@ use LogicException;
  * @property string|null $ended_by_name
  * @property int|null $opened_by
  * @property string|null $opened_by_name
+ * @property int|null $budget_cents The warranty budget a manager approved; zero is allowed (step 22b).
+ * @property string|null $budget_reason
+ * @property int|null $budget_approved_by
+ * @property string|null $budget_approved_by_name
+ * @property Carbon|null $budget_approved_at
+ * @property Carbon|null $visit_on The day of the visit.
+ * @property string|null $done_by_kind One of the DONE_BY keys.
+ * @property string|null $done_by_name Who does it, when it is not a subcontractor.
+ * @property int|null $subcontractor_id The subcontractor who does it, when it is one.
+ * @property string|null $scheduled_by_name
+ * @property Carbon|null $scheduled_at
+ * @property-read Subcontractor|null $subcontractor
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Project $project
@@ -53,6 +65,21 @@ class WarrantyCase extends Model implements HasPhotos
         self::COMPLETED => 'Completed',
         self::CLOSED => 'Closed without work',
     ];
+
+    /** Who can do the work (16), and how each is said, in English. */
+    public const array DONE_BY = [
+        'original_subcontractor' => 'The original subcontractor',
+        'other_subcontractor' => 'Another subcontractor',
+        'w2_painter' => 'A W-2 painter',
+        'warranty_tech' => 'A warranty technician',
+        'production_manager' => 'A Production Manager',
+        'other' => 'Someone else',
+    ];
+
+    /** The ways of doing it that are a subcontractor. */
+    public const array BY_SUBCONTRACTOR = ['original_subcontractor', 'other_subcontractor'];
+
+    public const int DONE_BY_LENGTH = 160;
 
     public const int DESCRIPTION_LENGTH = 2000;
 
@@ -78,6 +105,10 @@ class WarrantyCase extends Model implements HasPhotos
             'original_subcontractor_ids' => 'array',
             'owner_assigned_at' => 'datetime',
             'ended_at' => 'datetime',
+            'budget_cents' => 'integer',
+            'budget_approved_at' => 'datetime',
+            'visit_on' => 'date',
+            'scheduled_at' => 'datetime',
         ];
     }
 
@@ -87,6 +118,35 @@ class WarrantyCase extends Model implements HasPhotos
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * @return BelongsTo<Subcontractor, $this>
+     */
+    public function subcontractor(): BelongsTo
+    {
+        return $this->belongsTo(Subcontractor::class);
+    }
+
+    public function hasBudget(): bool
+    {
+        return $this->budget_cents !== null;
+    }
+
+    /**
+     * Who does the work, as it is said: "Sandia Brush Co. (the original
+     * subcontractor)", "Riley (a W-2 painter)".
+     */
+    public function doneByWords(): ?string
+    {
+        if ($this->done_by_kind === null) {
+            return null;
+        }
+
+        $who = $this->subcontractor->business_name ?? $this->done_by_name;
+        $kind = lcfirst(self::DONE_BY[$this->done_by_kind] ?? $this->done_by_kind);
+
+        return $who === null ? ucfirst($kind) : $who.' ('.$kind.')';
     }
 
     public function stateLabel(): string

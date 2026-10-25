@@ -6,6 +6,8 @@ use App\Models\Project;
 use App\Models\Subcontractor;
 use App\Models\User;
 use App\Models\WarrantyCase;
+use App\Support\Money;
+use App\Support\Projects\RoughTimeframe;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +30,20 @@ new #[Title('Warranty case')] class extends Component {
     public ?int $warrantyOwner = null;
 
     public string $warrantyCloseReason = '';
+
+    public string $warrantyBudget = '';
+
+    public string $warrantyBudgetReason = '';
+
+    public string $warrantyVisitOn = '';
+
+    public string $warrantyDoneByKind = '';
+
+    public string $warrantyDoneByName = '';
+
+    public ?int $warrantySubcontractor = null;
+
+    public string $warrantyOutcome = '';
 
     public function mount(Project $project, WarrantyCase $warrantyCase): void
     {
@@ -61,6 +77,26 @@ new #[Title('Warranty case')] class extends Component {
     public function mayAssign(): bool
     {
         return Gate::allows('assign', $this->case);
+    }
+
+    #[Computed]
+    public function mayApproveBudget(): bool
+    {
+        return Gate::allows('approveBudget', $this->case);
+    }
+
+    /**
+     * The subcontractors the visit can be given to: the original ones, or
+     * any who work at the Location (step 22b).
+     *
+     * @return Collection<int, Subcontractor>
+     */
+    #[Computed]
+    public function subcontractorChoices(): Collection
+    {
+        return $this->warrantyDoneByKind === 'original_subcontractor'
+            ? $this->originalSubcontractors
+            : Subcontractor::query()->whereHas('locations', fn ($location) => $location->whereKey($this->case->project->location_id))->orderBy('business_name')->get();
     }
 
     /**
@@ -107,6 +143,62 @@ new #[Title('Warranty case')] class extends Component {
         $this->done('warranty-assign', __('The case is given to :name.', ['name' => $this->case->fresh()?->owner_name]));
     }
 
+    public function openBudget(): void
+    {
+        $this->authorize('approveBudget', $this->case);
+
+        $this->warrantyBudget = $this->case->budget_cents === null ? '' : ltrim(Money::format($this->case->budget_cents), '$');
+        $this->warrantyBudgetReason = '';
+        $this->resetValidation();
+
+        Flux::modal('warranty-budget')->show();
+    }
+
+    public function saveBudget(ManageWarrantyCases $manageWarrantyCases): void
+    {
+        $manageWarrantyCases->approveBudget($this->case, $this->warrantyBudget, $this->warrantyBudgetReason, Auth::user());
+
+        $this->done('warranty-budget', __('Warranty budget approved.'));
+    }
+
+    public function openSchedule(): void
+    {
+        $this->authorize('manage', $this->case);
+
+        $case = $this->case;
+        $this->warrantyVisitOn = $case->visit_on?->toDateString() ?? RoughTimeframe::today($case->project->location)->toDateString();
+        $this->warrantyDoneByKind = (string) $case->done_by_kind;
+        $this->warrantyDoneByName = (string) $case->done_by_name;
+        $this->warrantySubcontractor = $case->subcontractor_id;
+        $this->resetValidation();
+
+        Flux::modal('warranty-schedule')->show();
+    }
+
+    public function saveSchedule(ManageWarrantyCases $manageWarrantyCases): void
+    {
+        $manageWarrantyCases->schedule($this->case, $this->warrantyVisitOn, $this->warrantyDoneByKind, $this->warrantyDoneByName, $this->warrantySubcontractor, Auth::user());
+
+        $this->done('warranty-schedule', __('The visit is scheduled.'));
+    }
+
+    public function openComplete(): void
+    {
+        $this->authorize('manage', $this->case);
+
+        $this->warrantyOutcome = '';
+        $this->resetValidation();
+
+        Flux::modal('warranty-complete')->show();
+    }
+
+    public function complete(ManageWarrantyCases $manageWarrantyCases): void
+    {
+        $manageWarrantyCases->complete($this->case, $this->warrantyOutcome, Auth::user());
+
+        $this->done('warranty-complete', __('The case is completed.'));
+    }
+
     public function openClose(): void
     {
         $this->authorize('manage', $this->case);
@@ -126,7 +218,7 @@ new #[Title('Warranty case')] class extends Component {
 
     private function done(string $modal, string $message): void
     {
-        unset($this->case, $this->mayManage, $this->mayAssign);
+        unset($this->case, $this->mayManage, $this->mayAssign, $this->mayApproveBudget);
 
         Flux::modal($modal)->close();
         Flux::toast(variant: 'success', text: $message);
@@ -187,6 +279,53 @@ new #[Title('Warranty case')] class extends Component {
         @endif
     </div>
 
+    {{-- The budget and the visit (step 22b). --}}
+    <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="warranty-visit">
+        <flux:heading size="lg" level="2">{{ __('Budget and visit') }}</flux:heading>
+
+        <dl class="grid gap-3 sm:grid-cols-2">
+            <div>
+                <dt class="text-sm text-zinc-500">{{ __('Warranty budget') }}</dt>
+                <dd class="flex flex-wrap items-center gap-2" data-test="warranty-budget">
+                    @if ($case->hasBudget())
+                        <span class="font-nav font-bold tabular-nums text-ink">{{ Money::format((int) $case->budget_cents) }}</span>
+                        <span class="text-sm text-zinc-500">{{ __('approved by :name', ['name' => $case->budget_approved_by_name ?? __('Unknown')]) }}</span>
+                    @else
+                        <span class="text-amber-700">{{ __('Not approved yet') }}</span>
+                    @endif
+                    @if ($this->mayApproveBudget)
+                        <flux:button size="xs" variant="ghost" wire:click="openBudget" data-test="approve-warranty-budget">{{ $case->hasBudget() ? __('Change') : __('Approve a budget') }}</flux:button>
+                    @endif
+                </dd>
+                @if ($case->budget_reason !== null)
+                    <dd class="text-sm text-zinc-700">{{ $case->budget_reason }}</dd>
+                @endif
+            </div>
+            <div>
+                <dt class="text-sm text-zinc-500">{{ __('Visit') }}</dt>
+                <dd class="text-ink" data-test="warranty-visit-day">
+                    @if ($case->visit_on !== null)
+                        <span class="font-semibold">{{ $case->visit_on->format('D, M j, Y') }}</span>
+                        <span class="block text-sm text-zinc-700">{{ $case->doneByWords() }}</span>
+                    @else
+                        <span class="text-zinc-500">{{ $case->hasBudget() ? __('Not scheduled yet') : __('Scheduled once a manager approves the budget') }}</span>
+                    @endif
+                </dd>
+            </div>
+        </dl>
+
+        @if ($this->mayManage && $case->isActive())
+            <div class="flex flex-wrap justify-end gap-2">
+                @if ($case->hasBudget())
+                    <flux:button size="sm" :variant="$case->state === WarrantyCase::OPEN ? 'primary' : 'ghost'" wire:click="openSchedule" data-test="schedule-warranty-visit">{{ $case->visit_on === null ? __('Schedule the visit') : __('Move the visit') }}</flux:button>
+                @endif
+                @if ($case->state === WarrantyCase::SCHEDULED)
+                    <flux:button size="sm" variant="primary" wire:click="openComplete" data-test="complete-warranty-case">{{ __('Complete') }}</flux:button>
+                @endif
+            </div>
+        @endif
+    </div>
+
     <livewire:pages::projects.photos :attachable="$case" title="Photos" :key="'photos-warranty-'.$case->id" />
 
     @if ($this->mayAssign)
@@ -215,7 +354,88 @@ new #[Title('Warranty case')] class extends Component {
         </flux:modal>
     @endif
 
+    @if ($this->mayApproveBudget)
+        <flux:modal name="warranty-budget" class="w-full max-w-md">
+            <form wire:submit="saveBudget" class="flex flex-col gap-5">
+                <div>
+                    <flux:heading size="lg">{{ __('Warranty budget') }}</flux:heading>
+                    <flux:subheading>{{ __('What this case may cost. $0 is allowed, as for a subcontractor returning to correct their own work.') }}</flux:subheading>
+                </div>
+
+                <flux:input wire:model="warrantyBudget" inputmode="decimal" icon="currency-dollar" :label="__('Budget')" data-test="warranty-budget-amount" />
+                <flux:textarea wire:model="warrantyBudgetReason" rows="2" :label="__('Why (required)')" data-test="warranty-budget-reason" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-warranty-budget">{{ __('Approve') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+    @endif
+
     @if ($this->mayManage)
+        <flux:modal name="warranty-schedule" class="w-full max-w-lg">
+            <form wire:submit="saveSchedule" class="flex flex-col gap-5">
+                <flux:error name="warranty" />
+
+                <div>
+                    <flux:heading size="lg">{{ __('The visit') }}</flux:heading>
+                    <flux:subheading>{{ __('It shows on Production > Schedule. Call the customer to agree the day.') }}</flux:subheading>
+                </div>
+
+                <flux:input wire:model="warrantyVisitOn" type="date" :label="__('Day')" data-test="warranty-visit-on" />
+                <flux:select wire:model.live="warrantyDoneByKind" :label="__('Who does it')" data-test="warranty-done-by-kind">
+                    <flux:select.option value="">{{ __('Choose') }}</flux:select.option>
+                    @foreach (WarrantyCase::DONE_BY as $kind => $label)
+                        <flux:select.option :value="$kind" wire:key="warranty-done-by-{{ $kind }}">{{ __($label) }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                @if (in_array($warrantyDoneByKind, WarrantyCase::BY_SUBCONTRACTOR, true))
+                    <flux:select wire:model="warrantySubcontractor" :label="__('Subcontractor')" data-test="warranty-subcontractor">
+                        <flux:select.option value="">{{ __('Choose') }}</flux:select.option>
+                        @foreach ($this->subcontractorChoices as $option)
+                            <flux:select.option :value="$option->id" wire:key="warranty-subcontractor-{{ $option->id }}">{{ $option->business_name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                @elseif ($warrantyDoneByKind !== '')
+                    <flux:input wire:model="warrantyDoneByName" maxlength="{{ WarrantyCase::DONE_BY_LENGTH }}" :label="__('Their name')" data-test="warranty-done-by-name" />
+                @endif
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-warranty-visit">{{ __('Schedule') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        <flux:modal name="warranty-complete" class="w-full max-w-lg">
+            <form wire:submit="complete" class="flex flex-col gap-5">
+                <flux:error name="warranty" />
+
+                <div>
+                    <flux:heading size="lg">{{ __('Complete the case') }}</flux:heading>
+                    <flux:subheading>{{ __('What was done. Add photos after the work on this page; record what it cost below.') }}</flux:subheading>
+                </div>
+
+                <flux:textarea wire:model="warrantyOutcome" rows="3" :label="__('What was done (required)')" data-test="warranty-outcome-input" />
+
+                <div class="flex justify-end gap-2">
+                    <flux:modal.close>
+                        <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
+                    </flux:modal.close>
+
+                    <flux:button type="submit" variant="primary" data-test="save-warranty-complete">{{ __('Complete') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
         <x-confirmation-modal
             name="warranty-close"
             :title="__('Close this case without work?')"

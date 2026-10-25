@@ -112,6 +112,23 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 - Opening, giving and closing a case are audited and shown in the job's
   activity. Nothing is sent to the customer.
 
+## Step 22b as built
+
+- **The warranty budget:** a manager at the Location approves it on the
+  case, with why; $0 is allowed, as for a subcontractor correcting their own
+  work. It can be changed while the case is open or scheduled. Who approved
+  it and when is kept.
+- **The visit:** once the budget is approved, the case's owner or a manager
+  schedules the day (today or later) and who does it: the original
+  subcontractor (one of those who did the work), another subcontractor who
+  works at the Location, a W-2 painter, a warranty technician, a Production
+  Manager, or someone else, by name. It can be moved while scheduled.
+- **Production > Schedule** shows each warranty visit in its week, with the
+  job, what was reported, who does it and the owner, linked to the case.
+- **Completing** a scheduled case records what was done; photos after the
+  work are added on the case's page. Each step is audited and shown in the
+  job's activity.
+
 ## Known limits of this plan
 
 - **No warranty period** is checked; the owner decides each case.

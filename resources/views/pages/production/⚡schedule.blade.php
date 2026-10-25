@@ -3,6 +3,7 @@
 use App\Enums\Permission;
 use App\Models\Location;
 use App\Models\Project;
+use App\Models\WarrantyCase;
 use App\Models\WorkPackage;
 use App\Models\WorkPackageWindow;
 use App\Support\Access\CurrentLocation;
@@ -118,6 +119,28 @@ new #[Title('Schedule')] class extends Component {
             ->orderBy('scheduled_first_day')
             ->orderBy('project_id')
             ->orderBy('position')
+            ->limit(self::LIMIT)
+            ->get();
+    }
+
+    /**
+     * Warranty visits in the weeks shown, the earliest first (slice 22, step
+     * 22b; decision 177, question 6).
+     *
+     * @return Collection<int, WarrantyCase>
+     */
+    #[Computed]
+    public function warrantyVisits(): Collection
+    {
+        $first = $this->firstWeek;
+
+        return WarrantyCase::query()
+            ->whereIn('state', [WarrantyCase::SCHEDULED, WarrantyCase::COMPLETED])
+            ->whereBetween('visit_on', [$first->toDateString(), $first->addWeeks(self::WEEKS)->subDay()->toDateString()])
+            ->whereHas('project', fn ($project) => $project->where('location_id', $this->location?->id ?? 0))
+            ->with(['project', 'subcontractor'])
+            ->orderBy('visit_on')
+            ->orderBy('id')
             ->limit(self::LIMIT)
             ->get();
     }
@@ -239,6 +262,7 @@ new #[Title('Schedule')] class extends Component {
                 $monday = $first->addWeeks($offset);
                 $sunday = $monday->addDays(6);
                 $inWeek = $booked->filter(fn (WorkPackage $package): bool => $package->scheduled_first_day->lessThanOrEqualTo($sunday) && $package->scheduled_last_day->greaterThanOrEqualTo($monday));
+                $visits = $this->warrantyVisits->filter(fn (WarrantyCase $case): bool => $case->visit_on !== null && $case->visit_on->between($monday, $sunday));
             @endphp
 
             <div wire:key="schedule-week-{{ $monday->toDateString() }}" class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-5" data-test="schedule-week">
@@ -249,10 +273,10 @@ new #[Title('Schedule')] class extends Component {
                             <flux:badge size="sm" color="sky" class="ms-1">{{ __('This week') }}</flux:badge>
                         @endif
                     </flux:heading>
-                    <span class="text-sm text-zinc-500">{{ trans_choice(':count booking|:count bookings', $inWeek->count()) }}</span>
+                    <span class="text-sm text-zinc-500">{{ trans_choice(':count booking|:count bookings', $inWeek->count() + $visits->count()) }}</span>
                 </div>
 
-                @if ($inWeek->isEmpty())
+                @if ($inWeek->isEmpty() && $visits->isEmpty())
                     <flux:text class="text-sm" data-test="schedule-week-empty">{{ __('Nothing booked.') }}</flux:text>
                 @else
                     <ul class="flex flex-col divide-y divide-zinc-200">
@@ -283,6 +307,23 @@ new #[Title('Schedule')] class extends Component {
                                 <span class="text-sm text-zinc-500">
                                     {{ $project->account->display_name }} &middot; {{ $project->production_manager_id === Auth::id() ? __('Yours') : ($project->production_manager_name ?? __('No Production Manager')) }} &middot; {{ __('Colors: :state', ['state' => mb_strtolower(__($project->color_readiness->label()))]) }}
                                 </span>
+                            </li>
+                        @endforeach
+
+                        {{-- Warranty visits (slice 22, step 22b). --}}
+                        @foreach ($visits as $case)
+                            <li wire:key="schedule-{{ $monday->toDateString() }}-warranty-{{ $case->id }}" class="flex flex-col py-3 first:pt-0 last:pb-0" data-test="schedule-warranty-visit">
+                                <span class="flex flex-wrap items-center gap-2">
+                                    <span class="font-semibold text-ink">{{ $case->visit_on->format('D, M j') }}</span>
+                                    <flux:badge size="sm" color="amber">{{ __('Warranty visit') }}</flux:badge>
+                                    @if ($case->state === WarrantyCase::COMPLETED)
+                                        <flux:badge size="sm" color="emerald">{{ __('Completed') }}</flux:badge>
+                                    @endif
+                                </span>
+                                <a href="{{ route('projects.warranty-case', [$case->project, $case]) }}" wire:navigate class="text-ink underline decoration-zinc-300 underline-offset-2 hover:decoration-ink">{{ $case->project->title }}</a>
+                                <span class="text-sm text-zinc-700">{{ $case->summary() }}</span>
+                                <span class="text-sm text-ink">{{ __('Done by :who', ['who' => $case->doneByWords()]) }}</span>
+                                <span class="text-sm text-zinc-500">{{ $case->owner_id === Auth::id() ? __('Yours') : ($case->owner_name ?? __('Nobody owns it yet')) }}</span>
                             </li>
                         @endforeach
                     </ul>

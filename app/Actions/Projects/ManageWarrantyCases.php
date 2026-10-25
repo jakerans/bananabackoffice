@@ -6,10 +6,13 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Enums\Role;
 use App\Models\Project;
+use App\Models\Subcontractor;
 use App\Models\User;
 use App\Models\WarrantyCase;
 use App\Models\WorkPackageAward;
 use App\Notifications\ProjectNotice;
+use App\Support\Money;
+use App\Support\Projects\RoughTimeframe;
 use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Collection;
@@ -126,6 +129,121 @@ class ManageWarrantyCases
     }
 
     /**
+     * A manager approves the warranty budget, with why, before the visit is
+     * scheduled; $0 is allowed (step 22b; question 4). It can be changed
+     * while the case is open or scheduled.
+     *
+     * @throws ValidationException
+     * @throws AuthorizationException
+     */
+    public function approveBudget(WarrantyCase $case, ?string $amount, ?string $reason, User $actor): WarrantyCase
+    {
+        $typed = str_replace([',', ' ', '$'], '', trim((string) $amount));
+        $cents = preg_match('/^0+(\.0{1,2})?$/', $typed) === 1 ? 0 : (Money::toCents($amount)
+            ?? throw ValidationException::withMessages(['warrantyBudget' => __('Give the budget in dollars, like 350 or 0.')]));
+        $reason = $this->text($reason, 'warrantyBudgetReason', __('Say why this budget.'), WarrantyCase::OUTCOME_LENGTH);
+
+        return $this->held($case, $actor, 'approveBudget', function (WarrantyCase $case, Project $project) use ($cents, $reason, $actor): WarrantyCase {
+            $before = $case->budget_cents;
+            $case->forceFill(['budget_cents' => $cents, 'budget_reason' => $reason, 'budget_approved_by' => $actor->id, 'budget_approved_by_name' => $actor->name, 'budget_approved_at' => now()])->save();
+
+            $this->recordAuditEvent->handle(
+                AuditAction::WarrantyBudgetApproved,
+                $project,
+                actor: $actor,
+                before: ['budget_cents' => $before],
+                after: ['case' => $case->id, 'budget_cents' => $cents],
+                location: $project->location,
+                reason: $reason,
+            );
+
+            return $case;
+        });
+    }
+
+    /**
+     * Schedule the visit, or move it: the day and who does it. Not before
+     * the budget is approved.
+     *
+     * @throws ValidationException
+     * @throws AuthorizationException
+     */
+    public function schedule(WarrantyCase $case, ?string $day, ?string $doneByKind, ?string $doneByName, ?int $subcontractorId, User $actor): WarrantyCase
+    {
+        return $this->held($case, $actor, 'manage', function (WarrantyCase $case, Project $project) use ($day, $doneByKind, $doneByName, $subcontractorId, $actor): WarrantyCase {
+            $this->refuseUnlessActive($case);
+
+            if (! $case->hasBudget()) {
+                throw ValidationException::withMessages(['warranty' => __('A manager approves the warranty budget first.')]);
+            }
+
+            $visit = RoughTimeframe::typed($day, 'warrantyVisitOn', __('Give the day of the visit.'));
+
+            if ($visit->lessThan(RoughTimeframe::today($project->location))) {
+                throw ValidationException::withMessages(['warrantyVisitOn' => __('The visit cannot be in the past.')]);
+            }
+
+            if (! isset(WarrantyCase::DONE_BY[(string) $doneByKind])) {
+                throw ValidationException::withMessages(['warrantyDoneByKind' => __('Choose who does it.')]);
+            }
+
+            [$subcontractor, $name] = in_array($doneByKind, WarrantyCase::BY_SUBCONTRACTOR, true)
+                ? [$this->subcontractorFor($case, $project, (string) $doneByKind, $subcontractorId), null]
+                : [null, $this->text($doneByName, 'warrantyDoneByName', __('Say who does it.'), WarrantyCase::DONE_BY_LENGTH)];
+
+            $case->forceFill([
+                'state' => WarrantyCase::SCHEDULED,
+                'visit_on' => $visit->toDateString(),
+                'done_by_kind' => $doneByKind,
+                'done_by_name' => $name,
+                'subcontractor_id' => $subcontractor?->id,
+                'scheduled_by_name' => $actor->name,
+                'scheduled_at' => now(),
+            ])->save();
+
+            $this->recordAuditEvent->handle(
+                AuditAction::WarrantyVisitScheduled,
+                $project,
+                actor: $actor,
+                after: ['case' => $case->id, 'visit_on' => $visit->toDateString(), 'done_by' => $case->doneByWords()],
+                location: $project->location,
+            );
+
+            return $case;
+        });
+    }
+
+    /**
+     * Complete a scheduled case: what was done.
+     *
+     * @throws ValidationException
+     * @throws AuthorizationException
+     */
+    public function complete(WarrantyCase $case, ?string $outcome, User $actor): WarrantyCase
+    {
+        $outcome = $this->text($outcome, 'warrantyOutcome', __('Say what was done.'), WarrantyCase::OUTCOME_LENGTH);
+
+        return $this->held($case, $actor, 'manage', function (WarrantyCase $case, Project $project) use ($outcome, $actor): WarrantyCase {
+            if ($case->state !== WarrantyCase::SCHEDULED) {
+                throw ValidationException::withMessages(['warranty' => __('Only a scheduled case is completed.')]);
+            }
+
+            $case->forceFill(['state' => WarrantyCase::COMPLETED, 'outcome' => $outcome, 'ended_at' => now(), 'ended_by' => $actor->id, 'ended_by_name' => $actor->name])->save();
+
+            $this->recordAuditEvent->handle(
+                AuditAction::WarrantyCaseCompleted,
+                $project,
+                actor: $actor,
+                after: ['case' => $case->id, 'state' => WarrantyCase::COMPLETED],
+                location: $project->location,
+                reason: $outcome,
+            );
+
+            return $case;
+        });
+    }
+
+    /**
      * Close a case without work, with why: not covered, or nothing to do.
      *
      * @throws ValidationException
@@ -195,6 +313,26 @@ class ManageWarrantyCases
         }
 
         return $typed;
+    }
+
+    /**
+     * The subcontractor who does it: one of the original work's, or another
+     * who works at the Location.
+     *
+     * @throws ValidationException
+     */
+    private function subcontractorFor(WarrantyCase $case, Project $project, string $kind, ?int $subcontractorId): Subcontractor
+    {
+        $subcontractor = $subcontractorId === null ? null : Subcontractor::query()->find($subcontractorId);
+        $fits = $subcontractor !== null && ($kind === 'original_subcontractor'
+            ? in_array($subcontractor->id, $case->original_subcontractor_ids, true)
+            : $subcontractor->locations()->whereKey($project->location_id)->exists());
+
+        if (! $fits) {
+            throw ValidationException::withMessages(['warrantySubcontractor' => $kind === 'original_subcontractor' ? __('Choose one of the subcontractors who did the original work.') : __('Choose a subcontractor who works at :location.', ['location' => $project->location->name])]);
+        }
+
+        return $subcontractor;
     }
 
     private function tellOwner(WarrantyCase $case, User $owner, User $actor): void
