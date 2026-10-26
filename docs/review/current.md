@@ -21,6 +21,19 @@ Plan and "as built": [../slice-25-marketing-and-executive-boards-plan.md](../sli
 - **25c:** Company > Executive Board: each Location beside the others and
   the company, each number with its own status; the leaderboard's top three.
 
+## Browser review (local, fictitious data)
+
+Done with Playwright: as Morgan, the Marketing Center opened on its board;
+Morgan recorded $1,200 of spend at Northside and corrected it by $200; the
+board showed $1,000 spent, 40 leads, $25 per lead. As the Owner, a $40,000
+monthly target for Northside was set in Settings > Locations, and Company
+opened on the Executive Board with every Location side by side: Northside
+$19,700 of $40,000, Behind. Most local sample leads have the "Unknown"
+source, so the spend sits against a source with no leads yet.
+
+The company's target adds up only the Locations that have one, while its
+sold revenue counts every Location.
+
 ## Decisions
 
 None open. Direct ad-platform connections come last of everything
