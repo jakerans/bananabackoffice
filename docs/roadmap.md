@@ -229,7 +229,9 @@ write-offs (10.5, 10.7) unbuilt. Its plan is
 [slice-24-refunds-credits-plan.md](slice-24-refunds-credits-plan.md).
 
 **Slice 25, Marketing Spend, Marketing Performance and the Executive
-Board, is proposed (2026-10-26) and not approved.** The plan check after
+Board, is approved (2026-10-26, decision 183) and being built straight
+through its three steps.** Direct connections to ad platforms, which would
+bring spend in by themselves, are built last of everything (decision 183). The plan check after
 slice 24 found Marketing and Company the last Centers opening on Coming Soon
 pages (4.1, 18), Marketing's board waiting only on recorded spend. Its plan
 is

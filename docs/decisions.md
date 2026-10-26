@@ -3665,6 +3665,36 @@ recommendations, do the entire slice in one go".
 2. **Next:** the plan check after a slice, and a proposed next slice, for
    his approval.
 
+## 183. Slice 25 is approved and built straight through; ad-platform connections come last (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 25 plan: "approved, follow
+recommendations, do the entire slice in one go. also for the ad spend - lets
+build the direct connections in last".
+
+1. **Slice 25 is approved** in three steps
+   ([slice-25-marketing-and-executive-boards-plan.md](slice-25-marketing-and-executive-boards-plan.md)),
+   with the recommendation on all eight questions taken as the answer:
+   - 25a, 25b, 25c, in that order;
+   - spend is recorded against the Lead Source, by month and Location;
+   - a new permission, `marketing.spend.manage`, for Owner, Leadership,
+     Location Manager and Finance, records it; not the Contact Center;
+   - leads count in the month received, appointments in the month issued,
+     and sales and sold revenue in the month accepted, by the Lead's source,
+     as Sales > Performance counts them;
+   - return on spend is sold revenue ÷ spend, "$4.20 per $1";
+   - each Location has a monthly sold-revenue target, effective from a
+     month, set in Settings > Locations; the company's is their sum;
+   - each Executive Board KPI has its own status: sold revenue on pace or
+     behind its target so far, gross margin against the target margin, and
+     late balances and jobs at risk as counts; no single health score;
+   - Company Overview access sees the Executive Board.
+2. **Direct connections to ad platforms** (Google, Meta and the like), which
+   would bring spend in by themselves, **are built last,** after everything
+   else in the plan. Until then spend is typed in.
+3. **Built without stopping between the steps,** on one branch, each step
+   committed and checked on both GitHub jobs. Nothing is merged until
+   Jacob reviews the slice.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

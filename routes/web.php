@@ -80,6 +80,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('marketing/contact-center/queue', 'pages::marketing.call-queue')->can(Permission::WorkLeadQueue)->name('marketing.call_center.queue');
     Route::livewire('sales/calendar', 'pages::sales.calendar')->can(Permission::SalesAccess)->name('sales.calendar');
     Route::livewire('sales/performance-board', 'pages::sales.performance')->can(Permission::SalesAccess)->name('sales.performance');
+    // Marketing spend, typed in until ad platforms are connected (slice 25, step 25a).
+    Route::livewire('marketing/spend', 'pages::marketing.spend')->can(Permission::MarketingSpendManage)->name('marketing.performance.spend');
+
     // Sales > Leaderboard: company-wide, for everyone with Sales access (slice 23, step 23c).
     Route::livewire('sales/leaderboard', 'pages::sales.leaderboard')->can(Permission::SalesAccess)->name('sales.leaderboard');
 

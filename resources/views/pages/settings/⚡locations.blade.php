@@ -3,6 +3,7 @@
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Locations\ChangeDepositPolicy;
 use App\Actions\Locations\ChangeLocationTimezone;
+use App\Actions\Locations\ChangeSalesTarget;
 use App\Actions\Locations\ChangeTargetMargin;
 use App\Actions\Locations\DeactivateLocation;
 use App\Actions\Locations\UpdateServiceAreaPostalCodes;
@@ -12,7 +13,10 @@ use App\Enums\AuditAction;
 use App\Models\ComplianceRequirement;
 use App\Models\InsuranceDeductionRate;
 use App\Models\Location;
+use App\Models\LocationSalesTarget;
 use App\Models\ServiceAreaPostalCode;
+use App\Support\Compensation\PayPeriods;
+use App\Support\Money;
 use App\Support\Queue\LocationTimezones;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
@@ -41,6 +45,14 @@ new #[Title('Locations')] class extends Component {
     /** The location whose target gross margin is open, and its percent as typed (slice 19, step 19a). */
     #[Locked]
     public ?int $marginLocationId = null;
+
+    /** The Location whose monthly sold-revenue target is being set (slice 25, step 25a). */
+    #[Locked]
+    public ?int $salesTargetLocationId = null;
+
+    public string $salesTargetAmount = '';
+
+    public string $salesTargetFrom = '';
 
     public string $targetMarginPercent = '';
 
@@ -216,6 +228,37 @@ new #[Title('Locations')] class extends Component {
         $this->resetValidation('targetMarginPercent');
 
         Flux::modal('location-target-margin')->show();
+    }
+
+    /**
+     * Open the monthly sold-revenue target of a Location (slice 25, step 25a).
+     */
+    public function editSalesTarget(int $locationId): void
+    {
+        $location = Location::query()->findOrFail($locationId);
+
+        $this->authorize('update', $location);
+
+        $this->salesTargetLocationId = $location->id;
+        $current = LocationSalesTarget::for($location->id, PayPeriods::now());
+        $this->salesTargetAmount = $current === null ? '' : ltrim(Money::format($current), '$');
+        $this->salesTargetFrom = PayPeriods::now();
+        $this->resetValidation(['salesTargetAmount', 'salesTargetFrom']);
+
+        Flux::modal('location-sales-target')->show();
+    }
+
+    public function saveSalesTarget(ChangeSalesTarget $changeSalesTarget): void
+    {
+        $location = Location::query()->findOrFail($this->salesTargetLocationId);
+
+        $changeSalesTarget->handle($location, $this->salesTargetAmount, $this->salesTargetFrom, Auth::user());
+
+        $this->reset('salesTargetLocationId', 'salesTargetAmount', 'salesTargetFrom');
+        unset($this->locations);
+
+        Flux::modal('location-sales-target')->close();
+        Flux::toast(variant: 'success', text: __('Sales target saved.'));
     }
 
     /**
@@ -597,6 +640,7 @@ new #[Title('Locations')] class extends Component {
                     <flux:table.column>{{ __('Timezone') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('Deposit') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('Target margin') }}</flux:table.column>
+                    <flux:table.column align="end">{{ __('Monthly sales target') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('ZIP codes served') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('Access grants') }}</flux:table.column>
                     <flux:table.column align="end"><span class="sr-only">{{ __('Actions') }}</span></flux:table.column>
@@ -618,6 +662,10 @@ new #[Title('Locations')] class extends Component {
                             <flux:table.cell data-test="location-timezone-{{ $location->id }}">{{ LocationTimezones::label($location->timezone) }}</flux:table.cell>
                             <flux:table.cell align="end" class="tabular-nums" data-test="location-deposit-{{ $location->id }}">{{ $location->deposit_percent }}%</flux:table.cell>
                             <flux:table.cell align="end" class="tabular-nums" data-test="location-target-margin-{{ $location->id }}">{{ $location->target_margin_percent }}%</flux:table.cell>
+                            @php
+                                $salesTarget = LocationSalesTarget::for($location->id, PayPeriods::now());
+                            @endphp
+                            <flux:table.cell align="end" class="tabular-nums" data-test="location-sales-target-{{ $location->id }}">{{ $salesTarget === null ? '—' : Money::format($salesTarget) }}</flux:table.cell>
 
                             <flux:table.cell align="end" class="tabular-nums">{{ $location->service_postal_codes_count }}</flux:table.cell>
                             <flux:table.cell align="end" class="tabular-nums">{{ $location->access_grants_count }}</flux:table.cell>
@@ -629,6 +677,7 @@ new #[Title('Locations')] class extends Component {
                                     <flux:button size="sm" wire:click="editTimezone({{ $location->id }})">{{ __('Timezone') }}</flux:button>
                                     <flux:button size="sm" wire:click="editDeposit({{ $location->id }})" data-test="deposit-policy-{{ $location->id }}">{{ __('Deposit') }}</flux:button>
                                     <flux:button size="sm" wire:click="editTargetMargin({{ $location->id }})" data-test="target-margin-{{ $location->id }}">{{ __('Target margin') }}</flux:button>
+                                    <flux:button size="sm" wire:click="editSalesTarget({{ $location->id }})" data-test="sales-target-{{ $location->id }}">{{ __('Sales target') }}</flux:button>
                                     <flux:button size="sm" wire:click="edit({{ $location->id }})">{{ __('Rename') }}</flux:button>
 
                                     @if ($location->is_active)
@@ -752,6 +801,28 @@ new #[Title('Locations')] class extends Component {
                 </flux:modal.close>
 
                 <flux:button type="submit" variant="primary" data-test="save-target-margin">{{ __('Save') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="location-sales-target" class="w-full max-w-md">
+        <form wire:submit="saveSalesTarget" class="flex flex-col gap-6">
+            <div>
+                <flux:heading size="lg">{{ __('Monthly sales target') }}</flux:heading>
+                <flux:subheading>
+                    {{ __('The sold revenue this Location aims for each month, from the month chosen. Earlier months keep the target they had. The Executive Board compares against it.') }}
+                </flux:subheading>
+            </div>
+
+            <flux:input wire:model="salesTargetAmount" inputmode="decimal" icon="currency-dollar" :label="__('Each month')" data-test="sales-target-amount" />
+            <flux:input wire:model="salesTargetFrom" type="month" :label="__('From')" class="max-w-48" data-test="sales-target-from" />
+
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+
+                <flux:button type="submit" variant="primary" data-test="save-sales-target">{{ __('Save') }}</flux:button>
             </div>
         </form>
     </flux:modal>

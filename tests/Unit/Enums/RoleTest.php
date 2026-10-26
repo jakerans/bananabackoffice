@@ -39,6 +39,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ManageSubcontractors,
         Permission::ViewPayouts,
         Permission::ManageCompensation,
+        Permission::MarketingSpendManage,
     ]],
     'leadership' => [Role::Leadership, [
         Permission::ViewProjects,
@@ -69,6 +70,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ViewSubcontractors,
         Permission::ManageSubcontractors,
         Permission::ViewPayouts,
+        Permission::MarketingSpendManage,
     ]],
     'finance' => [Role::Finance, [
         Permission::ViewPayouts,
@@ -76,6 +78,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::FinanceAccess,
         Permission::ViewAccounts,
         Permission::ManageCompensation,
+        Permission::MarketingSpendManage,
     ]],
     'location manager' => [Role::LocationManager, [
         Permission::ViewProjects,
@@ -100,6 +103,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ViewSubcontractors,
         Permission::ManageSubcontractors,
         Permission::ViewPayouts,
+        Permission::MarketingSpendManage,
     ]],
     'call center agent' => [Role::CallCenterAgent, [
         Permission::MarketingAccess,
@@ -163,6 +167,7 @@ test('company overview and settings are company-level permissions', function (Pe
     'manage accounts' => [Permission::ManageAccounts, false],
     'archive accounts' => [Permission::ArchiveAccounts, true],
     'manage compensation' => [Permission::ManageCompensation, true],
+    'manage marketing spend' => [Permission::MarketingSpendManage, false],
     'manage contact center settings' => [Permission::ManageContactCenterSettings, true],
     'work the lead queue' => [Permission::WorkLeadQueue, false],
     'book appointments' => [Permission::BookAppointments, false],

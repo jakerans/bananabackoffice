@@ -17,6 +17,7 @@ use App\Models\LeadDisqualificationReason;
 use App\Models\LeadSource;
 use App\Models\Location;
 use App\Models\MarketingSource;
+use App\Models\MarketingSpendEntry;
 use App\Models\Objection;
 use App\Models\PayPlan;
 use App\Models\PayrollPeriod;
@@ -141,6 +142,7 @@ class AppServiceProvider extends ServiceProvider
             'payroll_period' => PayrollPeriod::class,
             'warranty_case' => WarrantyCase::class,
             'warranty_cost' => WarrantyCost::class,
+            'marketing_spend_entry' => MarketingSpendEntry::class,
             'insurance_deduction_rate' => InsuranceDeductionRate::class,
         ]);
     }

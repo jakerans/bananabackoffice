@@ -1,8 +1,10 @@
 # Slice 25 — Marketing Spend, Marketing Performance and the Executive Board: Plan
 
-Status: **proposed on 2026-10-26 for Jacob's review, after slice 24 was
-merged (decision 182). Nothing is built.** Written as what the
-implementation agent recommends from the plan check below.
+Status: **approved on 2026-10-26 (decision 183), with the recommendation on
+all eight questions, to be built straight through 25a, 25b and 25c and then
+reviewed. Being built.** Direct ad-platform connections come last in the
+plan (decision 183). Written as what the implementation agent recommended
+from the plan check below.
 
 ## Why this is next (the plan check)
 
@@ -84,6 +86,19 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
    risk shown as counts, red when not zero. No single health score (18).
 8. **Who sees the Executive Board.** *Recommended:* Company Overview
    access, as its menu already says (Owner and Leadership).
+
+## Step 25a as built
+
+- **Marketing spend** (`marketing_spend_entries`) has its own page,
+  `/marketing/spend`, for anyone with the new `marketing.spend.manage` at a
+  Location (Owner, Leadership, Location Manager, Finance; question 3). For a
+  month that has begun, it lists the spend at the Locations shown, with the
+  total, and adds an entry: Location, Lead Source (question 2), amount and a
+  note. A wrong entry is corrected by a new one that adds or takes some
+  back, with why; nothing is ever changed. Each is audited.
+- **The monthly sales target** (`location_sales_targets`) is set in
+  Settings > Locations with **Sales target**, from a month; earlier months
+  keep the target they had (question 6). The table shows this month's.
 
 ## Known limits of this plan
 
