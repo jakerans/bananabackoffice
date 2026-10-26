@@ -6,6 +6,7 @@ use App\Enums\AppointmentState;
 use App\Enums\LeadStatusEvent;
 use App\Enums\ProposalResult;
 use App\Models\Appointment;
+use App\Models\Lead;
 use App\Models\LeadIssue;
 use App\Models\LeadStatusChange;
 use App\Models\Location;
@@ -82,16 +83,21 @@ final readonly class SalesFigures
      *
      * @param  CarbonImmutable  $month  Any moment in the month wanted, read in the Location's time.
      * @param  int|null  $salespersonId  One salesperson, or null for everyone at the Location.
+     * @param  int|null  $leadSourceId  Only the Leads from one Lead Source, for Marketing > Performance (slice 25, step 25b).
      */
-    public static function for(Location $location, CarbonImmutable $month, ?int $salespersonId = null): self
+    public static function for(Location $location, CarbonImmutable $month, ?int $salespersonId = null, ?int $leadSourceId = null): self
     {
         [$from, $to] = self::monthAt($location, $month);
+
+        // Each count below narrowed to the Leads from one source, when asked.
+        $sourceLeads = fn () => Lead::query()->where('lead_source_id', $leadSourceId)->select('id');
 
         $appointments = fn (): Builder => Appointment::query()
             ->where('appointments.location_id', $location->id)
             ->where('appointments.starts_at', '>=', $from)
             ->where('appointments.starts_at', '<', $to)
-            ->when($salespersonId !== null, fn (Builder $query) => $query->where('appointments.salesperson_id', $salespersonId));
+            ->when($salespersonId !== null, fn (Builder $query) => $query->where('appointments.salesperson_id', $salespersonId))
+            ->when($leadSourceId !== null, fn (Builder $query) => $query->whereIn('appointments.lead_id', $sourceLeads()));
 
         $byState = $appointments()->toBase()->selectRaw('state, count(*) as total')->groupBy('state')->pluck('total', 'state');
         $count = fn (AppointmentState $state): int => (int) ($byState[$state->value] ?? 0);
@@ -125,6 +131,7 @@ final readonly class SalesFigures
             ->where($moment, '>=', $from)
             ->where($moment, '<', $to)
             ->when($salespersonId !== null, fn (Builder $query) => $query->where('salesperson_id', $salespersonId))
+            ->when($leadSourceId !== null, fn (Builder $query) => $query->whereIn('lead_id', $sourceLeads()))
             ->count();
 
         // A sale counts in the month it was accepted, for whoever had the Lead then (decision 134).
@@ -133,7 +140,8 @@ final readonly class SalesFigures
             ->where('location_id', $location->id)
             ->where('occurred_at', '>=', $from)
             ->where('occurred_at', '<', $to)
-            ->when($salespersonId !== null, fn (Builder $query) => $query->where('salesperson_id', $salespersonId));
+            ->when($salespersonId !== null, fn (Builder $query) => $query->where('salesperson_id', $salespersonId))
+            ->when($leadSourceId !== null, fn (Builder $query) => $query->whereIn('lead_id', $sourceLeads()));
 
         // Where each Lead first demoed in the month stood at the end of that day, in the Location's time.
         $demos = (clone $firstDemos)->with(['proposals' => fn ($proposals) => $proposals->counted()])->get();
@@ -178,6 +186,7 @@ final readonly class SalesFigures
             ->where('created_at', '>=', $from)
             ->where('created_at', '<', $to)
             ->when($salespersonId !== null, fn (Builder $query) => $query->where('assigned_user_id', $salespersonId))
+            ->when($leadSourceId !== null, fn (Builder $query) => $query->whereIn('lead_id', $sourceLeads()))
             ->orderBy('id')
             ->get(['lead_id', 'created_at'])
             ->unique('lead_id');

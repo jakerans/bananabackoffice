@@ -100,6 +100,24 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
   Settings > Locations with **Sales target**, from a month; earlier months
   keep the target they had (question 6). The table shows this month's.
 
+## Step 25b as built
+
+- **Marketing > Performance is live,** the page the Marketing Center opens
+  on, for one Location or all of those where the person has Marketing
+  access, and a chosen month.
+- **For each Lead Source with spend, leads, appointments or sales in the
+  month,** and in total: spend, leads received, cost per lead, appointments
+  issued, cost per appointment, sales, cost per sale, sold revenue, return
+  on spend ("$8.45 per $1") and close rate (question 5). A cost with nothing
+  to divide by is a dash.
+- **Counted as Sales > Performance counts them** (question 4): Sales'
+  own figures can now be narrowed to one Lead Source, so appointments
+  issued, sales, sold revenue and close rate (sales over Leads demoed,
+  decision 135) are the same numbers, by source. Leads count in the month
+  received.
+- Those who record spend get a **Marketing spend** button to the spend page
+  for the month shown.
+
 ## Known limits of this plan
 
 - **Spend is what is typed:** until an ad platform is connected, the board

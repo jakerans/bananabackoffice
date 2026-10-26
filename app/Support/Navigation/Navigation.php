@@ -230,7 +230,7 @@ class Navigation
             description: 'Performance, the Contact Center, campaigns and customers.',
             primary: 'marketing.performance',
             children: [
-                new NavigationItem('marketing.performance', 'Performance', $permissions, route: 'marketing.performance'),
+                new NavigationItem('marketing.performance', 'Performance', $permissions, NavigationState::Live, route: 'marketing.performance'),
                 new NavigationItem('marketing.call_center', 'Contact Center', $permissions, primary: 'shared.leads', children: [
                     $this->leads(),
                     $this->callQueue(),
