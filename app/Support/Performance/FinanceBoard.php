@@ -5,6 +5,7 @@ namespace App\Support\Performance;
 use App\Models\CompensationEntry;
 use App\Models\PayrollPeriod;
 use App\Models\Project;
+use App\Models\ProjectBalanceAdjustment;
 use App\Models\ProjectInvoice;
 use App\Models\ProjectPayment;
 use App\Models\WarrantyCost;
@@ -113,6 +114,33 @@ final readonly class FinanceBoard
         return [
             'toReconcile' => $costings->filter(fn (JobCosting $costing): bool => $costing->takesCorrections())->count(),
             'toClose' => $costings->filter(fn (JobCosting $costing): bool => $costing->state() === JobCosting::APPROVED)->count(),
+        ];
+    }
+
+    /**
+     * Credits and write-offs approved in the month, and refunds paid back in
+     * it (slice 24).
+     *
+     * @return array{credits: int, refunds: int, writeOffs: int}
+     */
+    public function adjustments(): array
+    {
+        [$from, $to] = $this->days();
+        $approved = fn (string $kind): int => (int) ProjectBalanceAdjustment::query()
+            ->whereIn('project_id', Project::query()->whereIn('location_id', $this->locationIds)->select('id'))
+            ->where('kind', $kind)
+            ->where('status', ProjectBalanceAdjustment::STATUS_APPROVED)
+            ->whereBetween('decided_at', [$from->startOfDay(), $to->endOfDay()])
+            ->sum('amount_cents');
+
+        return [
+            'credits' => $approved(ProjectBalanceAdjustment::CREDIT),
+            'refunds' => (int) ProjectBalanceAdjustment::query()
+                ->whereIn('project_id', Project::query()->whereIn('location_id', $this->locationIds)->select('id'))
+                ->where('kind', ProjectBalanceAdjustment::REFUND)
+                ->whereBetween('paid_on', [$from->toDateString(), $to->toDateString()])
+                ->sum('amount_cents'),
+            'writeOffs' => $approved(ProjectBalanceAdjustment::WRITE_OFF),
         ];
     }
 

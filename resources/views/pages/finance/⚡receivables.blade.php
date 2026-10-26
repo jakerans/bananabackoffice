@@ -3,6 +3,7 @@
 use App\Enums\Permission;
 use App\Models\Location;
 use App\Models\Project;
+use App\Models\ProjectBalanceAdjustment;
 use App\Models\ProjectInvoice;
 use App\Models\ProjectPayment;
 use App\Support\Money;
@@ -62,6 +63,23 @@ new #[Title('Receivables')] class extends Component {
         $ids = $this->locations->modelKeys();
 
         return $this->locationId !== null && in_array($this->locationId, $ids, true) ? [$this->locationId] : $ids;
+    }
+
+    /**
+     * Credits, refunds and write-offs waiting for someone to decide them, at
+     * the Locations shown (slice 24, question 8). Decided on each job.
+     *
+     * @return Collection<int, ProjectBalanceAdjustment>
+     */
+    #[Computed]
+    public function adjustmentsWaiting(): Collection
+    {
+        return ProjectBalanceAdjustment::query()
+            ->where('status', ProjectBalanceAdjustment::STATUS_REQUESTED)
+            ->whereHas('project', fn (Builder $project) => $project->whereIn('location_id', $this->shownLocationIds()))
+            ->with('project')
+            ->orderBy('id')
+            ->get();
     }
 
     /**
@@ -227,6 +245,28 @@ new #[Title('Receivables')] class extends Component {
             @endif
         </div>
     @endforeach
+
+    {{-- Credits, refunds and write-offs to decide (slice 24). Shown only when there are some. --}}
+    @if ($this->adjustmentsWaiting->isNotEmpty())
+        <div class="flex flex-col gap-4 rounded-xl border border-amber-300 bg-card p-5" data-test="receivables-adjustments">
+            <div>
+                <flux:heading size="lg" level="2">{{ __('Credits, refunds and write-offs waiting for approval') }}</flux:heading>
+                <flux:subheading>{{ __('Decide each on its job. Whoever asked cannot decide it.') }}</flux:subheading>
+            </div>
+            <ul class="flex flex-col divide-y divide-zinc-200">
+                @foreach ($this->adjustmentsWaiting as $adjustment)
+                    <li wire:key="adjustment-waiting-{{ $adjustment->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="receivables-adjustment">
+                        <div class="flex min-w-0 flex-1 flex-col">
+                            <flux:link :href="route('projects.show', $adjustment->project)" wire:navigate class="font-semibold">{{ $adjustment->project->title }}</flux:link>
+                            <span class="text-sm text-zinc-700">{{ __($adjustment->kindLabel()) }}: {{ $adjustment->reason }}</span>
+                            <span class="text-sm text-zinc-500">{{ __('Asked by :name', ['name' => $adjustment->requested_by_name ?? __('Unknown')]) }}</span>
+                        </div>
+                        <span class="font-nav font-bold tabular-nums text-ink">{{ $adjustment->amount() }}</span>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="receivables-deposits">
         <div class="flex flex-wrap items-start justify-between gap-3">
