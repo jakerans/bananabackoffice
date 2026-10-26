@@ -3695,6 +3695,18 @@ build the direct connections in last".
    committed and checked on both GitHub jobs. Nothing is merged until
    Jacob reviews the slice.
 
+## 184. Slice 25 is merged (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 25 report: "continue".
+
+1. **Slice 25, Marketing Spend, Marketing Performance and the Executive
+   Board, is merged** as built
+   ([slice-25-marketing-and-executive-boards-plan.md](slice-25-marketing-and-executive-boards-plan.md),
+   "Step 25a as built" to "Step 25c as built"). Every Center now opens on a
+   working board.
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

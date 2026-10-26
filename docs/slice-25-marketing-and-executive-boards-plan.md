@@ -1,9 +1,8 @@
 # Slice 25 — Marketing Spend, Marketing Performance and the Executive Board: Plan
 
 Status: **approved on 2026-10-26 (decision 183), with the recommendation on
-all eight questions, and built straight through 25a, 25b and 25c on
-`checkpoint-slice-25-marketing-executive`. Waiting for Jacob's review; not
-merged.** Direct ad-platform connections come last in the
+all eight questions, built straight through 25a, 25b and 25c, and merged on
+2026-10-26 (decision 184). Slice 25 is complete.** Direct ad-platform connections come last in the
 plan (decision 183). Written as what the implementation agent recommended
 from the plan check below.
 

@@ -230,8 +230,7 @@ write-offs (10.5, 10.7) unbuilt. Its plan is
 
 **Slice 25, Marketing Spend, Marketing Performance and the Executive
 Board, is approved (2026-10-26, decision 183), built straight through its
-three steps on `checkpoint-slice-25-marketing-executive`, and waiting for
-Jacob's review.** Direct connections to ad platforms, which would
+three steps, and merged (2026-10-26, decision 184). Slice 25 is complete.** Direct connections to ad platforms, which would
 bring spend in by themselves, are built last of everything (decision 183). The plan check after
 slice 24 found Marketing and Company the last Centers opening on Coming Soon
 pages (4.1, 18), Marketing's board waiting only on recorded spend. Its plan
