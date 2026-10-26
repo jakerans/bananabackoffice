@@ -4,6 +4,7 @@ namespace App\Support\Projects;
 
 use App\Models\Project;
 use App\Models\ProjectAccuracyStrike;
+use App\Models\ProjectBalanceAdjustment;
 use App\Models\ProjectCost;
 use App\Models\ProjectJobCostingStep;
 use App\Models\WarrantyCost;
@@ -170,6 +171,19 @@ final readonly class JobCosting
     public function lifetimeMarginCents(): int
     {
         return ($this->final()->margin_cents ?? $this->marginCents()) - $this->warrantyCents();
+    }
+
+    /**
+     * What was written off as bad debt: below gross margin, linked to the
+     * job (slice 24, step 24c; product-architecture.md, 10.7).
+     */
+    public function badDebtCents(): int
+    {
+        return (int) ProjectBalanceAdjustment::query()
+            ->where('project_id', $this->project->id)
+            ->where('kind', ProjectBalanceAdjustment::WRITE_OFF)
+            ->where('status', ProjectBalanceAdjustment::STATUS_APPROVED)
+            ->sum('amount_cents');
     }
 
     public function payoutsCents(): int

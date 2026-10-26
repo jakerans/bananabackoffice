@@ -40,6 +40,7 @@ new #[Title('Finance Performance')] class extends PerformanceBoard {
         $cash = $board->cashCollected();
         $aging = $board->aging();
         $waiting = $board->awaitingClose();
+        $adjusted = $board->adjustments();
         $percent = fn (?float $value): string => $value === null ? '—' : rtrim(rtrim(number_format($value, 1), '0'), '.').'%';
     @endphp
 
@@ -80,6 +81,16 @@ new #[Title('Finance Performance')] class extends PerformanceBoard {
             <div class="mt-1 font-nav text-3xl font-bold tabular-nums text-ink" data-test="board-value">{{ Money::format($cash['cents']) }}</div>
             <div class="mt-1 text-sm text-zinc-700">{{ trans_choice(':count payment received|:count payments received', $cash['payments']) }}</div>
         </div>
+    </div>
+
+    {{-- Credits, refunds and write-offs of the month (slice 24). --}}
+    <div class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-5" data-test="board-adjustments">
+        <flux:heading size="lg" level="2">{{ __('Credits, refunds and write-offs, :month', ['month' => $this->chosenMonthWords()]) }}</flux:heading>
+        <dl class="grid grid-cols-3 gap-3 text-sm">
+            <div><dt class="text-zinc-500">{{ __('Credits approved') }}</dt><dd class="font-nav text-2xl font-bold tabular-nums text-ink" data-test="board-credits">{{ Money::format($adjusted['credits']) }}</dd></div>
+            <div><dt class="text-zinc-500">{{ __('Refunds paid back') }}</dt><dd class="font-nav text-2xl font-bold tabular-nums text-ink" data-test="board-refunds">{{ Money::format($adjusted['refunds']) }}</dd></div>
+            <div><dt class="text-zinc-500">{{ __('Written off as bad debt') }}</dt><dd class="font-nav text-2xl font-bold tabular-nums {{ $adjusted['writeOffs'] > 0 ? 'text-rose-700' : 'text-ink' }}" data-test="board-write-offs">{{ Money::format($adjusted['writeOffs']) }}</dd></div>
+        </dl>
     </div>
 
     <div class="grid gap-4 sm:grid-cols-2">

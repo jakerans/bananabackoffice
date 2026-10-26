@@ -1,8 +1,9 @@
 # Slice 24 — Refunds, Credits and Write-offs: Plan
 
-Status: **proposed on 2026-10-25 for Jacob's review, after slice 23 was
-merged (decision 180). Nothing is built.** Written as what the
-implementation agent recommends from the plan check below.
+Status: **approved on 2026-10-25 (decision 181), with the recommendation on
+all eight questions, built straight through 24a, 24b and 24c, and merged on
+2026-10-26 (decision 182). Slice 24 is complete.** Written as what the implementation agent recommended from the plan
+check below; what was built is under "as built".
 
 ## Why this is next (the plan check)
 
@@ -87,9 +88,53 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 8. **Where requests wait.** *Recommended:* on the job, and on Finance >
    Receivables as "Waiting for approval", for those who may approve.
 
+## Steps 24a and 24b as built
+
+Built and committed together: credits and refunds share their record
+(`project_balance_adjustments`), their asking and deciding, and the job's new
+**Credits, refunds and write-offs** card, below Payments.
+
+- **Asking:** the job's Production Manager or a manager asks for a credit,
+  once the final invoice is recorded and while Finance has not approved the
+  job costing, up to the contract; or for a refund, up to what was
+  collected and not already asked for. Each says why.
+- **Deciding:** Finance at the Location or a manager there approves, with
+  QuickBooks' reference if there is one yet, or declines with why; never
+  whoever asked (question 2). Each step is audited and shown in the job's
+  activity.
+- **A credit, once approved,** comes off what the customer owes and off the
+  job's revenue, in the payments, the budget and the gross margin, so the
+  commission and the Production Bonus follow at the close (question 3).
+- **A refund, once approved,** is recorded paid back by Finance: how, the
+  day and the reference. Only then does it count: it is added back to what
+  the customer owes, as the money left (question 4).
+
+## Step 24c as built
+
+- **A write-off** is proposed by Finance at the Location, with why, only
+  once the balance is with Collections (30 days after the final invoice),
+  for no more than the balance; a manager there who did not propose it
+  approves or declines (question 5).
+- **Approved,** it closes that much of the balance, so a job paid in full
+  but for it can be financially closed.
+- **Below gross margin** (question 6): the gross margin, the final
+  commission and the Production Bonus do not change. The job's costing card
+  shows what was written off and the lifetime figure after it; Finance >
+  Performance shows the month's credits, refunds paid back and write-offs.
+- **Commission on money never collected** (question 7): the salesperson's
+  plan rate on the written-off amount is taken back in the open pay period,
+  linked to the job, as "Commission on bad debt". It stands apart from the
+  job's commission, so the close never pays it back.
+- **Finance > Receivables** lists the credits, refunds and write-offs
+  waiting for approval at the Locations shown (question 8); each is decided
+  on its job.
+
 ## Known limits of this plan
 
-- **A credit after the financial close** reopens nothing: Finance reopens
-  the job costing first, as for any change after the close.
-- **Partial collection after a write-off** is recorded as a payment, and the
-  write-off is reversed by the same amount, by Finance.
+- **A credit after Finance approved the job costing** is refused: Finance
+  reopens the job costing first, as for any change after approval.
+- **A credit's amount** comes off both what is owed and the revenue; any
+  tax on it is QuickBooks'.
+- **Money collected after a write-off** is recorded as a payment; nothing
+  reverses the write-off yet, so the balance then reads below zero until
+  Finance asks for a refund or a credit to square it.

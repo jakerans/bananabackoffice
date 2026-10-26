@@ -3626,6 +3626,45 @@ recommendations, do the entire slice in one go".
 2. **Next:** the plan check after a slice, and a proposed next slice, for
    his approval.
 
+## 181. Slice 24, Refunds, Credits and Write-offs, is approved and built straight through (2026-10-25)
+
+**Decided by Jacob,** in reply to the slice 24 plan: "approved, follow
+recommendations, do the entire slice in one go".
+
+1. **Slice 24 is approved** in three steps
+   ([slice-24-refunds-credits-plan.md](slice-24-refunds-credits-plan.md)),
+   with the recommendation on all eight questions taken as the answer:
+   - 24a, 24b, 24c, in that order;
+   - Finance at the Location or a manager there approves credits and
+     refunds, never whoever requested them;
+   - a credit lowers what the customer owes and the job's revenue, so its
+     budget, gross margin, commission and Production Bonus follow; it goes
+     on the final invoice only;
+   - a refund is never more than what was collected, is approved like a
+     credit and recorded paid by Finance; it does not change revenue by
+     itself;
+   - a write-off is proposed by Finance once the balance is with
+     Collections and approved by a Location manager, two different people;
+   - bad debt stays below gross margin: the gross margin and the Production
+     Bonus do not change; the job shows a lifetime figure after bad debt,
+     and Finance > Performance shows the month's write-offs;
+   - a write-off takes back the salesperson's plan rate on the written-off
+     amount, in the open pay period, linked to the job;
+   - requests wait on the job and on Finance > Receivables.
+2. **Built without stopping between the steps,** on one branch, each step
+   committed and checked on both GitHub jobs. Nothing is merged until
+   Jacob reviews the slice.
+
+## 182. Slice 24 is merged (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 24 report: "continue".
+
+1. **Slice 24, Refunds, Credits and Write-offs, is merged** as built
+   ([slice-24-refunds-credits-plan.md](slice-24-refunds-credits-plan.md),
+   "Steps 24a and 24b as built" and "Step 24c as built").
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

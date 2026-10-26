@@ -3,6 +3,7 @@
 namespace App\Support\Projects;
 
 use App\Models\Project;
+use App\Models\ProjectBalanceAdjustment;
 use App\Models\ProjectChangeOrder;
 use App\Models\ProjectCollectionContact;
 use App\Models\ProjectDepositChange;
@@ -54,6 +55,7 @@ final class Payments
      * @param  Collection<int, ProjectPayment>  $payments  Not reversed.
      * @param  ProjectDepositChange|null  $depositChange  The latest smaller deposit, or none, set by a manager.
      * @param  Collection<int, ProjectCollectionContact>  $contacts  Each contact about the balance, the latest first.
+     * @param  Collection<int, ProjectBalanceAdjustment>  $adjustments  Its credits, refunds and write-offs (slice 24), in order.
      */
     private function __construct(
         public readonly Project $project,
@@ -61,6 +63,7 @@ final class Payments
         public readonly Collection $payments,
         public readonly ?ProjectDepositChange $depositChange,
         public readonly Collection $contacts,
+        public readonly Collection $adjustments,
     ) {}
 
     public static function for(Project $project): self
@@ -71,8 +74,9 @@ final class Payments
         $payments = $project->payments()->whereNull('reversed_at')->get();
         $depositChange = $project->depositChanges()->reorder()->orderByDesc('id')->first();
         $contacts = $project->collectionContacts()->reorder()->orderByDesc('contacted_on')->orderByDesc('id')->get();
+        $adjustments = $project->balanceAdjustments()->get();
 
-        return new self($project, $invoices, $payments, $depositChange, $contacts);
+        return new self($project, $invoices, $payments, $depositChange, $contacts, $adjustments);
     }
 
     /**
@@ -171,13 +175,60 @@ final class Payments
 
     /**
      * What the customer agreed to pay before tax, in cents: the price sold
-     * and every signed change order (slice 18, step 18a).
+     * and every signed change order (slice 18, step 18a), less every approved
+     * credit (slice 24, step 24a).
      */
     public function contractCents(): int
     {
         return $this->project->sold_cents + (int) $this->project->changeOrders()
             ->where('status', ProjectChangeOrder::STATUS_SIGNED)
-            ->sum('price_change_cents');
+            ->sum('price_change_cents') - $this->creditedCents();
+    }
+
+    /**
+     * What approved credits took off, in cents (slice 24, step 24a).
+     */
+    public function creditedCents(): int
+    {
+        return $this->countedCents(ProjectBalanceAdjustment::CREDIT);
+    }
+
+    /**
+     * What was paid back in refunds, in cents (step 24b).
+     */
+    public function refundedCents(): int
+    {
+        return $this->countedCents(ProjectBalanceAdjustment::REFUND);
+    }
+
+    /**
+     * What was written off as bad debt, in cents (step 24c).
+     */
+    public function writtenOffCents(): int
+    {
+        return $this->countedCents(ProjectBalanceAdjustment::WRITE_OFF);
+    }
+
+    /**
+     * What can still be refunded: what was paid, less every refund asked
+     * for and not declined (question 4).
+     */
+    public function refundableCents(): int
+    {
+        $asked = (int) $this->adjustments
+            ->where('kind', ProjectBalanceAdjustment::REFUND)
+            ->where('status', '!=', ProjectBalanceAdjustment::STATUS_DECLINED)
+            ->sum('amount_cents');
+
+        return max(0, $this->paidCents() - $asked);
+    }
+
+    private function countedCents(string $kind): int
+    {
+        return (int) $this->adjustments
+            ->where('kind', $kind)
+            ->filter(fn (ProjectBalanceAdjustment $adjustment): bool => $adjustment->counts())
+            ->sum('amount_cents');
     }
 
     /**
@@ -238,11 +289,12 @@ final class Payments
     }
 
     /**
-     * What is still owed on everything invoiced, in cents.
+     * What is still owed on everything invoiced, in cents: less what was
+     * paid, credited and written off, and plus what was refunded (slice 24).
      */
     public function balanceCents(): int
     {
-        return $this->invoicedCents() - $this->paidCents();
+        return $this->invoicedCents() - $this->paidCents() - $this->creditedCents() - $this->writtenOffCents() + $this->refundedCents();
     }
 
     /**

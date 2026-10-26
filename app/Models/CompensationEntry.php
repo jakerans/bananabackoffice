@@ -54,6 +54,9 @@ class CompensationEntry extends Model
 
     public const string KIND_BONUS = 'bonus';
 
+    /** Commission taken back on a balance written off as bad debt (slice 24, step 24c). */
+    public const string KIND_BAD_DEBT = 'bad_debt';
+
     /** How each kind is said, in English. */
     public const array KINDS = [
         self::KIND_PROJECTED => 'Projected commission',
@@ -63,6 +66,7 @@ class CompensationEntry extends Model
         self::KIND_CLAWBACK => 'Clawback',
         self::KIND_ADJUSTMENT => 'Manual adjustment',
         self::KIND_BONUS => 'Production Bonus',
+        self::KIND_BAD_DEBT => 'Commission on bad debt',
     ];
 
     /** The kinds a job's commission is worked out from; a manual adjustment stands on its own. */
