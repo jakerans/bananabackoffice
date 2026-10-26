@@ -244,6 +244,13 @@ Center opening on a board, but nothing gathering what needs someone and
 putting it in front of its owner (19, 18, 26). Its plan is
 [slice-26-needs-attention-plan.md](slice-26-needs-attention-plan.md).
 
+**Slice 27, Leadership Scorecards and TV Mode, is proposed (2026-10-26)
+and waits for Jacob's approval.** The plan check after slice 26 found
+Leadership Scorecards the last Company item still Coming Soon besides
+Reports, now possible with each Location's sales target, and TV Mode
+unbuilt (17.2, 17.3, 18). Its plan is
+[slice-27-leadership-scorecards-plan.md](slice-27-leadership-scorecards-plan.md).
+
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the
 customer still unbuilt. Its plan is
