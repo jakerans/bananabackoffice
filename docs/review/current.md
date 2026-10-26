@@ -25,6 +25,15 @@ Plan and "as built": [../slice-24-refunds-credits-plan.md](../slice-24-refunds-c
 
 None open.
 
+## Browser review (local, fictitious data)
+
+Done with Playwright on sample job 1, which is paid in full and closed:
+Remy's credit was refused because Finance had approved the job costing;
+Remy asked for a $100 refund; Finley saw it on Receivables, approved it on
+the job and recorded it paid back; Finance > Performance showed $100 of
+refunds this month. Write-offs need a balance 30 days with Collections,
+which the local data does not have; the tests cover them.
+
 ## Optional, for Jacob
 
 Staging's upload limit is 20 MB per upload. Raising it to 100 in Forge

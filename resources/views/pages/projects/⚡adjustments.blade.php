@@ -243,7 +243,7 @@ new class extends Component {
                             <span class="text-zinc-500">{{ $adjustment->isApproved() ? __('Approved by :name', ['name' => $adjustment->decided_by_name]) : __('Declined by :name: :reason', ['name' => $adjustment->decided_by_name, 'reason' => $adjustment->declined_reason]) }}@if ($adjustment->quickbooks_reference !== null) &middot; {{ __('QuickBooks :reference', ['reference' => $adjustment->quickbooks_reference]) }}@endif</span>
                         @endif
                         @if ($adjustment->paid_on !== null)
-                            <span class="text-zinc-500">{{ __('Paid back :day by :method, reference :reference', ['day' => $adjustment->paid_on->format('M j, Y'), 'method' => mb_strtolower(__(ProjectPayment::METHODS[$adjustment->paid_method] ?? (string) $adjustment->paid_method)), 'reference' => $adjustment->paid_reference ?? '—']) }}</span>
+                            <span class="text-zinc-500">{{ __('Paid back :day by :method, reference :reference', ['day' => $adjustment->paid_on->format('M j, Y'), 'method' => lcfirst(__(ProjectPayment::METHODS[$adjustment->paid_method] ?? (string) $adjustment->paid_method)), 'reference' => $adjustment->paid_reference ?? '—']) }}</span>
                         @endif
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
