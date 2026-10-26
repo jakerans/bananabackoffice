@@ -3,30 +3,28 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-26 · **Branch:** `main`
+**Updated:** 2026-10-26 · **Branch:** `checkpoint-slice-25-marketing-executive`
 
-**State:** slice 24, Refunds, Credits and Write-offs, is complete and
-merged (decision 182). **Slice 25, Marketing Spend, Marketing Performance
-and the Executive Board, is proposed and waits for Jacob's approval.**
-Nothing of it is built.
+**State:** slice 25, Marketing Spend, Marketing Performance and the
+Executive Board, is built straight through (decision 183) and **waits for
+Jacob's review. Not merged.** Every Center now opens on a working board.
 
-## The proposal
+## What to review
 
-Plan: [../slice-25-marketing-and-executive-boards-plan.md](../slice-25-marketing-and-executive-boards-plan.md).
+Plan and "as built": [../slice-25-marketing-and-executive-boards-plan.md](../slice-25-marketing-and-executive-boards-plan.md).
 
-- **25a:** monthly marketing spend by Lead Source and Location; each
-  Location's monthly sold-revenue target.
-- **25b:** Marketing > Performance: spend, leads, cost per lead,
-  appointments, cost per close, sold revenue, return on spend, close rate,
-  by source.
-- **25c:** Company > Executive Board: each Location's key numbers side by
-  side, each with its own status, and the leaderboard's top three.
+- **25a:** Marketing spend by Lead Source and month (`/marketing/spend`),
+  corrected with why; each Location's monthly sales target in Settings >
+  Locations.
+- **25b:** Marketing > Performance: spend, leads, appointments, sales and
+  what each cost, return on spend and close rate, by Lead Source.
+- **25c:** Company > Executive Board: each Location beside the others and
+  the company, each number with its own status; the leaderboard's top three.
 
-## Decisions needed
+## Decisions
 
-The plan's eight questions, each with a recommendation. "Follow your
-recommendations" is a complete answer. Question 2, recording spend against
-the Lead Source, is the one most likely to need your word.
+None open. Direct ad-platform connections come last of everything
+(decision 183).
 
 ## Optional, for Jacob
 

@@ -290,7 +290,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | ID | Label | State |
 | --- | --- | --- |
 | `company.home` | Shortcut: opens Company Performance | — |
-| `company.performance` | Company Performance | CS, primary |
+| `company.performance` | Company Performance | **Live (slice 25, step 25c), primary:** the Executive Board, `/company/performance`, route name `company.performance`, `company_overview.access` |
 | `company.location_comparison` | Location Comparison | CS |
 | `company.reports` | Company Reports | CS |
 

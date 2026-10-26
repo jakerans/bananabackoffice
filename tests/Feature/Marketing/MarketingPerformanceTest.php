@@ -27,7 +27,7 @@ beforeEach(function () {
     $this->sam = User::factory()->withRoleAt(Role::SalesConsultant, $this->lakeview)->create(['name' => 'Sam Sales']);
     $this->casey = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create(['name' => 'Casey Caller']);
     $this->google = LeadSource::factory()->create(['name' => 'Google Ads']);
-    $this->yardSign = LeadSource::factory()->create(['name' => 'Yard sign']);
+    $this->yardSign = LeadSource::query()->where('name', 'Yard Sign')->sole();
 
     app(RecordMarketingSpend::class)->record($this->lakeview, $this->google->id, '2026-10', '1,000', null, $this->manager);
 
@@ -55,9 +55,9 @@ test('each Lead Source shows its spend, leads, appointments and sales, and what 
         ->and($google->returnWords())->toBe('$8.45 per $1')
         ->and($google->closeRate())->toBe(100);
 
-    expect($rows['Yard sign']->leads)->toBe(1)
-        ->and($rows['Yard sign']->costPerLeadCents())->toBeNull()
-        ->and(MarketingRow::money($rows['Yard sign']->costPerLeadCents()))->toBe('—');
+    expect($rows['Yard Sign']->leads)->toBe(1)
+        ->and($rows['Yard Sign']->costPerLeadCents())->toBeNull()
+        ->and(MarketingRow::money($rows['Yard Sign']->costPerLeadCents()))->toBe('—');
 });
 
 test('Marketing > Performance shows the board to those with Marketing access; spend is linked for those who record it', function () {

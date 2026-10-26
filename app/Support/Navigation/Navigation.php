@@ -200,7 +200,7 @@ class Navigation
             description: 'Company-wide performance, locations and settings.',
             primary: 'company.performance',
             children: [
-                new NavigationItem('company.performance', 'Executive Board', $overviewPermissions, route: 'company.performance'),
+                new NavigationItem('company.performance', 'Executive Board', $overviewPermissions, NavigationState::Live, route: 'company.performance'),
                 new NavigationItem('company.leadership_scorecards', 'Leadership Scorecards', $overviewPermissions),
                 new NavigationItem('company.needs_attention', 'Needs Attention', $overviewPermissions),
                 new NavigationItem(

@@ -1,8 +1,9 @@
 # Slice 25 — Marketing Spend, Marketing Performance and the Executive Board: Plan
 
 Status: **approved on 2026-10-26 (decision 183), with the recommendation on
-all eight questions, to be built straight through 25a, 25b and 25c and then
-reviewed. Being built.** Direct ad-platform connections come last in the
+all eight questions, and built straight through 25a, 25b and 25c on
+`checkpoint-slice-25-marketing-executive`. Waiting for Jacob's review; not
+merged.** Direct ad-platform connections come last in the
 plan (decision 183). Written as what the implementation agent recommended
 from the plan check below.
 
@@ -117,6 +118,22 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
   received.
 - Those who record spend get a **Marketing spend** button to the spend page
   for the month shown.
+
+## Step 25c as built
+
+- **Company > Executive Board is live,** the page Company opens on, for
+  Company Overview access (Owner and Leadership; question 8), for a chosen
+  month.
+- **Each Location in a column, then the company:** sold revenue with its
+  target and **On pace**, **Behind** or **No target** against the share of
+  the target for the days gone (a finished month needs all of it); completed
+  revenue; gross margin against the Location's target margin, red when
+  below; cash collected; balances late and with Collections now; leads and
+  cost per lead; jobs at risk now, red when any (question 7). No single
+  health score.
+- **The month's top three** on the leaderboard. Each row links to its own
+  board.
+- The company's target is the Locations' targets added up (question 6).
 
 ## Known limits of this plan
 
