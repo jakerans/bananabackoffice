@@ -2,8 +2,8 @@
 
 Status: **approved on 2026-10-26 (decision 187), with one owner per
 Location, its general manager, and Net Profit % to join once QuickBooks is
-connected; built straight through 27a, 27b and 27c. Waits for Jacob's
-review; not merged.** Written as what the implementation agent recommended from the
+connected; built straight through 27a, 27b and 27c, and merged on 2026-10-26
+(decision 188). Slice 27 is complete.** Written as what the implementation agent recommended from the
 plan check below.
 
 ## Why this is next (the plan check)

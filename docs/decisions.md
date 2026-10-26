@@ -3768,6 +3768,17 @@ complete the entire slice in one go."
    committed and checked on both GitHub jobs. Nothing is merged until
    Jacob reviews the slice.
 
+## 188. Slice 27 is merged (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 27 report: "continue".
+
+1. **Slice 27, Leadership Scorecards and TV Mode, is merged** as built
+   ([slice-27-leadership-scorecards-plan.md](slice-27-leadership-scorecards-plan.md),
+   "Step 27a as built" to "Step 27c as built"), including a scorecard's
+   numbers being the month so far when it is submitted.
+2. **Next:** connecting QuickBooks, proposed as its own slice (decision
+   187), for his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
