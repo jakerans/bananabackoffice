@@ -2,7 +2,8 @@
 
 Status: **approved on 2026-10-26 (decision 185), with the recommendation on
 all eight questions, to be built straight through 26a, 26b and 26c and then
-reviewed. Built straight through; waits for Jacob's review.** Written as what the implementation agent
+reviewed. Built straight through and merged on 2026-10-26 (decision 186).
+Slice 26 is complete.** Written as what the implementation agent
 recommended from the plan check below.
 
 ## Why this is next (the plan check)

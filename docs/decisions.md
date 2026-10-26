@@ -3734,6 +3734,18 @@ recommendations, do the entire slice in one go".
    committed and checked on both GitHub jobs. Nothing is merged until
    Jacob reviews the slice.
 
+## 186. Slice 26 is merged (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 26 report: "continue".
+
+1. **Slice 26, the Exception Engine and Needs Attention, is merged** as
+   built ([slice-26-needs-attention-plan.md](slice-26-needs-attention-plan.md),
+   "Step 26a as built" to "Step 26c as built"), including counting every
+   standing appointment from today to four days out as one to confirm,
+   until a confirmation call is recorded.
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
