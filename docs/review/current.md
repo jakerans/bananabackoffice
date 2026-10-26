@@ -3,41 +3,30 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-26 · **Branch:** `checkpoint-slice-25-marketing-executive`
+**Updated:** 2026-10-26 · **Branch:** `main`
 
-**State:** slice 25, Marketing Spend, Marketing Performance and the
-Executive Board, is built straight through (decision 183) and **waits for
-Jacob's review. Not merged.** Every Center now opens on a working board.
+**State:** slice 25 is complete and merged (decision 184); every Center
+opens on a working board. **Slice 26, the Exception Engine and Needs
+Attention, is proposed and waits for Jacob's approval.** Nothing of it is
+built.
 
-## What to review
+## The proposal
 
-Plan and "as built": [../slice-25-marketing-and-executive-boards-plan.md](../slice-25-marketing-and-executive-boards-plan.md).
+Plan: [../slice-26-needs-attention-plan.md](../slice-26-needs-attention-plan.md).
 
-- **25a:** Marketing spend by Lead Source and month (`/marketing/spend`),
-  corrected with why; each Location's monthly sales target in Settings >
-  Locations.
-- **25b:** Marketing > Performance: spend, leads, appointments, sales and
-  what each cost, return on spend and close rate, by Lead Source.
-- **25c:** Company > Executive Board: each Location beside the others and
-  the company, each number with its own status; the leaderboard's top three.
+- **26a:** rules that every 15 minutes find what needs someone (work
+  running over, job costing late, balances past due, compliance expiring,
+  approvals waiting and more), each with an owner and a severity, closing by
+  themselves when fixed.
+- **26b:** each person's Needs Attention list on Home; Company > Needs
+  Attention; useful, not useful or dismiss.
+- **26c:** a short role-specific morning briefing on Home.
 
-## Browser review (local, fictitious data)
+## Decisions needed
 
-Done with Playwright: as Morgan, the Marketing Center opened on its board;
-Morgan recorded $1,200 of spend at Northside and corrected it by $200; the
-board showed $1,000 spent, 40 leads, $25 per lead. As the Owner, a $40,000
-monthly target for Northside was set in Settings > Locations, and Company
-opened on the Executive Board with every Location side by side: Northside
-$19,700 of $40,000, Behind. Most local sample leads have the "Unknown"
-source, so the spend sits against a source with no leads yet.
-
-The company's target adds up only the Locations that have one, while its
-sold revenue counts every Location.
-
-## Decisions
-
-None open. Direct ad-platform connections come last of everything
-(decision 183).
+The plan's eight questions, each with a recommendation. "Follow your
+recommendations" is a complete answer. Question 2, the first rules and
+their severities, is the one most worth a look.
 
 ## Optional, for Jacob
 

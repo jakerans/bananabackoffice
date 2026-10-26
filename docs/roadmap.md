@@ -237,6 +237,12 @@ pages (4.1, 18), Marketing's board waiting only on recorded spend. Its plan
 is
 [slice-25-marketing-and-executive-boards-plan.md](slice-25-marketing-and-executive-boards-plan.md).
 
+**Slice 26, the Exception Engine and Needs Attention, is proposed
+(2026-10-26) and not approved.** The plan check after slice 25 found every
+Center opening on a board, but nothing gathering what needs someone and
+putting it in front of its owner (19, 18, 26). Its plan is
+[slice-26-needs-attention-plan.md](slice-26-needs-attention-plan.md).
+
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the
 customer still unbuilt. Its plan is
