@@ -1,8 +1,10 @@
 # Slice 27 — Leadership Scorecards and TV Mode: Plan
 
-Status: **proposed on 2026-10-26, waiting for Jacob's approval. Nothing is
-built.** Written as what the implementation agent recommends from the plan
-check below.
+Status: **approved on 2026-10-26 (decision 187), with one owner per
+Location, its general manager, and Net Profit % to join once QuickBooks is
+connected; to be built straight through 27a, 27b and 27c and then reviewed.
+Being built.** Written as what the implementation agent recommended from the
+plan check below.
 
 ## Why this is next (the plan check)
 
@@ -90,6 +92,33 @@ Not in slice 27:
    serious Needs Attention items the person may see. A TV shows it while
    signed in as a staff member who may see the board; there is no public
    link.
+
+## Step 27a as built
+
+- **Settings > Locations, "Scorecard":** whoever manages Locations chooses
+  each Location's scorecard owner from its active managers, its general
+  manager (question 3), and sets its NSLI and cost-per-close targets; a
+  blank target is none. Its sales target (slice 25) and target margin
+  (slice 19) are set as before. Until an owner is chosen, the Owner owns
+  it. Each change is audited.
+- **The scorecard** (`/scorecards/{location}`, a week chosen from the last
+  eight): each KPI with its target, the actual, and whether it is on
+  target. Sold revenue shows the month's target and the share of it due by
+  the week's Sunday. Its owner chooses Green, Yellow or Red for each and
+  must say why for any that is not Green, up to 500 characters (question
+  5). Only a week that has ended can be submitted, once.
+- **Kept as submitted** (question 6): the numbers, targets and statuses are
+  stored, so later corrections to the records do not change them. Its
+  owner may correct a status or note with a reason, kept in the audit
+  trail; the numbers stay.
+- **Who sees it** (question 7): its owner, the Owner and Leadership; only
+  its owner submits. Anyone else is refused.
+- **Home** shows its owner each scorecard they own for the last week:
+  submitted, due by the end of Monday, or overdue.
+- **The numbers** are the month so far when the page is opened or the
+  scorecard submitted, for the month the week's Sunday is in. Submitted on
+  the Monday it is due, that is the week's; submitted later, it includes
+  the days since.
 
 ## Known limits of this plan
 

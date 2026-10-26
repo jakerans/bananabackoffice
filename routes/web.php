@@ -44,6 +44,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('leads/{lead}/customer', 'pages::leads.customer')->can('resolveCustomer', 'lead')->name('leads.customer');
     Route::livewire('leads/{lead}/appointments/{appointment}/report', 'pages::leads.report')->can('view', 'lead')->name('leads.report');
 
+    // A Location's weekly scorecard (slice 27, step 27a) is reached from Home and Company > Leadership Scorecards.
+    // Its owner, the Owner and Leadership may open it; the page checks.
+    Route::livewire('scorecards/{location}', 'pages::scorecards.show')->name('scorecards.show');
+
     // A Project is reached from its Lead, its customer and, later, Production's Workspace. It has no menu item
     // of its own (product-architecture.md, 6.2) and is authorized by its own location.
     Route::livewire('projects/{project}', 'pages::projects.show')->can('view', 'project')->name('projects.show');

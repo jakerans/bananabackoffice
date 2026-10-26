@@ -40,6 +40,9 @@
             {{-- The morning briefing (slice 26, step 26c), then Needs Attention (step 26b): the person's own items, then a manager's Locations. --}}
             <x-attention.briefing />
 
+            {{-- The weekly scorecards the person owns (slice 27, step 27a). --}}
+            <x-scorecards.due />
+
             <livewire:pages::attention.list scope="mine" />
 
             @can(\App\Enums\Permission::CompanyOverviewAccess)

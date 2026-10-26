@@ -4,6 +4,7 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Locations\ChangeDepositPolicy;
 use App\Actions\Locations\ChangeLocationTimezone;
 use App\Actions\Locations\ChangeSalesTarget;
+use App\Actions\Locations\ChangeScorecardSetup;
 use App\Actions\Locations\ChangeTargetMargin;
 use App\Actions\Locations\DeactivateLocation;
 use App\Actions\Locations\UpdateServiceAreaPostalCodes;
@@ -18,6 +19,7 @@ use App\Models\ServiceAreaPostalCode;
 use App\Support\Compensation\PayPeriods;
 use App\Support\Money;
 use App\Support\Queue\LocationTimezones;
+use App\Support\Scorecards\ScorecardOwnership;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -53,6 +55,16 @@ new #[Title('Locations')] class extends Component {
     public string $salesTargetAmount = '';
 
     public string $salesTargetFrom = '';
+
+    /** The Location whose scorecard owner and targets are open (slice 27, step 27a). */
+    #[Locked]
+    public ?int $scorecardLocationId = null;
+
+    public string $scorecardOwnerId = '';
+
+    public string $scorecardNsliTarget = '';
+
+    public string $scorecardCostPerCloseTarget = '';
 
     public string $targetMarginPercent = '';
 
@@ -129,7 +141,7 @@ new #[Title('Locations')] class extends Component {
     #[Computed]
     public function locations(): Collection
     {
-        return Location::query()->withCount(['accessGrants', 'servicePostalCodes'])->orderBy('name')->get();
+        return Location::query()->withCount(['accessGrants', 'servicePostalCodes'])->with('scorecardOwner')->orderBy('name')->get();
     }
 
     /**
@@ -259,6 +271,37 @@ new #[Title('Locations')] class extends Component {
 
         Flux::modal('location-sales-target')->close();
         Flux::toast(variant: 'success', text: __('Sales target saved.'));
+    }
+
+    /**
+     * Open who owns a Location's weekly scorecard, and its targets (slice 27, step 27a).
+     */
+    public function editScorecard(int $locationId): void
+    {
+        $location = Location::query()->findOrFail($locationId);
+
+        $this->authorize('update', $location);
+
+        $this->scorecardLocationId = $location->id;
+        $this->scorecardOwnerId = (string) $location->scorecard_owner_id;
+        $this->scorecardNsliTarget = $location->nsli_target_cents === null ? '' : ltrim(Money::format($location->nsli_target_cents), '$');
+        $this->scorecardCostPerCloseTarget = $location->cost_per_close_target_cents === null ? '' : ltrim(Money::format($location->cost_per_close_target_cents), '$');
+        $this->resetValidation(['scorecardOwnerId', 'scorecardNsliTarget', 'scorecardCostPerCloseTarget']);
+
+        Flux::modal('location-scorecard')->show();
+    }
+
+    public function saveScorecard(ChangeScorecardSetup $changeScorecardSetup): void
+    {
+        $location = Location::query()->findOrFail($this->scorecardLocationId);
+
+        $changeScorecardSetup->handle($location, $this->scorecardOwnerId === '' ? null : (int) $this->scorecardOwnerId, $this->scorecardNsliTarget, $this->scorecardCostPerCloseTarget, Auth::user());
+
+        $this->reset('scorecardLocationId', 'scorecardOwnerId', 'scorecardNsliTarget', 'scorecardCostPerCloseTarget');
+        unset($this->locations);
+
+        Flux::modal('location-scorecard')->close();
+        Flux::toast(variant: 'success', text: __('Scorecard saved.'));
     }
 
     /**
@@ -641,6 +684,7 @@ new #[Title('Locations')] class extends Component {
                     <flux:table.column align="end">{{ __('Deposit') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('Target margin') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('Monthly sales target') }}</flux:table.column>
+                    <flux:table.column>{{ __('Scorecard owner') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('ZIP codes served') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('Access grants') }}</flux:table.column>
                     <flux:table.column align="end"><span class="sr-only">{{ __('Actions') }}</span></flux:table.column>
@@ -666,6 +710,7 @@ new #[Title('Locations')] class extends Component {
                                 $salesTarget = LocationSalesTarget::for($location->id, PayPeriods::now());
                             @endphp
                             <flux:table.cell align="end" class="tabular-nums" data-test="location-sales-target-{{ $location->id }}">{{ $salesTarget === null ? '—' : Money::format($salesTarget) }}</flux:table.cell>
+                            <flux:table.cell data-test="location-scorecard-owner-{{ $location->id }}">{{ $location->scorecardOwner?->name ?? __('The Owner') }}</flux:table.cell>
 
                             <flux:table.cell align="end" class="tabular-nums">{{ $location->service_postal_codes_count }}</flux:table.cell>
                             <flux:table.cell align="end" class="tabular-nums">{{ $location->access_grants_count }}</flux:table.cell>
@@ -678,6 +723,7 @@ new #[Title('Locations')] class extends Component {
                                     <flux:button size="sm" wire:click="editDeposit({{ $location->id }})" data-test="deposit-policy-{{ $location->id }}">{{ __('Deposit') }}</flux:button>
                                     <flux:button size="sm" wire:click="editTargetMargin({{ $location->id }})" data-test="target-margin-{{ $location->id }}">{{ __('Target margin') }}</flux:button>
                                     <flux:button size="sm" wire:click="editSalesTarget({{ $location->id }})" data-test="sales-target-{{ $location->id }}">{{ __('Sales target') }}</flux:button>
+                                    <flux:button size="sm" wire:click="editScorecard({{ $location->id }})" data-test="scorecard-setup-{{ $location->id }}">{{ __('Scorecard') }}</flux:button>
                                     <flux:button size="sm" wire:click="edit({{ $location->id }})">{{ __('Rename') }}</flux:button>
 
                                     @if ($location->is_active)
@@ -823,6 +869,40 @@ new #[Title('Locations')] class extends Component {
                 </flux:modal.close>
 
                 <flux:button type="submit" variant="primary" data-test="save-sales-target">{{ __('Save') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="location-scorecard" class="w-full max-w-md">
+        <form wire:submit="saveScorecard" class="flex flex-col gap-6">
+            <div>
+                <flux:heading size="lg">{{ __('Weekly scorecard') }}</flux:heading>
+                <flux:subheading>
+                    {{ __('Who owns this Location\'s scorecard, its general manager, and the targets it is measured against. The sales target and target margin are set on their own.') }}
+                </flux:subheading>
+            </div>
+
+            @php
+                $scorecardLocation = $scorecardLocationId === null ? null : $this->locations->firstWhere('id', $scorecardLocationId);
+            @endphp
+
+            <flux:select wire:model="scorecardOwnerId" :label="__('Owner')" data-test="scorecard-owner">
+                <flux:select.option value="">{{ __('The Owner, until one is chosen') }}</flux:select.option>
+                @if ($scorecardLocation !== null)
+                    @foreach (ScorecardOwnership::candidates($scorecardLocation) as $candidate)
+                        <flux:select.option :value="$candidate->id">{{ $candidate->name }}</flux:select.option>
+                    @endforeach
+                @endif
+            </flux:select>
+            <flux:input wire:model="scorecardNsliTarget" inputmode="decimal" icon="currency-dollar" :label="__('NSLI target')" :description="__('Net sales per Lead issued.')" data-test="scorecard-nsli-target" />
+            <flux:input wire:model="scorecardCostPerCloseTarget" inputmode="decimal" icon="currency-dollar" :label="__('Cost per close target')" :description="__('Marketing spend for each sale, at most.')" data-test="scorecard-cost-per-close-target" />
+
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+
+                <flux:button type="submit" variant="primary" data-test="save-scorecard-setup">{{ __('Save') }}</flux:button>
             </div>
         </form>
     </flux:modal>

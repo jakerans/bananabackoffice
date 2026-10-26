@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
@@ -21,6 +22,10 @@ use Illuminate\Support\Carbon;
  * @property string $timezone
  * @property int $target_margin_percent The gross margin a job there aims for (slice 19): 55 by default.
  * @property int $deposit_percent The share of the sold price asked for as a deposit (slice 17, step 17b): 50 by default.
+ * @property int|null $scorecard_owner_id Who owns its weekly scorecard: its general manager (slice 27, decision 187).
+ * @property int|null $nsli_target_cents Its scorecard's NSLI target.
+ * @property int|null $cost_per_close_target_cents Its scorecard's cost-per-close target.
+ * @property-read User|null $scorecardOwner
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -59,7 +64,17 @@ class Location extends Model
             'is_active' => 'boolean',
             'deposit_percent' => 'integer',
             'target_margin_percent' => 'integer',
+            'nsli_target_cents' => 'integer',
+            'cost_per_close_target_cents' => 'integer',
         ];
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function scorecardOwner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'scorecard_owner_id');
     }
 
     /**
