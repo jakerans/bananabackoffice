@@ -285,6 +285,16 @@ class Project extends Model implements HasPhotos
     }
 
     /**
+     * Its credits, refunds and write-offs, in the order asked for (slice 24).
+     *
+     * @return HasMany<ProjectBalanceAdjustment, $this>
+     */
+    public function balanceAdjustments(): HasMany
+    {
+        return $this->hasMany(ProjectBalanceAdjustment::class)->orderBy('id');
+    }
+
+    /**
      * Its warranty cases, the latest first (slice 22).
      *
      * @return HasMany<WarrantyCase, $this>

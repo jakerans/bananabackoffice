@@ -5,6 +5,7 @@ namespace App\Actions\Compensation;
 use App\Models\CompensationEntry;
 use App\Models\PayPlan;
 use App\Models\Project;
+use App\Models\ProjectBalanceAdjustment;
 use App\Models\ProjectJobCostingStep;
 use App\Models\User;
 use App\Support\Compensation\PayPeriods;
@@ -177,6 +178,33 @@ class RecordCommission
                 actor: $actor,
             );
         }
+    }
+
+    /**
+     * A balance was written off as bad debt: the salesperson's plan rate on
+     * it is taken back, in the open pay period, linked to the job (slice 24,
+     * question 7). It stands apart from the job's commission, so a later
+     * close does not pay it back.
+     */
+    public function writtenOff(Project $project, ProjectBalanceAdjustment $writeOff, ?User $actor): void
+    {
+        $plan = $this->planFor($project);
+
+        if ($plan === null || ! $plan->paysAnything()) {
+            return;
+        }
+
+        $this->recordLedgerEntry->handle(
+            (int) $project->salesperson_id,
+            (string) $project->salesperson_name,
+            $project,
+            CompensationEntry::KIND_BAD_DEBT,
+            -$plan->shareOf($writeOff->amount_cents),
+            PayPeriods::open($project->location),
+            $plan,
+            sprintf('%s written off as bad debt: %s of it is taken back. No commission is paid on money never collected.', Money::format($writeOff->amount_cents), $plan->rateWords()),
+            actor: $actor,
+        );
     }
 
     /**

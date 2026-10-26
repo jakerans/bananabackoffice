@@ -11,6 +11,7 @@ use App\Models\Appointment;
 use App\Models\AuditEvent;
 use App\Models\Project;
 use App\Models\ProjectAmbassadorObligation;
+use App\Models\ProjectBalanceAdjustment;
 use App\Models\WorkPackageWindow;
 use App\Support\Customers\CustomerActivity;
 use App\Support\Money;
@@ -60,6 +61,7 @@ new #[Title('Project')] class extends Component {
         AuditAction::WarrantyCaseOpened, AuditAction::WarrantyCaseAssigned, AuditAction::WarrantyCaseClosed,
         AuditAction::WarrantyBudgetApproved, AuditAction::WarrantyVisitScheduled, AuditAction::WarrantyCaseCompleted,
         AuditAction::WarrantyCostRecorded, AuditAction::WarrantyCostVoided,
+        AuditAction::ProjectAdjustmentRequested, AuditAction::ProjectAdjustmentApproved, AuditAction::ProjectAdjustmentDeclined, AuditAction::ProjectRefundPaid,
     ];
 
     /**
@@ -172,6 +174,16 @@ new #[Title('Project')] class extends Component {
             AuditAction::WarrantyCaseCompleted => __('Warranty case completed'),
             AuditAction::WarrantyCostRecorded => __('Warranty cost recorded'),
             AuditAction::WarrantyCostVoided => __('Warranty cost voided'),
+            AuditAction::ProjectAdjustmentRequested, AuditAction::ProjectAdjustmentApproved, AuditAction::ProjectAdjustmentDeclined, AuditAction::ProjectRefundPaid => __(':kind of :amount :what', [
+                'kind' => __(ProjectBalanceAdjustment::KINDS[(string) ($event->values_after['kind'] ?? '')] ?? ''),
+                'amount' => Money::format((int) ($event->values_after['amount_cents'] ?? 0)),
+                'what' => match ($event->action) {
+                    AuditAction::ProjectAdjustmentRequested => __('asked for'),
+                    AuditAction::ProjectAdjustmentApproved => __('approved'),
+                    AuditAction::ProjectAdjustmentDeclined => __('declined'),
+                    default => __('paid back'),
+                },
+            ]),
             AuditAction::ProjectAmbassadorObligationHandled => __('Brand Ambassador: :item, :state', [
                 'item' => __((string) ($event->values_after['item'] ?? '')),
                 'state' => mb_strtolower(__(ProjectAmbassadorObligation::STATES[(string) ($event->values_after['state'] ?? '')] ?? '')),
@@ -691,6 +703,9 @@ new #[Title('Project')] class extends Component {
     {{-- The customer's change orders (slice 18, step 18a), and their invoices and payments (slice 17), kept in view on a cancelled job too. --}}
     <livewire:pages::projects.change-orders :project="$project" :key="'change-orders-'.$project->id" />
     <livewire:pages::projects.payments :project="$project" :key="'payments-'.$project->id" />
+
+    {{-- Credits, refunds and write-offs (slice 24). --}}
+    <livewire:pages::projects.adjustments :project="$project" :key="'adjustments-'.$project->id" />
 
     {{-- The Brand Ambassador package (slice 21). --}}
     <livewire:pages::projects.ambassador :project="$project" :key="'ambassador-'.$project->id" />

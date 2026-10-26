@@ -3,6 +3,7 @@
 namespace App\Support\Projects;
 
 use App\Models\Project;
+use App\Models\ProjectBalanceAdjustment;
 use App\Models\ProjectChangeOrder;
 use App\Models\WorkPackage;
 use App\Support\Money;
@@ -32,7 +33,8 @@ final readonly class AfterPayouts
 
     public static function for(Project $project): self
     {
-        $contract = $project->sold_cents + (int) $project->changeOrders()->where('status', ProjectChangeOrder::STATUS_SIGNED)->sum('price_change_cents');
+        $contract = $project->sold_cents + (int) $project->changeOrders()->where('status', ProjectChangeOrder::STATUS_SIGNED)->sum('price_change_cents')
+            - ProjectBalanceAdjustment::creditedCents($project->id);
         $packages = WorkPackage::query()->where('project_id', $project->id)->get(['id', 'payout_cents']);
 
         return new self(

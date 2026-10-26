@@ -1,8 +1,9 @@
 # Slice 24 — Refunds, Credits and Write-offs: Plan
 
-Status: **proposed on 2026-10-25 for Jacob's review, after slice 23 was
-merged (decision 180). Nothing is built.** Written as what the
-implementation agent recommends from the plan check below.
+Status: **approved on 2026-10-25 (decision 181), with the recommendation on
+all eight questions, to be built straight through 24a, 24b and 24c and then
+reviewed. Being built.** Written as what the implementation agent
+recommended from the plan check below.
 
 ## Why this is next (the plan check)
 
@@ -86,6 +87,27 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
    collection).
 8. **Where requests wait.** *Recommended:* on the job, and on Finance >
    Receivables as "Waiting for approval", for those who may approve.
+
+## Steps 24a and 24b as built
+
+Built and committed together: credits and refunds share their record
+(`project_balance_adjustments`), their asking and deciding, and the job's new
+**Credits, refunds and write-offs** card, below Payments.
+
+- **Asking:** the job's Production Manager or a manager asks for a credit,
+  once the final invoice is recorded and while Finance has not approved the
+  job costing, up to the contract; or for a refund, up to what was
+  collected and not already asked for. Each says why.
+- **Deciding:** Finance at the Location or a manager there approves, with
+  QuickBooks' reference if there is one yet, or declines with why; never
+  whoever asked (question 2). Each step is audited and shown in the job's
+  activity.
+- **A credit, once approved,** comes off what the customer owes and off the
+  job's revenue, in the payments, the budget and the gross margin, so the
+  commission and the Production Bonus follow at the close (question 3).
+- **A refund, once approved,** is recorded paid back by Finance: how, the
+  day and the reference. Only then does it count: it is added back to what
+  the customer owes, as the money left (question 4).
 
 ## Known limits of this plan
 

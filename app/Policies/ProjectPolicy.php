@@ -58,6 +58,49 @@ class ProjectPolicy
     }
 
     /**
+     * Determine whether the user can ask for a credit or a refund (slice 24,
+     * decision 181): the job's Production Manager or a manager there.
+     */
+    public function requestAdjustment(User $user, Project $project): bool
+    {
+        return $this->managePreProduction($user, $project);
+    }
+
+    /**
+     * Determine whether the user can approve or decline a credit or a
+     * refund: Finance at the Location or a manager there (10.5). The action
+     * also refuses whoever asked.
+     */
+    public function decideAdjustment(User $user, Project $project): bool
+    {
+        return $this->view($user, $project)
+            && ($user->hasPermissionAt(Permission::FinanceAccess, $project->location) || $user->hasPermissionAt(Permission::ManageProjects, $project->location));
+    }
+
+    /**
+     * Determine whether the user can propose a bad-debt write-off, or record
+     * a refund paid: Finance at the Location (10.7).
+     */
+    public function proposeWriteOff(User $user, Project $project): bool
+    {
+        return $this->view($user, $project) && $user->hasPermissionAt(Permission::FinanceAccess, $project->location);
+    }
+
+    public function recordRefundPaid(User $user, Project $project): bool
+    {
+        return $this->proposeWriteOff($user, $project);
+    }
+
+    /**
+     * Determine whether the user can approve or decline a write-off: a
+     * manager at the Location, the GM of 10.7.
+     */
+    public function approveWriteOff(User $user, Project $project): bool
+    {
+        return $this->view($user, $project) && $user->hasPermissionAt(Permission::ManageProjects, $project->location);
+    }
+
+    /**
      * Determine whether the user can open a warranty case on the job (slice
      * 22, decision 177): anyone who can see it.
      */
