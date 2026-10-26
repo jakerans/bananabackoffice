@@ -102,6 +102,48 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 - **Urgent** items ring their owner's bell once, when they open (question
   6). Nothing is emailed or texted. No AI (question 8).
 
+## Step 26b as built
+
+- **Each person's own list** opens Home, the most serious first, then the
+  oldest (question 4). The header shows a flag with how many are open,
+  linked to the list, beside the bell; it is hidden when there are none.
+- **A manager's Locations:** anyone who manages projects at a Location, and
+  is not the Owner or Leadership, also sees every item there on Home, each
+  once, with who owns it.
+- **Company > Needs Attention** (`/company/needs-attention`, Live; Company
+  Overview access) shows the Owner and Leadership every open item, with its
+  owners. Home links to it for them instead of a Locations list.
+- **Never a record the person may not open:** an item's owner always sees
+  it; anyone else sees it only with the permission to view its Lead,
+  Project or subcontractor at its Location. A pay period is seen only by
+  people who manage pay.
+- **Feedback** (question 5): on their own list, each person marks an item
+  useful or not useful, or dismisses it with an optional reason of up to
+  500 characters, in a styled dialog. A dismissed item leaves their list
+  and the header count until it clears; found again, it is a new item and
+  comes back. Feedback is kept on the item for tuning the rules. Nobody can
+  give feedback on someone else's item.
+
+## Step 26c as built
+
+- **The morning briefing** sits at the top of Home, worked out each time it
+  opens, counting from midnight in the person's Location's time (question
+  7). No email.
+- **Everyone:** how many of their items are new, and how many cleared,
+  since this morning.
+- **A salesperson:** customers with a pending proposal; appointments to
+  confirm, from today to four days out (Sales confirms one to four days
+  before, product-architecture.md 5.3); visits waiting for them to say what
+  happened. Backoffice does not yet record a confirmation call, so every
+  standing appointment in that window counts.
+- **A Production Manager:** from their own items, jobs running over, job
+  costing late, balances to chase and Brand Ambassador items overdue.
+- **A manager** (and the Owner): at their Locations, what is Urgent, open,
+  new since this morning and cleared since this morning, each finding once
+  however many people own it.
+- Each line links to where it is worked: the Leads list, the Sales
+  calendar, or the Needs Attention list.
+
 ## Known limits of this plan
 
 - **Fifteen minutes behind:** an item opens or closes at the next sweep.

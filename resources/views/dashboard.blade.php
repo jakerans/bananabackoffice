@@ -37,7 +37,9 @@
         @endif
 
         @if (count($centers) + count($externalSurfaces) > 0)
-            {{-- Needs Attention (slice 26, step 26b): the person's own items, then a manager's Locations. --}}
+            {{-- The morning briefing (slice 26, step 26c), then Needs Attention (step 26b): the person's own items, then a manager's Locations. --}}
+            <x-attention.briefing />
+
             <livewire:pages::attention.list scope="mine" />
 
             @can(\App\Enums\Permission::CompanyOverviewAccess)
