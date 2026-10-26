@@ -72,6 +72,8 @@ enum Role: string
                 Permission::ManageAccounts,
                 // Archiving shared customer data counts only through an all-locations grant.
                 Permission::ArchiveAccounts,
+                // Marketing spend is typed in until ad platforms are connected (decision 183, question 3).
+                Permission::MarketingSpendManage,
             ],
             self::Finance => [
                 Permission::FinanceAccess,
@@ -81,6 +83,7 @@ enum Role: string
                 Permission::ViewPayouts,
                 // Finance sees and manages everyone's pay, through an all-locations grant (decision 172, question 4).
                 Permission::ManageCompensation,
+                Permission::MarketingSpendManage,
             ],
             self::LocationManager => [
                 Permission::MarketingAccess,
@@ -111,6 +114,7 @@ enum Role: string
                 Permission::RemoveNotes,
                 Permission::ViewAccounts,
                 Permission::ManageAccounts,
+                Permission::MarketingSpendManage,
             ],
             self::CallCenterAgent => [
                 Permission::MarketingAccess,

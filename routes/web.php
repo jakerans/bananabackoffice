@@ -80,6 +80,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('marketing/contact-center/queue', 'pages::marketing.call-queue')->can(Permission::WorkLeadQueue)->name('marketing.call_center.queue');
     Route::livewire('sales/calendar', 'pages::sales.calendar')->can(Permission::SalesAccess)->name('sales.calendar');
     Route::livewire('sales/performance-board', 'pages::sales.performance')->can(Permission::SalesAccess)->name('sales.performance');
+    // Marketing spend, typed in until ad platforms are connected (slice 25, step 25a).
+    Route::livewire('marketing/spend', 'pages::marketing.spend')->can(Permission::MarketingSpendManage)->name('marketing.performance.spend');
+
     // Sales > Leaderboard: company-wide, for everyone with Sales access (slice 23, step 23c).
     Route::livewire('sales/leaderboard', 'pages::sales.leaderboard')->can(Permission::SalesAccess)->name('sales.leaderboard');
 
@@ -100,8 +103,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings', NavigationLandingController::class)->name('settings.home');
 
     // Primary sections that are not built yet. Each becomes a real page when its feature is built.
-    Route::get('company/performance', SectionController::class)->defaults('section', 'company.performance')->name('company.performance');
-    Route::get('marketing/performance-board', SectionController::class)->defaults('section', 'marketing.performance')->name('marketing.performance');
+    // Company > Executive Board (slice 25, step 25c).
+    Route::livewire('company/performance', 'pages::company.performance')->can(Permission::CompanyOverviewAccess)->name('company.performance');
+    // Marketing > Performance (slice 25, step 25b).
+    Route::livewire('marketing/performance-board', 'pages::marketing.performance')->can(Permission::MarketingAccess)->name('marketing.performance');
     // Production > Performance (slice 23, step 23a).
     Route::livewire('production/performance-board', 'pages::production.performance')->can(Permission::ProductionAccess)->name('production.performance');
     // Finance > Performance (slice 23, step 23b).

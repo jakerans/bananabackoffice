@@ -290,7 +290,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | ID | Label | State |
 | --- | --- | --- |
 | `company.home` | Shortcut: opens Company Performance | — |
-| `company.performance` | Company Performance | CS, primary |
+| `company.performance` | Company Performance | **Live (slice 25, step 25c), primary:** the Executive Board, `/company/performance`, route name `company.performance`, `company_overview.access` |
 | `company.location_comparison` | Location Comparison | CS |
 | `company.reports` | Company Reports | CS |
 
@@ -299,7 +299,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | ID | Label | State |
 | --- | --- | --- |
 | `marketing.home` | Shortcut: opens Performance Board | — |
-| `marketing.performance` | Performance Board | CS, primary |
+| `marketing.performance` | Performance Board | **Live (slice 25, step 25b), primary:** `/marketing/performance-board`, route name `marketing.performance`, `marketing.access` at the Locations shown; marketing spend at `/marketing/spend`, route name `marketing.performance.spend`, `marketing.spend.manage` |
 | `marketing.call_center` | Call Center | CS |
 | `marketing.call_center.inbox` | Central Inbox | CS |
 | `shared.leads` | Leads | Live (step B3). The shared Leads page; see "Shared". It replaced the never-built `marketing.call_center.leads`. |

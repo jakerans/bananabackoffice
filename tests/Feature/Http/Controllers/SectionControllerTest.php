@@ -78,15 +78,16 @@ test('a section is forbidden in a location where the staff member lacks its perm
 test('an unbuilt primary section says it is coming soon and shows its center and location', function () {
     Location::factory()->create(['name' => 'Lakeview']);
 
-    $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
 
-    $this->actingAs($agent)
-        ->get(route('marketing.performance'))
+    // Marketing's and Company's boards are built (slice 25); Color Studio's projects are not yet.
+    $this->actingAs($owner)
+        ->get(route('color_studio.projects'))
         ->assertOk()
-        ->assertSee('Performance')
+        ->assertSee('Color Projects')
         ->assertSee('Coming soon')
-        ->assertSee('Marketing Center')
-        ->assertSee('Working in Lakeview');
+        ->assertSee('Color Studio')
+        ->assertSee('Lakeview');
 });
 
 test('the second navigation row lists the sections of the current center in order', function () {

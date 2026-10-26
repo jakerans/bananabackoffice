@@ -1,8 +1,10 @@
 # Slice 25 — Marketing Spend, Marketing Performance and the Executive Board: Plan
 
-Status: **proposed on 2026-10-26 for Jacob's review, after slice 24 was
-merged (decision 182). Nothing is built.** Written as what the
-implementation agent recommends from the plan check below.
+Status: **approved on 2026-10-26 (decision 183), with the recommendation on
+all eight questions, built straight through 25a, 25b and 25c, and merged on
+2026-10-26 (decision 184). Slice 25 is complete.** Direct ad-platform connections come last in the
+plan (decision 183). Written as what the implementation agent recommended
+from the plan check below.
 
 ## Why this is next (the plan check)
 
@@ -84,6 +86,53 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
    risk shown as counts, red when not zero. No single health score (18).
 8. **Who sees the Executive Board.** *Recommended:* Company Overview
    access, as its menu already says (Owner and Leadership).
+
+## Step 25a as built
+
+- **Marketing spend** (`marketing_spend_entries`) has its own page,
+  `/marketing/spend`, for anyone with the new `marketing.spend.manage` at a
+  Location (Owner, Leadership, Location Manager, Finance; question 3). For a
+  month that has begun, it lists the spend at the Locations shown, with the
+  total, and adds an entry: Location, Lead Source (question 2), amount and a
+  note. A wrong entry is corrected by a new one that adds or takes some
+  back, with why; nothing is ever changed. Each is audited.
+- **The monthly sales target** (`location_sales_targets`) is set in
+  Settings > Locations with **Sales target**, from a month; earlier months
+  keep the target they had (question 6). The table shows this month's.
+
+## Step 25b as built
+
+- **Marketing > Performance is live,** the page the Marketing Center opens
+  on, for one Location or all of those where the person has Marketing
+  access, and a chosen month.
+- **For each Lead Source with spend, leads, appointments or sales in the
+  month,** and in total: spend, leads received, cost per lead, appointments
+  issued, cost per appointment, sales, cost per sale, sold revenue, return
+  on spend ("$8.45 per $1") and close rate (question 5). A cost with nothing
+  to divide by is a dash.
+- **Counted as Sales > Performance counts them** (question 4): Sales'
+  own figures can now be narrowed to one Lead Source, so appointments
+  issued, sales, sold revenue and close rate (sales over Leads demoed,
+  decision 135) are the same numbers, by source. Leads count in the month
+  received.
+- Those who record spend get a **Marketing spend** button to the spend page
+  for the month shown.
+
+## Step 25c as built
+
+- **Company > Executive Board is live,** the page Company opens on, for
+  Company Overview access (Owner and Leadership; question 8), for a chosen
+  month.
+- **Each Location in a column, then the company:** sold revenue with its
+  target and **On pace**, **Behind** or **No target** against the share of
+  the target for the days gone (a finished month needs all of it); completed
+  revenue; gross margin against the Location's target margin, red when
+  below; cash collected; balances late and with Collections now; leads and
+  cost per lead; jobs at risk now, red when any (question 7). No single
+  health score.
+- **The month's top three** on the leaderboard. Each row links to its own
+  board.
+- The company's target is the Locations' targets added up (question 6).
 
 ## Known limits of this plan
 
