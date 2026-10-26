@@ -28,6 +28,10 @@ final class Visibility
             return $user->hasPermissionAcrossAllLocations(Permission::ManageCompensation);
         }
 
+        if ($item->rule === 'scorecard_missing') {
+            return $user->hasPermissionAcrossAllLocations(Permission::CompanyOverviewAccess);
+        }
+
         $location = $locations->firstWhere('id', $item->location_id);
 
         if ($location === null) {

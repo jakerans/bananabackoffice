@@ -120,6 +120,20 @@ Not in slice 27:
   the Monday it is due, that is the week's; submitted later, it includes
   the days since.
 
+## Step 27b as built
+
+- **Company > Leadership Scorecards** (`/company/leadership-scorecards`,
+  Live; Company Overview access): every active Location for a week, the
+  last that ended unless another of the last eight is chosen. Each shows
+  its owner and whether it is submitted, due or not submitted, and each KPI
+  with the status its owner chose, the actual, the target and the note. A
+  Location not submitted shows its numbers as they are now, with no status.
+  Each Location opens its own scorecard for that week.
+- **Not submitted by the end of Monday** (question 7): the exception engine
+  opens a Needs Attention item, "Scorecard not submitted", for its owner,
+  closed by itself once it is submitted. Besides its owner, only the Owner
+  and Leadership see it.
+
 ## Known limits of this plan
 
 - **Net Profit %** waits for QuickBooks.

@@ -15,9 +15,10 @@ use Carbon\CarbonImmutable;
 final class ScorecardWeek
 {
     /**
-     * The Monday of the last week that has ended at a Location.
+     * The Monday of the last week that has ended at a Location, or in the
+     * company's own time for none.
      */
-    public static function lastEnded(Location $location): CarbonImmutable
+    public static function lastEnded(?Location $location): CarbonImmutable
     {
         return self::today($location)->startOfWeek(CarbonImmutable::MONDAY)->subWeek();
     }
@@ -79,14 +80,14 @@ final class ScorecardWeek
      *
      * @return list<CarbonImmutable>
      */
-    public static function recent(Location $location, int $count = 8): array
+    public static function recent(?Location $location, int $count = 8): array
     {
         $last = self::lastEnded($location);
 
         return array_map(fn (int $back): CarbonImmutable => $last->subWeeks($back), range(0, $count - 1));
     }
 
-    private static function today(Location $location): CarbonImmutable
+    private static function today(?Location $location): CarbonImmutable
     {
         return CarbonImmutable::parse(now()->timezone(CallingHours::timezoneFor($location))->toDateString());
     }
