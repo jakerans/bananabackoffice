@@ -245,7 +245,8 @@ putting it in front of its owner (19, 18, 26). Its plan is
 [slice-26-needs-attention-plan.md](slice-26-needs-attention-plan.md).
 
 **Slice 27, Leadership Scorecards and TV Mode, is approved (2026-10-26,
-decision 187) and being built straight through its three steps.** The plan check after slice 26 found
+decision 187) and built straight through its three steps; it waits for
+Jacob's review.** The plan check after slice 26 found
 Leadership Scorecards the last Company item still Coming Soon besides
 Reports, now possible with each Location's sales target, and TV Mode
 unbuilt (17.2, 17.3, 18). Its plan is

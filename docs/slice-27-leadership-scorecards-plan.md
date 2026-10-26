@@ -2,8 +2,8 @@
 
 Status: **approved on 2026-10-26 (decision 187), with one owner per
 Location, its general manager, and Net Profit % to join once QuickBooks is
-connected; to be built straight through 27a, 27b and 27c and then reviewed.
-Being built.** Written as what the implementation agent recommended from the
+connected; built straight through 27a, 27b and 27c. Waits for Jacob's
+review; not merged.** Written as what the implementation agent recommended from the
 plan check below.
 
 ## Why this is next (the plan check)
@@ -106,7 +106,9 @@ Not in slice 27:
   target. Sold revenue shows the month's target and the share of it due by
   the week's Sunday. Its owner chooses Green, Yellow or Red for each and
   must say why for any that is not Green, up to 500 characters (question
-  5). Only a week that has ended can be submitted, once.
+  5). Only a week that has ended can be submitted, once. Each choice stays
+  in the browser until it is submitted, so choosing quickly loses nothing;
+  the note box is always there, needed for Yellow or Red.
 - **Kept as submitted** (question 6): the numbers, targets and statuses are
   stored, so later corrections to the records do not change them. Its
   owner may correct a status or note with a reason, kept in the audit

@@ -236,17 +236,13 @@ new #[Title('Scorecard')] class extends Component {
 
                         @if ($this->canSubmit)
                             <div class="flex flex-1 flex-col gap-3">
-                                <flux:radio.group wire:model.live="statuses.{{ $kpi }}" variant="segmented" size="sm" :label="__('Status')" data-test="scorecard-status-{{ $kpi }}">
+                                <flux:radio.group wire:model="statuses.{{ $kpi }}" variant="segmented" size="sm" :label="__('Status')" data-test="scorecard-status-{{ $kpi }}">
                                     @foreach (ScorecardLine::STATUSES as $value => $label)
                                         <flux:radio :value="$value" :label="__($label)" />
                                     @endforeach
                                 </flux:radio.group>
-                                <flux:error name="statuses.{{ $kpi }}" />
 
-                                @if (($statuses[$kpi] ?? ScorecardLine::GREEN) !== ScorecardLine::GREEN)
-                                    <flux:textarea wire:model="notes.{{ $kpi }}" rows="2" :label="__('Why, and what is being done')" data-test="scorecard-note-{{ $kpi }}" />
-                                @endif
-                                <flux:error name="notes.{{ $kpi }}" />
+                                <flux:textarea wire:model="notes.{{ $kpi }}" rows="2" :label="__('Why, and what is being done')" :description="__('Needed for Yellow or Red.')" data-test="scorecard-note-{{ $kpi }}" />
                             </div>
                         @endif
                     </div>
@@ -269,7 +265,7 @@ new #[Title('Scorecard')] class extends Component {
                     <flux:subheading>{{ __('Its numbers stay as they were submitted. The reason is kept in the audit trail.') }}</flux:subheading>
                 </div>
 
-                <flux:radio.group wire:model.live="correctStatus" variant="segmented" size="sm" :label="__('Status')" data-test="correct-status">
+                <flux:radio.group wire:model="correctStatus" variant="segmented" size="sm" :label="__('Status')" data-test="correct-status">
                     @foreach (ScorecardLine::STATUSES as $value => $label)
                         <flux:radio :value="$value" :label="__($label)" />
                     @endforeach
