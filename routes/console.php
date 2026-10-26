@@ -25,3 +25,7 @@ Schedule::command('backoffice:production-bonus')->dailyAt('00:30')->timezone(con
 // Reminds each Production Manager of the Brand Ambassador items due on their
 // jobs, such as a yard sign to take down (docs/slice-21-brand-ambassador-plan.md, step 21b).
 Schedule::command('backoffice:ambassador-reminders')->dailyAt('07:00')->timezone(config('app.display_timezone'))->withoutOverlapping(30);
+
+// The exception engine's sweep: what needs someone, kept as Needs Attention,
+// and what is fixed, closed (docs/slice-26-needs-attention-plan.md, step 26a).
+Schedule::command('backoffice:attention')->everyFifteenMinutes()->withoutOverlapping(10);

@@ -3707,6 +3707,45 @@ build the direct connections in last".
 2. **Next:** the plan check after a slice, and a proposed next slice, for
    his approval.
 
+## 185. Slice 26, the Exception Engine and Needs Attention, is approved and built straight through (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 26 plan: "approved, follow
+recommendations, do the entire slice in one go".
+
+1. **Slice 26 is approved** in three steps
+   ([slice-26-needs-attention-plan.md](slice-26-needs-attention-plan.md)),
+   with the recommendation on all eight questions taken as the answer:
+   - 26a, 26b, 26c, in that order;
+   - the twelve first rules, their owners and severities, as the plan's
+     table has them;
+   - exceptions are kept, swept every 15 minutes by the scheduler, and close
+     by themselves when fixed;
+   - each person sees their own, a manager every one at their Locations, the
+     Owner and Leadership all of them, never one about a record the person
+     may not open;
+   - feedback is useful, not useful or dismiss, with an optional reason; a
+     dismissed item leaves that person's list until it clears and comes
+     back;
+   - an Urgent item rings its owner's bell once; nothing is emailed or
+     texted;
+   - the morning briefing is on Home; no email;
+   - no AI in this slice.
+2. **Built without stopping between the steps,** on one branch, each step
+   committed and checked on both GitHub jobs. Nothing is merged until
+   Jacob reviews the slice.
+
+## 186. Slice 26 is merged (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 26 report: "continue".
+
+1. **Slice 26, the Exception Engine and Needs Attention, is merged** as
+   built ([slice-26-needs-attention-plan.md](slice-26-needs-attention-plan.md),
+   "Step 26a as built" to "Step 26c as built"), including counting every
+   standing appointment from today to four days out as one to confirm,
+   until a confirmation call is recorded.
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
