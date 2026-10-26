@@ -238,8 +238,8 @@ is
 [slice-25-marketing-and-executive-boards-plan.md](slice-25-marketing-and-executive-boards-plan.md).
 
 **Slice 26, the Exception Engine and Needs Attention, is approved
-(2026-10-26, decision 185) and being built straight through its three
-steps.** The plan check after slice 25 found every
+(2026-10-26, decision 185) and built straight through its three
+steps; it waits for Jacob's review.** The plan check after slice 25 found every
 Center opening on a board, but nothing gathering what needs someone and
 putting it in front of its owner (19, 18, 26). Its plan is
 [slice-26-needs-attention-plan.md](slice-26-needs-attention-plan.md).

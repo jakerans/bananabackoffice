@@ -141,7 +141,7 @@ new class extends Component {
                 @php
                     $item = $row['item'];
                 @endphp
-                <li wire:key="attention-{{ $scope }}-{{ $item->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="attention-item">
+                <li wire:key="attention-{{ $scope }}-{{ $item->id }}" class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-3" data-test="attention-item">
                     <div class="flex min-w-0 flex-1 flex-col gap-1">
                         <span class="flex flex-wrap items-center gap-2">
                             <flux:badge size="sm" :color="$colors[$item->severity] ?? 'zinc'">{{ __($item->severityLabel()) }}</flux:badge>
@@ -154,12 +154,12 @@ new class extends Component {
                     </div>
 
                     @if ($scope === 'mine')
-                        <div class="flex items-center gap-1">
+                        <div class="-ms-2 flex flex-wrap items-center gap-1 sm:ms-0 sm:shrink-0">
                             @if ($item->feedback === null)
                                 <flux:button size="xs" variant="ghost" icon="hand-thumb-up" wire:click="mark({{ $item->id }}, 'useful')" data-test="attention-useful">{{ __('Useful') }}</flux:button>
                                 <flux:button size="xs" variant="ghost" icon="hand-thumb-down" wire:click="mark({{ $item->id }}, 'not_useful')" data-test="attention-not-useful">{{ __('Not useful') }}</flux:button>
                             @else
-                                <span class="text-xs text-zinc-500">{{ __(AttentionItem::FEEDBACK[$item->feedback] ?? '') }}</span>
+                                <span class="px-2 text-xs text-zinc-500">{{ __(AttentionItem::FEEDBACK[$item->feedback] ?? '') }}</span>
                             @endif
                             <flux:button size="xs" variant="ghost" wire:click="openDismiss({{ $item->id }})" data-test="attention-dismiss">{{ __('Dismiss') }}</flux:button>
                         </div>

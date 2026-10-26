@@ -2,7 +2,7 @@
 
 Status: **approved on 2026-10-26 (decision 185), with the recommendation on
 all eight questions, to be built straight through 26a, 26b and 26c and then
-reviewed. Being built.** Written as what the implementation agent
+reviewed. Built straight through; waits for Jacob's review.** Written as what the implementation agent
 recommended from the plan check below.
 
 ## Why this is next (the plan check)
@@ -106,7 +106,8 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 
 - **Each person's own list** opens Home, the most serious first, then the
   oldest (question 4). The header shows a flag with how many are open,
-  linked to the list, beside the bell; it is hidden when there are none.
+  linked to the list, beside the bell; it is hidden when there are none,
+  and on a phone, where the header has no room and Home opens on the list.
 - **A manager's Locations:** anyone who manages projects at a Location, and
   is not the Owner or Leadership, also sees every item there on Home, each
   once, with who owns it.
