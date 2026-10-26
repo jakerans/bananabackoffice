@@ -135,6 +135,9 @@ enum AuditAction: string
     case ProjectAccuracyStrike = 'project.accuracy_strike';
     case LocationTargetMarginChanged = 'location.target_margin_changed';
     case LocationSalesTargetChanged = 'location.sales_target_changed';
+    case LocationScorecardChanged = 'location.scorecard_changed';
+    case ScorecardSubmitted = 'scorecard.submitted';
+    case ScorecardLineCorrected = 'scorecard.line_corrected';
     case MarketingSpendRecorded = 'marketing.spend_recorded';
     case ProjectAmbassadorPackageRecorded = 'project.ambassador_package_recorded';
     case ProjectAmbassadorObligationHandled = 'project.ambassador_obligation_handled';

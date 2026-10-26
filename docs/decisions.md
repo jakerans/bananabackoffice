@@ -3746,6 +3746,39 @@ recommendations, do the entire slice in one go".
 2. **Next:** the plan check after a slice, and a proposed next slice, for
    his approval.
 
+## 187. Slice 27 is approved and built straight through; QuickBooks will be connected (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 27 plan: "We are going to
+connect QuickBooks. In fact, we already have QuickBooks set up for the
+location ... Yes, one owner per location, because that's going to be the
+general manager. Other than that, approved and good to go. Go ahead and
+complete the entire slice in one go."
+
+1. **Slice 27 is approved** in three steps
+   ([slice-27-leadership-scorecards-plan.md](slice-27-leadership-scorecards-plan.md)),
+   with the recommendation on every question taken as the answer, and:
+   - **question 3:** one owner per Location's scorecard, its general
+     manager, chosen in Settings > Locations;
+   - **question 2:** Net Profit % joins the scorecard once QuickBooks is
+     connected. QuickBooks is already set up for the Location, and Jacob
+     will connect it. The connection is its own slice, proposed after this
+     one, because it needs Jacob to authorize Backoffice in QuickBooks
+     himself; this slice builds the scorecard so a KPI can be added.
+2. **Built without stopping between the steps,** on one branch, each step
+   committed and checked on both GitHub jobs. Nothing is merged until
+   Jacob reviews the slice.
+
+## 188. Slice 27 is merged (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 27 report: "continue".
+
+1. **Slice 27, Leadership Scorecards and TV Mode, is merged** as built
+   ([slice-27-leadership-scorecards-plan.md](slice-27-leadership-scorecards-plan.md),
+   "Step 27a as built" to "Step 27c as built"), including a scorecard's
+   numbers being the month so far when it is submitted.
+2. **Next:** connecting QuickBooks, proposed as its own slice (decision
+   187), for his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

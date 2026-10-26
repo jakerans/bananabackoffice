@@ -29,6 +29,7 @@ use App\Models\ProjectSize;
 use App\Models\Property;
 use App\Models\PunchItem;
 use App\Models\SalesLossReason;
+use App\Models\Scorecard;
 use App\Models\Service;
 use App\Models\Subcontractor;
 use App\Models\SubcontractorComplianceRecord;
@@ -143,6 +144,7 @@ class AppServiceProvider extends ServiceProvider
             'warranty_case' => WarrantyCase::class,
             'warranty_cost' => WarrantyCost::class,
             'marketing_spend_entry' => MarketingSpendEntry::class,
+            'scorecard' => Scorecard::class,
             'insurance_deduction_rate' => InsuranceDeductionRate::class,
         ]);
     }

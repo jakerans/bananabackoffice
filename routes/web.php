@@ -44,6 +44,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('leads/{lead}/customer', 'pages::leads.customer')->can('resolveCustomer', 'lead')->name('leads.customer');
     Route::livewire('leads/{lead}/appointments/{appointment}/report', 'pages::leads.report')->can('view', 'lead')->name('leads.report');
 
+    // A Location's weekly scorecard (slice 27, step 27a) is reached from Home and Company > Leadership Scorecards.
+    // Its owner, the Owner and Leadership may open it; the page checks.
+    Route::livewire('scorecards/{location}', 'pages::scorecards.show')->name('scorecards.show');
+
     // A Project is reached from its Lead, its customer and, later, Production's Workspace. It has no menu item
     // of its own (product-architecture.md, 6.2) and is authorized by its own location.
     Route::livewire('projects/{project}', 'pages::projects.show')->can('view', 'project')->name('projects.show');
@@ -85,6 +89,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Sales > Leaderboard: company-wide, for everyone with Sales access (slice 23, step 23c).
     Route::livewire('sales/leaderboard', 'pages::sales.leaderboard')->can(Permission::SalesAccess)->name('sales.leaderboard');
+    // The leaderboard in TV Mode (slice 27, step 27c).
+    Route::livewire('sales/leaderboard/tv', 'pages::sales.leaderboard-tv')->can(Permission::SalesAccess)->name('sales.leaderboard.tv');
 
     // Customers is one shared page too. A customer has no location: each one is authorized by
     // what the person can already see of it, never by the location that happens to be selected.
@@ -105,6 +111,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Primary sections that are not built yet. Each becomes a real page when its feature is built.
     // Company > Executive Board (slice 25, step 25c).
     Route::livewire('company/performance', 'pages::company.performance')->can(Permission::CompanyOverviewAccess)->name('company.performance');
+    // The Executive Board in TV Mode (slice 27, step 27c).
+    Route::livewire('company/performance/tv', 'pages::company.performance-tv')->can(Permission::CompanyOverviewAccess)->name('company.performance.tv');
+    // Company > Leadership Scorecards (slice 27, step 27b).
+    Route::livewire('company/leadership-scorecards', 'pages::company.leadership-scorecards')->can(Permission::CompanyOverviewAccess)->name('company.leadership_scorecards');
     // Company > Needs Attention (slice 26, step 26b).
     Route::livewire('company/needs-attention', 'pages::company.needs-attention')->can(Permission::CompanyOverviewAccess)->name('company.needs_attention');
     // Marketing > Performance (slice 25, step 25b).

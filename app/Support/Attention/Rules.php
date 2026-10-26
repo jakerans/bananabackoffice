@@ -17,6 +17,7 @@ use App\Models\ProjectBalanceAdjustment;
 use App\Models\ProjectInvoice;
 use App\Models\ProjectPayment;
 use App\Models\Proposal;
+use App\Models\Scorecard;
 use App\Models\Subcontractor;
 use App\Models\User;
 use App\Models\WarrantyCase;
@@ -27,6 +28,8 @@ use App\Support\Performance\ProductionBoard;
 use App\Support\Projects\JobCosting;
 use App\Support\Projects\Payments;
 use App\Support\Projects\RoughTimeframe;
+use App\Support\Scorecards\ScorecardOwnership;
+use App\Support\Scorecards\ScorecardWeek;
 use App\Support\Subcontractors\Compliance;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -53,6 +56,7 @@ final class Rules
         'adjustment_waiting' => 'Credit, refund or write-off waiting',
         'payment_awaiting' => 'Cash or check waiting',
         'pay_period_open' => 'Pay period not finalized',
+        'scorecard_missing' => 'Scorecard not submitted',
     ];
 
     /** A sold job's handoff is due within a day; a waiting decision within two; a pay period within five days of its end. */
@@ -85,6 +89,7 @@ final class Rules
             ...$this->adjustmentWaiting(),
             ...$this->paymentAwaiting(),
             ...$this->payPeriodOpen(),
+            ...$this->scorecardMissing(),
         ];
     }
 
@@ -447,6 +452,34 @@ final class Rules
                 PayPeriods::words($period).' is over and not finalized for payroll.',
                 route('finance.payroll', ['period' => $period]),
                 $owners,
+            ))
+            ->values()
+            ->pipe(fn (Collection $found): array => array_values($found->all()));
+    }
+
+    /**
+     * A Location's scorecard for the last week, not submitted by the end of
+     * the Monday after it (slice 27, step 27b; decision 187, question 7): its
+     * owner.
+     *
+     * @return list<Finding>
+     */
+    private function scorecardMissing(): array
+    {
+        return Location::query()
+            ->where('is_active', true)
+            ->get()
+            ->map(fn (Location $location): array => ['location' => $location, 'monday' => ScorecardWeek::lastEnded($location)])
+            ->filter(fn (array $week): bool => ScorecardWeek::isOverdue($week['location'], $week['monday'])
+                && ! Scorecard::query()->where('location_id', $week['location']->id)->whereDate('week_starts_on', $week['monday']->toDateString())->exists())
+            ->map(fn (array $week): Finding => new Finding(
+                'scorecard_missing',
+                'scorecard:'.$week['location']->id.':'.$week['monday']->toDateString(),
+                $week['location']->id,
+                AttentionItem::ATTENTION,
+                $week['location']->name.'\'s scorecard for '.ScorecardWeek::words($week['monday']).' is not submitted.',
+                route('scorecards.show', ['location' => $week['location'], 'week' => $week['monday']->toDateString()]),
+                array_values(ScorecardOwnership::owners($week['location'])->map(fn (User $user): int => $user->id)->all()),
             ))
             ->values()
             ->pipe(fn (Collection $found): array => array_values($found->all()));
