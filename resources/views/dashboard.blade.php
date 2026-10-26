@@ -37,6 +37,19 @@
         @endif
 
         @if (count($centers) + count($externalSurfaces) > 0)
+            {{-- Needs Attention (slice 26, step 26b): the person's own items, then a manager's Locations. --}}
+            <livewire:pages::attention.list scope="mine" />
+
+            @can(\App\Enums\Permission::CompanyOverviewAccess)
+                <flux:link :href="route('company.needs_attention')" wire:navigate class="-mt-4 text-sm" data-test="attention-company-link">{{ __('See everything that needs attention, company-wide') }}</flux:link>
+            @else
+                @if (auth()->user()->locationsWhere(\App\Enums\Permission::ManageProjects)->isNotEmpty())
+                    <livewire:pages::attention.list scope="locations" />
+                @endif
+            @endcan
+        @endif
+
+        @if (count($centers) + count($externalSurfaces) > 0)
             @if (count($centers) > 0)
                 <section class="flex flex-col gap-3" aria-labelledby="centers-heading">
                     <h2 id="centers-heading" class="font-nav text-sm font-bold tracking-wide text-zinc-500 uppercase">

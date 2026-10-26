@@ -30,6 +30,8 @@
 
                     <x-shell.location-switcher :shell="$shell" />
 
+                    <x-shell.attention-link />
+
                     <livewire:pages::notifications.bell />
 
                     <x-desktop-user-menu />

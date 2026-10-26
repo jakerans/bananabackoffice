@@ -202,7 +202,7 @@ class Navigation
             children: [
                 new NavigationItem('company.performance', 'Executive Board', $overviewPermissions, NavigationState::Live, route: 'company.performance'),
                 new NavigationItem('company.leadership_scorecards', 'Leadership Scorecards', $overviewPermissions),
-                new NavigationItem('company.needs_attention', 'Needs Attention', $overviewPermissions),
+                new NavigationItem('company.needs_attention', 'Needs Attention', $overviewPermissions, NavigationState::Live, route: 'company.needs_attention'),
                 new NavigationItem(
                     id: 'settings.locations',
                     label: 'Locations',

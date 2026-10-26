@@ -105,6 +105,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Primary sections that are not built yet. Each becomes a real page when its feature is built.
     // Company > Executive Board (slice 25, step 25c).
     Route::livewire('company/performance', 'pages::company.performance')->can(Permission::CompanyOverviewAccess)->name('company.performance');
+    // Company > Needs Attention (slice 26, step 26b).
+    Route::livewire('company/needs-attention', 'pages::company.needs-attention')->can(Permission::CompanyOverviewAccess)->name('company.needs_attention');
     // Marketing > Performance (slice 25, step 25b).
     Route::livewire('marketing/performance-board', 'pages::marketing.performance')->can(Permission::MarketingAccess)->name('marketing.performance');
     // Production > Performance (slice 23, step 23a).

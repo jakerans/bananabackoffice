@@ -26,7 +26,7 @@ explicitly maps it to an existing working route.
 | Company | Keep root ID `company`, route name `company.home` and `/company`. Relabel Company Overview to Company. | Its entry permission becomes the union of the existing `company.overview.access`, `settings.locations.manage`, `settings.users.manage` and `settings.lead_sales_lists.manage` gates so each existing Settings-only user can still enter the containing Center. This is composition of current grants, not a new grant. |
 | Company → Executive Board | Keep `company.performance` and `/company/performance`; change only the label. | Existing `company.overview.access`; current primary coming-soon page. |
 | Company → Leadership Scorecards | Add `company.leadership_scorecards`; no route. | Coming soon; `company.overview.access`. |
-| Company → Needs Attention | Add `company.needs_attention`; no route. | Coming soon; `company.overview.access`. |
+| Company → Needs Attention | Add `company.needs_attention`; `/company/needs-attention`, route name `company.needs_attention` (slice 26, step 26b). | Live; `company.overview.access`. |
 | Company → Locations | Reparent `settings.locations` as a direct Company child; keep `/settings/locations`. | Live; existing `settings.locations.manage`. |
 | Company → Reports | Keep `company.reports`; no route. | Coming soon; `company.overview.access`. |
 | Company → Settings | Reparent the existing `settings` node under Company. Keep `settings.users`, `settings.lists` and the unbuilt Settings children beneath it; `settings.locations` moves to the direct Locations item above. Preserve `settings`, every `settings.*` ID, `settings.home`, `/settings` and every live `/settings/*` URL. | The nested entry keeps the current union of Settings permissions. `/settings` still lands on the first working Settings destination the user may open, including the sibling Locations item. |
@@ -291,6 +291,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | --- | --- | --- |
 | `company.home` | Shortcut: opens Company Performance | — |
 | `company.performance` | Company Performance | **Live (slice 25, step 25c), primary:** the Executive Board, `/company/performance`, route name `company.performance`, `company_overview.access` |
+| `company.needs_attention` | Needs Attention | **Live (slice 26, step 26b):** every open item of the exception engine, `/company/needs-attention`, route name `company.needs_attention`, `company_overview.access` |
 | `company.location_comparison` | Location Comparison | CS |
 | `company.reports` | Company Reports | CS |
 

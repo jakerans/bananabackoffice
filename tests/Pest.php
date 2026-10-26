@@ -19,6 +19,7 @@ use App\Enums\ContactAttemptDisposition;
 use App\Models\Account;
 use App\Models\Appointment;
 use App\Models\AppointmentCancellationReason;
+use App\Models\AttentionItem;
 use App\Models\ContactAttempt;
 use App\Models\ContactCenterSettings;
 use App\Models\Lead;
@@ -500,4 +501,24 @@ function handoffAnswers(array $with = []): array
 function completeHandoff(Project $project, User $by, array $with = []): ProjectHandoff
 {
     return app(CompleteProjectHandoff::class)->handle($project, handoffAnswers($with), $by);
+}
+
+/**
+ * An item of Needs Attention as the sweep keeps it, for the tests that are
+ * not about the rules: open since now, at Attention, unless told otherwise.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function attentionItem(User $user, ?Location $location, array $attributes): AttentionItem
+{
+    return tap((new AttentionItem)->forceFill([
+        'user_id' => $user->id,
+        'location_id' => $location?->id,
+        'severity' => AttentionItem::ATTENTION,
+        'title' => 'Something needs attention',
+        'url' => '/projects',
+        'opened_at' => now(),
+        'last_seen_at' => now(),
+        ...$attributes,
+    ]))->save();
 }
