@@ -17,6 +17,7 @@ use App\Models\ProjectBalanceAdjustment;
 use App\Models\ProjectInvoice;
 use App\Models\ProjectPayment;
 use App\Models\Proposal;
+use App\Models\QuickBooksConnection;
 use App\Models\Scorecard;
 use App\Models\Subcontractor;
 use App\Models\User;
@@ -57,6 +58,7 @@ final class Rules
         'payment_awaiting' => 'Cash or check waiting',
         'pay_period_open' => 'Pay period not finalized',
         'scorecard_missing' => 'Scorecard not submitted',
+        'quickbooks_reconnect' => 'QuickBooks needs connecting again',
     ];
 
     /** A sold job's handoff is due within a day; a waiting decision within two; a pay period within five days of its end. */
@@ -90,6 +92,7 @@ final class Rules
             ...$this->paymentAwaiting(),
             ...$this->payPeriodOpen(),
             ...$this->scorecardMissing(),
+            ...$this->quickBooksReconnect(),
         ];
     }
 
@@ -480,6 +483,42 @@ final class Rules
                 $week['location']->name.'\'s scorecard for '.ScorecardWeek::words($week['monday']).' is not submitted.',
                 route('scorecards.show', ['location' => $week['location'], 'week' => $week['monday']->toDateString()]),
                 array_values(ScorecardOwnership::owners($week['location'])->map(fn (User $user): int => $user->id)->all()),
+            ))
+            ->values()
+            ->pipe(fn (Collection $found): array => array_values($found->all()));
+    }
+
+    /**
+     * A Location's QuickBooks connection that QuickBooks refused to renew, or
+     * soon will (slice 28, step 28a; decision 189): whoever manages
+     * Locations, who can connect it again. Urgent once refused.
+     *
+     * @return list<Finding>
+     */
+    private function quickBooksReconnect(): array
+    {
+        $owners = $this->staff()
+            ->filter(fn (User $user): bool => $user->hasPermissionAcrossAllLocations(Permission::ManageLocations))
+            ->map(fn (User $user): int => $user->id)
+            ->values()
+            ->pipe(fn (Collection $found): array => array_values($found->all()));
+
+        if ($owners === []) {
+            return [];
+        }
+
+        return QuickBooksConnection::query()
+            ->with('location')
+            ->get()
+            ->filter(fn (QuickBooksConnection $connection): bool => $connection->needsReconnecting())
+            ->map(fn (QuickBooksConnection $connection): Finding => new Finding(
+                'quickbooks_reconnect',
+                'quickbooks:'.$connection->location_id,
+                $connection->location_id,
+                $connection->failed_at !== null ? AttentionItem::URGENT : AttentionItem::ATTENTION,
+                'QuickBooks needs connecting again for '.$connection->location->name.'.',
+                route('settings.integrations'),
+                $owners,
             ))
             ->values()
             ->pipe(fn (Collection $found): array => array_values($found->all()));

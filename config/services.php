@@ -28,6 +28,15 @@ return [
         'token' => env('MAPBOX_ACCESS_TOKEN'),
     ],
 
+    // QuickBooks Online (slice 28, decision 189): one app registered with Intuit, connected
+    // to each Location's own company. Its keys stay on the server. Left empty, connecting
+    // is switched off. "sandbox" reads Intuit's test companies; "production" real ones.
+    'quickbooks' => [
+        'client_id' => env('QUICKBOOKS_CLIENT_ID'),
+        'client_secret' => env('QUICKBOOKS_CLIENT_SECRET'),
+        'environment' => env('QUICKBOOKS_ENVIRONMENT', 'sandbox'),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

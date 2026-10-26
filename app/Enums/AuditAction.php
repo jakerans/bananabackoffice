@@ -136,6 +136,8 @@ enum AuditAction: string
     case LocationTargetMarginChanged = 'location.target_margin_changed';
     case LocationSalesTargetChanged = 'location.sales_target_changed';
     case LocationScorecardChanged = 'location.scorecard_changed';
+    case QuickBooksConnected = 'location.quickbooks_connected';
+    case QuickBooksDisconnected = 'location.quickbooks_disconnected';
     case ScorecardSubmitted = 'scorecard.submitted';
     case ScorecardLineCorrected = 'scorecard.line_corrected';
     case MarketingSpendRecorded = 'marketing.spend_recorded';

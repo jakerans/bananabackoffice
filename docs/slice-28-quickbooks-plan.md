@@ -1,8 +1,10 @@
 # Slice 28 — QuickBooks Connection and Net Profit: Plan
 
-Status: **proposed on 2026-10-26, waiting for Jacob's approval. Nothing is
-built.** Written as what the implementation agent recommends from the plan
-check below.
+Status: **approved on 2026-10-26 (decision 189): each Location has its own
+QuickBooks company and connects on its own; staging uses Intuit sandbox
+companies. To be built straight through 28a, 28b and 28c and then reviewed.
+Being built.** Written as what the implementation agent recommended from the
+plan check below.
 
 ## Why this is next (the plan check)
 
@@ -89,6 +91,35 @@ steps when the step is built.
    encrypted and never shown or logged; Backoffice asks QuickBooks for
    accounting access only, and uses it only to read reports. Disconnecting
    removes them.
+
+## Step 28a as built
+
+- **Settings > Integrations** (`/settings/integrations`, Live; whoever
+  manages Locations): each active Location with its QuickBooks company, or
+  "Not connected". "Connect" sends the Owner to QuickBooks' own page to sign
+  in with that Location's QuickBooks login and approve Backoffice; QuickBooks
+  sends them back and the company's name is shown. "Connect again" replaces
+  the approval; "Disconnect", after a styled confirmation, tells QuickBooks
+  to forget it and removes it from Backoffice.
+- **One company, one Location** (decision 189): a company already
+  connected to another Location is refused.
+- **Kept safe** (question 8): the keys QuickBooks gives are stored
+  encrypted, never shown, logged or sent anywhere but QuickBooks. A one-time
+  code ties QuickBooks' answer to the person and Location that asked, so an
+  approval started anywhere else connects nothing. Backoffice asks only for
+  accounting access and only reads (question 3).
+- **Renewing:** Backoffice renews the keys itself before they run out and
+  keeps the newest QuickBooks gives. If QuickBooks refuses, or the approval
+  is within 14 days of ending, the exception engine opens "QuickBooks needs
+  connecting again" for whoever manages Locations: Urgent once refused.
+- **Switched off until the keys are in:** with no Intuit app keys on the
+  server, the page says so and offers no Connect. The server reads Intuit's
+  test companies unless it is set to production (question 4).
+- **For Jacob, once:** the Intuit app needs this Redirect URI, for each
+  server it is used on: the server's address followed by
+  `/settings/integrations/quickbooks/callback`. The server's settings need
+  `QUICKBOOKS_CLIENT_ID`, `QUICKBOOKS_CLIENT_SECRET` and, on staging,
+  `QUICKBOOKS_ENVIRONMENT=sandbox`.
 
 ## Known limits of this plan
 
