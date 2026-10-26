@@ -253,7 +253,8 @@ unbuilt (17.2, 17.3, 18). Its plan is
 [slice-27-leadership-scorecards-plan.md](slice-27-leadership-scorecards-plan.md).
 
 **Slice 28, the QuickBooks Connection and Net Profit, is approved
-(2026-10-26, decision 189) and being built straight through its three steps.** Jacob asked for QuickBooks to
+(2026-10-26, decision 189) and built straight through its three steps; it
+waits for Jacob's review.** Jacob asked for QuickBooks to
 be connected (decision 187); the plan check after slice 27 found net profit
 missing from every view of the business's health (9.1, 17.2, 17.3, 18) and
 reading QuickBooks the first step of its integration (9.8). Its plan is

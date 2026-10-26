@@ -2,8 +2,8 @@
 
 Status: **approved on 2026-10-26 (decision 189): each Location has its own
 QuickBooks company and connects on its own; staging uses Intuit sandbox
-companies. To be built straight through 28a, 28b and 28c and then reviewed.
-Being built.** Written as what the implementation agent recommended from the
+companies. Built straight through 28a, 28b and 28c. Waits for Jacob's
+review; not merged.** Written as what the implementation agent recommended from the
 plan check below.
 
 ## Why this is next (the plan check)

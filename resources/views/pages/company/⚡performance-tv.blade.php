@@ -67,7 +67,7 @@ new #[Title('Executive Board')] #[Layout('layouts::tv')] class extends Performan
                 </div>
                 <dl class="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
                     <div>
-                        <dt class="text-base text-white/60">{{ __('Gross margin') }}</dt>
+                        <dt class="text-base text-white/60">{{ __('Margin') }}</dt>
                         @php
                             $belowTarget = $column['marginPercent'] !== null && $column['targetMargin'] !== null && $column['marginPercent'] < $column['targetMargin'];
                         @endphp
