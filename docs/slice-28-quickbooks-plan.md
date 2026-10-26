@@ -2,8 +2,8 @@
 
 Status: **approved on 2026-10-26 (decision 189): each Location has its own
 QuickBooks company and connects on its own; staging uses Intuit sandbox
-companies. Built straight through 28a, 28b and 28c. Waits for Jacob's
-review; not merged.** Written as what the implementation agent recommended from the
+companies. Built straight through 28a, 28b and 28c, and merged on
+2026-10-26 (decision 190). Slice 28 is complete.** Written as what the implementation agent recommended from the
 plan check below.
 
 ## Why this is next (the plan check)

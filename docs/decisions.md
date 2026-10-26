@@ -3802,6 +3802,21 @@ account. continue".
    committed and checked on both GitHub jobs. Nothing is merged until
    Jacob reviews the slice.
 
+## 190. Slice 28 is merged (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 28 report, after creating the
+Intuit app and putting its development keys into staging's settings
+himself: "continue".
+
+1. **Slice 28, the QuickBooks Connection and Net Profit, is merged** as
+   built ([slice-28-quickbooks-plan.md](slice-28-quickbooks-plan.md),
+   "Step 28a as built" to "Step 28c as built").
+2. **One Intuit app serves every Location.** Each Location's company
+   connects to it on its own, signed in with that company's login; a new
+   Location needs no new app.
+3. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
