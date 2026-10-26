@@ -1,8 +1,9 @@
 # Slice 26 — The Exception Engine and Needs Attention: Plan
 
-Status: **proposed on 2026-10-26 for Jacob's review, after slice 25 was
-merged (decision 184). Nothing is built.** Written as what the
-implementation agent recommends from the plan check below.
+Status: **approved on 2026-10-26 (decision 185), with the recommendation on
+all eight questions, to be built straight through 26a, 26b and 26c and then
+reviewed. Being built.** Written as what the implementation agent
+recommended from the plan check below.
 
 ## Why this is next (the plan check)
 
@@ -84,6 +85,22 @@ Each has a recommendation. "Follow your recommendations" is a complete answer.
 7. **The briefing.** *Recommended:* on Home, every time it is opened,
    counting from that morning; no email.
 8. **AI.** *Recommended:* none in this slice.
+
+## Step 26a as built
+
+- **The twelve rules** of the table above read the records Backoffice keeps
+  (question 2). Two narrowings: a pending proposal past its validity counts
+  only while its Lead is still with Sales; a subcontractor's compliance
+  counts only while they are Active. A job with no Production Manager goes
+  to the Location's managers.
+- **Kept** (`attention_items`; question 3): each finding is an item for each
+  of its owners, with its rule, what it is about, its Location, severity,
+  words and link, when first and last seen. `backoffice:attention` sweeps
+  every 15 minutes: it opens what is new, keeps what is still found up to
+  date, and closes what is no longer found, because it is fixed. Found again
+  later, it is a new item.
+- **Urgent** items ring their owner's bell once, when they open (question
+  6). Nothing is emailed or texted. No AI (question 8).
 
 ## Known limits of this plan
 
