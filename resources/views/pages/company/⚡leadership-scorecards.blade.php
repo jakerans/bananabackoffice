@@ -134,5 +134,5 @@ new #[Title('Leadership Scorecards')] class extends Component {
         </flux:table>
     </div>
 
-    <flux:text class="text-sm">{{ __('Week of :week. Each number is the month so far; a submitted scorecard keeps the numbers it was submitted with. Net Profit % joins once QuickBooks is connected.', ['week' => ScorecardWeek::words($monday)]) }}</flux:text>
+    <flux:text class="text-sm">{{ __('Week of :week. Each number is the month so far; a submitted scorecard keeps the numbers it was submitted with. Net Profit % is as each Location\'s QuickBooks last reported it.', ['week' => ScorecardWeek::words($monday)]) }}</flux:text>
 </section>

@@ -138,6 +138,19 @@ steps when the step is built.
   Locations together. "Refresh now" reads this month and last month at
   once.
 
+## Step 28c as built
+
+- **The scorecard's fifth KPI:** Net Profit %, after Gross Profit %, is the
+  Location's net income over its income as its QuickBooks last reported
+  them for the month. Its target, a whole percent, is set with the other
+  scorecard targets in Settings > Locations. Scorecards submitted before
+  this keep their four KPIs.
+- **The Executive Board** shows each Location's Net Profit % with its net
+  income, and the company's, adding up the Locations whose QuickBooks has
+  been read (decision 189). Its TV view shows it beside gross margin, cash
+  and jobs at risk.
+- **A Location not read** shows "—" and does not count in the company's.
+
 ## Known limits of this plan
 
 - **Live keys need Intuit's questionnaire,** which only Jacob can answer.

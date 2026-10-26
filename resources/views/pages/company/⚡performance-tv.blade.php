@@ -65,13 +65,17 @@ new #[Title('Executive Board')] #[Layout('layouts::tv')] class extends Performan
                         <span class="rounded px-2 py-0.5 text-base font-bold uppercase {{ $paceColors[$column['pace']] }}">{{ $paceWords[$column['pace']] }}</span>
                     </p>
                 </div>
-                <dl class="grid grid-cols-3 gap-3 text-center">
+                <dl class="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
                     <div>
                         <dt class="text-base text-white/60">{{ __('Gross margin') }}</dt>
                         @php
                             $belowTarget = $column['marginPercent'] !== null && $column['targetMargin'] !== null && $column['marginPercent'] < $column['targetMargin'];
                         @endphp
                         <dd @class(['font-nav text-3xl font-bold tabular-nums', 'text-rose-400' => $belowTarget])>{{ $percent($column['marginPercent']) }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-base text-white/60">{{ __('Net profit') }}</dt>
+                        <dd @class(['font-nav text-3xl font-bold tabular-nums', 'text-rose-400' => ($column['netProfit'] ?? 0) < 0])>{{ $column['netProfit'] === null ? '—' : $percent($column['netProfit'] / 100) }}</dd>
                     </div>
                     <div>
                         <dt class="text-base text-white/60">{{ __('Cash') }}</dt>
