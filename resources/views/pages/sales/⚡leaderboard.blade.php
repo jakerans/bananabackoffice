@@ -81,9 +81,12 @@ new #[Title('Leaderboard')] class extends Component {
         $previous = SalesLeaderboard::words($this->kind, SalesLeaderboard::previous($this->kind, $this->start));
     @endphp
 
-    <div>
-        <flux:heading size="xl" level="1">{{ __('Leaderboard') }}</flux:heading>
-        <flux:subheading>{{ __('Residential sold revenue, company-wide, by salesperson. Corrections come off in the period they are made.') }}</flux:subheading>
+    <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <flux:heading size="xl" level="1">{{ __('Leaderboard') }}</flux:heading>
+            <flux:subheading>{{ __('Residential sold revenue, company-wide, by salesperson. Corrections come off in the period they are made.') }}</flux:subheading>
+        </div>
+        <flux:button icon="tv" :href="route('sales.leaderboard.tv')" data-test="enter-tv">{{ __('Enter TV Mode') }}</flux:button>
     </div>
 
     <flux:radio.group wire:model.live="period" variant="segmented" class="max-w-md" data-test="leaderboard-period">

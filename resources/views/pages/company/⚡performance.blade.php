@@ -47,11 +47,14 @@ new #[Title('Executive Board')] class extends PerformanceBoard {
             <flux:heading size="xl" level="1">{{ __('Executive Board') }}</flux:heading>
             <flux:subheading>{{ __('Each Location\'s key numbers side by side, each with its own status. Net profit stays in QuickBooks.') }}</flux:subheading>
         </div>
-        <flux:select wire:model.live="month" :label="__('Month')" class="max-w-xs" data-test="executive-month">
-            @foreach ($this->months as $option)
-                <flux:select.option :value="$option['value']" wire:key="month-{{ $option['value'] }}">{{ $option['label'] }}</flux:select.option>
-            @endforeach
-        </flux:select>
+        <div class="flex flex-wrap items-end gap-3">
+            <flux:select wire:model.live="month" :label="__('Month')" class="max-w-xs" data-test="executive-month">
+                @foreach ($this->months as $option)
+                    <flux:select.option :value="$option['value']" wire:key="month-{{ $option['value'] }}">{{ $option['label'] }}</flux:select.option>
+                @endforeach
+            </flux:select>
+            <flux:button icon="tv" :href="route('company.performance.tv')" data-test="enter-tv">{{ __('Enter TV Mode') }}</flux:button>
+        </div>
     </div>
 
     <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="executive-kpis">

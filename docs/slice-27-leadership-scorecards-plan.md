@@ -134,6 +134,26 @@ Not in slice 27:
   closed by itself once it is submitted. Besides its owner, only the Owner
   and Leadership see it.
 
+## Step 27c as built
+
+- **"Enter TV Mode"** on the Executive Board and the Sales leaderboard
+  opens each full-page at `/company/performance/tv` and
+  `/sales/leaderboard/tv`, with the same access as the board (question 8).
+- **For a screen across a room:** dark, large type, no menus or controls
+  besides "Exit TV Mode", and colored status blocks; it refreshes itself
+  every five minutes and says when it last did.
+- **The Executive Board** shows this month's sold revenue against plan with
+  its pace, gross margin, cash and jobs at risk for each Location and the
+  company; the leaderboard's top three; and the five most serious Needs
+  Attention items.
+- **The leaderboard** shows this month's top ten, the leader highlighted,
+  the defending champion marked, and the five most serious Needs Attention
+  items.
+- **Needs Attention on a TV** is the widest list the signed-in person may
+  see: everything for the Owner and Leadership, their Locations' for a
+  manager, or else their own. A TV signed in as a salesperson shows only
+  that salesperson's.
+
 ## Known limits of this plan
 
 - **Net Profit %** waits for QuickBooks.

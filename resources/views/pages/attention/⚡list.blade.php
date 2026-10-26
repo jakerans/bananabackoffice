@@ -2,9 +2,8 @@
 
 use App\Enums\Permission;
 use App\Models\AttentionItem;
-use App\Models\Location;
+use App\Support\Attention\AttentionList;
 use App\Support\Attention\Rules;
-use App\Support\Attention\Visibility;
 use Flux\Flux;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -53,29 +52,7 @@ new class extends Component {
     #[Computed]
     public function rows(): Collection
     {
-        $user = Auth::user();
-        $query = AttentionItem::query()->whereNull('closed_at')->with(['user', 'location']);
-
-        if ($this->scope === 'mine') {
-            $query->where('user_id', $user->id)->where(fn ($open) => $open->whereNull('feedback')->orWhere('feedback', '!=', AttentionItem::DISMISSED));
-        } elseif ($this->scope === 'locations') {
-            $query->whereIn('location_id', $user->locationsWhere(Permission::ManageProjects)->modelKeys());
-        }
-
-        $locations = Location::query()->get();
-
-        return $query->get()
-            ->filter(fn (AttentionItem $item): bool => Visibility::allows($user, $item, $locations))
-            ->groupBy(fn (AttentionItem $item): string => $item->rule.'|'.$item->subject_key)
-            ->map(fn (Collection $items): array => [
-                'item' => $items->firstWhere('user_id', $user->id) ?? $items->first(),
-                'owners' => $items->map(fn (AttentionItem $item): string => $item->user->name)->unique()->sort()->values()->all(),
-            ])
-            ->sortBy([
-                fn (array $a, array $b): int => $a['item']->severityRank() <=> $b['item']->severityRank(),
-                fn (array $a, array $b): int => $a['item']->opened_at <=> $b['item']->opened_at,
-            ])
-            ->values();
+        return AttentionList::rows(Auth::user(), $this->scope);
     }
 
     public function mark(int $itemId, string $feedback): void
