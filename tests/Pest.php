@@ -31,6 +31,7 @@ use App\Models\ProjectHandoff;
 use App\Models\ProjectSize;
 use App\Models\Property;
 use App\Models\Proposal;
+use App\Models\QuickBooksConnection;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\Appointments\BookingResult;
@@ -521,4 +522,48 @@ function attentionItem(User $user, ?Location $location, array $attributes): Atte
         'last_seen_at' => now(),
         ...$attributes,
     ]))->save();
+}
+
+/**
+ * A Location connected to its QuickBooks company, with keys good for an
+ * hour, for the tests that are not about connecting.
+ */
+function connectQuickBooksFor(Location $location, string $realmId): QuickBooksConnection
+{
+    config(['services.quickbooks' => ['client_id' => 'test-client', 'client_secret' => 'test-secret', 'environment' => 'sandbox']]);
+
+    return tap((new QuickBooksConnection)->forceFill([
+        'location_id' => $location->id,
+        'realm_id' => $realmId,
+        'company_name' => 'Banana Painting '.$location->name,
+        'access_token' => 'access-'.$realmId,
+        'refresh_token' => 'refresh-'.$realmId,
+        'access_token_expires_at' => now()->addHour(),
+        'refresh_token_expires_at' => now()->addDays(100),
+        'connected_at' => now(),
+    ]))->save();
+}
+
+/**
+ * QuickBooks' Profit and Loss report as it sends it, with the totals given in dollars.
+ *
+ * @return array<string, mixed>
+ */
+function quickBooksProfitAndLoss(string $income, string $costOfGoods, string $expenses, string $net): array
+{
+    $section = fn (string $group, string $title, string $total): array => ['type' => 'Section', 'group' => $group, 'Header' => ['ColData' => [['value' => $title], ['value' => '']]], 'Rows' => ['Row' => [['type' => 'Data', 'ColData' => [['value' => 'An account', 'id' => '1'], ['value' => $total]]]]], 'Summary' => ['ColData' => [['value' => 'Total '.$title], ['value' => $total]]]];
+    $netOperating = number_format((float) $income - (float) $costOfGoods - (float) $expenses, 2, '.', '');
+
+    return [
+        'Header' => ['ReportName' => 'ProfitAndLoss', 'ReportBasis' => 'Accrual', 'Currency' => 'USD'],
+        'Columns' => ['Column' => [['ColTitle' => '', 'ColType' => 'Account'], ['ColTitle' => 'Total', 'ColType' => 'Money']]],
+        'Rows' => ['Row' => [
+            $section('Income', 'Income', $income),
+            $section('COGS', 'Cost of Goods Sold', $costOfGoods),
+            ['type' => 'Section', 'group' => 'GrossProfit', 'Summary' => ['ColData' => [['value' => 'Gross Profit'], ['value' => number_format((float) $income - (float) $costOfGoods, 2, '.', '')]]]],
+            $section('Expenses', 'Expenses', $expenses),
+            ['type' => 'Section', 'group' => 'NetOperatingIncome', 'Summary' => ['ColData' => [['value' => 'Net Operating Income'], ['value' => $netOperating]]]],
+            ['type' => 'Section', 'group' => 'NetIncome', 'Summary' => ['ColData' => [['value' => 'Net Income'], ['value' => $net]]]],
+        ]],
+    ];
 }

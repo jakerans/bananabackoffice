@@ -29,3 +29,7 @@ Schedule::command('backoffice:ambassador-reminders')->dailyAt('07:00')->timezone
 // The exception engine's sweep: what needs someone, kept as Needs Attention,
 // and what is fixed, closed (docs/slice-26-needs-attention-plan.md, step 26a).
 Schedule::command('backoffice:attention')->everyFifteenMinutes()->withoutOverlapping(10);
+
+// Each Location's profit and loss from its QuickBooks company, this month and last
+// (slice 28, step 28b; decision 189, question 6). Finance can also read it now.
+Schedule::command('backoffice:quickbooks')->dailyAt('04:30')->timezone(config('app.display_timezone'))->withoutOverlapping(30);

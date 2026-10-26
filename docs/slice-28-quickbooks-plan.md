@@ -121,6 +121,23 @@ steps when the step is built.
   `QUICKBOOKS_CLIENT_ID`, `QUICKBOOKS_CLIENT_SECRET` and, on staging,
   `QUICKBOOKS_ENVIRONMENT=sandbox`.
 
+## Step 28b as built
+
+- **Read from QuickBooks** (question 5): each connected Location's Profit
+  and Loss report for a month so far, in its own calendar, on the accrual
+  basis: QuickBooks' own totals for income, cost of goods sold, expenses,
+  net operating income and net income. Backoffice adds nothing up again.
+  Read again, a month's numbers replace what was read before, with when.
+- **Every night at 4:30** (question 6), `backoffice:quickbooks` reads this
+  month and last month for every connected Location. A Location
+  QuickBooks cannot answer for is skipped and named; the rest are read. On
+  a server without Intuit's keys it reads nothing.
+- **Finance > Performance** (question 7: Finance and the Owner) shows each
+  Location's profit and loss for the chosen month, its net profit % and
+  when it was read, or "Not connected" or "Not read yet", and the shown
+  Locations together. "Refresh now" reads this month and last month at
+  once.
+
 ## Known limits of this plan
 
 - **Live keys need Intuit's questionnaire,** which only Jacob can answer.
