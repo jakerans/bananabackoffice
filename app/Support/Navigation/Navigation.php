@@ -394,7 +394,13 @@ class Navigation
                 new NavigationItem('settings.services', 'Services and Products', $permissions),
                 new NavigationItem('settings.pricing', 'Pricing Settings', $permissions),
                 new NavigationItem('settings.templates', 'Templates', $permissions),
-                new NavigationItem('settings.integrations', 'Integrations', $permissions),
+                new NavigationItem(
+                    id: 'settings.integrations',
+                    label: 'Integrations',
+                    permissions: [Permission::ManageLocations],
+                    state: NavigationState::Live,
+                    route: 'settings.integrations',
+                ),
                 new NavigationItem('settings.audit_log', 'Audit Log', $permissions),
             ],
         );

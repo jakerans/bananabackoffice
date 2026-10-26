@@ -45,7 +45,7 @@ new #[Title('Executive Board')] class extends PerformanceBoard {
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
             <flux:heading size="xl" level="1">{{ __('Executive Board') }}</flux:heading>
-            <flux:subheading>{{ __('Each Location\'s key numbers side by side, each with its own status. Net profit stays in QuickBooks.') }}</flux:subheading>
+            <flux:subheading>{{ __('Each Location\'s key numbers side by side, each with its own status. Net profit is as each Location\'s QuickBooks last reported it.') }}</flux:subheading>
         </div>
         <div class="flex flex-wrap items-end gap-3">
             <flux:select wire:model.live="month" :label="__('Month')" class="max-w-xs" data-test="executive-month">
@@ -95,6 +95,17 @@ new #[Title('Executive Board')] class extends PerformanceBoard {
                                 <span class="block font-semibold {{ $belowTarget ? 'text-rose-700' : 'text-ink' }}">{{ $percent($column['marginPercent']) }}</span>
                                 @if ($column['targetMargin'] !== null)
                                     <span class="block text-xs text-zinc-500">{{ __('target :percent%', ['percent' => $column['targetMargin']]) }}</span>
+                                @endif
+                            </td>
+                        @endforeach
+                    </tr>
+                    <tr data-test="executive-net-profit">
+                        <td class="py-2 pe-4">{{ __('Net profit, from QuickBooks') }}</td>
+                        @foreach ($columns as $column)
+                            <td wire:key="executive-net-{{ $loop->index }}" class="py-2 pe-4 text-right">
+                                <span class="block font-semibold {{ ($column['netProfit'] ?? 0) < 0 ? 'text-rose-700' : 'text-ink' }}">{{ $column['netProfit'] === null ? '—' : $percent($column['netProfit'] / 100) }}</span>
+                                @if ($column['netIncome'] !== null)
+                                    <span class="block text-xs text-zinc-500">{{ Money::format($column['netIncome']) }}</span>
                                 @endif
                             </td>
                         @endforeach

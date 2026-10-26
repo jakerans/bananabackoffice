@@ -28,6 +28,10 @@ final class Visibility
             return $user->hasPermissionAcrossAllLocations(Permission::ManageCompensation);
         }
 
+        if ($item->rule === 'quickbooks_reconnect') {
+            return $user->hasPermissionAcrossAllLocations(Permission::ManageLocations);
+        }
+
         if ($item->rule === 'scorecard_missing') {
             return $user->hasPermissionAcrossAllLocations(Permission::CompanyOverviewAccess);
         }

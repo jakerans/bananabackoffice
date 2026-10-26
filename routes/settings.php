@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Permission;
+use App\Http\Controllers\QuickBooksController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
@@ -33,6 +34,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('settings/contact-center', 'pages::settings.contact-center')
         ->can(Permission::ManageContactCenterSettings)
         ->name('settings.contact_center');
+
+    // Settings > Integrations: each Location's QuickBooks company (slice 28, step 28a). Connecting sends
+    // the Owner to QuickBooks' own page and back to the callback.
+    Route::livewire('settings/integrations', 'pages::settings.integrations')
+        ->can(Permission::ManageLocations)
+        ->name('settings.integrations');
+
+    Route::get('settings/integrations/quickbooks/{location}/connect', [QuickBooksController::class, 'connect'])
+        ->can(Permission::ManageLocations)
+        ->name('quickbooks.connect');
+
+    Route::get('settings/integrations/quickbooks/callback', [QuickBooksController::class, 'callback'])
+        ->can(Permission::ManageLocations)
+        ->name('quickbooks.callback');
 });
 
 Route::get('.well-known/passkey-endpoints', function () {

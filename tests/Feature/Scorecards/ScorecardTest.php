@@ -77,14 +77,14 @@ test('the Owner chooses a Location\'s general manager to own its scorecard, and 
         ->cost_per_close_target_cents->toBe(30000)
         ->and(AuditEvent::query()->where('action', AuditAction::LocationScorecardChanged)->count())->toBe(1);
 
-    expect(fn () => app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->riley->id, null, null, $this->owner))
+    expect(fn () => app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->riley->id, null, null, null, $this->owner))
         ->toThrow(ValidationException::class);
-    expect(fn () => app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->morgan->id, '1', null, $this->morgan))
+    expect(fn () => app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->morgan->id, '1', null, null, $this->morgan))
         ->toThrow(AuthorizationException::class);
 });
 
 test('its owner sees the week\'s numbers and submits Green, Yellow or Red, with a note for any not Green', function () {
-    app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->morgan->id, null, null, $this->owner);
+    app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->morgan->id, null, null, null, $this->owner);
     $this->actingAs($this->morgan);
 
     // 25 of 31 days of $10,000 is $8,064 due; $8,450 is on target.
@@ -119,7 +119,7 @@ test('its owner sees the week\'s numbers and submits Green, Yellow or Red, with 
 });
 
 test('a submitted scorecard keeps its numbers, and its owner corrects a status only with a reason', function () {
-    app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->morgan->id, null, null, $this->owner);
+    app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->morgan->id, null, null, null, $this->owner);
     $scorecard = app(SubmitScorecard::class)->handle($this->lakeview, '2026-10-19', allGreen()['statuses'], [], $this->morgan);
     scorecardSale($this->lakeview, $this->sam, 2000, '2026-10-21 16:00:00');
     $line = $scorecard->lines()->where('kpi', ScorecardNumbers::SOLD)->sole();
@@ -145,7 +145,7 @@ test('a submitted scorecard keeps its numbers, and its owner corrects a status o
 test('only its owner submits it; the Owner and Leadership see it; nobody else does', function () {
     $this->actingAs($this->owner)->get(route('scorecards.show', $this->lakeview))->assertOk()->assertSee('data-test="submit-scorecard"', false);
 
-    app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->morgan->id, null, null, $this->owner);
+    app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->morgan->id, null, null, null, $this->owner);
 
     $this->actingAs($this->leader)->get(route('scorecards.show', $this->lakeview))->assertOk()
         ->assertSee('Not submitted yet')
@@ -159,7 +159,7 @@ test('only its owner submits it; the Owner and Leadership see it; nobody else do
 });
 
 test('Home shows its owner the scorecard due, and when it is overdue', function () {
-    app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->morgan->id, null, null, $this->owner);
+    app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->morgan->id, null, null, null, $this->owner);
 
     $this->actingAs($this->morgan)->get(route('dashboard'))->assertOk()
         ->assertSee('Your weekly scorecard')

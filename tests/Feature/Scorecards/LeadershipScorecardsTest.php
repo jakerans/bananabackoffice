@@ -29,8 +29,8 @@ beforeEach(function () {
     $this->morgan = User::factory()->withRoleAt(Role::LocationManager, $this->lakeview)->create(['name' => 'Morgan Manager']);
     $this->riley = User::factory()->withRoleAt(Role::LocationManager, $this->harbor)->create(['name' => 'Riley Manager']);
 
-    app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->morgan->id, null, null, $this->owner);
-    app(ChangeScorecardSetup::class)->handle($this->harbor, $this->riley->id, null, null, $this->owner);
+    app(ChangeScorecardSetup::class)->handle($this->lakeview, $this->morgan->id, null, null, null, $this->owner);
+    app(ChangeScorecardSetup::class)->handle($this->harbor, $this->riley->id, null, null, null, $this->owner);
 
     $this->statuses = array_fill_keys(array_keys(ScorecardNumbers::KPIS), ScorecardLine::GREEN);
     app(SubmitScorecard::class)->handle($this->lakeview, '2026-10-19', [...$this->statuses, ScorecardNumbers::NSLI => ScorecardLine::RED], [ScorecardNumbers::NSLI => 'Too few leads issued this month.'], $this->morgan);

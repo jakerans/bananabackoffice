@@ -3779,6 +3779,44 @@ complete the entire slice in one go."
 2. **Next:** connecting QuickBooks, proposed as its own slice (decision
    187), for his approval.
 
+## 189. Slice 28 is approved; each Location has its own QuickBooks company (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 28 plan: "banana's QB is 1
+account for each location. each has a seperate login and payment setup and
+everything. so 3 total accounts. and each new location will have an
+account. continue".
+
+1. **Slice 28 is approved** in three steps
+   ([slice-28-quickbooks-plan.md](slice-28-quickbooks-plan.md)), with the
+   recommendation taken as the answer on every question but the second.
+2. **Question 2: one QuickBooks Online company per Location,** each with
+   its own sign-in and payment setup; three today, and each new Location
+   gets its own. Each Backoffice Location therefore connects to its own
+   company, signed in with that company's login; one QuickBooks company
+   cannot be connected to two Locations. The company's net profit adds up
+   the Locations'.
+3. **Question 4 follows the recommendation:** staging connects to Intuit
+   sandbox companies with made-up numbers; Banana's real companies are
+   connected only on production, once production is approved.
+4. **Built without stopping between the steps,** on one branch, each step
+   committed and checked on both GitHub jobs. Nothing is merged until
+   Jacob reviews the slice.
+
+## 190. Slice 28 is merged (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 28 report, after creating the
+Intuit app and putting its development keys into staging's settings
+himself: "continue".
+
+1. **Slice 28, the QuickBooks Connection and Net Profit, is merged** as
+   built ([slice-28-quickbooks-plan.md](slice-28-quickbooks-plan.md),
+   "Step 28a as built" to "Step 28c as built").
+2. **One Intuit app serves every Location.** Each Location's company
+   connects to it on its own, signed in with that company's login; a new
+   Location needs no new app.
+3. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

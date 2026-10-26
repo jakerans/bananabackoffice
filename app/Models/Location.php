@@ -25,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $scorecard_owner_id Who owns its weekly scorecard: its general manager (slice 27, decision 187).
  * @property int|null $nsli_target_cents Its scorecard's NSLI target.
  * @property int|null $cost_per_close_target_cents Its scorecard's cost-per-close target.
+ * @property int|null $net_profit_target_percent Its scorecard's Net Profit % target (slice 28).
  * @property-read User|null $scorecardOwner
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -65,6 +66,7 @@ class Location extends Model
             'deposit_percent' => 'integer',
             'target_margin_percent' => 'integer',
             'nsli_target_cents' => 'integer',
+            'net_profit_target_percent' => 'integer',
             'cost_per_close_target_cents' => 'integer',
         ];
     }

@@ -3,6 +3,7 @@
 namespace App\Support\Performance;
 
 use App\Models\Location;
+use App\Models\LocationProfitAndLoss;
 use App\Models\LocationSalesTarget;
 use App\Support\Compensation\PayPeriods;
 use App\Support\Compensation\ProductionBonus;
@@ -41,7 +42,7 @@ final readonly class ExecutiveBoard
     /**
      * One column for each Location, then the company's.
      *
-     * @return list<array{name: string, sold: int, target: int|null, pace: string, completed: int, margin: int, marginPercent: float|null, targetMargin: int|null, cash: int, late: int, collections: int, leads: int, costPerLead: int|null, atRisk: int}>
+     * @return list<array{name: string, sold: int, target: int|null, pace: string, completed: int, margin: int, marginPercent: float|null, targetMargin: int|null, cash: int, late: int, collections: int, leads: int, costPerLead: int|null, atRisk: int, booksIncome: int|null, netIncome: int|null, netProfit: int|null}>
      */
     public function columns(): array
     {
@@ -71,6 +72,7 @@ final readonly class ExecutiveBoard
             'leads' => $sum('leads'),
             'costPerLead' => $marketing->costPerLeadCents(),
             'atRisk' => $sum('atRisk'),
+            ...$this->companyBooks($columns),
         ];
 
         return $columns;
@@ -89,7 +91,7 @@ final readonly class ExecutiveBoard
     }
 
     /**
-     * @return array{name: string, sold: int, target: int|null, pace: string, completed: int, margin: int, marginPercent: float|null, targetMargin: int|null, cash: int, late: int, collections: int, leads: int, costPerLead: int|null, atRisk: int}
+     * @return array{name: string, sold: int, target: int|null, pace: string, completed: int, margin: int, marginPercent: float|null, targetMargin: int|null, cash: int, late: int, collections: int, leads: int, costPerLead: int|null, atRisk: int, booksIncome: int|null, netIncome: int|null, netProfit: int|null}
      */
     private function column(Location $location): array
     {
@@ -116,7 +118,46 @@ final readonly class ExecutiveBoard
             'leads' => $marketing->leads,
             'costPerLead' => $marketing->costPerLeadCents(),
             'atRisk' => $production->atRisk()->count(),
+            ...$this->books($location),
         ];
+    }
+
+    /**
+     * A Location's income and net income as its QuickBooks company last
+     * reported them for the month, and its Net Profit % in hundredths of a
+     * percent (slice 28, step 28c); nothing when not read.
+     *
+     * @return array{booksIncome: int|null, netIncome: int|null, netProfit: int|null}
+     */
+    private function books(Location $location): array
+    {
+        $statement = LocationProfitAndLoss::query()->where('location_id', $location->id)->where('month', $this->month)->first();
+
+        return [
+            'booksIncome' => $statement?->income_cents,
+            'netIncome' => $statement?->net_income_cents,
+            'netProfit' => $statement?->netProfitBasisPoints(),
+        ];
+    }
+
+    /**
+     * The company's, adding up the Locations whose QuickBooks has been read.
+     *
+     * @param  list<array{booksIncome: int|null, netIncome: int|null}>  $columns
+     * @return array{booksIncome: int|null, netIncome: int|null, netProfit: int|null}
+     */
+    private function companyBooks(array $columns): array
+    {
+        $read = array_filter($columns, fn (array $column): bool => $column['booksIncome'] !== null);
+
+        if ($read === []) {
+            return ['booksIncome' => null, 'netIncome' => null, 'netProfit' => null];
+        }
+
+        $income = (int) array_sum(array_column($read, 'booksIncome'));
+        $net = (int) array_sum(array_column($read, 'netIncome'));
+
+        return ['booksIncome' => $income, 'netIncome' => $net, 'netProfit' => LocationProfitAndLoss::percent($income, $net)];
     }
 
     /**

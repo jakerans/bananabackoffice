@@ -66,6 +66,8 @@ new #[Title('Locations')] class extends Component {
 
     public string $scorecardCostPerCloseTarget = '';
 
+    public string $scorecardNetProfitTarget = '';
+
     public string $targetMarginPercent = '';
 
     #[Locked]
@@ -286,7 +288,8 @@ new #[Title('Locations')] class extends Component {
         $this->scorecardOwnerId = (string) $location->scorecard_owner_id;
         $this->scorecardNsliTarget = $location->nsli_target_cents === null ? '' : ltrim(Money::format($location->nsli_target_cents), '$');
         $this->scorecardCostPerCloseTarget = $location->cost_per_close_target_cents === null ? '' : ltrim(Money::format($location->cost_per_close_target_cents), '$');
-        $this->resetValidation(['scorecardOwnerId', 'scorecardNsliTarget', 'scorecardCostPerCloseTarget']);
+        $this->scorecardNetProfitTarget = (string) $location->net_profit_target_percent;
+        $this->resetValidation(['scorecardOwnerId', 'scorecardNsliTarget', 'scorecardCostPerCloseTarget', 'scorecardNetProfitTarget']);
 
         Flux::modal('location-scorecard')->show();
     }
@@ -295,9 +298,9 @@ new #[Title('Locations')] class extends Component {
     {
         $location = Location::query()->findOrFail($this->scorecardLocationId);
 
-        $changeScorecardSetup->handle($location, $this->scorecardOwnerId === '' ? null : (int) $this->scorecardOwnerId, $this->scorecardNsliTarget, $this->scorecardCostPerCloseTarget, Auth::user());
+        $changeScorecardSetup->handle($location, $this->scorecardOwnerId === '' ? null : (int) $this->scorecardOwnerId, $this->scorecardNsliTarget, $this->scorecardCostPerCloseTarget, $this->scorecardNetProfitTarget, Auth::user());
 
-        $this->reset('scorecardLocationId', 'scorecardOwnerId', 'scorecardNsliTarget', 'scorecardCostPerCloseTarget');
+        $this->reset('scorecardLocationId', 'scorecardOwnerId', 'scorecardNsliTarget', 'scorecardCostPerCloseTarget', 'scorecardNetProfitTarget');
         unset($this->locations);
 
         Flux::modal('location-scorecard')->close();
@@ -896,6 +899,7 @@ new #[Title('Locations')] class extends Component {
             </flux:select>
             <flux:input wire:model="scorecardNsliTarget" inputmode="decimal" icon="currency-dollar" :label="__('NSLI target')" :description="__('Net sales per Lead issued.')" data-test="scorecard-nsli-target" />
             <flux:input wire:model="scorecardCostPerCloseTarget" inputmode="decimal" icon="currency-dollar" :label="__('Cost per close target')" :description="__('Marketing spend for each sale, at most.')" data-test="scorecard-cost-per-close-target" />
+            <flux:input wire:model="scorecardNetProfitTarget" inputmode="numeric" icon:trailing="percent-badge" :label="__('Net Profit % target')" :description="__('Net income over income, as this Location\'s QuickBooks reports it.')" class="max-w-48" data-test="scorecard-net-profit-target" />
 
             <div class="flex justify-end gap-2">
                 <flux:modal.close>

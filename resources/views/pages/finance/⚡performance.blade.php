@@ -1,9 +1,15 @@
 <?php
 
+use App\Actions\QuickBooks\ReadProfitAndLoss;
 use App\Enums\Permission;
 use App\Livewire\PerformanceBoard;
+use App\Models\LocationProfitAndLoss;
+use App\Models\QuickBooksConnection;
 use App\Support\Money;
 use App\Support\Performance\FinanceBoard;
+use App\Support\QuickBooks\QuickBooksClient;
+use Flux\Flux;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
@@ -31,6 +37,51 @@ new #[Title('Finance Performance')] class extends PerformanceBoard {
     {
         return FinanceBoard::for($this->shownLocationIds, $this->chosenMonth);
     }
+
+    /**
+     * Each shown Location's profit and loss for the month, as last read from
+     * its QuickBooks company (slice 28, step 28b).
+     *
+     * @return Collection<int, LocationProfitAndLoss>
+     */
+    #[Computed]
+    public function statements(): Collection
+    {
+        return LocationProfitAndLoss::query()
+            ->whereIn('location_id', $this->shownLocationIds())
+            ->where('month', $this->chosenMonth())
+            ->get()
+            ->keyBy('location_id');
+    }
+
+    /**
+     * @return list<int>
+     */
+    #[Computed]
+    public function connectedIds(): array
+    {
+        return array_values(QuickBooksConnection::query()->whereIn('location_id', $this->shownLocationIds())->pluck('location_id')->map(fn (mixed $id): int => (int) $id)->all());
+    }
+
+    /**
+     * Read this month and last month from QuickBooks now, for the shown
+     * Locations (decision 189, question 6).
+     */
+    public function readQuickBooks(ReadProfitAndLoss $readProfitAndLoss): void
+    {
+        $this->authorize(Permission::FinanceAccess);
+
+        $done = $readProfitAndLoss->recent($this->shownLocationIds());
+        unset($this->statements);
+
+        if ($done['failed'] !== []) {
+            Flux::toast(variant: 'warning', text: __('QuickBooks could not be read for :locations. Try again in a moment, or connect it again in Settings > Integrations.', ['locations' => implode(', ', $done['failed'])]));
+
+            return;
+        }
+
+        Flux::toast(variant: 'success', text: __('Read from QuickBooks.'));
+    }
 }; ?>
 
 <section class="mx-auto flex w-full max-w-5xl flex-col gap-6" data-test="finance-performance">
@@ -46,7 +97,7 @@ new #[Title('Finance Performance')] class extends PerformanceBoard {
 
     <div>
         <flux:heading size="xl" level="1">{{ __('Performance') }}</flux:heading>
-        <flux:subheading>{{ __('The month\'s revenue, margin and cash, and what is owed now. Net profit and the P&L stay in QuickBooks.') }}</flux:subheading>
+        <flux:subheading>{{ __('The month\'s revenue, margin and cash, what is owed now, and each Location\'s profit and loss from QuickBooks.') }}</flux:subheading>
     </div>
 
     <div class="flex flex-wrap items-end gap-4" data-test="performance-filters">
@@ -80,6 +131,81 @@ new #[Title('Finance Performance')] class extends PerformanceBoard {
             <flux:text class="text-sm">{{ __('Cash collected') }}</flux:text>
             <div class="mt-1 font-nav text-3xl font-bold tabular-nums text-ink" data-test="board-value">{{ Money::format($cash['cents']) }}</div>
             <div class="mt-1 text-sm text-zinc-700">{{ trans_choice(':count payment received|:count payments received', $cash['payments']) }}</div>
+        </div>
+    </div>
+
+    {{-- Profit and loss, as each Location's QuickBooks company reports it (slice 28, step 28b). --}}
+    @php
+        $shown = $this->locations->whereIn('id', $this->shownLocationIds)->values();
+        $statements = $this->statements;
+        $netPercent = fn (?int $basisPoints): string => $basisPoints === null ? '—' : rtrim(rtrim(number_format($basisPoints / 100, 1), '0'), '.').'%';
+        $totalIncome = (int) $statements->sum('income_cents');
+        $totalNet = (int) $statements->sum('net_income_cents');
+    @endphp
+    <div class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-5" data-test="board-profit-and-loss">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <flux:heading size="lg" level="2">{{ __('Profit and loss, :month', ['month' => $this->chosenMonthWords()]) }}</flux:heading>
+                <flux:subheading>{{ __('As each Location\'s QuickBooks company reports it, the month so far. Read every night.') }}</flux:subheading>
+            </div>
+            @if (QuickBooksClient::isConfigured() && $this->connectedIds !== [])
+                <flux:button size="sm" icon="arrow-path" wire:click="readQuickBooks" data-test="read-quickbooks">{{ __('Refresh now') }}</flux:button>
+            @endif
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[40rem] text-sm">
+                <thead>
+                    <tr class="border-b border-zinc-200 text-left text-zinc-500">
+                        <th class="py-2 pe-4 font-medium">{{ __('Location') }}</th>
+                        <th class="py-2 pe-4 text-right font-medium">{{ __('Income') }}</th>
+                        <th class="py-2 pe-4 text-right font-medium">{{ __('Cost of goods sold') }}</th>
+                        <th class="py-2 pe-4 text-right font-medium">{{ __('Expenses') }}</th>
+                        <th class="py-2 pe-4 text-right font-medium">{{ __('Net income') }}</th>
+                        <th class="py-2 pe-4 text-right font-medium">{{ __('Net profit') }}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-100 tabular-nums">
+                    @foreach ($shown as $location)
+                        @php
+                            $statement = $statements->get($location->id);
+                        @endphp
+                        <tr wire:key="pl-{{ $location->id }}" data-test="pl-{{ $location->id }}">
+                            <td class="py-2 pe-4">
+                                <span class="block text-ink">{{ $location->name }}</span>
+                                <span class="block text-xs text-zinc-500">
+                                    @if ($statement !== null)
+                                        {{ __('Read :when', ['when' => $statement->read_at->timezone((string) config('app.display_timezone'))->format('j M, g:i a')]) }}
+                                    @elseif (in_array($location->id, $this->connectedIds, true))
+                                        {{ __('Not read yet') }}
+                                    @else
+                                        {{ __('Not connected to QuickBooks') }}
+                                    @endif
+                                </span>
+                            </td>
+                            @if ($statement !== null)
+                                <td class="py-2 pe-4 text-right">{{ Money::format($statement->income_cents) }}</td>
+                                <td class="py-2 pe-4 text-right">{{ Money::format($statement->cost_of_goods_cents) }}</td>
+                                <td class="py-2 pe-4 text-right">{{ Money::format($statement->expenses_cents) }}</td>
+                                <td class="py-2 pe-4 text-right font-semibold {{ $statement->net_income_cents < 0 ? 'text-rose-700' : 'text-ink' }}">{{ Money::format($statement->net_income_cents) }}</td>
+                                <td class="py-2 pe-4 text-right font-semibold text-ink">{{ $netPercent($statement->netProfitBasisPoints()) }}</td>
+                            @else
+                                <td colspan="5" class="py-2 pe-4 text-right text-zinc-400">—</td>
+                            @endif
+                        </tr>
+                    @endforeach
+                    @if ($shown->count() > 1 && $statements->isNotEmpty())
+                        <tr data-test="pl-total" class="font-semibold">
+                            <td class="py-2 pe-4 text-ink">{{ __('Together') }}</td>
+                            <td class="py-2 pe-4 text-right">{{ Money::format($totalIncome) }}</td>
+                            <td class="py-2 pe-4 text-right">{{ Money::format((int) $statements->sum('cost_of_goods_cents')) }}</td>
+                            <td class="py-2 pe-4 text-right">{{ Money::format((int) $statements->sum('expenses_cents')) }}</td>
+                            <td class="py-2 pe-4 text-right {{ $totalNet < 0 ? 'text-rose-700' : 'text-ink' }}">{{ Money::format($totalNet) }}</td>
+                            <td class="py-2 pe-4 text-right text-ink">{{ $netPercent(LocationProfitAndLoss::percent($totalIncome, $totalNet)) }}</td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
         </div>
     </div>
 
