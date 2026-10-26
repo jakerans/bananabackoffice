@@ -1,9 +1,8 @@
 # Slice 24 — Refunds, Credits and Write-offs: Plan
 
 Status: **approved on 2026-10-25 (decision 181), with the recommendation on
-all eight questions, and built straight through 24a, 24b and 24c on
-`checkpoint-slice-24-refunds-credits`. Waiting for Jacob's review; not
-merged.** Written as what the implementation agent recommended from the plan
+all eight questions, built straight through 24a, 24b and 24c, and merged on
+2026-10-26 (decision 182). Slice 24 is complete.** Written as what the implementation agent recommended from the plan
 check below; what was built is under "as built".
 
 ## Why this is next (the plan check)

@@ -3655,6 +3655,16 @@ recommendations, do the entire slice in one go".
    committed and checked on both GitHub jobs. Nothing is merged until
    Jacob reviews the slice.
 
+## 182. Slice 24 is merged (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 24 report: "continue".
+
+1. **Slice 24, Refunds, Credits and Write-offs, is merged** as built
+   ([slice-24-refunds-credits-plan.md](slice-24-refunds-credits-plan.md),
+   "Steps 24a and 24b as built" and "Step 24c as built").
+2. **Next:** the plan check after a slice, and a proposed next slice, for
+   his approval.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

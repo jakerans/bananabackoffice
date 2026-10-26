@@ -222,8 +222,8 @@ leaderboard (5.8) unbuilt. Its plan is
 [slice-23-performance-boards-plan.md](slice-23-performance-boards-plan.md).
 
 **Slice 24, Refunds, Credits and Write-offs, is approved (2026-10-25,
-decision 181), built straight through its three steps on
-`checkpoint-slice-24-refunds-credits`, and waiting for Jacob's review.** The plan check after slice 23 found that a job whose customer
+decision 181), built straight through its three steps, and merged
+(2026-10-26, decision 182). Slice 24 is complete.** The plan check after slice 23 found that a job whose customer
 never pays can never be financially closed, and refunds, credits and
 write-offs (10.5, 10.7) unbuilt. Its plan is
 [slice-24-refunds-credits-plan.md](slice-24-refunds-credits-plan.md).
