@@ -3,11 +3,11 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-27 · **Branch:** `checkpoint-slice-30-production-readiness`
+**Updated:** 2026-10-27 · **Branch:** `main`
 
-**State:** slice 30, Production Readiness, is approved with the
-recommendation on every question (decision 193). **Step 30a is built and
-waits for Jacob's review. Not merged.** 30b and 30c need Jacob.
+**State:** slice 30, Production Readiness, is approved (decision 193).
+**Step 30a is merged (decision 194).** 30b waits for Jacob's answer on
+whether production comes before more of what is still unbuilt.
 
 ## What to review
 

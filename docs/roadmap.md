@@ -267,7 +267,7 @@ recorded, but no page shows them. Its plan is
 [slice-29-audit-log-plan.md](slice-29-audit-log-plan.md).
 
 **Slice 30, Production Readiness, is approved (2026-10-27, decision 193).
-Step 30a is built and waits for Jacob's review; 30b and 30c need him.** The plan check after slice
+Step 30a is built and merged (decision 194); 30b and 30c need him.** The plan check after slice
 28 found a job running end to end, what is still Coming Soon not needed
 before real use, and real work, including Banana's real QuickBooks, possible
 only on production, whose safeguards below are written but not met. Its plan

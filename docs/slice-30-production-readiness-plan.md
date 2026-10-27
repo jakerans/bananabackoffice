@@ -3,7 +3,7 @@
 Status: **proposed on 2026-10-26 as slice 29; renumbered 30 when Jacob
 asked for it to wait until he is back (decision 191); approved on
 2026-10-27 with the recommendation on every question (decision 193). Step
-30a is built and waits for Jacob's review.** Written as
+30a is built and merged (decision 194); 30b waits for Jacob.** Written as
 what the implementation agent recommended from the plan check below.
 
 ## Why this is next (the plan check)

@@ -3871,6 +3871,18 @@ the computer".
    live keys, adds the production Redirect URI, and puts the keys into the
    production server's settings himself.
 
+## 194. Step 30a is merged (2026-10-27)
+
+**Decided by Jacob,** in reply to the step 30a report: "continue - is the
+app fully built? why are we getting prod ready?"
+
+1. **Step 30a is merged** as built
+   ([slice-30-production-readiness-plan.md](slice-30-production-readiness-plan.md),
+   "Step 30a as built"). Staging now requires two-factor sign-in for Owner,
+   Leadership and Finance.
+2. **Step 30b waits** for Jacob's answer to his question: what is still
+   unbuilt, and whether production comes before more of it.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
