@@ -274,11 +274,15 @@ only on production, whose safeguards below are written but not met. Its plan
 is [slice-30-production-readiness-plan.md](slice-30-production-readiness-plan.md).
 Step 30b goes ahead at Jacob's pace, from a step-by-step guide (decision 195).
 
-**Slice 31, Reports, the first set, is proposed (2026-10-27) and waits for
-Jacob's answers (decision 195).** Built while Jacob sets up production:
+**Slice 31, Estimating, is next (decision 196):** PaintScout's pricing
+rebuilt exactly, with only the presentation of options changed. Its plan is
+written after studying PaintScout, for Jacob's approval.
+
+**Slice 32, Reports, the first set, is proposed (2026-10-27) and waits for
+Jacob's answers (decisions 195 and 196).** Built while Jacob sets up production:
 Sales, Marketing and Finance Reports, each over any range of dates, by
 Location, month by month, with a spreadsheet download. Its plan is
-[slice-31-reports-plan.md](slice-31-reports-plan.md).
+[slice-32-reports-plan.md](slice-32-reports-plan.md).
 
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the

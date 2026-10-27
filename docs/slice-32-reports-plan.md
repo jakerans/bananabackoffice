@@ -1,7 +1,8 @@
-# Slice 31 — Reports, the First Set: Plan
+# Slice 32 — Reports, the First Set: Plan
 
-Status: **proposed on 2026-10-27, at Jacob's request ("both at once, start
-with reports"; decision 195). Waits for his answers.** Written as what the
+Status: **proposed on 2026-10-27 as slice 31, at Jacob's request ("both at
+once, start with reports"; decision 195); renumbered 32 when he put
+estimating first (decision 196). Waits for his answers.** Written as what the
 implementation agent recommends.
 
 ## Why this, now
@@ -27,7 +28,7 @@ What each Center's Reports holds, from the plan:
 - **Company (18):** analysis across the company and Locations.
 - **Production:** named in the menu, not yet described.
 
-## What slice 31 is, and is not
+## What slice 32 is, and is not
 
 Three steps. Every report has the same frame: a range of dates, one
 Location or all of yours, the figures in a table with totals, a
@@ -36,11 +37,11 @@ month-by-month view, and a download of the table as a spreadsheet file
 
 | Step | Delivers |
 | --- | --- |
-| 31a | **The report frame and Sales > Reports.** By salesperson and in total: appointments issued, run and cancelled, Demo Rate, Cancellation Rate, sales, Close Rate, Close-on-the-Spot, average job size and sold revenue; Pending and Rehash outcomes; Lost Reasons; each month's leaderboard. |
-| 31b | **Marketing > Reports.** By Lead Source and Marketing Source: spend, leads, cost per lead, appointments and booking rate, sales, close rate, sold revenue and return on spend; speed to lead and connection rate from the call attempts; month by month. |
-| 31c | **Finance > Reports.** Profit and loss by Location from QuickBooks, side by side; AR Aging; cash collected by month; gross profit and job-cost variance on completed jobs; pay and commission owed but not yet paid. |
+| 32a | **The report frame and Sales > Reports.** By salesperson and in total: appointments issued, run and cancelled, Demo Rate, Cancellation Rate, sales, Close Rate, Close-on-the-Spot, average job size and sold revenue; Pending and Rehash outcomes; Lost Reasons; each month's leaderboard. |
+| 32b | **Marketing > Reports.** By Lead Source and Marketing Source: spend, leads, cost per lead, appointments and booking rate, sales, close rate, sold revenue and return on spend; speed to lead and connection rate from the call attempts; month by month. |
+| 32c | **Finance > Reports.** Profit and loss by Location from QuickBooks, side by side; AR Aging; cash collected by month; gross profit and job-cost variance on completed jobs; pay and commission owed but not yet paid. |
 
-Not in slice 31, for a later slice: Production and Company Reports,
+Not in slice 32, for a later slice: Production and Company Reports,
 Payables, Monthly Close, referrals and campaigns (not recorded yet),
 product-line mix and demand by area, and missed-call recovery (no phone
 system yet).

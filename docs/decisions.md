@@ -3895,9 +3895,41 @@ a artifact guide - step by step with copy/paste".
 2. **Production deploys only when Jacob presses Deploy** in Forge. Unlike
    staging, a push to `main` does not reach it on its own, so production
    deployment keeps needing his approval (collaboration.md).
-3. **Features continue meanwhile, starting with Reports:** slice 31,
-   proposed in [slice-31-reports-plan.md](slice-31-reports-plan.md), waits
+3. **Features continue meanwhile, starting with Reports:** slice 31 (now 32, decision 196),
+   proposed in [slice-32-reports-plan.md](slice-32-reports-plan.md), waits
    for his answers.
+4. **How the guide carries out decision 193:** Wasabi's own replication
+   copies each new file to a second bucket in another region within
+   minutes, instead of a nightly copy, and never copies a deletion; the
+   clean-up of removed files in the copy comes in 30c. The database's
+   change log, which Forge switches off, is switched on from DigitalOcean's
+   console, and `backoffice:production-check` confirms it.
+
+## 196. Estimating comes first, rebuilt from PaintScout (2026-10-27)
+
+**Decided by Jacob:** "for estimating - i want to run the gauntlet skill
+inside of paintscout to recreate it exactly with some minor adjustments for
+us. but the calculating functions need ot be exactly the same - the only
+thing we are changing is the presentation for options." Asked how, he
+chose: estimating before Reports; he signs in to PaintScout and the
+implementation agent reads; he builds the test estimates himself.
+
+1. **Estimating is the next slice, 31;** Reports becomes slice 32 and
+   waits.
+2. **The pricing must match PaintScout exactly.** Backoffice's estimate
+   for the same inputs gives the same figures, to the cent. Only how
+   options are presented to the customer changes.
+3. **How it is learned:** Jacob signs in to PaintScout in the
+   implementation agent's browser himself; the agent only reads settings,
+   rates and estimates there, changes nothing, and copies no customer's
+   details into Backoffice's repository or documents.
+4. **How it is proved:** Jacob builds test estimates in PaintScout from a
+   list the agent gives him, with fictitious customers, covering every kind
+   of surface, item and option. Their PaintScout figures become automated
+   tests that Backoffice must match to the cent. The work is driven by the
+   gauntlet loop, against that bar.
+5. **Next:** the agent studies PaintScout and proposes slice 31's plan,
+   for his approval, before building.
 
 ## Future decisions already constrained by the brief
 
