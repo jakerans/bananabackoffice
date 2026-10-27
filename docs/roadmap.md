@@ -272,6 +272,13 @@ Step 30a is built and merged (decision 194); 30b and 30c need him.** The plan ch
 before real use, and real work, including Banana's real QuickBooks, possible
 only on production, whose safeguards below are written but not met. Its plan
 is [slice-30-production-readiness-plan.md](slice-30-production-readiness-plan.md).
+Step 30b goes ahead at Jacob's pace, from a step-by-step guide (decision 195).
+
+**Slice 31, Reports, the first set, is proposed (2026-10-27) and waits for
+Jacob's answers (decision 195).** Built while Jacob sets up production:
+Sales, Marketing and Finance Reports, each over any range of dates, by
+Location, month by month, with a spreadsheet download. Its plan is
+[slice-31-reports-plan.md](slice-31-reports-plan.md).
 
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the

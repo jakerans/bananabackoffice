@@ -3883,6 +3883,22 @@ app fully built? why are we getting prod ready?"
 2. **Step 30b waits** for Jacob's answer to his question: what is still
    unbuilt, and whether production comes before more of it.
 
+## 195. Production and features at once; Reports next (2026-10-27)
+
+**Decided by Jacob,** told what is still Coming Soon and why production was
+recommended: "both at once, start with reports. and walk me through setup in
+a artifact guide - step by step with copy/paste".
+
+1. **Step 30b goes ahead at Jacob's pace,** from a step-by-step guide with
+   text to copy and paste, published to him as a private page. It holds no
+   key or password; he enters each one where it is used.
+2. **Production deploys only when Jacob presses Deploy** in Forge. Unlike
+   staging, a push to `main` does not reach it on its own, so production
+   deployment keeps needing his approval (collaboration.md).
+3. **Features continue meanwhile, starting with Reports:** slice 31,
+   proposed in [slice-31-reports-plan.md](slice-31-reports-plan.md), waits
+   for his answers.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

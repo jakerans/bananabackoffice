@@ -5,46 +5,31 @@ No secrets or customer information belong here.
 
 **Updated:** 2026-10-27 · **Branch:** `main`
 
-**State:** slice 30, Production Readiness, is approved (decision 193).
-**Step 30a is merged (decision 194).** 30b waits for Jacob's answer on
-whether production comes before more of what is still unbuilt.
+**State:** production and features at once (decision 195). Jacob sets up
+production from a step-by-step guide (step 30b) while slice 31, Reports, is
+proposed and waits for his answers. Nothing is being built.
 
-## What to review
+## Slice 31, Reports: decisions
 
-Plan and "Step 30a as built":
-[../slice-30-production-readiness-plan.md](../slice-30-production-readiness-plan.md).
+Plan: [../slice-31-reports-plan.md](../slice-31-reports-plan.md). Each has a
+recommendation there.
 
-- Owner, Leadership and Finance must set up two-factor sign-in before
-  anything else, and cannot switch it off.
-- A server command resets it for someone who lost their phone and recovery
-  codes, recorded in the Audit Log.
-- `php artisan backoffice:production-check` says whether a server is safe
-  for real data.
+1. What comes first. (Recommended: Sales, Marketing, then Finance;
+   Production and Company Reports later.)
+2. Who sees Reports. (Recommended: Owner and Leadership everywhere,
+   Location Managers for their Location, Finance for Finance's.)
+3. Ranges of dates. (Recommended: this month by default, last month, this
+   quarter, year to date, last 12 months, or any two days.)
+4. Downloads. (Recommended: every table as a CSV file; reports hold no
+   customer details.)
 
-## In the browser (Jacob, after merging, on staging)
+## Step 30b, the production server (Jacob)
 
-Merging puts the requirement on staging. At the next sign-in as the Owner:
-
-1. Backoffice opens Settings > Security, asking for the password first.
-2. Press "Enable 2FA", scan the code with an authenticator app (such as
-   Google Authenticator or 1Password), press Continue and type the six digits.
-3. Press "View recovery codes" and keep them in the password manager.
-4. Sign out and in again: it asks for the six digits.
-
-## Decisions
-
-None open for 30a. Before 30c puts real data in, decision 140 is still
-open: whether the repository goes back to private.
-
-## Next, step 30b (needs Jacob)
-
-The server runbook, then: a second Forge server, its own database account,
-the production bucket and key, email, `backoffice.bananapainting.com` with
-HTTPS, the scheduler and the backups. Jacob creates and pays; the
-implementation agent writes the steps and checks the result.
+Jacob follows the guide published to him privately. It holds no keys or
+passwords. Production deploys only when he presses Deploy (decision 195).
+When he has finished a part, the implementation agent checks it without
+changing anything.
 
 ## Noted separately
 
-On a phone, the header's Location and account menus are wider than the
-screen on every page, so the page can scroll sideways. Offered as its own
-small fix.
+The header overflow on phones is being fixed in its own session.
