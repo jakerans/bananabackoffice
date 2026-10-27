@@ -56,7 +56,7 @@ class AuditLine
     }
 
     /**
-     * Each recorded field, as it was and as it became, in the order recorded.
+     * Each recorded field, as it was and as it became, in the order the database keeps them.
      *
      * @return list<array{field: string, before: string, after: string}>
      */

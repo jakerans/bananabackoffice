@@ -149,3 +149,11 @@ test('only whoever manages Locations connects, and not before the server has Int
         ->assertSee('QuickBooks is not set up on this server yet')
         ->assertDontSee('data-test="quickbooks-connect-', false);
 });
+
+test('with no Location yet, Settings > Integrations says to add one first', function () {
+    Location::query()->update(['is_active' => false]);
+
+    $this->actingAs($this->owner)->get(route('settings.integrations'))->assertOk()
+        ->assertSee('There are no Locations to connect yet.')
+        ->assertSee(route('settings.locations'), false);
+});

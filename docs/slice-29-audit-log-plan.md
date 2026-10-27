@@ -1,8 +1,8 @@
 # Slice 29 — Settings > Audit Log: Plan
 
-Status: **chosen while Jacob was away and built straight through with the
-recommendation on every question (decision 191). Waits for Jacob's review;
-not merged.** Written as what the implementation agent recommended.
+Status: **chosen while Jacob was away and built straight through 29a and
+29b with the recommendation on every question (decision 191). Waits for
+Jacob's review; not merged.** Written as what the implementation agent recommended.
 
 ## Why this, now
 
@@ -77,4 +77,23 @@ Not in slice 29:
 
 ## Step 29b as built
 
-To be written when built.
+- **Filters** (question 3): area, Location (active or not), made by (anyone
+  who has made a recorded change) and a range of days in Banana's own
+  calendar. Each is kept in the page's address, so a filtered view can be
+  bookmarked; anything that is not a real choice is ignored. "Show
+  everything" clears them.
+- **One record's history:** "History" beside each change shows every change
+  to that record, under "The history of" it, linked to its page.
+- **Links in:** a staff member's page in Users and Access has "Changes they
+  made" and "History" (changes to their account and access); each Location
+  in Settings > Locations has "Changes" (everything done there). Both show
+  only to whoever may see the Audit Log.
+- **Settings > Integrations,** with no Location yet, says to add one first,
+  with a link to Settings > Locations.
+- **Browser review** (local, fictitious data): the log opened from the
+  Settings menu with 659 changes on 14 pages; "What changed" opened; the
+  Projects area, a Project's history, a Location's and a person's changes,
+  and an empty date range each showed what they should; Finance was
+  refused. On a phone the page's own content fits; the header's Location
+  and account menus are wider than the screen on every page, which is not
+  part of this slice and is noted for a separate fix.
