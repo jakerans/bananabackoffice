@@ -6,11 +6,13 @@ use App\Actions\Pricing\ImportPaintScoutSettings;
 use App\Actions\Pricing\SavePaintProduct;
 use App\Actions\Pricing\SaveProductionRate;
 use App\Enums\AuditAction;
+use App\Enums\DiscountKind;
 use App\Enums\EstimateType;
 use App\Enums\RateCalculation;
 use App\Enums\RateMeasure;
 use App\Enums\Role;
 use App\Models\AuditEvent;
+use App\Models\Discount;
 use App\Models\Location;
 use App\Models\PriceBook;
 use App\Models\ProductionRate;
@@ -29,7 +31,7 @@ use Livewire\Livewire;
 /**
  * Import the made-up sample of a saved PaintScout settings file into the default price book.
  *
- * @return array{book: PriceBook, categories: int, rates: int, paints: int, areas: int, line_items: int}
+ * @return array{book: PriceBook, categories: int, rates: int, paints: int, areas: int, line_items: int, discounts: int, tax_rates: int}
  */
 function importSamplePricing(?User $actor = null): array
 {
@@ -96,6 +98,14 @@ test('PaintScout settings fill the default price book exactly, once', function (
         ->and($book->lineItems->first()->plainDescription())->toBe("We cover the floors.\nHoles filled.")
         ->and($book->areaTemplates->pluck('side')->all())->toBe(['interior', 'exterior']);
 
+    // Named discounts and tax rates come too (step 31b); one with no value is left out.
+    expect($book->discounts->map(fn (Discount $discount): array => [$discount->name, $discount->kind, (float) $discount->value, $discount->is_default])->all())->toBe([
+        ['Sample Cash Savings', DiscountKind::Amount, 40.0, true],
+        ['Sample Friend Savings', DiscountKind::Percentage, 12.5, false],
+    ])
+        ->and($book->taxRates->sole())->name->toBe('Sample City Tax')->percent->toBe('6.1250')
+        ->and([$imported['discounts'], $imported['tax_rates']])->toBe([2, 1]);
+
     expect(AuditEvent::query()->sole())->action->toBe(AuditAction::PricingImported)->actor_id->toBe($this->owner->id)
         ->and(fn () => importSamplePricing())->toThrow(RuntimeException::class, 'already has rates');
 });
@@ -128,7 +138,7 @@ test('replacing the default\'s prices removes the old ones, records how many, an
         ->and($own->rates()->count())->toBe(3);
 
     $event = AuditEvent::query()->where('action', AuditAction::PricingImported)->latest('id')->first();
-    expect($event->before())->toEqual(['rates' => 3, 'categories' => 2, 'paints' => 1, 'areas' => 2, 'line_items' => 2])
+    expect($event->before())->toEqual(['rates' => 3, 'categories' => 2, 'paints' => 1, 'areas' => 2, 'line_items' => 2, 'discounts' => 2, 'tax_rates' => 1])
         ->and($event->reason)->toBe('From PaintScout, replacing the prices imported before');
 
     $this->artisan('backoffice:pricing-import', ['file' => base_path('tests/Fixtures/paintscout-settings-sample.json'), '--replace' => true])->assertSuccessful();
@@ -148,7 +158,9 @@ test('a Location uses the default until it is customized, then its prices are it
         ->and($own->categories()->count())->toBe(2)
         ->and($own->paints()->count())->toBe(1)
         ->and($own->areaTemplates()->count())->toBe(2)
-        ->and($own->lineItems()->count())->toBe(2);
+        ->and($own->lineItems()->count())->toBe(2)
+        ->and($own->discounts()->count())->toBe(2)
+        ->and($own->taxRates()->count())->toBe(1);
 
     // Each copied rate points at the Location's own category and paint, never the default's.
     $roll = $own->rates()->where('name', 'Sample Walls Roll')->sole();
@@ -254,6 +266,17 @@ test('the page shows prices to those who may see them, and lets only Owner and L
     $this->actingAs(User::factory()->withRoleAt(Role::CallCenterAgent, $this->lakeview)->create())->get(route('settings.pricing'))->assertForbidden();
 });
 
+test('the page lists the named discounts and tax rates', function () {
+    importSamplePricing();
+    $salesperson = User::factory()->withRoleAt(Role::SalesConsultant, $this->lakeview)->create();
+
+    $this->actingAs($salesperson)->get(route('settings.pricing', ['tab' => 'discounts']))->assertOk()
+        ->assertSeeInOrder(['Sample Cash Savings', '$40', 'Sample Friend Savings', '12.5%']);
+
+    $this->actingAs($salesperson)->get(route('settings.pricing', ['tab' => 'hourly']))->assertOk()
+        ->assertSeeInOrder(['Tax rates', 'Sample City Tax', '6.125%']);
+});
+
 test('from the page, an Owner customizes a Location and changes one of its rates', function () {
     importSamplePricing();
 
@@ -289,4 +312,9 @@ test('the audit log names the price book that was changed', function () {
     $this->actingAs($this->owner)->get(route('settings.audit_log', ['area' => 'pricing']))->assertOk()
         ->assertSeeInOrder(['Pricing · Imported', 'Default price book', 'Olive Owner'])
         ->assertSee(route('settings.pricing'), false);
+});
+
+test('a door rate counted per hour reads as hours for each door', function () {
+    expect(RateCalculation::UnitsPerHour->label(RateMeasure::Count))->toBe('Hours each')
+        ->and(RateCalculation::UnitsPerHour->label(RateMeasure::WallArea))->toBe('sq ft per hour');
 });

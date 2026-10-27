@@ -25,6 +25,17 @@
             },
             "order": ["sample-paint"]
         },
+        "discounts": {
+            "values": {
+                "sample-friend": {"description": "Sample Friend Savings", "value": "12.5", "type": "percentage", "isDefault": false},
+                "sample-cash": {"description": "Sample Cash Savings", "value": "40", "type": "amount", "isDefault": true},
+                "sample-broken": {"description": "Sample Broken Discount", "value": "", "type": "percentage"}
+            },
+            "order": ["sample-cash", "sample-friend", "sample-broken"]
+        },
+        "taxRates": [
+            {"key": "sample-city", "rate": "6.125", "description": "Sample City Tax", "isDefault": false}
+        ],
         "areaTemplates": {
             "values": {
                 "sample-room": {"active": true, "label": "Sample Room", "int_ext": {"value": "int"}, "quoteTypes": ["int"]},

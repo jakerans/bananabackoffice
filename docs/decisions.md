@@ -4048,6 +4048,25 @@ menu, not inside it. **Decided by Jacob:** "fix it".
    Settings, hiding pages not built yet, and moving the insurance deduction
    were proposed for him to decide.
 
+## 203. Step 31b is merged; more PaintScout test estimates; staging's prices re-imported (2026-10-27)
+
+**Decided by Jacob,** in reply to the step 31b report: "yes merge. yes you
+may build as many estimates as you want. yes you can rerun on staging".
+
+1. **Step 31b, the pricing engine, is merged** as built
+   ([slice-31-estimating-plan.md](slice-31-estimating-plan.md), "Step 31b
+   as built").
+2. **The implementation agent builds as many PaintScout test estimates as
+   it needs,** like the first six (decision 200): at ABQ, each with a
+   made-up customer, saved and never sent, sold or saved to settings, kept
+   outside the repository. The first is a city tax and two discounts, to
+   settle how PaintScout rounds tax and combines discounts.
+3. **Staging's default price book is imported again with `--replace`,** so
+   it gains ABQ's discounts and tax rates.
+4. **QuickBooks:** Intuit's questionnaire for live keys is submitted, after
+   Connect, Disconnect and Connect again were tried on staging with an
+   Intuit sandbox company.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

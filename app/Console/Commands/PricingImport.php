@@ -53,6 +53,8 @@ class PricingImport extends Command
         $this->components->twoColumnDetail('Paints', (string) $imported['paints']);
         $this->components->twoColumnDetail('Area templates', (string) $imported['areas']);
         $this->components->twoColumnDetail('Line items', (string) $imported['line_items']);
+        $this->components->twoColumnDetail('Discounts', (string) $imported['discounts']);
+        $this->components->twoColumnDetail('Tax rates', (string) $imported['tax_rates']);
 
         return self::SUCCESS;
     }
