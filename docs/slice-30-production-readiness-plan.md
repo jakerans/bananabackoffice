@@ -135,7 +135,9 @@ Jacob set up the production server from the step-by-step guide on
 2026-10-27, at `app.bananapainting.com` (decision 198). On its first full
 run the production check said **ready** for every setting except
 QuickBooks's live keys, which wait for Intuit to review the app (guide
-step 16; Backoffice works without them).
+step 16; Backoffice works without them). Intuit's form asks for a
+license agreement and a privacy policy; Backoffice's own public pages,
+`/legal/terms` and `/legal/privacy`, are given (decision 201).
 
 **Found while doing it:**
 

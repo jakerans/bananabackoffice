@@ -14,7 +14,9 @@ class NavigationLandingController extends Controller
 
         abort_unless($navigation->allows($request->user(), $settings), 403);
 
-        foreach (['settings.locations', 'settings.users', 'settings.lists', 'settings.contact_center'] as $id) {
+        // A page inside Settings first, so its menu shows (decision 202). Locations sits
+        // beside Settings in the Company menu, so it is only the last resort.
+        foreach (['settings.users', 'settings.lists', 'settings.contact_center', 'settings.pricing', 'settings.integrations', 'settings.audit_log', 'settings.locations'] as $id) {
             $destination = $navigation->find($id) ?? abort(404);
 
             if ($destination->route !== null && $navigation->allows($request->user(), $destination)) {

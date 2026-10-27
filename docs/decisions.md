@@ -4013,6 +4013,41 @@ replace the imported prices, and rebuild the test estimates: "1: go ahead
    areas whose figures PaintScout keeps separately, so the same parts of
    the calculation are covered.
 
+## 201. Backoffice has public terms and privacy pages, for Intuit (2026-10-27)
+
+**Asked by Jacob** while setting up QuickBooks's live keys (guide step 16):
+Intuit asks every app for an end user license agreement and a privacy
+policy, and Backoffice, being internal, had neither. Offered two short pages
+in Backoffice or pages on bananapainting.com, he chose Backoffice's: "go
+ahead".
+
+1. **Two public pages,** `/legal/terms` and `/legal/privacy`, readable
+   without signing in. In plain words: Backoffice is Banana Painting's
+   internal software for its own staff; QuickBooks is only read, for profit
+   and loss, and never written to; its keys are stored encrypted; nothing is
+   sold or shared outside the services that run Backoffice.
+2. **Built on a branch of its own,** outside step 31b, so it can reach
+   production before the pricing engine.
+
+## 202. The Settings button opens a page inside Settings (2026-10-27)
+
+**Found by Jacob** on staging: from Locations, pressing Settings only reloaded
+Locations, and the Settings pages' links never showed. Settings opened on
+Locations, which the navigation plan places beside Settings in the Company
+menu, not inside it. **Decided by Jacob:** "fix it".
+
+1. **Settings opens on its first working page inside Settings** the person
+   may open: Users and Access, Lead & Sales Lists, Contact Center, Pricing
+   Settings, Integrations, Audit Log; Locations only as a last resort. An
+   Owner lands on Users and Access, Leadership on Lead & Sales Lists, and
+   someone who may only see prices on Pricing Settings, who before was
+   turned away.
+2. **Built on its own branch,** outside step 31b.
+3. **Noted, not decided:** Jacob finds the row of Settings links hard to use
+   and the insurance deduction out of place on Locations. A side menu for
+   Settings, hiding pages not built yet, and moving the insurance deduction
+   were proposed for him to decide.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
