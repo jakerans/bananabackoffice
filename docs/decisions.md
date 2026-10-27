@@ -3939,6 +3939,32 @@ implementation agent reads; he builds the test estimates himself.
    never committed. The plan is
    [slice-31-estimating-plan.md](slice-31-estimating-plan.md).
 
+## 197. Slice 31 is approved: options one after another, a default price book (2026-10-27)
+
+**Decided by Jacob,** answering the slice 31 plan's six questions.
+
+1. **Options are not all on one screen** ("we dont want hte homeowner
+   seening tons of options, we want the sales person to guide them
+   through"). They follow one another down the page, **the largest first**,
+   and the salesperson scrolls through them with the homeowner. A row of
+   quick buttons, easy to tap, jumps straight to any option. Each option
+   is still a proposal of its own.
+2. **Each Location has its own price book.** A new Location starts from the
+   company's **default price book** and is customized from there. Banana's
+   PaintScout settings become the default price book, and ABQ's and
+   Farmington's start as copies of it.
+3. **Owner and Leadership change rates;** Location Managers and
+   salespeople see them but cannot change them (the recommendation).
+4. **Rate changes are never retroactive.** An estimate keeps the rates it
+   was priced with; a salesperson may choose to reprice an open estimate.
+5. **Real prices stay out of the public repository** (the recommendation):
+   they live only in Backoffice's database, and the match-to-the-cent check
+   runs on this computer only.
+6. **Farmington's PaintScout settings are the same as ABQ's,** so only
+   ABQ's are saved.
+7. **Built as collaboration.md sets out:** 31a first, reported before 31b
+   starts.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

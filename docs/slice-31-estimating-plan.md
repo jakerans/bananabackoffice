@@ -1,6 +1,7 @@
 # Slice 31 — Estimating and Production Rates: Plan
 
-Status: **proposed on 2026-10-27 (decision 196). Waits for Jacob's answers.**
+Status: **proposed on 2026-10-27 (decision 196) and approved the same day
+(decision 197). Step 31a is being built.**
 Written as what the implementation agent recommends, after reading Banana
 Painting ABQ's PaintScout settings with Jacob signed in.
 
@@ -48,40 +49,33 @@ repository (`docs/reference/paintscout/`, never committed).
 
 | Step | Delivers |
 | --- | --- |
-| 31a | **Settings > Pricing: production rates and the price book.** Rate categories and rates with every setting above, products, area templates, line items, the hourly rates, discount and tax, for each Location. A one-time import of each Location's PaintScout settings from the saved file. Every change recorded in the Audit Log. |
+| 31a | **Settings > Pricing: production rates and the price book.** Rate categories and rates with every setting above, products, area templates, line items, the hourly rates, discount and tax, in a company default price book and a copy for each Location. A one-time import of Banana's PaintScout settings from the saved file into the default. Every change recorded in the Audit Log. |
 | 31b | **The pricing engine, proved against PaintScout.** Backoffice's calculation for areas, surfaces, coats, difficulty, prep, materials, line items, discount and tax. Jacob's test estimates from PaintScout are checked to the cent on this computer; the committed tests use made-up rates. |
-| 31c | **The estimate in the Sales Workspace.** Built on a tablet during the appointment: areas from templates, measurements, surfaces from the rates, then options presented the new way. Each option becomes a proposal, so everything built on proposals (results, Pending, sales, commission) keeps working. |
+| 31c | **The estimate in the Sales Workspace.** Built on a tablet during the appointment: areas from templates, measurements, surfaces from the rates, then the options, one after another down the page, largest first, with quick buttons to jump to each. Each option becomes a proposal, so everything built on proposals (results, Pending, sales, commission) keeps working. |
 
 Not in slice 31: the signed agreement and deposit (5.3, later), Commercial
 estimates (the plan says commercial selling is pending, 5.9; their rates
 are imported but not offered), PaintScout's invoices, emails and
 customer-facing PDF design, and moving old PaintScout estimates over.
 
-## Decisions needed
+## Decisions (settled by decision 197)
 
-1. **How options are presented.** You said only this changes. What should
-   the customer see? *Recommended, from the plan's rule "any number of
-   named, ordered options, no fixed tiers":* the salesperson builds
-   as many options as the conversation needs, each named in their words
-   (for example "Walls only" or "Whole house with the upgraded paint"). They
-   are shown side by side with the price and what each includes, and one
-   can be marked as recommended. Good / Better / Best percentage tiers are
-   not used. Please describe anything you want different.
-2. **Whose price book.** *Recommended:* each Location has its own, as in
-   PaintScout; a new Location starts as a copy of another's.
-3. **Who manages rates.** *Recommended:* Owner and Leadership change them;
-   Location Managers and salespeople can see them but not change them.
-4. **When rates change.** *Recommended:* an estimate keeps the rates it was
-   priced with. Changing a rate affects new estimates only, unless the
-   salesperson presses "Reprice" on an open one.
-5. **Keeping your prices private.** The GitHub repository is public
-   (decision 140). *Recommended:* real rates live only in Backoffice's
-   database, entered by the import or the Pricing pages, never in the code.
-   The match-to-the-cent check against your test estimates runs on this
+1. **Options follow one another down the page, largest first,** never all
+   on one screen: the salesperson guides the homeowner through them. Quick
+   buttons, easy to tap, jump straight to any option. Each option is a
+   proposal of its own. Good / Better / Best tiers are not used.
+2. **A default price book, and one per Location.** A new Location starts
+   from the company's default price book and is customized from there.
+   Banana's PaintScout settings become the default, and ABQ's and
+   Farmington's start as copies of it.
+3. **Owner and Leadership change rates;** Location Managers and
+   salespeople can see them but not change them.
+4. **Never retroactive:** an estimate keeps the rates it was priced with;
+   a salesperson may choose to reprice an open estimate.
+5. **Real prices stay out of the public repository:** they live only in
+   Backoffice's database; the match-to-the-cent check runs on this
    computer only, from files that are never committed.
-6. **Farmington.** *Recommended:* import Farmington's PaintScout settings
-   too, saved the same way, once you say so.
-
+6. **Farmington's PaintScout settings are the same as ABQ's.**
 ## The test estimates (Jacob builds them in PaintScout)
 
 Every test estimate uses a made-up customer named **"Backoffice Test 01"**
