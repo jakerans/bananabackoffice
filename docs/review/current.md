@@ -8,8 +8,9 @@ No secrets or customer information belong here.
 **State:** step 31a is merged; the default price book on this computer and
 on staging now holds ABQ's own PaintScout prices, replacing the Corporate
 account's imported by mistake (decision 200). Six test estimates are built
-in PaintScout and saved outside the repository. Jacob is setting up
-production (step 30b) from the guide. Nothing is being built.
+in PaintScout and saved outside the repository. The production server is
+set up (step 30b): its check says ready for everything except QuickBooks's
+live keys, which wait for Intuit. Nothing is being built.
 
 ## Next
 
@@ -17,8 +18,11 @@ production (step 30b) from the guide. Nothing is being built.
   the six test estimates to the cent on this computer. What they show so
   far is in [../slice-31-estimating-plan.md](../slice-31-estimating-plan.md),
   "The test estimates". It starts when Jacob says so.
-- **30b, the production server:** Jacob, from the guide; then he sends the
-  production check's result.
+- **30b, the production server:** done except QuickBooks's live keys
+  (guide step 16, Intuit's review).
+- **30c, recovery and first use:** the restore drill, the backup and file
+  copy checks, then the first Owner, the Locations and QuickBooks on
+  production. With Jacob, when he chooses.
 
 ## In the browser (Jacob, on staging)
 

@@ -3,7 +3,8 @@
 Status: **proposed on 2026-10-26 as slice 29; renumbered 30 when Jacob
 asked for it to wait until he is back (decision 191); approved on
 2026-10-27 with the recommendation on every question (decision 193). Step
-30a is built and merged (decision 194); 30b waits for Jacob.** Written as
+30a is built and merged (decision 194); 30b is done except QuickBooks's
+live keys, which wait for Intuit's review.** Written as
 what the implementation agent recommended from the plan check below.
 
 ## Why this is next (the plan check)
@@ -127,3 +128,27 @@ someone's second factor needs access to the server.
 Jacob's staging Owner account must set up two-factor sign-in at its next
 sign-in. The production check cannot see Forge's backups or Wasabi's
 settings; those stay on its list to check by hand.
+
+## Step 30b as done
+
+Jacob set up the production server from the step-by-step guide on
+2026-10-27, at `app.bananapainting.com` (decision 198). On its first full
+run the production check said **ready** for every setting except
+QuickBooks's live keys, which wait for Intuit to review the app (guide
+step 16; Backoffice works without them).
+
+**Found while doing it:**
+
+- Forge switches MySQL's change log off on new servers; it is switched on
+  with a Forge recipe run as root, since DigitalOcean's own console does not
+  work on Forge's servers.
+- The Laravel Scheduler switch did not show on the site, so the
+  every-minute job was added by hand under the site's Processes >
+  Scheduler, pointing at the site's `current` folder. The check said ready
+  six minutes later with nothing run by hand.
+- The check ends as a failed command in Forge while anything says not yet;
+  that is on purpose.
+
+**Still to check by hand, in 30c:** the hourly backups and their first
+copy, the nightly copy of files, the restore drill, other Wasabi keys, and
+whether the repository goes back to private (decision 140).
