@@ -22,7 +22,9 @@ use App\Enums\RateMeasure;
  *   how far a gallon goes, or a set amount for each item), and the paint's
  *   cost is rounded up to the whole dollar.
  * - A rate priced per item has no hours and no paint.
- * - A line item priced by hours is not rounded.
+ * - A line item's price is rounded up to the whole dollar, however it is
+ *   priced; its hours are kept as typed, except a line item priced by
+ *   quantity, whose hours are rounded up to the whole hour.
  * - A percentage discount is rounded up to the whole dollar.
  * - Optional work is priced but left out of the total.
  *
@@ -30,9 +32,13 @@ use App\Enums\RateMeasure;
  * order, so even a figure that lands exactly on a whole hour or dollar rounds
  * the same way. Money comes out in whole cents.
  *
- * Not yet matched against PaintScout, as no test estimate shows them: prep
- * hours (counted separately, at the hourly rate, not rounded), a fixed-hours
- * rate, a rate's own hourly rate, and how tax is rounded (to the cent).
+ * - Prep hours are not rounded and are counted beside the painting hours; a
+ *   surface's labor is both times the hourly rate.
+ * - Several discounts are each worked out on the same amount, then added up.
+ * - Tax is charged on the total after the discount, rounded to the cent.
+ *
+ * Not yet matched against PaintScout, as no test estimate shows them: a
+ * fixed-hours rate and a rate's own hourly rate; no ABQ rate uses either.
  */
 class PricingEngine
 {
@@ -51,7 +57,7 @@ class PricingEngine
         }
         $countedLineItems = array_values(array_filter($lineItems, fn (PricedLineItem $item): bool => $item->isCounted));
 
-        $hours = array_sum(array_map(fn (PricedSurface $surface): float => $surface->hours + $surface->prepHours, $counted))
+        $hours = array_sum(array_map(fn (PricedSurface $surface): float => $surface->hours, $counted))
             + array_sum(array_map(fn (PricedLineItem $item): float => $item->hours, $countedLineItems));
         $workCents = array_sum(array_map(fn (PricedSurface $surface): int => $surface->workCents, $counted));
         $materialsCents = array_sum(array_map(fn (PricedSurface $surface): int => $surface->materialsCents, $counted));
@@ -78,6 +84,7 @@ class PricingEngine
             areas: $areas,
             lineItems: $lineItems,
             hours: $hours,
+            prepHours: array_sum(array_map(fn (PricedSurface $surface): float => $surface->prepHours, $counted)),
             workCents: $workCents,
             materialsCents: $materialsCents,
             lineItemsCents: $lineItemsCents,
@@ -104,7 +111,8 @@ class PricingEngine
             input: $area,
             measurements: $measurements,
             surfaces: $surfaces,
-            hours: array_sum(array_map(fn (PricedSurface $surface): float => $surface->hours + $surface->prepHours, $counted)),
+            hours: array_sum(array_map(fn (PricedSurface $surface): float => $surface->hours, $counted)),
+            prepHours: array_sum(array_map(fn (PricedSurface $surface): float => $surface->prepHours, $counted)),
             workCents: array_sum(array_map(fn (PricedSurface $surface): int => $surface->workCents, $counted)),
             materialsCents: array_sum(array_map(fn (PricedSurface $surface): int => $surface->materialsCents, $counted)),
             optionalCents: array_sum(array_map(fn (PricedSurface $surface): int => $surface->isCounted ? 0 : $surface->totalCents(), $surfaces)),
@@ -136,7 +144,7 @@ class PricingEngine
         }
 
         $hours = (float) ceil($this->hours($rate->measure, $rate->calculation, $amount, $value));
-        $prepHours = (float) ($rate->prepHours ?? 0);
+        $prepHours = (float) ($surface->prepHours ?? $rate->prepHours ?? 0);
         $gallons = $this->gallons($surface->paint, $rate->measure, $amount, $coats);
         $materialsCents = $surface->paint === null ? 0 : (int) ceil($gallons * ($surface->paint->priceCents / 100)) * 100;
 
@@ -184,10 +192,18 @@ class PricingEngine
 
     private function priceLineItem(LineItemInput $item, int $hourlyRateCents): PricedLineItem
     {
-        $hours = (float) ($item->hours ?? 0);
-        $priceCents = $item->priceCents ?? (int) round($hours * ($item->hourlyRateCents ?? $hourlyRateCents));
+        if ($item->quantity !== null) {
+            $quantity = (float) $item->quantity;
+            $hours = (float) ceil($quantity * (float) ($item->hoursEach ?? 0));
+            $dollars = $quantity * (($item->priceEachCents ?? 0) / 100);
+        } else {
+            $hours = (float) ($item->hours ?? 0);
+            $dollars = $item->priceCents !== null
+                ? $item->priceCents / 100
+                : $hours * (($item->hourlyRateCents ?? $hourlyRateCents) / 100);
+        }
 
-        return new PricedLineItem($item, $hours, $priceCents, ! $item->isOptional);
+        return new PricedLineItem($item, $hours, (int) ceil($dollars) * 100, ! $item->isOptional);
     }
 
     private function discountCents(DiscountInput $discount, int $discountableCents): int

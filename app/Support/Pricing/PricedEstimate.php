@@ -18,6 +18,7 @@ final readonly class PricedEstimate
         public array $areas,
         public array $lineItems,
         public float $hours,
+        public float $prepHours,
         public int $workCents,
         public int $materialsCents,
         public int $lineItemsCents,

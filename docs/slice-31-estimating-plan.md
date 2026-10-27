@@ -112,7 +112,8 @@ What they already show, for 31b:
   for each surface.
 - **A price-per-item rate has no hours and no paint;** its price is the
   quantity times the price.
-- **A line item priced by hours is not rounded:** 2.5 hours stays 2.5.
+- **A line item's price is rounded up to the whole dollar** (test 8,
+  below); a line item priced by hours keeps its hours: 2.5 hours stays 2.5.
 - **A percentage discount is rounded up to the whole dollar.**
 - **Options are priced like any surface but left out of the total.**
 - **Measurements are not rounded:** a room's length around is twice its
@@ -227,16 +228,40 @@ yet; the estimate in the Sales Workspace (31c) is built on it.
 **Known limits:**
 
 - **Not yet matched against PaintScout,** because no test estimate uses
-  them: how tax is rounded (Backoffice rounds to the cent), two discounts on
-  one estimate (Backoffice adds them up, each worked out on the same
-  amount), prep hours (counted at the hourly rate, not rounded), a rate's
-  own hourly rate, a fixed-hours rate, and a line item with its own price.
-  No ABQ rate uses prep hours, its own hourly rate or fixed hours; ABQ does
-  use tax rates and several discounts. One more test estimate, with a city
-  tax and two discounts, would settle the two ABQ uses.
+  them: a rate's own hourly rate and a fixed-hours rate. No ABQ rate uses
+  either.
 - PaintScout's per-surface overrides (typing over the hours or the price)
   and an area's quantity are not part of the engine; 31c decides whether
   the estimate offers them.
 - Discounts and tax rates are read-only until a later step.
 - Staging's default price book gets the discounts and tax rates when the
   import is run there again with `--replace`.
+
+**The seventh test estimate** (decision 203; PaintScout #45, "Backoffice
+Test 07"): a bedroom with three sprayed doors and 1.5 prep hours typed in,
+walls, two discounts (15% and 10%) and Bernalillo County's 6.188% tax. It
+settled four rules, and all seven test estimates now match to the cent:
+
+- **Prep hours are not rounded and are counted beside the painting hours:**
+  three doors at 0.75 hours are 2.25 hours, rounded up to 3, plus 1.5 prep,
+  so 4.5 hours of labor ($882). PaintScout reports the painting hours and
+  the prep hours separately, and Backoffice now does the same. Prep is typed
+  on each surface in the estimate, starting from the rate's.
+- **Several discounts are each worked out on the same amount** and rounded
+  up: 15% and 10% of $1,819 are $273 and $182, $455 together.
+- **Tax is rounded to the nearest cent,** never up: 6.188% of $1,364 is
+  $84.404, charged as $84.40.
+- **A rate that does not use coats offers no coats** in PaintScout: a door
+  has no coats choice.
+
+**The eighth test estimate** (PaintScout #46, "Backoffice Test 08"): three
+line items, one for each way PaintScout prices them. All eight test
+estimates now match to the cent.
+
+- **A line item's price is always rounded up to the whole dollar:** a set
+  price of $249.40 is charged as $250; 1.75 hours at its own $210 an hour,
+  $367.50, as $368; 3 at $33.33 each, $99.99, as $100.
+- **Priced by quantity,** a line item's hours are the quantity times the
+  hours for each, rounded up (3 at 0.4 hours is 1.2, so 2), and its price
+  the quantity times the price for each; the hours do not change the price.
+- A line item priced by hours keeps its hours as typed (1.75).
