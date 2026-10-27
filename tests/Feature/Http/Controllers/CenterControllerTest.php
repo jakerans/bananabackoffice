@@ -32,7 +32,7 @@ test('a center opens directly on its primary section', function (string $center,
     'production' => ['production.home', 'production.performance'],
     'finance' => ['finance.home', 'finance.performance'],
     'color studio' => ['color_studio.home', 'color_studio.projects'],
-    'settings' => ['settings.home', 'settings.locations'],
+    'settings' => ['settings.home', 'settings.users'],
 ]);
 
 test('a staff member with no grants is forbidden from every navigation destination', function (string $route) {

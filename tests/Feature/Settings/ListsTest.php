@@ -141,10 +141,10 @@ test('leadership is shown no other settings page, built or not', function () {
         ->assertDontSee('Integrations');
 });
 
-test('an owner still opens settings on locations and sees the nested settings entry beside it', function () {
+test('an owner opens settings on users and access, and sees the settings entry beside locations', function () {
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
 
-    $this->actingAs($owner)->get(route('settings.home'))->assertRedirect(route('settings.locations'));
+    $this->actingAs($owner)->get(route('settings.home'))->assertRedirect(route('settings.users'));
 
     $this->actingAs($owner)
         ->get(route('settings.locations'))
