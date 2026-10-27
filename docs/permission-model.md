@@ -223,6 +223,22 @@ cannot differ only by capital letters.
 - Only the Owner role contains `settings.users.manage` today. If another role is
   ever given it, add a rule that only an Owner may grant or remove the Owner role.
 
+### Two-factor sign-in (step 30a, decision 193)
+
+- **Required for Owner, Leadership and Finance,** held anywhere; offered to
+  every other role. Someone who must use it and has not set it up is sent to
+  Settings > Security before anything else, and cannot switch it off once set.
+- **A passkey does not replace it.** A passkey signs in on its own, but a
+  password sign-in always asks for the code.
+- **While an Owner is viewing Backoffice as someone,** that person is not
+  asked: the Owner signed in with two factors, and that person's sign-in
+  details are closed during impersonation.
+- **Lost phone and recovery codes:** `php artisan backoffice:two-factor-reset
+  <email>` on the server switches it off, with a reason kept in the Audit Log;
+  the person sets it up again at their next sign-in.
+- Switched on unless `AUTH_REQUIRE_TWO_FACTOR=false`, which only a developer's
+  own computer and the tests use.
+
 ## Owner impersonation
 
 An Owner can view Backoffice as another active staff member, to support them or

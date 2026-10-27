@@ -30,6 +30,18 @@ enum Role: string
     }
 
     /**
+     * Whether whoever holds this role must use two-factor sign-in (decision 193,
+     * question 3): the roles that see every Location's money and people.
+     */
+    public function requiresTwoFactor(): bool
+    {
+        return match ($this) {
+            self::Owner, self::Leadership, self::Finance => true,
+            default => false,
+        };
+    }
+
+    /**
      * The permissions this role contains. Where they apply depends on each grant.
      *
      * @return list<Permission>

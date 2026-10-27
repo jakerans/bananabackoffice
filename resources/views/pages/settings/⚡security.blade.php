@@ -27,6 +27,10 @@ new #[Title('Security settings')] class extends Component {
 
     public bool $requiresConfirmation;
 
+    /** Whether the person's role must use two-factor sign-in (decision 193, question 3). */
+    #[Locked]
+    public bool $mustUseTwoFactor = false;
+
     #[Locked]
     public bool $canManagePasskeys;
 
@@ -64,6 +68,7 @@ new #[Title('Security settings')] class extends Component {
 
             $this->twoFactorEnabled = auth()->user()->hasEnabledTwoFactorAuthentication();
             $this->requiresConfirmation = Features::optionEnabled(Features::twoFactorAuthentication(), 'confirm');
+            $this->mustUseTwoFactor = auth()->user()->mustUseTwoFactor();
         }
 
         $this->canManagePasskeys = Features::canManagePasskeys();
@@ -170,6 +175,8 @@ new #[Title('Security settings')] class extends Component {
      */
     public function disable(DisableTwoFactorAuthentication $disableTwoFactorAuthentication): void
     {
+        abort_if(auth()->user()->mustUseTwoFactor(), 403, __('Your role must use two-factor sign-in, so it cannot be switched off.'));
+
         $disableTwoFactorAuthentication(auth()->user());
 
         $this->twoFactorEnabled = false;
@@ -222,6 +229,13 @@ new #[Title('Security settings')] class extends Component {
                 <flux:heading>{{ __('Two-factor authentication') }}</flux:heading>
                 <flux:subheading>{{ __('Manage your two-factor authentication settings') }}</flux:subheading>
 
+                @if ($mustUseTwoFactor && ! $twoFactorEnabled)
+                    <flux:callout variant="warning" icon="shield-exclamation" class="mt-4" data-test="two-factor-required">
+                        <flux:callout.heading>{{ __('Your role must use two-factor sign-in') }}</flux:callout.heading>
+                        <flux:callout.text>{{ __('Owner, Leadership and Finance can see every Location\'s money and people. Set up two-factor sign-in below to continue using Backoffice.') }}</flux:callout.text>
+                    </flux:callout>
+                @endif
+
                 <div class="flex flex-col w-full mx-auto space-y-6 text-sm" wire:cloak>
                     @if ($twoFactorEnabled)
                         <div class="space-y-4">
@@ -229,14 +243,20 @@ new #[Title('Security settings')] class extends Component {
                                 {{ __('You will be prompted for a secure, random pin during login, which you can retrieve from the TOTP-supported application on your phone.') }}
                             </flux:text>
 
-                            <div class="flex justify-start">
-                                <flux:button
-                                    variant="danger"
-                                    wire:click="disable"
-                                >
-                                    {{ __('Disable 2FA') }}
-                                </flux:button>
-                            </div>
+                            @if ($mustUseTwoFactor)
+                                <flux:text variant="subtle" data-test="two-factor-stays-on">
+                                    {{ __('Your role must use two-factor sign-in, so it stays on. If you lose your phone, sign in with a recovery code below.') }}
+                                </flux:text>
+                            @else
+                                <div class="flex justify-start">
+                                    <flux:button
+                                        variant="danger"
+                                        wire:click="disable"
+                                    >
+                                        {{ __('Disable 2FA') }}
+                                    </flux:button>
+                                </div>
+                            @endif
 
                             <livewire:pages::settings.two-factor.recovery-codes :$requiresConfirmation />
                         </div>

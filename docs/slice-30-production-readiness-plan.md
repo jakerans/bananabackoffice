@@ -1,9 +1,10 @@
 # Slice 30 — Production Readiness: Plan
 
 Status: **proposed on 2026-10-26 as slice 29; renumbered 30 when Jacob
-asked for it to wait until he is back (decision 191). Waits for his
-answers.** Written as
-what the implementation agent recommends from the plan check below.
+asked for it to wait until he is back (decision 191); approved on
+2026-10-27 with the recommendation on every question (decision 193). Step
+30a is built and waits for Jacob's review.** Written as
+what the implementation agent recommended from the plan check below.
 
 ## Why this is next (the plan check)
 
@@ -81,3 +82,48 @@ Not in slice 30:
   them.
 - **The restore drill overwrites staging** while it runs; its fictitious
   data comes back from the backup taken just before.
+
+## Step 30a as built
+
+**Two-factor sign-in is required for Owner, Leadership and Finance**
+(question 3), held anywhere:
+
+- Someone who holds one of these roles and has not set it up is sent to
+  Settings > Security from any page, with a notice saying why. They can still
+  confirm their password, set up two-factor sign-in or a passkey, verify their
+  email and sign out; any other page, and any action on a page opened
+  earlier, is refused until it is set up.
+- Once set up, it cannot be switched off: the Security page says it stays on
+  and points to the recovery codes, and switching it off is refused however
+  it is asked for.
+- A passkey does not replace it: a password sign-in always asks for the code.
+- An Owner viewing Backoffice as someone is not asked to set it up for them
+  (question 4, decision 46 unchanged).
+- `php artisan backoffice:two-factor-reset <email>` switches it off for
+  someone who has lost their phone and their recovery codes, with a reason
+  recorded in the Audit Log ("Staff member · Two factor reset"). They set it
+  up again at their next sign-in.
+- It is on unless `AUTH_REQUIRE_TWO_FACTOR=false`; only a developer's own
+  computer and the tests switch it off.
+
+**`php artisan backoffice:production-check`** says whether a server is safe
+for real data. It reads settings and never changes one or prints a key. It
+reports on: a production environment; debugging off; an HTTPS address and
+HTTPS-only sign-in cookies; database sessions; required two-factor sign-in;
+MySQL, with an account of its own (not `forge` or `root`) and its change log
+on; the scheduler having run in the last five minutes; email through Resend
+from `mail.bananapainting.com`; uploaded files in a private bucket that is
+not staging's; and QuickBooks on live keys. It then lists what only a person
+can check: the hourly database backups, the nightly copy of files, the
+restore drill, other Wasabi keys, and whether the repository goes back to
+private (decision 140). It ends "not ready" while any setting is wrong.
+
+**Decisions made while building:** a passkey does not count instead of
+two-factor sign-in, because a password sign-in would then ask for nothing
+more; and the reset is a server command, not a button, so turning off
+someone's second factor needs access to the server.
+
+**Known limits:** staging gets the requirement when this is merged, so
+Jacob's staging Owner account must set up two-factor sign-in at its next
+sign-in. The production check cannot see Forge's backups or Wasabi's
+settings; those stay on its list to check by hand.

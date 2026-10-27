@@ -171,6 +171,24 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Determine whether the staff member must use two-factor sign-in, because
+     * they hold Owner, Leadership or Finance anywhere (decision 193, question 3).
+     */
+    public function mustUseTwoFactor(): bool
+    {
+        return config('auth.two_factor_required')
+            && $this->accessGrants->contains(fn (AccessGrant $grant): bool => $grant->role->requiresTwoFactor());
+    }
+
+    /**
+     * Determine whether the staff member must set up two-factor sign-in before using Backoffice.
+     */
+    public function mustSetUpTwoFactor(): bool
+    {
+        return $this->mustUseTwoFactor() && ! $this->hasEnabledTwoFactorAuthentication();
+    }
+
+    /**
      * Determine whether the staff member may use a permission at one location.
      */
     public function hasPermissionAt(Permission $permission, Location $location): bool

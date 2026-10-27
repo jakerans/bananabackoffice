@@ -266,8 +266,8 @@ alternative the plan check after slice 28 named: every important change is
 recorded, but no page shows them. Its plan is
 [slice-29-audit-log-plan.md](slice-29-audit-log-plan.md).
 
-**Slice 30, Production Readiness, is proposed (2026-10-26) and waits for
-Jacob's answers when he is back (decision 191).** The plan check after slice
+**Slice 30, Production Readiness, is approved (2026-10-27, decision 193).
+Step 30a is built and waits for Jacob's review; 30b and 30c need him.** The plan check after slice
 28 found a job running end to end, what is still Coming Soon not needed
 before real use, and real work, including Banana's real QuickBooks, possible
 only on production, whose safeguards below are written but not met. Its plan
@@ -812,11 +812,9 @@ staging.** Before real customer data is entered into production:
 
 ### Still open
 
-- Whether sensitive roles (Owner, Finance) must use two-factor sign-in. Needed by
-  the production-readiness checkpoint.
-- The production domain. Needed by the production-readiness checkpoint.
-- Whether Owner impersonation should be restricted or announced in production.
-  Needed by the production-readiness checkpoint.
+- ~~Two-factor sign-in, the production domain, and Owner impersonation in
+  production.~~ Settled by decision 193: required for Owner, Leadership and
+  Finance; `backoffice.bananapainting.com`; impersonation kept as decision 46.
 - **How uploaded files are backed up.** Database backups do not cover them. This is
   settled as part of step B10, before the first real file is stored. See "Backups"
   above.
