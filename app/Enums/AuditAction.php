@@ -22,6 +22,7 @@ enum AuditAction: string
     case StaffImpersonationStarted = 'staff.impersonation_started';
     case StaffImpersonationStopped = 'staff.impersonation_stopped';
     case StaffQueueManagerViewChanged = 'staff.queue_manager_view_changed';
+    case StaffTwoFactorReset = 'staff.two_factor_reset';
     case LocationCreated = 'location.created';
     case LocationRenamed = 'location.renamed';
     case LocationDeactivated = 'location.deactivated';

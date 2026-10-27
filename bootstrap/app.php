@@ -3,6 +3,7 @@
 use App\Http\Middleware\ApplyImpersonation;
 use App\Http\Middleware\EnsureStaffIsActive;
 use App\Http\Middleware\RefuseAccountChangesWhileImpersonating;
+use App\Http\Middleware\RequireTwoFactorForSensitiveRoles;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ApplyImpersonation::class,
             EnsureStaffIsActive::class,
             RefuseAccountChangesWhileImpersonating::class,
+            RequireTwoFactorForSensitiveRoles::class,
         ]);
 
         // Both run after sign-in is checked and before a route looks up its records

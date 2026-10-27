@@ -360,9 +360,10 @@ is used with real accounts on a server.
 Decide whether it goes back to private before production holds real customer
 data (decision 140). See "The repository is public" at the top of this document.
 
-**Two-factor sign-in is optional for every role.**
-Decide whether Owner and Finance accounts must use it. Already listed in
-roadmap.md under decisions for Checkpoint B.
+**Two-factor sign-in: settled and built (decision 193, step 30a).**
+Required for Owner, Leadership and Finance; see permission-model.md,
+"Two-factor sign-in". `php artisan backoffice:production-check` reports
+whether a server enforces it.
 
 **Database backups run on staging, but a restore has never been performed.**
 Staging is backed up daily (keep 7) to a dedicated private DigitalOcean Spaces

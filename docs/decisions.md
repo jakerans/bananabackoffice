@@ -3846,6 +3846,43 @@ the computer".
 2. **Next:** slice 30, Production Readiness, still waits for his answers
    ([slice-30-production-readiness-plan.md](slice-30-production-readiness-plan.md)).
 
+## 193. Slice 30 is approved, with the recommendation on every question (2026-10-27)
+
+**Decided by Jacob,** in reply to the slice 30 plan: "recommended on all".
+
+1. **Slice 30, Production Readiness, is approved** in three steps
+   ([slice-30-production-readiness-plan.md](slice-30-production-readiness-plan.md)),
+   each step built, checked and reported before the next starts. 30b and
+   30c need Jacob for the server, payment, the domain, email and keys.
+2. **The production address is `backoffice.bananapainting.com`,** a part
+   of Banana's own domain (decision 22), as recommended. Jacob can still
+   change it before 30b creates the server.
+3. **Two-factor sign-in is required for Owner, Leadership and Finance**
+   and offered to everyone else. Someone who holds one of these roles and
+   has not set it up is sent to set it up before anything else.
+4. **Owner impersonation stays as decision 46** on production.
+5. **The production server is a second Forge server** on DigitalOcean, the
+   size of staging, in the same region, created and paid for by Jacob.
+6. **Backups:** the database every hour, kept 30 days, with MySQL's change
+   log on so it can be put back to any minute; uploaded files copied every
+   night to a separate private space, kept 30 days, besides the bucket's
+   versioning (step 16a). This answers decision 157, question 8.
+7. **QuickBooks on production:** Jacob answers Intuit's questionnaire for
+   live keys, adds the production Redirect URI, and puts the keys into the
+   production server's settings himself.
+
+## 194. Step 30a is merged (2026-10-27)
+
+**Decided by Jacob,** in reply to the step 30a report: "continue - is the
+app fully built? why are we getting prod ready?"
+
+1. **Step 30a is merged** as built
+   ([slice-30-production-readiness-plan.md](slice-30-production-readiness-plan.md),
+   "Step 30a as built"). Staging now requires two-factor sign-in for Owner,
+   Leadership and Finance.
+2. **Step 30b waits** for Jacob's answer to his question: what is still
+   unbuilt, and whether production comes before more of it.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

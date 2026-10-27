@@ -123,4 +123,17 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Required Two-Factor Sign-In
+    |--------------------------------------------------------------------------
+    |
+    | Owner, Leadership and Finance must set up two-factor sign-in before they
+    | can use Backoffice (decision 193, question 3). It is on unless switched
+    | off, which only a developer's own computer and the tests do.
+    |
+    */
+
+    'two_factor_required' => (bool) env('AUTH_REQUIRE_TWO_FACTOR', true),
+
 ];
