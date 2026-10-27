@@ -260,8 +260,8 @@ missing from every view of the business's health (9.1, 17.2, 17.3, 18) and
 reading QuickBooks the first step of its integration (9.8). Its plan is
 [slice-28-quickbooks-plan.md](slice-28-quickbooks-plan.md).
 
-**Slice 29, Settings > Audit Log, is built straight through and waits
-for Jacob's review (decision 191).** Chosen while Jacob was away, as the
+**Slice 29, Settings > Audit Log, is built straight through (decision
+191) and merged (2026-10-26, decision 192). Slice 29 is complete.** Chosen while Jacob was away, as the
 alternative the plan check after slice 28 named: every important change is
 recorded, but no page shows them. Its plan is
 [slice-29-audit-log-plan.md](slice-29-audit-log-plan.md).

@@ -1,8 +1,8 @@
 # Slice 29 — Settings > Audit Log: Plan
 
 Status: **chosen while Jacob was away and built straight through 29a and
-29b with the recommendation on every question (decision 191). Waits for
-Jacob's review; not merged.** Written as what the implementation agent recommended.
+29b with the recommendation on every question (decision 191), and merged
+on 2026-10-26 (decision 192).** Written as what the implementation agent recommended.
 
 ## Why this, now
 

@@ -3835,6 +3835,17 @@ the computer".
    and checked on both GitHub jobs step by step, and not merged until Jacob
    reviews it.
 
+## 192. Slice 29 is merged (2026-10-26)
+
+**Decided by Jacob,** in reply to the slice 29 report: "continue".
+
+1. **Slice 29, Settings > Audit Log, is merged** as built
+   ([slice-29-audit-log-plan.md](slice-29-audit-log-plan.md), "Step 29a as
+   built" and "Step 29b as built"), with the recommendation taken on every
+   question.
+2. **Next:** slice 30, Production Readiness, still waits for his answers
+   ([slice-30-production-readiness-plan.md](slice-30-production-readiness-plan.md)).
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
