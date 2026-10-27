@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
  * PaintScout's production rates do (docs/slice-31-estimating-plan.md, step
  * 31a; decision 196). A rate measures something (wall area, length, a count),
  * and turns it into hours or a price by its calculation. Its values are for
- * how hard the work is, easiest first; the estimate picks one.
+ * one, two, three and four coats (decision 200); the estimate's coats pick one.
  *
  * Decimals are kept as the database's exact strings, never as floats.
  *
@@ -87,7 +87,7 @@ class ProductionRate extends Model
     }
 
     /**
-     * Its values in order, easiest first, empty ones as null.
+     * Its values for one to four coats, empty ones as null.
      *
      * @return list<string|null>
      */

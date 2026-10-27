@@ -1,4 +1,4 @@
-{{-- A price book's production rates (slice 31, step 31a): what each measures, its values easiest first, coats, prep and paint. --}}
+{{-- A price book's production rates (slice 31, step 31a): what each measures, its values for 1 to 4 coats, default coats, prep and paint. --}}
 @php
     use App\Support\Money;
     use App\Support\Pricing\Decimal;
@@ -12,8 +12,8 @@
         <flux:table.columns>
             <flux:table.column>{{ __('Rate') }}</flux:table.column>
             <flux:table.column>{{ __('Calculated as') }}</flux:table.column>
-            <flux:table.column align="end">{{ __('Values, easiest first') }}</flux:table.column>
-            <flux:table.column align="end">{{ __('Coats') }}</flux:table.column>
+            <flux:table.column align="end">{{ __('1 · 2 · 3 · 4 coats') }}</flux:table.column>
+            <flux:table.column align="end">{{ __('Default coats') }}</flux:table.column>
             <flux:table.column align="end">{{ __('Prep') }}</flux:table.column>
             <flux:table.column>{{ __('Paint') }}</flux:table.column>
             <flux:table.column>{{ __('Status') }}</flux:table.column>

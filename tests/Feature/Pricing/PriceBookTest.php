@@ -114,6 +114,27 @@ test('the import command fills the default price book and refuses a file it cann
         ->assertFailed();
 });
 
+test('replacing the default\'s prices removes the old ones, records how many, and leaves a Location\'s own book alone', function () {
+    $default = importSamplePricing()['book'];
+    $own = app(CustomizePriceBook::class)->handle($this->lakeview, $this->owner);
+    $default->rates()->where('name', 'Sample Door')->sole()->forceFill(['name' => 'Sample Door, changed'])->save();
+
+    $settings = json_decode((string) file_get_contents(base_path('tests/Fixtures/paintscout-settings-sample.json')), true);
+    $replaced = app(ImportPaintScoutSettings::class)->handle($settings, $this->owner, replace: true);
+
+    expect($replaced['book']->is($default))->toBeTrue()
+        ->and($default->rates()->pluck('name')->sort()->values()->all())->toBe(['Sample Door', 'Sample Old Drawer', 'Sample Walls Roll'])
+        ->and($default->categories()->count())->toBe(2)
+        ->and($own->rates()->count())->toBe(3);
+
+    $event = AuditEvent::query()->where('action', AuditAction::PricingImported)->latest('id')->first();
+    expect($event->before())->toEqual(['rates' => 3, 'categories' => 2, 'paints' => 1, 'areas' => 2, 'line_items' => 2])
+        ->and($event->reason)->toBe('From PaintScout, replacing the prices imported before');
+
+    $this->artisan('backoffice:pricing-import', ['file' => base_path('tests/Fixtures/paintscout-settings-sample.json'), '--replace' => true])->assertSuccessful();
+    expect(ProductionRate::query()->where('price_book_id', $default->id)->count())->toBe(3);
+});
+
 test('a Location uses the default until it is customized, then its prices are its own', function () {
     $default = importSamplePricing()['book'];
 

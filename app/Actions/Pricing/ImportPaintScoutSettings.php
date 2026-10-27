@@ -31,7 +31,10 @@ use RuntimeException;
  * off, with no category.
  *
  * It refuses a default price book that already has rates, so it never mixes
- * two sets of prices.
+ * two sets of prices, unless told to replace them (decision 200): the
+ * default's rates, categories, paints, area templates and line items are then
+ * removed first, and the replacement is recorded. A Location's own price book
+ * is never touched.
  */
 class ImportPaintScoutSettings
 {
@@ -48,7 +51,7 @@ class ImportPaintScoutSettings
      * @param  array<string, mixed>  $settings
      * @return array{book: PriceBook, categories: int, rates: int, paints: int, areas: int, line_items: int}
      */
-    public function handle(array $settings, ?User $actor = null): array
+    public function handle(array $settings, ?User $actor = null, bool $replace = false): array
     {
         $options = $settings['options'] ?? null;
         $rates = $settings['rates'] ?? null;
@@ -57,11 +60,16 @@ class ImportPaintScoutSettings
             throw new RuntimeException('This is not a saved PaintScout settings file: it has no options or rates.');
         }
 
-        return DB::transaction(function () use ($options, $rates, $actor): array {
+        return DB::transaction(function () use ($options, $rates, $actor, $replace): array {
             $book = PriceBook::query()->whereNull('location_id')->lockForUpdate()->orderBy('id')->first();
+            $replaced = null;
 
             if ($book !== null && ProductionRate::query()->where('price_book_id', $book->id)->exists()) {
-                throw new RuntimeException('The default price book already has rates. It is imported only once.');
+                if (! $replace) {
+                    throw new RuntimeException('The default price book already has rates. It is imported only once, unless it is replaced.');
+                }
+
+                $replaced = $this->clear($book);
             }
 
             $types = $this->estimateTypes($options);
@@ -200,10 +208,33 @@ class ImportPaintScoutSettings
                 'line_items' => LineItemTemplate::query()->where('price_book_id', $book->id)->count(),
             ];
 
-            $this->recordAuditEvent->handle(AuditAction::PricingImported, $book, actor: $actor, after: $counts, reason: __('From PaintScout'));
+            $this->recordAuditEvent->handle(
+                AuditAction::PricingImported,
+                $book,
+                actor: $actor,
+                before: $replaced ?? [],
+                after: $counts,
+                reason: $replaced === null ? __('From PaintScout') : __('From PaintScout, replacing the prices imported before'),
+            );
 
             return ['book' => $book] + $counts;
         });
+    }
+
+    /**
+     * Remove everything in the default price book, before a replacement, and say how much there was.
+     *
+     * @return array{categories: int, rates: int, paints: int, areas: int, line_items: int}
+     */
+    private function clear(PriceBook $book): array
+    {
+        return [
+            'rates' => ProductionRate::query()->where('price_book_id', $book->id)->delete(),
+            'categories' => RateCategory::query()->where('price_book_id', $book->id)->delete(),
+            'paints' => PaintProduct::query()->where('price_book_id', $book->id)->delete(),
+            'areas' => AreaTemplate::query()->where('price_book_id', $book->id)->delete(),
+            'line_items' => LineItemTemplate::query()->where('price_book_id', $book->id)->delete(),
+        ];
     }
 
     /**
