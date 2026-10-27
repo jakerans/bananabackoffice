@@ -3965,6 +3965,18 @@ implementation agent reads; he builds the test estimates himself.
 7. **Built as collaboration.md sets out:** 31a first, reported before 31b
    starts.
 
+## 198. The production address is app.bananapainting.com (2026-10-27)
+
+**Decided by Jacob,** while setting up the production server: "can we make
+the dns app.bananapainting.com instead?"
+
+1. **Production is at `app.bananapainting.com`,** replacing
+   `backoffice.bananapainting.com` (decision 193, question 2). Its DNS
+   record is an `A` record named `app`, and QuickBooks' production
+   addresses use it too.
+2. **The setup guide is updated to match;** nothing else depended on the
+   old name.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

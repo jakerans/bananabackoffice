@@ -827,7 +827,7 @@ staging.** Before real customer data is entered into production:
 
 - ~~Two-factor sign-in, the production domain, and Owner impersonation in
   production.~~ Settled by decision 193: required for Owner, Leadership and
-  Finance; `backoffice.bananapainting.com`; impersonation kept as decision 46.
+  Finance; `app.bananapainting.com` (decision 198); impersonation kept as decision 46.
 - **How uploaded files are backed up.** Database backups do not cover them. This is
   settled as part of step B10, before the first real file is stored. See "Backups"
   above.
