@@ -3930,6 +3930,14 @@ implementation agent reads; he builds the test estimates himself.
    gauntlet loop, against that bar.
 5. **Next:** the agent studies PaintScout and proposes slice 31's plan,
    for his approval, before building.
+6. **Production rates are managed in Backoffice too,** as in PaintScout
+   (Jacob: "We also need to build in the ability to manage production
+   rates, which paintscout has. so copy that as well.").
+7. **PaintScout's settings are saved outside the repository.** With Jacob's
+   OK, Banana Painting ABQ's settings (rates, products, templates, line
+   items; no customers) were saved to `docs/reference/paintscout/`, which is
+   never committed. The plan is
+   [slice-31-estimating-plan.md](slice-31-estimating-plan.md).
 
 ## Future decisions already constrained by the brief
 

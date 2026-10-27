@@ -7,15 +7,15 @@ No secrets or customer information belong here.
 
 **State:** production and features at once (decisions 195 and 196). Jacob
 sets up production from a step-by-step guide (step 30b). Slice 31,
-Estimating, comes next: the implementation agent studies PaintScout with
-Jacob signed in, then proposes its plan. Nothing is being built.
+Estimating, is proposed and waits for his answers. Nothing is being built.
 
 ## Slice 31, Estimating (decision 196)
 
-PaintScout's pricing rebuilt exactly; only the presentation of options
-changes. Waiting for Jacob to sign in to PaintScout in the agent's browser.
-The plan, and the list of test estimates for Jacob to build, follow from
-what is found there.
+Plan: [../slice-31-estimating-plan.md](../slice-31-estimating-plan.md).
+PaintScout's pricing rebuilt exactly, production rates managed in
+Settings, only the presentation of options changed. Six questions, each
+with a recommendation; the first (how options are presented) needs
+Jacob's own description. Then the list of test estimates for him to build.
 
 ## Slice 32, Reports
 
