@@ -4013,6 +4013,22 @@ replace the imported prices, and rebuild the test estimates: "1: go ahead
    areas whose figures PaintScout keeps separately, so the same parts of
    the calculation are covered.
 
+## 201. Backoffice has public terms and privacy pages, for Intuit (2026-10-27)
+
+**Asked by Jacob** while setting up QuickBooks's live keys (guide step 16):
+Intuit asks every app for an end user license agreement and a privacy
+policy, and Backoffice, being internal, had neither. Offered two short pages
+in Backoffice or pages on bananapainting.com, he chose Backoffice's: "go
+ahead".
+
+1. **Two public pages,** `/legal/terms` and `/legal/privacy`, readable
+   without signing in. In plain words: Backoffice is Banana Painting's
+   internal software for its own staff; QuickBooks is only read, for profit
+   and loss, and never written to; its keys are stored encrypted; nothing is
+   sold or shared outside the services that run Backoffice.
+2. **Built on a branch of its own,** outside step 31b, so it can reach
+   production before the pricing engine.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

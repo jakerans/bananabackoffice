@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', 'dashboard')->name('home');
 
+// Public terms and privacy pages, which Intuit asks every QuickBooks app for (decision 201).
+Route::view('legal/terms', 'legal.terms')->name('legal.terms');
+Route::view('legal/privacy', 'legal.privacy')->name('legal.privacy');
+
 Route::middleware('guest')->group(function () {
     Route::get('invitation/{token}', [InvitationAcceptanceController::class, 'create'])->name('invitation.accept');
 
