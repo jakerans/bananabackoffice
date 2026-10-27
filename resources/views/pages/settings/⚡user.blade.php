@@ -7,6 +7,7 @@ use App\Actions\Staff\ResendStaffInvitation;
 use App\Actions\Staff\RevokeAccess;
 use App\Actions\Staff\StartImpersonation;
 use App\Enums\GrantScope;
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Exceptions\InvitationNotSent;
 use App\Models\AccessGrant;
@@ -278,6 +279,11 @@ new #[Title('Manage access')] class extends Component {
             @if ($staff->isActive() && $staff->invitationIsPending())
                 <flux:button wire:click="resendInvitation" icon="envelope">{{ __('Resend invitation') }}</flux:button>
             @endif
+
+            @can(Permission::ViewAuditLog)
+                <flux:button :href="route('settings.audit_log', ['person' => $staff->id])" wire:navigate icon="clock" data-test="audit-made-by">{{ __('Changes they made') }}</flux:button>
+                <flux:button :href="route('settings.audit_log', ['record' => 'user:'.$staff->id])" wire:navigate data-test="audit-about">{{ __('History') }}</flux:button>
+            @endcan
 
             @can('impersonate', $staff)
                 <flux:button wire:click="impersonate" icon="eye" data-test="impersonate">{{ __('Impersonate') }}</flux:button>

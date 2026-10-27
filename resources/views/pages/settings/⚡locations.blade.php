@@ -11,6 +11,7 @@ use App\Actions\Locations\UpdateServiceAreaPostalCodes;
 use App\Actions\Projects\ChangeInsuranceDeduction;
 use App\Actions\Subcontractors\ChangeComplianceRequirements;
 use App\Enums\AuditAction;
+use App\Enums\Permission;
 use App\Models\ComplianceRequirement;
 use App\Models\InsuranceDeductionRate;
 use App\Models\Location;
@@ -728,6 +729,9 @@ new #[Title('Locations')] class extends Component {
                                     <flux:button size="sm" wire:click="editSalesTarget({{ $location->id }})" data-test="sales-target-{{ $location->id }}">{{ __('Sales target') }}</flux:button>
                                     <flux:button size="sm" wire:click="editScorecard({{ $location->id }})" data-test="scorecard-setup-{{ $location->id }}">{{ __('Scorecard') }}</flux:button>
                                     <flux:button size="sm" wire:click="edit({{ $location->id }})">{{ __('Rename') }}</flux:button>
+                                    @can(Permission::ViewAuditLog)
+                                        <flux:button size="sm" :href="route('settings.audit_log', ['location' => $location->id])" wire:navigate data-test="location-changes-{{ $location->id }}">{{ __('Changes') }}</flux:button>
+                                    @endcan
 
                                     @if ($location->is_active)
                                         <flux:button

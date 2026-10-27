@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use Illuminate\Support\Str;
+
 /**
  * The important changes Backoffice keeps a permanent record of.
  *
@@ -202,4 +204,97 @@ enum AuditAction: string
     case ContactCenterHoldLengthChanged = 'contact_center.hold_length_changed';
     case ContactCenterReleaseDaysChanged = 'contact_center.release_days_changed';
     case ContactCenterProposalValidDaysChanged = 'contact_center.proposal_valid_days_changed';
+
+    /**
+     * What each kind of record is called, by the first part of a stored value.
+     */
+    private const array NOUNS = [
+        'staff' => 'Staff member',
+        'location' => 'Location',
+        'list_option' => 'List option',
+        'lead' => 'Lead',
+        'project' => 'Project',
+        'insurance_deduction' => 'Insurance deduction',
+        'subcontractor' => 'Subcontractor',
+        'scorecard' => 'Scorecard',
+        'marketing' => 'Marketing spend',
+        'warranty' => 'Warranty case',
+        'compensation' => 'Pay',
+        'attachment' => 'File',
+        'account' => 'Customer',
+        'contact' => 'Contact',
+        'property' => 'Property',
+        'note' => 'Note',
+        'project_size' => 'Project size',
+        'contact_center' => 'Contact Center settings',
+    ];
+
+    /**
+     * The Audit Log's areas (slice 29, decision 191), by the first part of a stored value.
+     */
+    private const array AREA_OF = [
+        'lead' => 'leads',
+        'project' => 'projects',
+        'account' => 'customers',
+        'contact' => 'customers',
+        'property' => 'customers',
+        'staff' => 'staff',
+        'location' => 'settings',
+        'list_option' => 'settings',
+        'project_size' => 'settings',
+        'contact_center' => 'settings',
+        'insurance_deduction' => 'settings',
+        'subcontractor' => 'subcontractors',
+        'warranty' => 'warranty',
+        'compensation' => 'pay',
+        'scorecard' => 'scorecards',
+        'marketing' => 'marketing',
+        'attachment' => 'files',
+        'note' => 'files',
+    ];
+
+    /**
+     * The areas the Audit Log can be narrowed to, in the order they are offered.
+     */
+    public const array AREAS = [
+        'leads' => 'Leads',
+        'projects' => 'Projects',
+        'customers' => 'Customers',
+        'staff' => 'Staff',
+        'settings' => 'Locations and settings',
+        'subcontractors' => 'Subcontractors',
+        'warranty' => 'Warranty',
+        'pay' => 'Pay',
+        'scorecards' => 'Scorecards',
+        'marketing' => 'Marketing',
+        'files' => 'Files and notes',
+    ];
+
+    /**
+     * What was done, in words, from the stored value: "Lead · Appointment booked".
+     */
+    public function label(): string
+    {
+        [$kind, $what] = explode('.', $this->value, 2);
+
+        return __(self::NOUNS[$kind]).' · '.__(Str::ucfirst(str_replace('_', ' ', $what)));
+    }
+
+    /**
+     * The key of the Audit Log area this change belongs to.
+     */
+    public function area(): string
+    {
+        return self::AREA_OF[explode('.', $this->value, 2)[0]];
+    }
+
+    /**
+     * Every action in an area.
+     *
+     * @return list<self>
+     */
+    public static function inArea(string $area): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $action): bool => $action->area() === $area));
+    }
 }

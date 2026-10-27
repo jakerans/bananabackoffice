@@ -96,6 +96,13 @@ new #[Title('Integrations')] class extends Component {
             <flux:text class="text-sm" data-test="quickbooks-sandbox">{{ __('This server reads Intuit\'s test companies, with made-up numbers.') }}</flux:text>
         @endif
 
+        @if ($this->locations->isEmpty())
+            <flux:text data-test="quickbooks-no-locations">
+                {{ __('There are no Locations to connect yet.') }}
+                <flux:link :href="route('settings.locations')" wire:navigate>{{ __('Add a Location first') }}</flux:link>
+            </flux:text>
+        @endif
+
         <ul class="flex flex-col divide-y divide-zinc-200">
             @foreach ($this->locations as $location)
                 @php

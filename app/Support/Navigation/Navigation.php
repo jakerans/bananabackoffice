@@ -361,7 +361,7 @@ class Navigation
         return new NavigationItem(
             id: 'settings',
             label: 'Settings',
-            permissions: [...$permissions, Permission::ManageLeadSalesLists, Permission::ManageContactCenterSettings],
+            permissions: [...$permissions, Permission::ManageLeadSalesLists, Permission::ManageContactCenterSettings, Permission::ViewAuditLog],
             state: NavigationState::Live,
             route: 'settings.home',
             icon: 'cog-6-tooth',
@@ -401,7 +401,13 @@ class Navigation
                     state: NavigationState::Live,
                     route: 'settings.integrations',
                 ),
-                new NavigationItem('settings.audit_log', 'Audit Log', $permissions),
+                new NavigationItem(
+                    id: 'settings.audit_log',
+                    label: 'Audit Log',
+                    permissions: [Permission::ViewAuditLog],
+                    state: NavigationState::Live,
+                    route: 'settings.audit_log',
+                ),
             ],
         );
     }

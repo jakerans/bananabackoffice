@@ -45,6 +45,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->can(Permission::ManageLocations)
         ->name('quickbooks.connect');
 
+    // Settings > Audit Log: every recorded change, for the Owner (slice 29, decision 191).
+    Route::livewire('settings/audit-log', 'pages::settings.audit-log')
+        ->can(Permission::ViewAuditLog)
+        ->name('settings.audit_log');
+
     Route::get('settings/integrations/quickbooks/callback', [QuickBooksController::class, 'callback'])
         ->can(Permission::ManageLocations)
         ->name('quickbooks.callback');

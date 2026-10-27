@@ -260,12 +260,18 @@ missing from every view of the business's health (9.1, 17.2, 17.3, 18) and
 reading QuickBooks the first step of its integration (9.8). Its plan is
 [slice-28-quickbooks-plan.md](slice-28-quickbooks-plan.md).
 
-**Slice 29, Production Readiness, is proposed (2026-10-26) and waits for
-Jacob's approval.** The plan check after slice 28 found a job running end to
-end, what is still Coming Soon not needed before real use, and real work,
-including Banana's real QuickBooks, possible only on production, whose
-safeguards below are written but not met. Its plan is
-[slice-29-production-readiness-plan.md](slice-29-production-readiness-plan.md).
+**Slice 29, Settings > Audit Log, is built straight through (decision
+191) and merged (2026-10-26, decision 192). Slice 29 is complete.** Chosen while Jacob was away, as the
+alternative the plan check after slice 28 named: every important change is
+recorded, but no page shows them. Its plan is
+[slice-29-audit-log-plan.md](slice-29-audit-log-plan.md).
+
+**Slice 30, Production Readiness, is proposed (2026-10-26) and waits for
+Jacob's answers when he is back (decision 191).** The plan check after slice
+28 found a job running end to end, what is still Coming Soon not needed
+before real use, and real work, including Banana's real QuickBooks, possible
+only on production, whose safeguards below are written but not met. Its plan
+is [slice-30-production-readiness-plan.md](slice-30-production-readiness-plan.md).
 
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the

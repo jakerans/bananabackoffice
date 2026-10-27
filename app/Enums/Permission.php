@@ -41,6 +41,7 @@ enum Permission: string
     case ViewPayouts = 'payouts.view';
     case ManageCompensation = 'compensation.manage';
     case MarketingSpendManage = 'marketing.spend.manage';
+    case ViewAuditLog = 'settings.audit_log.view';
 
     /**
      * Company-level permissions only count when held through an all-locations grant.
@@ -58,6 +59,8 @@ enum Permission: string
             self::ArchiveAccounts,
             // Pay is one company payroll across every Location (slice 20; decision 172, question 4).
             self::ManageCompensation => true,
+            // The audit log covers every Location, pay and impersonation (slice 29, decision 191).
+            self::ViewAuditLog => true,
             default => false,
         };
     }
