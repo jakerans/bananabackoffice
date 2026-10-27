@@ -8,7 +8,11 @@ namespace App\Enums;
  */
 enum RateCalculation: string
 {
-    /** How much is done in an hour: hours = amount / value. */
+    /**
+     * How much is done in an hour: hours = amount / value. For a count of
+     * items PaintScout multiplies instead, so a door rate of 0.5 is half an
+     * hour for each door (step 31b).
+     */
     case UnitsPerHour = 'units_per_hour';
 
     /** A price for each one: price = amount x value. */
@@ -26,7 +30,7 @@ enum RateCalculation: string
     public function label(RateMeasure $measure): string
     {
         return match ($this) {
-            self::UnitsPerHour => __(':unit per hour', ['unit' => $measure->unit()]),
+            self::UnitsPerHour => $measure === RateMeasure::Count ? __('Hours each') : __(':unit per hour', ['unit' => $measure->unit()]),
             self::PricePerUnit => $measure === RateMeasure::Count ? __('Price each') : __('Price per :unit', ['unit' => $measure->unit()]),
             self::HoursPerUnit => $measure === RateMeasure::Count ? __('Hours each') : __('Hours per :unit', ['unit' => $measure->unit()]),
             self::FixedHours => __('Hours'),

@@ -134,4 +134,20 @@ class PriceBook extends Model
     {
         return $this->hasMany(LineItemTemplate::class)->orderBy('sort_order')->orderBy('id');
     }
+
+    /**
+     * @return HasMany<Discount, $this>
+     */
+    public function discounts(): HasMany
+    {
+        return $this->hasMany(Discount::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    /**
+     * @return HasMany<TaxRate, $this>
+     */
+    public function taxRates(): HasMany
+    {
+        return $this->hasMany(TaxRate::class)->orderBy('sort_order')->orderBy('id');
+    }
 }

@@ -5,6 +5,7 @@ use App\Actions\Pricing\CustomizePriceBook;
 use App\Actions\Pricing\SavePaintProduct;
 use App\Actions\Pricing\SaveProductionRate;
 use App\Actions\Pricing\SaveRateCategory;
+use App\Enums\DiscountKind;
 use App\Enums\EstimateType;
 use App\Enums\Permission;
 use App\Enums\RateCalculation;
@@ -70,7 +71,7 @@ new #[Title('Pricing Settings')] class extends Component {
     {
         abort_unless(Gate::any([Permission::ViewPricing, Permission::ManagePricing]), 403);
 
-        if (! in_array($this->tab, ['rates', 'paints', 'areas', 'line-items', 'hourly'], true)) {
+        if (! in_array($this->tab, ['rates', 'paints', 'areas', 'line-items', 'discounts', 'hourly'], true)) {
             $this->tab = 'rates';
         }
 
@@ -427,6 +428,7 @@ new #[Title('Pricing Settings')] class extends Component {
             <flux:navbar.item wire:click="$set('tab', 'paints')" :current="$tab === 'paints'">{{ __('Paints') }}</flux:navbar.item>
             <flux:navbar.item wire:click="$set('tab', 'areas')" :current="$tab === 'areas'">{{ __('Areas') }}</flux:navbar.item>
             <flux:navbar.item wire:click="$set('tab', 'line-items')" :current="$tab === 'line-items'">{{ __('Line items') }}</flux:navbar.item>
+            <flux:navbar.item wire:click="$set('tab', 'discounts')" :current="$tab === 'discounts'">{{ __('Discounts') }}</flux:navbar.item>
             <flux:navbar.item wire:click="$set('tab', 'hourly')" :current="$tab === 'hourly'">{{ __('Hourly rates and tax') }}</flux:navbar.item>
         </flux:navbar>
         </div>
@@ -557,6 +559,28 @@ new #[Title('Pricing Settings')] class extends Component {
                     </div>
                 @endforeach
             </div>
+        @elseif ($tab === 'discounts')
+            <div class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-4" data-test="discounts">
+                <flux:text class="text-sm">{{ __('Discounts an estimate can be given. A percentage is rounded up to the whole dollar. They are changed in a later step.') }}</flux:text>
+                <flux:table>
+                    <flux:table.columns>
+                        <flux:table.column>{{ __('Discount') }}</flux:table.column>
+                        <flux:table.column align="end">{{ __('Takes off') }}</flux:table.column>
+                    </flux:table.columns>
+                    <flux:table.rows>
+                        @forelse ($this->priceBook->discounts as $discount)
+                            <flux:table.row :key="'discount-'.$discount->id">
+                                <flux:table.cell variant="strong">{{ $discount->name }}</flux:table.cell>
+                                <flux:table.cell align="end" class="tabular-nums">{{ $discount->kind === DiscountKind::Percentage ? Decimal::plain($discount->value).'%' : Money::format((int) round((float) $discount->value * 100)) }}</flux:table.cell>
+                            </flux:table.row>
+                        @empty
+                            <flux:table.row>
+                                <flux:table.cell colspan="2">{{ __('No discounts yet.') }}</flux:table.cell>
+                            </flux:table.row>
+                        @endforelse
+                    </flux:table.rows>
+                </flux:table>
+            </div>
         @else
             <form wire:submit="saveHourlyRates" class="flex max-w-2xl flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-5" data-test="hourly-rates">
                 <flux:input wire:model="hourlyRate" :label="__('Hourly rate ($)')" inputmode="decimal" :disabled="! $this->editable" data-test="hourly-rate" />
@@ -576,6 +600,24 @@ new #[Title('Pricing Settings')] class extends Component {
                     </div>
                 @endif
             </form>
+            <div class="flex max-w-2xl flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-4" data-test="tax-rates">
+                <flux:heading level="3">{{ __('Tax rates') }}</flux:heading>
+                <flux:text class="text-sm">{{ __('Named tax rates an estimate can be charged instead. They are changed in a later step.') }}</flux:text>
+                <flux:table>
+                    <flux:table.rows>
+                        @forelse ($this->priceBook->taxRates as $taxRate)
+                            <flux:table.row :key="'tax-rate-'.$taxRate->id">
+                                <flux:table.cell variant="strong">{{ $taxRate->name }}</flux:table.cell>
+                                <flux:table.cell align="end" class="tabular-nums">{{ Decimal::plain($taxRate->percent) }}%</flux:table.cell>
+                            </flux:table.row>
+                        @empty
+                            <flux:table.row>
+                                <flux:table.cell colspan="2">{{ __('No named tax rates.') }}</flux:table.cell>
+                            </flux:table.row>
+                        @endforelse
+                    </flux:table.rows>
+                </flux:table>
+            </div>
         @endif
     @endif
 

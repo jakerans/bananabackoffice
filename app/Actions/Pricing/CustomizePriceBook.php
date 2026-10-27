@@ -6,12 +6,14 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Enums\Permission;
 use App\Models\AreaTemplate;
+use App\Models\Discount;
 use App\Models\LineItemTemplate;
 use App\Models\Location;
 use App\Models\PaintProduct;
 use App\Models\PriceBook;
 use App\Models\ProductionRate;
 use App\Models\RateCategory;
+use App\Models\TaxRate;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -63,6 +65,8 @@ class CustomizePriceBook
             $paintIds = $this->copy(PaintProduct::query()->where('price_book_id', $default->id)->get(), $book);
             $this->copy(AreaTemplate::query()->where('price_book_id', $default->id)->get(), $book);
             $this->copy(LineItemTemplate::query()->where('price_book_id', $default->id)->get(), $book);
+            $this->copy(Discount::query()->where('price_book_id', $default->id)->get(), $book);
+            $this->copy(TaxRate::query()->where('price_book_id', $default->id)->get(), $book);
 
             foreach (ProductionRate::query()->where('price_book_id', $default->id)->get() as $rate) {
                 $copy = $rate->replicate();
@@ -88,7 +92,7 @@ class CustomizePriceBook
     /**
      * Copy each record into the new book, and say which new record each old one became.
      *
-     * @param  iterable<RateCategory|PaintProduct|AreaTemplate|LineItemTemplate>  $records
+     * @param  iterable<RateCategory|PaintProduct|AreaTemplate|LineItemTemplate|Discount|TaxRate>  $records
      * @return array<int, int>
      */
     private function copy(iterable $records, PriceBook $book): array

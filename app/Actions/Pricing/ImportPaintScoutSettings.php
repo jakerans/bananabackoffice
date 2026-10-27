@@ -4,15 +4,18 @@ namespace App\Actions\Pricing;
 
 use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
+use App\Enums\DiscountKind;
 use App\Enums\EstimateType;
 use App\Enums\RateCalculation;
 use App\Enums\RateMeasure;
 use App\Models\AreaTemplate;
+use App\Models\Discount;
 use App\Models\LineItemTemplate;
 use App\Models\PaintProduct;
 use App\Models\PriceBook;
 use App\Models\ProductionRate;
 use App\Models\RateCategory;
+use App\Models\TaxRate;
 use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -25,16 +28,15 @@ use RuntimeException;
  *
  * The settings are the file saved from PaintScout outside the repository:
  * its "options" (categories, paints, area templates, line items, the hourly
- * and tax rates) and its "rates". Everything PaintScout keeps for a rate that
- * Backoffice does not use yet is kept in the rate's details for the steps that
- * follow. A rate whose category PaintScout no longer has is kept, switched
- * off, with no category.
+ * rate, and the named discounts and tax rates of step 31b) and its "rates".
+ * Everything PaintScout keeps for a rate that Backoffice does not use yet is
+ * kept in the rate's details for the steps that follow. A rate whose category
+ * PaintScout no longer has is kept, switched off, with no category.
  *
  * It refuses a default price book that already has rates, so it never mixes
- * two sets of prices, unless told to replace them (decision 200): the
- * default's rates, categories, paints, area templates and line items are then
- * removed first, and the replacement is recorded. A Location's own price book
- * is never touched.
+ * two sets of prices, unless told to replace them (decision 200): everything
+ * in the default is then removed first, and the replacement is recorded. A
+ * Location's own price book is never touched.
  */
 class ImportPaintScoutSettings
 {
@@ -49,7 +51,7 @@ class ImportPaintScoutSettings
 
     /**
      * @param  array<string, mixed>  $settings
-     * @return array{book: PriceBook, categories: int, rates: int, paints: int, areas: int, line_items: int}
+     * @return array{book: PriceBook, categories: int, rates: int, paints: int, areas: int, line_items: int, discounts: int, tax_rates: int}
      */
     public function handle(array $settings, ?User $actor = null, bool $replace = false): array
     {
@@ -200,12 +202,52 @@ class ImportPaintScoutSettings
                 ])->save();
             }
 
+            foreach ($this->ordered($options['discounts'] ?? []) as $position => [$key, $discount]) {
+                $kind = DiscountKind::tryFrom((string) ($discount['type'] ?? ''));
+                $value = $this->decimal($discount['value'] ?? null);
+
+                if ($kind === null || $value === null) {
+                    continue;
+                }
+
+                (new Discount)->forceFill([
+                    'price_book_id' => $book->id,
+                    'name' => Str::limit(trim((string) ($discount['description'] ?? '')), 147) ?: __('Untitled discount'),
+                    'kind' => $kind,
+                    'value' => $value,
+                    'is_default' => (bool) ($discount['isDefault'] ?? false),
+                    'is_active' => ($discount['active'] ?? true) !== false,
+                    'sort_order' => $position,
+                    'source_key' => $key,
+                ])->save();
+            }
+
+            foreach (array_values((array) ($options['taxRates'] ?? [])) as $position => $tax) {
+                $percent = is_array($tax) ? $this->decimal($tax['rate'] ?? null) : null;
+
+                if ($percent === null) {
+                    continue;
+                }
+
+                (new TaxRate)->forceFill([
+                    'price_book_id' => $book->id,
+                    'name' => Str::limit(trim((string) ($tax['description'] ?? '')), 147) ?: __('Untitled tax rate'),
+                    'percent' => $percent,
+                    'is_default' => (bool) ($tax['isDefault'] ?? false),
+                    'is_active' => ($tax['active'] ?? true) !== false,
+                    'sort_order' => $position,
+                    'source_key' => is_string($tax['key'] ?? null) ? Str::limit($tax['key'], 100, '') : null,
+                ])->save();
+            }
+
             $counts = [
                 'categories' => count($categoryIds),
                 'rates' => $rateCount,
                 'paints' => count($paintIds),
                 'areas' => AreaTemplate::query()->where('price_book_id', $book->id)->count(),
                 'line_items' => LineItemTemplate::query()->where('price_book_id', $book->id)->count(),
+                'discounts' => Discount::query()->where('price_book_id', $book->id)->count(),
+                'tax_rates' => TaxRate::query()->where('price_book_id', $book->id)->count(),
             ];
 
             $this->recordAuditEvent->handle(
@@ -224,7 +266,7 @@ class ImportPaintScoutSettings
     /**
      * Remove everything in the default price book, before a replacement, and say how much there was.
      *
-     * @return array{categories: int, rates: int, paints: int, areas: int, line_items: int}
+     * @return array{categories: int, rates: int, paints: int, areas: int, line_items: int, discounts: int, tax_rates: int}
      */
     private function clear(PriceBook $book): array
     {
@@ -234,6 +276,8 @@ class ImportPaintScoutSettings
             'paints' => PaintProduct::query()->where('price_book_id', $book->id)->delete(),
             'areas' => AreaTemplate::query()->where('price_book_id', $book->id)->delete(),
             'line_items' => LineItemTemplate::query()->where('price_book_id', $book->id)->delete(),
+            'discounts' => Discount::query()->where('price_book_id', $book->id)->delete(),
+            'tax_rates' => TaxRate::query()->where('price_book_id', $book->id)->delete(),
         ];
     }
 
