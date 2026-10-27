@@ -45,6 +45,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->can(Permission::ManageLocations)
         ->name('quickbooks.connect');
 
+    // Settings > Pricing Settings: the price books and production rates (slice 31, step 31a; decision 197).
+    // Seeing them and changing them are two permissions; the page checks both.
+    Route::livewire('settings/pricing', 'pages::settings.pricing')->name('settings.pricing');
+
     // Settings > Audit Log: every recorded change, for the Owner (slice 29, decision 191).
     Route::livewire('settings/audit-log', 'pages::settings.audit-log')
         ->can(Permission::ViewAuditLog)

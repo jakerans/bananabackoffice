@@ -3977,6 +3977,20 @@ the dns app.bananapainting.com instead?"
 2. **The setup guide is updated to match;** nothing else depended on the
    old name.
 
+## 199. Step 31a is merged; Banana's prices are imported on staging (2026-10-27)
+
+**Decided by Jacob,** in reply to the step 31a report: "continue, and yes
+run the import on staging".
+
+1. **Step 31a, Settings > Pricing Settings, is merged** as built
+   ([slice-31-estimating-plan.md](slice-31-estimating-plan.md), "Step 31a
+   as built").
+2. **Staging's default price book is filled from Banana's saved PaintScout
+   settings,** by `backoffice:pricing-import`, so the page can be tried
+   there. Prices are not customer information; the file itself still never
+   enters the repository.
+3. **Next:** 31b, once Jacob's test estimates are built in PaintScout.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

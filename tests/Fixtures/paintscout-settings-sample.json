@@ -1,0 +1,49 @@
+{
+    "savedAt": "2026-10-27T00:00:00.000Z",
+    "location": "Made-up sample, not Banana's prices",
+    "options": {
+        "hourlyRate": {"label": "Hourly Rate", "value": "50"},
+        "taxRate": {"value": 0},
+        "intExtOptions": {
+            "values": {
+                "int": {"label": "Residential Interior", "hourlyRate": 0},
+                "ext": {"label": "Residential Exterior", "hourlyRate": 60},
+                "all": {"label": "All Types", "hourlyRate": 0},
+                "sample-commercial-int": {"label": "Commercial Interior", "hourlyRate": 0}
+            }
+        },
+        "rateSections": {
+            "values": {
+                "sample-walls": {"key": "sample-walls", "label": "Sample Walls", "quoteTypes": ["int", "sample-commercial-int"], "active": true},
+                "sample-outside": {"key": "sample-outside", "label": "Sample Outside", "quoteTypes": ["ext"], "active": true}
+            },
+            "order": ["sample-outside", "sample-walls"]
+        },
+        "products": {
+            "values": {
+                "sample-paint": {"key": "sample-paint", "label": "Sample Wall Paint", "price": 30.5, "coverage_rate": 300, "lnft_coverage": 600, "quantity_coverage": 0.1, "unitLabel": "gal", "quoteTypes": ["all"], "active": true}
+            },
+            "order": ["sample-paint"]
+        },
+        "areaTemplates": {
+            "values": {
+                "sample-room": {"active": true, "label": "Sample Room", "int_ext": {"value": "int"}, "quoteTypes": ["int"]},
+                "sample-side": {"active": true, "label": "Sample Side", "int_ext": {"value": "ext"}, "quoteTypes": ["ext"]}
+            },
+            "order": ["sample-room", "sample-side"]
+        },
+        "lineItems": {
+            "values": {
+                "sample-prep": {"active": true, "label": "Sample Preparation", "description": "<p>We cover the floors.</p><ul><li><p>Holes filled.</p></li></ul>", "price": null, "hours": null, "calculate": false},
+                "sample-time": {"active": true, "label": "Sample Time and Materials", "description": "<p></p>", "price": 120, "hours": 2, "calculate": true, "customHourlyRate": false, "hourlyRate": 0}
+            },
+            "order": ["sample-prep", "sample-time"]
+        }
+    },
+    "rates": {
+        "rate-roll": {"name": "rate-roll", "label": "Sample Walls Roll", "client_label": "Walls", "section": "sample-walls", "rate_type": "sqft_walls", "calculation_type": "value_per_hour", "values": [100, 85.5, null, ".5"], "default_applications": 2, "useCoats": true, "prep": ".25", "default_products": [{"productKey": "sample-paint", "coverage": null}], "active": true, "showPrice": true, "order": 3},
+        "rate-door": {"name": "rate-door", "label": "Sample Door", "section": "sample-outside", "rate_type": "quantity", "calculation_type": "hours_per_value", "values": [1.5], "default_applications": 1, "useCoats": false, "active": true, "excludeDiscount": true},
+        "rate-old": {"name": "rate-old", "label": "Sample Old Drawer", "section": "a-section-paintscout-no-longer-has", "rate_type": "quantity", "calculation_type": "price_per_value", "values": [25, 50, 75], "default_applications": 2, "active": true},
+        "rate-unknown": {"name": "rate-unknown", "label": "Sample Unknown", "section": "sample-walls", "rate_type": "cubic_feet", "calculation_type": "value_per_hour", "values": [1]}
+    }
+}

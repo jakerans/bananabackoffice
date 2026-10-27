@@ -21,6 +21,7 @@ use App\Models\MarketingSpendEntry;
 use App\Models\Objection;
 use App\Models\PayPlan;
 use App\Models\PayrollPeriod;
+use App\Models\PriceBook;
 use App\Models\Project;
 use App\Models\ProjectChangeOrder;
 use App\Models\ProjectCost;
@@ -146,6 +147,7 @@ class AppServiceProvider extends ServiceProvider
             'marketing_spend_entry' => MarketingSpendEntry::class,
             'scorecard' => Scorecard::class,
             'insurance_deduction_rate' => InsuranceDeductionRate::class,
+            'price_book' => PriceBook::class,
         ]);
     }
 

@@ -621,7 +621,7 @@ test('leadership with an all-locations grant reaches the page through company an
     expect($navigation->allows($leader, $item))->toBeTrue();
 
     $visible = collect($settings->children)->filter(fn ($section) => $navigation->allows($leader, $section))->pluck('id')->all();
-    expect($visible)->toBe(['settings.lists', 'settings.contact_center']);
+    expect($visible)->toBe(['settings.lists', 'settings.contact_center', 'settings.pricing']);
 
     $this->actingAs($leader)->get(route('settings.home'))->assertRedirect(route('settings.lists'));
     $this->get(route('settings.contact_center'))->assertOk()->assertSee('Contact Center');

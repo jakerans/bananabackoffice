@@ -86,6 +86,9 @@ enum Role: string
                 Permission::ArchiveAccounts,
                 // Marketing spend is typed in until ad platforms are connected (decision 183, question 3).
                 Permission::MarketingSpendManage,
+                // Owner and Leadership change prices; others only see them (decision 197, question 3).
+                Permission::ViewPricing,
+                Permission::ManagePricing,
             ],
             self::Finance => [
                 Permission::FinanceAccess,
@@ -127,6 +130,8 @@ enum Role: string
                 Permission::ViewAccounts,
                 Permission::ManageAccounts,
                 Permission::MarketingSpendManage,
+                // A manager sees their Location's prices and cannot change them (decision 197, question 3).
+                Permission::ViewPricing,
             ],
             self::CallCenterAgent => [
                 Permission::MarketingAccess,
@@ -153,6 +158,8 @@ enum Role: string
                 Permission::WriteNotes,
                 Permission::ViewAccounts,
                 Permission::ManageAccounts,
+                // The prices they estimate with, seen and not changed (decision 197, question 3).
+                Permission::ViewPricing,
             ],
             self::ProductionManager => [
                 Permission::ProductionAccess,
