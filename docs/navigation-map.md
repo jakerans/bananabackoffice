@@ -387,7 +387,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | `settings.pricing` | Pricing Settings | CS |
 | `settings.templates` | Templates | CS |
 | `settings.integrations` | Integrations | **Live (slice 28, step 28a):** each Location's QuickBooks company, `/settings/integrations`, route name `settings.integrations`, `settings.locations.manage` |
-| `settings.audit_log` | Audit Log | CS |
+| `settings.audit_log` | Audit Log | **Live (slice 29, step 29a):** every recorded change, newest first, `/settings/audit-log`, route name `settings.audit_log`, `settings.audit_log.view` (Owner only) |
 
 ### Shared
 

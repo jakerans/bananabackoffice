@@ -40,6 +40,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ViewPayouts,
         Permission::ManageCompensation,
         Permission::MarketingSpendManage,
+        Permission::ViewAuditLog,
     ]],
     'leadership' => [Role::Leadership, [
         Permission::ViewProjects,
@@ -168,6 +169,7 @@ test('company overview and settings are company-level permissions', function (Pe
     'archive accounts' => [Permission::ArchiveAccounts, true],
     'manage compensation' => [Permission::ManageCompensation, true],
     'manage marketing spend' => [Permission::MarketingSpendManage, false],
+    'view the audit log' => [Permission::ViewAuditLog, true],
     'manage contact center settings' => [Permission::ManageContactCenterSettings, true],
     'work the lead queue' => [Permission::WorkLeadQueue, false],
     'book appointments' => [Permission::BookAppointments, false],

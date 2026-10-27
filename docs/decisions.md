@@ -3817,6 +3817,24 @@ himself: "continue".
 3. **Next:** the plan check after a slice, and a proposed next slice, for
    his approval.
 
+## 191. Production readiness waits; slice 29 is Settings > Audit Log (2026-10-26)
+
+**Decided by Jacob,** in reply to the proposed production-readiness slice:
+"can we come back to this and start the next slice or whatever i wont be by
+the computer".
+
+1. **Production readiness waits until Jacob is back,** unchanged; it needs
+   him for the server, the domain, payment and keys. Its plan becomes slice
+   30 ([slice-30-production-readiness-plan.md](slice-30-production-readiness-plan.md)),
+   still proposed and waiting for his answers.
+2. **Slice 29 is Settings > Audit Log,** the alternative the plan check
+   named, chosen by the implementation agent because it needs nothing from
+   Jacob while he is away. It is built straight through with the
+   recommendation on every question
+   ([slice-29-audit-log-plan.md](slice-29-audit-log-plan.md)), committed
+   and checked on both GitHub jobs step by step, and not merged until Jacob
+   reviews it.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

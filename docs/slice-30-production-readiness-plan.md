@@ -1,6 +1,8 @@
-# Slice 29 — Production Readiness: Plan
+# Slice 30 — Production Readiness: Plan
 
-Status: **proposed on 2026-10-26; waits for Jacob's approval.** Written as
+Status: **proposed on 2026-10-26 as slice 29; renumbered 30 when Jacob
+asked for it to wait until he is back (decision 191). Waits for his
+answers.** Written as
 what the implementation agent recommends from the plan check below.
 
 ## Why this is next (the plan check)
@@ -28,17 +30,17 @@ important change is already recorded, but no page shows them) and the
 Reports pages. Both are useful and either can follow straight after; neither
 is needed before real use.
 
-## What slice 29 is, and is not
+## What slice 30 is, and is not
 
 Three reviewed steps.
 
 | Step | Delivers |
 | --- | --- |
-| 29a | **What Backoffice itself needs for production.** Two-factor sign-in required for the roles Jacob names; Owner impersonation as he decides; a `backoffice:production-check` command that says whether a server is safe for real data: debugging off, HTTPS, email, private file storage, the scheduler running, backups configured, QuickBooks set to live keys. |
-| 29b | **The production server.** A written runbook, then the server set up step by step: its own server in Forge, its own least-privilege database account, its own private file storage and key, email from Banana's domain, the real domain with HTTPS, the scheduler, and stricter backups. Jacob does every step that creates an account, pays for something or handles a key; the implementation agent writes the steps and checks the result without changing anything. |
-| 29c | **Proof it can be recovered, then first use.** The restore drill on staging, following a written recovery procedure; the backup of uploaded files checked the same way; then the first Owner created on production from the command line, the three Locations added, and each Location's real QuickBooks company connected. |
+| 30a | **What Backoffice itself needs for production.** Two-factor sign-in required for the roles Jacob names; Owner impersonation as he decides; a `backoffice:production-check` command that says whether a server is safe for real data: debugging off, HTTPS, email, private file storage, the scheduler running, backups configured, QuickBooks set to live keys. |
+| 30b | **The production server.** A written runbook, then the server set up step by step: its own server in Forge, its own least-privilege database account, its own private file storage and key, email from Banana's domain, the real domain with HTTPS, the scheduler, and stricter backups. Jacob does every step that creates an account, pays for something or handles a key; the implementation agent writes the steps and checks the result without changing anything. |
+| 30c | **Proof it can be recovered, then first use.** The restore drill on staging, following a written recovery procedure; the backup of uploaded files checked the same way; then the first Owner created on production from the command line, the three Locations added, and each Location's real QuickBooks company connected. |
 
-Not in slice 29:
+Not in slice 30:
 
 - **Moving existing data in:** there is none to import (roadmap, "Existing
   data").
