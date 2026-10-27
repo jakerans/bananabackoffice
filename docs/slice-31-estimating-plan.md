@@ -1,7 +1,8 @@
 # Slice 31 — Estimating and Production Rates: Plan
 
 Status: **proposed on 2026-10-27 (decision 196) and approved the same day
-(decision 197). Step 31a is built and merged (decision 199).**
+(decision 197). Step 31a is built and merged (decision 199); step 31b is
+built and waits for Jacob's review.**
 Written as what the implementation agent recommends, after reading Banana
 Painting ABQ's PaintScout settings with Jacob signed in.
 
@@ -114,8 +115,13 @@ What they already show, for 31b:
 - **A line item priced by hours is not rounded:** 2.5 hours stays 2.5.
 - **A percentage discount is rounded up to the whole dollar.**
 - **Options are priced like any surface but left out of the total.**
-- **Measurements are kept to two decimals;** a room's length around is
-  twice its width and length, its wall area that times its height.
+- **Measurements are not rounded:** a room's length around is twice its
+  width and length, its wall area that times its height, its ceiling and
+  floor its width times its length (13.58 by 10.25 is 139.195 square feet).
+  One flat surface, such as a side of a house, a fence or a deck, counts its
+  length, its length times its height, and its length times its width.
+- **A rate for a count of items always multiplies:** a door rate of 0.5
+  "per hour" is half an hour for each door, never two doors an hour.
 - ABQ also has named discounts (three Brand Ambassador tiers and payments
   by check or ACH, and by card) that the import does not bring in yet;
   31b adds them.
@@ -177,3 +183,60 @@ never rounded on the way in; the tax rate has at most two decimals.
 **Known limits:** areas and line items are read-only until 31c; there is
 no way to undo a Location's customization (its book can be edited back to
 match); production gets its prices by running the import there in 30c.
+
+## Step 31b as built
+
+**The pricing engine** (`app/Support/Pricing/PricingEngine.php`) works out
+an estimate's price from its areas, their surfaces and rates, the coats,
+the paint, the line items, the discounts and the tax. It is not on a page
+yet; the estimate in the Sales Workspace (31c) is built on it.
+
+- **It matches PaintScout to the cent.** All six test estimates price the
+  same in Backoffice: every surface's hours, labor, gallons of paint and
+  paint cost, every area's totals, and each estimate's hours, paint, price,
+  discount and total (173 figures). The check runs on this computer only,
+  from the saved estimates outside the repository; elsewhere it is skipped.
+  The committed tests use made-up rates.
+- **The rules,** as found in the test estimates (above), including two
+  corrections to what was written before: measurements are not rounded, and
+  a rate for a count of items multiplies even when PaintScout calls it "per
+  hour". Settings > Pricing now calls such a rate's value "Hours each".
+- **Coats** pick a rate's value for one to four coats and multiply its paint,
+  only for a rate that uses coats (the walls, ceilings and trim); any other
+  rate counts one coat.
+- **Never retroactive** (decision 197, question 4): an estimate is priced
+  from a copy of each rate and paint as it was (`RateSnapshot`,
+  `PaintSnapshot`), so changing a price later cannot change it. 31c keeps
+  those copies with the estimate.
+- **Named discounts and tax rates.** The import now brings ABQ's five
+  discounts (the three Brand Ambassador tiers, check or ACH, and card) and
+  its nine city tax rates into the default price book; "Customize for this
+  Location" copies them too. Settings > Pricing shows the discounts on a new
+  "Discounts" tab and the tax rates under "Hourly rates and tax", read-only
+  for now, like areas and line items.
+
+**Decisions made while building:**
+
+- The engine works in the same floating-point arithmetic PaintScout uses, in
+  the same order, so a figure that lands exactly on a whole hour or dollar
+  rounds the same way; money comes out in whole cents.
+- The named tax rates came with the discounts, though the plan named only
+  the discounts: ABQ's estimates choose among them, and they are the same
+  kind of list.
+
+**Known limits:**
+
+- **Not yet matched against PaintScout,** because no test estimate uses
+  them: how tax is rounded (Backoffice rounds to the cent), two discounts on
+  one estimate (Backoffice adds them up, each worked out on the same
+  amount), prep hours (counted at the hourly rate, not rounded), a rate's
+  own hourly rate, a fixed-hours rate, and a line item with its own price.
+  No ABQ rate uses prep hours, its own hourly rate or fixed hours; ABQ does
+  use tax rates and several discounts. One more test estimate, with a city
+  tax and two discounts, would settle the two ABQ uses.
+- PaintScout's per-surface overrides (typing over the hours or the price)
+  and an area's quantity are not part of the engine; 31c decides whether
+  the estimate offers them.
+- Discounts and tax rates are read-only until a later step.
+- Staging's default price book gets the discounts and tax rates when the
+  import is run there again with `--replace`.
