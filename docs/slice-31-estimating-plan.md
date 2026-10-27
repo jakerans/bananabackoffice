@@ -91,6 +91,35 @@ a priced line item, a discount and a changed hourly rate; and PaintScout's
 optional extras. The implementation agent builds them at Jacob's request
 (decision 200) with ABQ's own rate names.
 
+**Built on 2026-10-27:** six estimates at ABQ, "Backoffice Test 01" to
+"06" (PaintScout #38 to #43), each with several test areas so that every
+area's own figures can be checked: one plain bedroom; the same room at two
+and three coats, odd measurements and a tall room; price per item, hours
+per item, items per hour and a stained ceiling; an exterior with body,
+fascia, doors, shutters and prep, a fence and a deck; a priced line item,
+a changed hourly rate and a 10% discount; and a different paint with an
+optional extra. Each one's complete PaintScout record is saved outside the
+repository (`docs/reference/paintscout/tests/`).
+
+What they already show, for 31b:
+
+- **Hours are rounded up to the whole hour for each surface,** even 6.04
+  hours becomes 7 and 0.5 becomes 1; a surface's hours times the hourly
+  rate is its labor.
+- **Paint is worked out in exact gallons** (area times coats over coverage,
+  or per item) and **the paint's cost is rounded up to the whole dollar**
+  for each surface.
+- **A price-per-item rate has no hours and no paint;** its price is the
+  quantity times the price.
+- **A line item priced by hours is not rounded:** 2.5 hours stays 2.5.
+- **A percentage discount is rounded up to the whole dollar.**
+- **Options are priced like any surface but left out of the total.**
+- **Measurements are kept to two decimals;** a room's length around is
+  twice its width and length, its wall area that times its height.
+- ABQ also has named discounts (three Brand Ambassador tiers and payments
+  by check or ACH, and by card) that the import does not bring in yet;
+  31b adds them.
+
 ## Known limits of this plan
 
 - PaintScout's exact rounding (per surface, per area or at the end) is

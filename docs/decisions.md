@@ -4008,7 +4008,10 @@ replace the imported prices, and rebuild the test estimates: "1: go ahead
    default is recorded in the Audit Log like the first import.
 3. **The test estimates are rewritten** with ABQ's rate names and built in
    PaintScout by the implementation agent, at Jacob's request, each with a
-   made-up customer, saved and never sent.
+   made-up customer, saved and never sent. Built as six estimates
+   (PaintScout #38 to #43) instead of seventeen, each holding several test
+   areas whose figures PaintScout keeps separately, so the same parts of
+   the calculation are covered.
 
 ## Future decisions already constrained by the brief
 
