@@ -42,6 +42,8 @@ enum Permission: string
     case ManageCompensation = 'compensation.manage';
     case MarketingSpendManage = 'marketing.spend.manage';
     case ViewAuditLog = 'settings.audit_log.view';
+    case ViewPricing = 'settings.pricing.view';
+    case ManagePricing = 'settings.pricing.manage';
 
     /**
      * Company-level permissions only count when held through an all-locations grant.
@@ -61,6 +63,8 @@ enum Permission: string
             self::ManageCompensation => true,
             // The audit log covers every Location, pay and impersonation (slice 29, decision 191).
             self::ViewAuditLog => true,
+            // Every Location's price book, and the default each starts from (decision 197, question 3).
+            self::ManagePricing => true,
             default => false,
         };
     }

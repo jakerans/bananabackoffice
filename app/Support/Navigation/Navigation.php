@@ -361,7 +361,7 @@ class Navigation
         return new NavigationItem(
             id: 'settings',
             label: 'Settings',
-            permissions: [...$permissions, Permission::ManageLeadSalesLists, Permission::ManageContactCenterSettings, Permission::ViewAuditLog],
+            permissions: [...$permissions, Permission::ManageLeadSalesLists, Permission::ManageContactCenterSettings, Permission::ViewAuditLog, Permission::ViewPricing, Permission::ManagePricing],
             state: NavigationState::Live,
             route: 'settings.home',
             icon: 'cog-6-tooth',
@@ -392,7 +392,13 @@ class Navigation
                 ),
                 new NavigationItem('settings.service_areas', 'Service Areas', $permissions),
                 new NavigationItem('settings.services', 'Services and Products', $permissions),
-                new NavigationItem('settings.pricing', 'Pricing Settings', $permissions),
+                new NavigationItem(
+                    id: 'settings.pricing',
+                    label: 'Pricing Settings',
+                    permissions: [Permission::ViewPricing, Permission::ManagePricing],
+                    state: NavigationState::Live,
+                    route: 'settings.pricing',
+                ),
                 new NavigationItem('settings.templates', 'Templates', $permissions),
                 new NavigationItem(
                     id: 'settings.integrations',

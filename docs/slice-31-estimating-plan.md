@@ -101,3 +101,55 @@ list comes in a step-by-step page once the decisions above are settled:
   learned from the test estimates; until they exist, 31b cannot finish.
 - The difficulty values' names are not in the settings file; the test
   estimates confirm which value each choice uses.
+
+## Step 31a as built
+
+**Settings > Pricing Settings** (`/settings/pricing`) shows a price book in
+five tabs: production rates by category, paints, areas, line items, and
+hourly rates and tax. A selector chooses the default price book or a
+Location's.
+
+- **The default and each Location's** (question 2). A Location estimates
+  with the default until someone presses "Customize for this Location",
+  confirmed in a dialog. That copies the default, with every category,
+  rate, paint, area and line item, into a book of the Location's own; from
+  then on a change to the default no longer reaches it. A Location still on
+  the default shows the default's prices and says so; they are changed from
+  the default's own view.
+- **Who** (question 3). New permissions: `settings.pricing.view`
+  (Location-level: Owner, Leadership, Location Manager, Sales Consultant)
+  and `settings.pricing.manage` (company-wide: Owner and Leadership). A
+  manager or salesperson sees the default and their own Locations' books,
+  read-only. Finance, the Call Center and Production Managers are turned
+  away.
+- **What can be changed now:** production rates (name, the customer's
+  label, category, what it measures, how it is calculated, up to four
+  values easiest first, coats, prep hours, its own hourly rate, default
+  paint, estimate types, never discounted, never taxed, offered or not),
+  categories, paints (price, coverage), and the hourly rate overall and by
+  estimate type, and tax. Nothing is deleted; a rate, category or paint is
+  switched off instead. Areas and line items are shown, and are edited
+  with the estimate itself in 31c.
+- **Every change is in the Audit Log,** under a new "Pricing" area, naming
+  the price book, the rate or paint, and only the settings that changed.
+- **Never retroactive** (question 4): no estimate exists yet; 31b keeps
+  the rates each estimate was priced with.
+- **The import.** `php artisan backoffice:pricing-import <file>` fills the
+  default price book from the saved PaintScout settings, once; it refuses a
+  default that already has rates. Run on this computer against Banana's
+  file, it read 18 categories, 148 rates, 11 paints, 33 areas and 16 line
+  items. A rate whose category PaintScout no longer shows (24 of them,
+  including all 12 "price per item" rates) is kept with no category,
+  switched off, under "Not in a category". Everything PaintScout keeps for
+  a rate that Backoffice does not use yet is kept with it for 31b.
+- **Real prices stay out of the repository** (question 5): they are only in
+  the database. The tests use a made-up sample file.
+
+**Decisions made while building:** a Location on the default cannot have
+its prices changed from its own view, so nobody changes the default by
+mistake while looking at a Location; values are kept as exact decimals,
+never rounded on the way in; the tax rate has at most two decimals.
+
+**Known limits:** areas and line items are read-only until 31c; there is
+no way to undo a Location's customization (its book can be edited back to
+match); production gets its prices by running the import there in 30c.

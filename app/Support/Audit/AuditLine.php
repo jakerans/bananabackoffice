@@ -7,6 +7,7 @@ use App\Models\AuditEvent;
 use App\Models\Contact;
 use App\Models\Lead;
 use App\Models\Location;
+use App\Models\PriceBook;
 use App\Models\Project;
 use App\Models\Property;
 use App\Models\Scorecard;
@@ -47,6 +48,10 @@ class AuditLine
             $subject instanceof Property => ['label' => $subject->address, 'url' => null],
             $subject instanceof Subcontractor => ['label' => $subject->business_name, 'url' => route('production.subcontractors.show', $subject)],
             $subject instanceof WarrantyCase => ['label' => __('Warranty case #:id', ['id' => $id]), 'url' => route('projects.warranty-case', [$subject->project_id, $subject])],
+            $subject instanceof PriceBook => [
+                'label' => $subject->label(),
+                'url' => route('settings.pricing', ['book' => $subject->location_id ?? 'default']),
+            ],
             $subject instanceof Scorecard => [
                 'label' => __('Scorecard for the week of :day', ['day' => $subject->week_starts_on->format('j F Y')]),
                 'url' => route('scorecards.show', [$subject->location_id, 'week' => $subject->week_starts_on->toDateString()]),

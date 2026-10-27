@@ -41,6 +41,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ManageCompensation,
         Permission::MarketingSpendManage,
         Permission::ViewAuditLog,
+        Permission::ViewPricing,
+        Permission::ManagePricing,
     ]],
     'leadership' => [Role::Leadership, [
         Permission::ViewProjects,
@@ -72,6 +74,8 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ManageSubcontractors,
         Permission::ViewPayouts,
         Permission::MarketingSpendManage,
+        Permission::ViewPricing,
+        Permission::ManagePricing,
     ]],
     'finance' => [Role::Finance, [
         Permission::ViewPayouts,
@@ -105,6 +109,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ManageSubcontractors,
         Permission::ViewPayouts,
         Permission::MarketingSpendManage,
+        Permission::ViewPricing,
     ]],
     'call center agent' => [Role::CallCenterAgent, [
         Permission::MarketingAccess,
@@ -129,6 +134,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::WriteNotes,
         Permission::ViewAccounts,
         Permission::ManageAccounts,
+        Permission::ViewPricing,
     ]],
     'production manager' => [Role::ProductionManager, [
         Permission::ViewProjects,
@@ -170,6 +176,8 @@ test('company overview and settings are company-level permissions', function (Pe
     'manage compensation' => [Permission::ManageCompensation, true],
     'manage marketing spend' => [Permission::MarketingSpendManage, false],
     'view the audit log' => [Permission::ViewAuditLog, true],
+    'view pricing' => [Permission::ViewPricing, false],
+    'manage pricing' => [Permission::ManagePricing, true],
     'manage contact center settings' => [Permission::ManageContactCenterSettings, true],
     'work the lead queue' => [Permission::WorkLeadQueue, false],
     'book appointments' => [Permission::BookAppointments, false],

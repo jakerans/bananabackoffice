@@ -144,6 +144,15 @@ enum AuditAction: string
     case ScorecardSubmitted = 'scorecard.submitted';
     case ScorecardLineCorrected = 'scorecard.line_corrected';
     case MarketingSpendRecorded = 'marketing.spend_recorded';
+    case PricingImported = 'pricing.imported';
+    case PricingCustomized = 'pricing.customized';
+    case PricingHourlyRatesChanged = 'pricing.hourly_rates_changed';
+    case PricingCategoryAdded = 'pricing.category_added';
+    case PricingCategoryChanged = 'pricing.category_changed';
+    case PricingRateAdded = 'pricing.rate_added';
+    case PricingRateChanged = 'pricing.rate_changed';
+    case PricingPaintAdded = 'pricing.paint_added';
+    case PricingPaintChanged = 'pricing.paint_changed';
     case ProjectAmbassadorPackageRecorded = 'project.ambassador_package_recorded';
     case ProjectAmbassadorObligationHandled = 'project.ambassador_obligation_handled';
     case WarrantyCaseOpened = 'warranty.case_opened';
@@ -228,6 +237,7 @@ enum AuditAction: string
         'note' => 'Note',
         'project_size' => 'Project size',
         'contact_center' => 'Contact Center settings',
+        'pricing' => 'Pricing',
     ];
 
     /**
@@ -252,6 +262,7 @@ enum AuditAction: string
         'marketing' => 'marketing',
         'attachment' => 'files',
         'note' => 'files',
+        'pricing' => 'pricing',
     ];
 
     /**
@@ -269,6 +280,7 @@ enum AuditAction: string
         'scorecards' => 'Scorecards',
         'marketing' => 'Marketing',
         'files' => 'Files and notes',
+        'pricing' => 'Pricing',
     ];
 
     /**
