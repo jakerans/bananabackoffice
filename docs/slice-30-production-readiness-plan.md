@@ -25,10 +25,11 @@ roadmap after slice 28:
    and database account, backups and a restore drill, a backup of uploaded
    files, the real domain, email, and three open questions.
 
-What else could be next, and why not first: Settings > Audit Log (every
-important change is already recorded, but no page shows them) and the
-Reports pages. Both are useful and either can follow straight after; neither
-is needed before real use.
+What else could be next, and why not first: the Reports pages. They are
+useful and can follow straight after, but are not needed before real use.
+Settings > Audit Log, the other alternative, was built meanwhile as slice
+29 (decisions 191 and 192), so production now has a page showing every
+recorded change.
 
 ## What slice 30 is, and is not
 
@@ -51,7 +52,7 @@ Not in slice 30:
 ## Decisions needed
 
 1. **Is production next?** *Recommended:* yes, in the three steps above.
-   The alternative is Settings > Audit Log or Reports first.
+   The alternative is Reports first.
 2. **The production address.** *Recommended:* a part of Banana's own
    domain, such as `backoffice.` followed by it. Jacob names it; he or
    whoever runs the domain adds one DNS record.

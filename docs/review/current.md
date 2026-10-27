@@ -3,36 +3,30 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-26 · **Branch:** `checkpoint-slice-29-audit-log`
+**Updated:** 2026-10-26 · **Branch:** `main`
 
-**State:** while Jacob was away, production readiness waits for him (now
-slice 30), and slice 29, Settings > Audit Log, is built straight through
-(decision 191). **It waits for Jacob's review. Not merged.**
+**State:** slice 29, Settings > Audit Log, is merged (decision 192). Slice
+30, Production Readiness, is proposed and waits for Jacob's answers
+(decision 191). Nothing is being built.
 
 ## What to review
 
-Plan and "as built": [../slice-29-audit-log-plan.md](../slice-29-audit-log-plan.md).
-
-- **29a:** Settings > Audit Log, for the Owner only: every recorded change,
-  newest first, 50 to a page, with who, when, the record (linked), the
-  Location, why, and "What changed".
-- **29b:** filters by area, Location, person and days; one record's
-  history; links from a staff member's page and from each Location; and
-  Settings > Integrations saying to add a Location first when there is none.
-
-## In the browser (Jacob)
-
-1. Settings > Audit Log. Open "What changed" on a line.
-2. Choose Area: Projects, then press "History" on a line.
-3. Settings > Locations: "Changes" on a Location. Users and Access: open a
-   person, then "Changes they made".
+Plan: [../slice-30-production-readiness-plan.md](../slice-30-production-readiness-plan.md).
 
 ## Decisions
 
-- **Slice 29:** none open; each question took the recommendation.
-- **Slice 30, Production Readiness**
-  ([../slice-30-production-readiness-plan.md](../slice-30-production-readiness-plan.md)):
-  seven questions wait for Jacob, including the production address.
+Seven questions, each with a recommendation in the plan:
+
+1. Is production next? (Recommended: yes; the alternative is Reports.)
+2. The production address, a part of Banana's own domain.
+3. Who must use two-factor sign-in. (Recommended: Owner, Leadership and
+   Finance.)
+4. Owner impersonation on production. (Recommended: keep it as decision 46.)
+5. The server. (Recommended: a second Forge server, the size of staging,
+   created and paid for by Jacob.)
+6. Backups. (Recommended: the database hourly and files nightly, each kept
+   30 days.)
+7. QuickBooks live keys, through Intuit's questionnaire.
 
 ## Trying QuickBooks on staging (Jacob)
 
@@ -43,5 +37,5 @@ choose Intuit's sandbox company.
 ## Noted separately
 
 On a phone, the header's Location and account menus are wider than the
-screen on every page, so the page can scroll sideways. Not part of slice
-29; offered as its own small fix.
+screen on every page, so the page can scroll sideways. Offered as its own
+small fix.
