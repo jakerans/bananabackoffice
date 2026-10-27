@@ -125,15 +125,18 @@ test('optional work is priced but left out of the total', function () {
         ->and($priced)->hours->toBe(3.0)->subtotalCents->toBe(20300)->totalCents->toBe(20300)->optionalCents->toBe(50500);
 });
 
-test('a line item by hours is not rounded, a priced one is its price, and both count in the total', function () {
+test('a line item\'s price is rounded up to the whole dollar, however it is priced', function () {
     $priced = (new PricingEngine)->price(new EstimateInput(5000, [], [
-        new LineItemInput('Sample consultation', hours: '2.5'),
-        new LineItemInput('Sample trip', hours: '1', hourlyRateCents: 8000),
-        new LineItemInput('Sample samples', priceCents: 4500),
+        // 1.75 hours at its own $210.50 an hour is $368.375, so $369; the hours stay as typed.
+        new LineItemInput('Sample consultation', hours: '1.75', hourlyRateCents: 21050),
+        // A set price of $249.40 is charged as $250.
+        new LineItemInput('Sample samples', priceCents: 24940),
+        // 3 at 0.4 hours and $33.33 each: 1.2 hours, so 2, and $99.99, so $100.
+        new LineItemInput('Sample patches', quantity: '3', hoursEach: '0.4', priceEachCents: 3333),
     ]));
 
-    expect(array_map(fn ($item): int => $item->priceCents, $priced->lineItems))->toBe([12500, 8000, 4500])
-        ->and($priced)->hours->toBe(3.5)->lineItemsCents->toBe(25000)->subtotalCents->toBe(25000);
+    expect(array_map(fn ($item): array => [$item->hours, $item->priceCents], $priced->lineItems))->toBe([[1.75, 36900], [0.0, 25000], [2.0, 10000]])
+        ->and($priced)->hours->toBe(3.75)->lineItemsCents->toBe(71900)->subtotalCents->toBe(71900);
 });
 
 test('a percentage discount is rounded up to the whole dollar and leaves out what may not be discounted', function () {
@@ -150,14 +153,28 @@ test('a percentage discount is rounded up to the whole dollar and leaves out wha
         ->and(array_column($priced->discounts, 'cents'))->toBe([1500, 2500]);
 });
 
-test('tax is charged on the total after the discount, leaving out what is not taxed', function () {
+test('tax is charged on the total after the discount, rounded to the cent, leaving out what is not taxed', function () {
     $walls = new SurfaceInput(sampleRate(RateMeasure::WallArea, RateCalculation::UnitsPerHour, ['150']), samplePaint());
     $repairs = new SurfaceInput(sampleRate(RateMeasure::Count, RateCalculation::HoursPerUnit, ['1'], changes: ['excludedFromTax' => true]), quantity: '2');
 
     $priced = (new PricingEngine)->price(new EstimateInput(5000, [sampleRoom([$walls, $repairs])], [], [
         new DiscountInput('Sample cash savings', DiscountKind::Amount, '3'),
-    ], taxPercent: '7.625'));
+    ], taxPercent: '6.122'));
 
-    // $303 less $3 is $300, of which $200 is taxed: $15.25.
-    expect($priced)->taxCents->toBe(1525)->totalCents->toBe(31525);
+    // $303 less $3 is $300, of which $200 is taxed: $12.244, so $12.24, never rounded up.
+    expect($priced)->taxCents->toBe(1224)->totalCents->toBe(31224);
+});
+
+test('prep hours are not rounded and are counted beside the painting hours', function () {
+    $doors = new SurfaceInput(sampleRate(RateMeasure::Count, RateCalculation::HoursPerUnit, ['0.75'], changes: ['prepHours' => '0.5']), quantity: '3');
+    $typedPrep = new SurfaceInput(sampleRate(RateMeasure::Count, RateCalculation::HoursPerUnit, ['0.75'], changes: ['prepHours' => '0.5']), quantity: '3', prepHours: '1.5');
+
+    $priced = (new PricingEngine)->price(new EstimateInput(5000, [sampleRoom([$doors, $typedPrep])]));
+    [$fromRate, $fromEstimate] = $priced->areas[0]->surfaces;
+
+    // 2.25 painting hours round up to 3; the prep the estimate typed replaces the rate's.
+    expect([$fromRate->hours, $fromRate->prepHours, $fromRate->workCents])->toBe([3.0, 0.5, 17500])
+        ->and([$fromEstimate->hours, $fromEstimate->prepHours, $fromEstimate->workCents])->toBe([3.0, 1.5, 22500])
+        ->and($priced->areas[0])->hours->toBe(6.0)->prepHours->toBe(2.0)
+        ->and($priced)->hours->toBe(6.0)->prepHours->toBe(2.0);
 });

@@ -80,6 +80,24 @@ final class PaintScoutQuote
     }
 
     /**
+     * The line items as PaintScout keeps them, in the estimate's order.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function lineItems(): array
+    {
+        $items = [];
+
+        foreach ($this->quote['order']['area'] as $entry) {
+            if ($entry['type'] === 'line_item') {
+                $items[] = $this->quote['lineItems'][$entry['key']];
+            }
+        }
+
+        return $items;
+    }
+
+    /**
      * @param  array<string, mixed>  $area
      */
     private function area(array $area): AreaInput
@@ -152,6 +170,7 @@ final class PaintScoutQuote
             coats: (int) $surface['coats'],
             quantity: (string) $surface['quantity'],
             isOptional: ($surface['use_total'] ?? true) === false,
+            prepHours: (float) ($surface['prep'] ?? 0) > 0 ? (string) $surface['prep'] : null,
         );
     }
 
@@ -160,14 +179,19 @@ final class PaintScoutQuote
      */
     private function lineItem(array $item): LineItemInput
     {
-        $byHours = ($item['calculateBy'] ?? null) === 'hourlyRate' && $item['hours'] !== null;
+        $by = $item['calculateBy'] ?? null;
+        $byHours = $by === 'hourlyRate' && ($item['hours'] ?? null) !== null;
+        $byQuantity = $by === 'quantity';
 
         return new LineItemInput(
             name: (string) $item['name'],
             hours: $byHours ? (string) $item['hours'] : null,
-            priceCents: $byHours ? null : $this->cents($item['price'] ?? 0),
+            priceCents: $byHours || $byQuantity ? null : $this->cents($item['price'] ?? 0),
             hourlyRateCents: ($item['customHourlyRate'] ?? false) ? $this->cents($item['hourlyRate']) : null,
             isOptional: ($item['use_total'] ?? true) === false,
+            quantity: $byQuantity ? (string) $item['quantity'] : null,
+            hoursEach: $byQuantity ? (string) $item['hoursPerUnit'] : null,
+            priceEachCents: $byQuantity ? $this->cents($item['pricePerUnit']) : null,
         );
     }
 

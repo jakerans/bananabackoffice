@@ -4,7 +4,8 @@ namespace App\Support\Pricing;
 
 /**
  * An area's figures: its surfaces, and the sums of those that count
- * (docs/slice-31-estimating-plan.md, step 31b).
+ * (docs/slice-31-estimating-plan.md, step 31b). Its hours are painting hours;
+ * prep hours are counted beside them, as PaintScout does.
  */
 final readonly class PricedArea
 {
@@ -16,6 +17,7 @@ final readonly class PricedArea
         public AreaMeasurements $measurements,
         public array $surfaces,
         public float $hours,
+        public float $prepHours,
         public int $workCents,
         public int $materialsCents,
         public int $optionalCents,

@@ -36,11 +36,19 @@ test('a saved PaintScout estimate prices the same in Backoffice', function (stri
         }
 
         expect($pricedArea->hours)->toEqual((float) $area['totals']['hours'], $name.': hours')
+            ->and($pricedArea->prepHours)->toEqual((float) $area['totals']['prep'], $name.': prep hours')
             ->and($pricedArea->workCents)->toBe((int) round($area['totals']['price'] * 100), $name.': labor')
             ->and($pricedArea->materialsCents)->toBe((int) round($area['totals']['materials'] * 100), $name.': paint');
     }
 
+    foreach (array_values($quote->lineItems()) as $position => $item) {
+        expect($priced->lineItems[$position])
+            ->priceCents->toBe((int) round($item['price'] * 100), $item['name'].': price')
+            ->hours->toEqual((float) ($item['hours'] ?? 0), $item['name'].': hours');
+    }
+
     expect($priced->hours)->toEqual((float) $totals['hours'], 'hours')
+        ->and($priced->prepHours)->toEqual((float) $totals['prep'], 'prep hours')
         ->and($priced->materialsCents)->toBe((int) round($totals['materials'] * 100), 'paint')
         ->and($priced->subtotalCents)->toBe((int) round($totals['price'] * 100), 'price before discount')
         ->and($priced->discountCents)->toBe((int) round($totals['total_discount'] * 100), 'discount')
