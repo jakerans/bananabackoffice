@@ -277,7 +277,7 @@ Step 30b goes ahead at Jacob's pace, from a step-by-step guide (decision 195).
 **Slice 31, Estimating, is next (decision 196):** PaintScout's pricing
 rebuilt exactly, with only the presentation of options changed, and
 production rates managed in Backoffice. Approved (2026-10-27, decision 197);
-step 31a, Settings > Pricing Settings, is built and waits for Jacob's review.
+step 31a, Settings > Pricing Settings, is built and merged (decision 199).
 Its plan is [slice-31-estimating-plan.md](slice-31-estimating-plan.md).
 
 **Slice 32, Reports, the first set, is proposed (2026-10-27) and waits for

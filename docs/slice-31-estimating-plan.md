@@ -1,7 +1,7 @@
 # Slice 31 — Estimating and Production Rates: Plan
 
 Status: **proposed on 2026-10-27 (decision 196) and approved the same day
-(decision 197). Step 31a is being built.**
+(decision 197). Step 31a is built and merged (decision 199).**
 Written as what the implementation agent recommends, after reading Banana
 Painting ABQ's PaintScout settings with Jacob signed in.
 
