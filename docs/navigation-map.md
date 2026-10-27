@@ -255,7 +255,7 @@ built it receives its own specific permission, recorded in
 | Production Center | Performance Board | Not yet |
 | Finance Center | Performance Board | Not yet |
 | Color Studio | Color Projects | Not yet |
-| Settings | Locations | Yes |
+| Settings | Users and Access (decision 202) | Yes |
 
 Sections with sub-sections open on:
 
@@ -273,9 +273,13 @@ How these were chosen:
 - Color Studio, Company Overview and every section with sub-sections open on the
   first item listed for them in the owner's brief. Nothing was invented.
 - Settings is the one center that does not open on its first listed item
-  ("Company", which is not built). It opens on Locations, its first working page,
-  so that Settings never lands on an empty page while working pages sit beside it.
-  This can be changed in one line when Company is built.
+  ("Company", which is not built). It opens on its first working page inside
+  Settings: Users and Access, then Lead & Sales Lists, Contact Center, Pricing
+  Settings, Integrations and Audit Log, whichever the person may open first
+  (decision 202). Locations sits beside Settings in the Company menu, not inside
+  it, so opening Settings on Locations showed Company's menu and no Settings
+  links; it is now only the last resort. This can be changed in one line when
+  Company is built.
 
 If a person may not open a center's primary section but may open another section
 in that center, the center opens on the first section they may open.

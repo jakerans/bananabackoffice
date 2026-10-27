@@ -652,7 +652,7 @@ test('an owner sees the item', function () {
     $navigation = app(Navigation::class);
 
     expect($navigation->allows($owner, $navigation->find('settings.contact_center')))->toBeTrue();
-    $this->actingAs($owner)->get(route('settings.home'))->assertRedirect(route('settings.locations'));
+    $this->actingAs($owner)->get(route('settings.home'))->assertRedirect(route('settings.users'));
 });
 
 test('the unbuilt settings pages do not borrow the contact center permission', function () {
