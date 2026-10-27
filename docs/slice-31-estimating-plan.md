@@ -18,26 +18,30 @@ puts the priced breakdown behind it.
 
 ## What PaintScout does, as found
 
-Read from Banana Painting ABQ's settings, saved for reference outside the
-repository (`docs/reference/paintscout/`, never committed).
+Read from Banana Painting ABQ's own settings and its rates export, saved
+for reference outside the repository (`docs/reference/paintscout/`, never
+committed). The first file read was the Corporate account's by mistake
+(decision 200); these figures are ABQ's.
 
-- **Estimate types:** Residential Interior and Exterior, Commercial
-  Interior and Exterior.
-- **Areas:** each estimate is built from areas (a room, a side of the
-  house), started from 33 area templates, with their measurements.
-- **Production rates:** 148 rates in 18 categories (Interior Prep, Walls,
-  Ceilings, Interior Trim, Doors, Windows, Exterior Siding, Trim,
-  Decking, Cabinets, Drywall Repair, Fencing, Repairs, Flooring Coatings,
-  Closets and others). Each rate has:
+- **Estimate types:** Interior and Exterior.
+- **Areas:** each estimate is built from areas (a room, or one wall or
+  surface), started from 13 area templates, with their width, length and
+  height; PaintScout works out the length around, wall area, ceiling area
+  and floor area from them.
+- **Production rates:** 301 rates in 68 categories (wall, ceiling, trim,
+  door and repair rates inside; siding, stucco, trim, fascia, soffit,
+  shutter, door, fence and deck rates outside, painted and stained). Each
+  rate has:
   - what it measures: wall area, ceiling area, floor area, linear feet,
     or a count;
-  - how it is calculated: units per hour (most), price per unit, hours per
-    unit, or fixed hours;
-  - up to four values, for how hard the work is;
-  - coats, a default product, prep hours, and an optional hourly rate of
-    its own.
-- **Materials:** 11 products, each with a price per gallon and how far a
-  gallon goes on walls, on trim and per item.
+  - how it is calculated: units per hour, hours per item (most), or price
+    per item;
+  - up to four values, **one for each number of coats** (1, 2, 3, 4): for
+    example square feet per hour for one coat, two coats, three;
+  - default coats, a default paint and how much of it each item uses,
+    prep hours, and an optional hourly rate of its own.
+- **Materials:** 26 paints and other products, each with a price per
+  gallon and how far a gallon goes on walls, on trim and per item.
 - **Price:** hours times the hourly rate (company-wide, by estimate type,
   or by rate), plus materials, plus priced line items, less a discount,
   plus tax. Line items are also the estimate's written sections, such as
@@ -50,7 +54,7 @@ repository (`docs/reference/paintscout/`, never committed).
 | Step | Delivers |
 | --- | --- |
 | 31a | **Settings > Pricing: production rates and the price book.** Rate categories and rates with every setting above, products, area templates, line items, the hourly rates, discount and tax, in a company default price book and a copy for each Location. A one-time import of Banana's PaintScout settings from the saved file into the default. Every change recorded in the Audit Log. |
-| 31b | **The pricing engine, proved against PaintScout.** Backoffice's calculation for areas, surfaces, coats, difficulty, prep, materials, line items, discount and tax. Jacob's test estimates from PaintScout are checked to the cent on this computer; the committed tests use made-up rates. |
+| 31b | **The pricing engine, proved against PaintScout.** Backoffice's calculation for areas, surfaces, coats, prep, materials, line items, discount and tax. Jacob's test estimates from PaintScout are checked to the cent on this computer; the committed tests use made-up rates. |
 | 31c | **The estimate in the Sales Workspace.** Built on a tablet during the appointment: areas from templates, measurements, surfaces from the rates, then the options, one after another down the page, largest first, with quick buttons to jump to each. Each option becomes a proposal, so everything built on proposals (results, Pending, sales, commission) keeps working. |
 
 Not in slice 31: the signed agreement and deposit (5.3, later), Commercial
@@ -76,31 +80,21 @@ customer-facing PDF design, and moving old PaintScout estimates over.
    Backoffice's database; the match-to-the-cent check runs on this
    computer only, from files that are never committed.
 6. **Farmington's PaintScout settings are the same as ABQ's.**
-## The test estimates (Jacob builds them in PaintScout)
+## The test estimates (built in PaintScout)
 
-Every test estimate uses a made-up customer named **"Backoffice Test 01"**
-to **"Backoffice Test 16"**, so the agent reads only those. Each covers one
-part of the calculation, so a mismatch points at its cause. The exact
-list comes in a step-by-step page once the decisions above are settled:
-
-- one bedroom priced each standard way: walls, ceiling, baseboards, a door;
-- the same room at each difficulty value, and with one coat and three;
-- walls sprayed against brush and roll;
-- prep hours, setup and clean-up, a closet, cabinet drawers (each other way
-  a rate is calculated);
-- an exterior: siding, trim, doors, windows; a fence; a deck; a floor
-  coating;
-- a premium product swapped in, to check materials;
-- a priced line item ("Time and Materials");
-- a percentage discount, and an hourly rate changed on the estimate;
-- a Good / Better / Best package, to record how PaintScout prices tiers.
+Each test estimate has a made-up customer named "Backoffice Test 01" and
+onwards, so only those are read. Each covers one part of the calculation,
+so a mismatch points at its cause: a room at one, two and three coats;
+odd measurements; each way a rate is calculated (per hour, hours per item,
+price per item); several rooms together; an exterior; a different paint;
+a priced line item, a discount and a changed hourly rate; and PaintScout's
+optional extras. The implementation agent builds them at Jacob's request
+(decision 200) with ABQ's own rate names.
 
 ## Known limits of this plan
 
 - PaintScout's exact rounding (per surface, per area or at the end) is
   learned from the test estimates; until they exist, 31b cannot finish.
-- The difficulty values' names are not in the settings file; the test
-  estimates confirm which value each choice uses.
 
 ## Step 31a as built
 
@@ -136,11 +130,12 @@ Location's.
   the rates each estimate was priced with.
 - **The import.** `php artisan backoffice:pricing-import <file>` fills the
   default price book from the saved PaintScout settings, once; it refuses a
-  default that already has rates. Run on this computer against Banana's
-  file, it read 18 categories, 148 rates, 11 paints, 33 areas and 16 line
-  items. A rate whose category PaintScout no longer shows (24 of them,
-  including all 12 "price per item" rates) is kept with no category,
-  switched off, under "Not in a category". Everything PaintScout keeps for
+  default that already has rates. With `--replace` it replaces the
+  default's prices instead of refusing (decision 200). Run on this
+  computer and on staging against ABQ's file, it read 68 categories, 301
+  rates, 26 paints, 13 areas and 4 line items. A rate whose category
+  PaintScout no longer shows would be kept with no category, switched off,
+  under "Not in a category"; ABQ has none. Everything PaintScout keeps for
   a rate that Backoffice does not use yet is kept with it for 31b.
 - **Real prices stay out of the repository** (question 5): they are only in
   the database. The tests use a made-up sample file.

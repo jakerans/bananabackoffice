@@ -3991,6 +3991,25 @@ run the import on staging".
    enters the repository.
 3. **Next:** 31b, once Jacob's test estimates are built in PaintScout.
 
+## 200. The imported prices were Corporate's; ABQ's replace them (2026-10-27)
+
+**Found by the implementation agent** while starting the test estimates: the
+settings saved from PaintScout (decision 196, point 7) were the Corporate
+account's ("Banana Painting (Corporate)"), which PaintScout keeps in the
+browser even while ABQ is shown, not ABQ's. ABQ's rate categories and rates
+are different. **Decided by Jacob,** asked whether to export ABQ's own,
+replace the imported prices, and rebuild the test estimates: "1: go ahead
+2: thats fine 3: go ahead".
+
+1. **ABQ's settings are exported** with PaintScout's own Export, saved
+   outside the repository like the first file.
+2. **The default price book is replaced** with ABQ's, on this computer and
+   on staging. The import gains a replace option for this; a replaced
+   default is recorded in the Audit Log like the first import.
+3. **The test estimates are rewritten** with ABQ's rate names and built in
+   PaintScout by the implementation agent, at Jacob's request, each with a
+   made-up customer, saved and never sent.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

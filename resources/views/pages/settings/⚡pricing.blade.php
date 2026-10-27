@@ -625,16 +625,16 @@ new #[Title('Pricing Settings')] class extends Component {
             </div>
 
             <div class="flex flex-col gap-2">
-                <flux:heading level="3">{{ __('Values, easiest first') }}</flux:heading>
+                <flux:heading level="3">{{ __('Values for 1, 2, 3 and 4 coats') }}</flux:heading>
                 <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     @foreach ([1, 2, 3, 4] as $number)
-                        <flux:input wire:model="rateForm.value_{{ $number }}" :label="__('Value :number', ['number' => $number])" inputmode="decimal" />
+                        <flux:input wire:model="rateForm.value_{{ $number }}" :label="trans_choice(':count coat|:count coats', $number)" inputmode="decimal" />
                     @endforeach
                 </div>
             </div>
 
             <div class="grid gap-4 sm:grid-cols-3">
-                <flux:input wire:model="rateForm.default_coats" :label="__('Coats')" type="number" min="1" max="9" />
+                <flux:input wire:model="rateForm.default_coats" :label="__('Default coats')" type="number" min="1" max="9" />
                 <flux:input wire:model="rateForm.prep_hours" :label="__('Prep hours')" inputmode="decimal" />
                 <flux:input wire:model="rateForm.hourly_rate" :label="__('Own hourly rate ($)')" inputmode="decimal" :placeholder="__('The book\'s')" />
             </div>

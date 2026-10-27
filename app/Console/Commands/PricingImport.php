@@ -14,9 +14,10 @@ use RuntimeException;
  * (docs/slice-31-estimating-plan.md, step 31a; decisions 196 and 197).
  *
  * The file is the one saved from PaintScout, kept outside the repository. It
- * prints how much was imported and never a price.
+ * prints how much was imported and never a price. With --replace it replaces
+ * the default's prices instead of refusing them (decision 200).
  */
-#[Signature('backoffice:pricing-import {file : The saved PaintScout settings file (.json)}')]
+#[Signature('backoffice:pricing-import {file : The saved PaintScout settings file (.json)} {--replace : Replace the prices the default price book already has}')]
 #[Description('Fill the default price book from saved PaintScout settings, once')]
 class PricingImport extends Command
 {
@@ -35,7 +36,7 @@ class PricingImport extends Command
 
         try {
             $settings = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
-            $imported = $importPaintScoutSettings->handle(is_array($settings) ? $settings : []);
+            $imported = $importPaintScoutSettings->handle(is_array($settings) ? $settings : [], replace: (bool) $this->option('replace'));
         } catch (JsonException) {
             $this->components->error('That file is not a saved PaintScout settings file: it is not JSON.');
 
