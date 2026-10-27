@@ -3,53 +3,37 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-26 · **Branch:** `checkpoint-slice-28-quickbooks`
+**Updated:** 2026-10-26 · **Branch:** `main`
 
-**State:** slice 28, the QuickBooks Connection and Net Profit, is built
-straight through (decision 189) and **waits for Jacob's review. Not
-merged.**
+**State:** slice 28, the QuickBooks Connection and Net Profit, is merged
+(decision 190) and on staging. Slice 29, Production Readiness, is
+**proposed and waits for Jacob's approval.**
 
 ## What to review
 
-Plan and "as built": [../slice-28-quickbooks-plan.md](../slice-28-quickbooks-plan.md).
+The plan: [../slice-29-production-readiness-plan.md](../slice-29-production-readiness-plan.md).
 
-- **28a:** Settings > Integrations: each Location connects its own
-  QuickBooks company by signing in on QuickBooks' own page. Read only; keys
-  kept encrypted and renewed; "QuickBooks needs connecting again" in Needs
-  Attention if QuickBooks refuses.
-- **28b:** each Location's profit and loss, read every night for this
-  month and last, and on "Refresh now"; shown on Finance > Performance.
-- **28c:** Net Profit % as the scorecard's fifth KPI, with a target per
-  Location, and on the Executive Board and its TV view.
+## Decisions needed
 
-## Browser review (local, fictitious data)
+From the plan, each with a recommendation:
 
-Done with Playwright. This computer has no Intuit keys, so Settings >
-Integrations said QuickBooks is not set up yet and listed every Location
-"Not connected"; Finance > Performance showed each "Not connected to
-QuickBooks"; a 12% Net Profit target was saved in Settings > Locations and
-showed on Northside's scorecard; the Executive Board and its TV view showed
-the Net profit row and "—". Connecting, renewing, refusals and reading the
-report are covered by tests against QuickBooks' replies, faked. The TV's
-"Gross margin" label was shortened to "Margin" to fit four numbers.
+1. Is production next, before Settings > Audit Log or Reports?
+2. The production address.
+3. Which roles must use two-factor sign-in.
+4. Owner impersonation on production.
+5. The production server.
+6. How often backups run and how long they are kept.
+7. QuickBooks' live keys.
 
-## To try it with QuickBooks (Jacob, outside Backoffice)
+## Trying QuickBooks on staging (Jacob)
 
-1. At developer.intuit.com, create an app for QuickBooks Online
-   accounting. Intuit gives it sandbox companies with made-up numbers.
-2. In the app's settings, add the Redirect URI: the staging address
-   followed by `/settings/integrations/quickbooks/callback`.
-3. In Forge, put the app's development Client ID and Client Secret into
-   staging's environment as `QUICKBOOKS_CLIENT_ID` and
-   `QUICKBOOKS_CLIENT_SECRET`, with `QUICKBOOKS_ENVIRONMENT=sandbox`. Never
-   in a chat.
-4. In Backoffice, Settings > Integrations, press Connect for a Location and
-   sign in to a sandbox company.
-
-## Decisions
-
-None open. Banana's three real QuickBooks companies are connected only on
-production, once production is approved (decision 189).
+The Intuit app "Banana Backoffice" is created with staging's Redirect URI,
+and its development keys are in staging's settings: Settings >
+Integrations says it reads Intuit's test companies. Staging has no
+Locations yet, so there is nothing to connect: add one in Settings >
+Locations (a made-up or real Location name; never customer details), then
+press Connect beside it on Settings > Integrations and choose Intuit's
+sandbox company.
 
 ## Optional, for Jacob
 
