@@ -4,9 +4,13 @@ use App\Actions\Appointments\BookAppointment;
 use App\Actions\Appointments\CancelAppointment;
 use App\Actions\Appointments\CloseOutAppointment;
 use App\Actions\Appointments\MarkAppointmentBookedInError;
+use App\Actions\Estimates\SaveEstimateLineItem;
+use App\Actions\Estimates\SaveEstimateOption;
+use App\Actions\Estimates\StartEstimate;
 use App\Actions\Leads\RecordManualContactAttempt;
 use App\Actions\Projects\CompleteProjectHandoff;
 use App\Actions\Proposals\AddProposal;
+use App\Actions\Proposals\PresentEstimate;
 use App\Actions\Proposals\RecordProposalResult;
 use App\Actions\Queue\ClaimNextLead;
 use App\Actions\Queue\EnterLeadCadence;
@@ -16,16 +20,21 @@ use App\Enums\CancellationParty;
 use App\Enums\ContactAttemptChannel;
 use App\Enums\ContactAttemptDirection;
 use App\Enums\ContactAttemptDisposition;
+use App\Enums\EstimateType;
+use App\Enums\LineItemPricing;
 use App\Models\Account;
 use App\Models\Appointment;
 use App\Models\AppointmentCancellationReason;
 use App\Models\AttentionItem;
 use App\Models\ContactAttempt;
 use App\Models\ContactCenterSettings;
+use App\Models\Estimate;
 use App\Models\Lead;
 use App\Models\LeadCadence;
 use App\Models\LeadQueueEvent;
 use App\Models\Location;
+use App\Models\PriceBook;
+use App\Models\ProductionRate;
 use App\Models\Project;
 use App\Models\ProjectHandoff;
 use App\Models\ProjectSize;
@@ -391,7 +400,55 @@ function addProposal(Lead $lead, User $by, array $with = []): Proposal
 }
 
 /**
- * The Proposals card of a Lead, as a staff member sees it on the Lead page.
+ * Build an estimate on the Lead through the actions, an Exterior one with one
+ * option for each name given, each priced by a single line item at the
+ * dollars given: "Whole exterior" at $8,450 unless told otherwise. A made-up
+ * default price book is set up first when there is none (step 31e).
+ *
+ * @param  array<string, string>  $options  Each option's name and price in dollars.
+ */
+function estimateFor(Lead $lead, User $by, array $options = ['Whole exterior' => '8450']): Estimate
+{
+    if (PriceBook::companyDefault() === null) {
+        $book = PriceBook::factory()->create(['hourly_rate_cents' => 5000]);
+        ProductionRate::factory()->create(['price_book_id' => $book->id, 'name' => 'Sample Walls Roll', 'source_key' => 'sample-walls-roll']);
+    }
+
+    $estimate = app(StartEstimate::class)->handle($lead, EstimateType::ResidentialExterior->value, $by);
+    $option = $estimate->options()->sole();
+
+    foreach ($options as $name => $price) {
+        $option ??= app(SaveEstimateOption::class)->copy($estimate, $estimate->options()->first(), $by);
+        app(SaveEstimateOption::class)->handle($estimate, $option, ['name' => $name, 'description' => ''], $by);
+        $option->lineItems()->delete();
+        app(SaveEstimateLineItem::class)->handle($estimate, $option, null, ['name' => 'The work', 'pricing' => LineItemPricing::Price->value, 'price' => $price], $by);
+        $option = null;
+    }
+
+    return $estimate->fresh('options');
+}
+
+/**
+ * Present the estimate through the action, at the Lead's latest run
+ * appointment unless told otherwise.
+ *
+ * @param  list<int>|null  $appointmentIds
+ */
+function presentEstimate(Estimate $estimate, User $by, ?array $appointmentIds = null): Proposal
+{
+    $lead = $estimate->lead()->firstOrFail();
+
+    return app(PresentEstimate::class)->handle(
+        $lead,
+        $estimate,
+        $appointmentIds ?? Appointment::query()->where('lead_id', $lead->id)->wereRun()->pluck('id')->take(-1)->all(),
+        $by,
+    );
+}
+
+/**
+ * The Estimates card of a Lead (it took over the Proposals card in step
+ * 31e), as a staff member sees it on the Lead page.
  *
  * @return Testable<Component>
  */

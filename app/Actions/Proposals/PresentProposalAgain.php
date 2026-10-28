@@ -63,11 +63,11 @@ class PresentProposalAgain
         Gate::forUser($actor)->authorize('manageProposals', $lead);
 
         if ($proposal->lead_id !== $lead->id) {
-            throw ValidationException::withMessages([$field => __('This proposal belongs to another lead.')]);
+            throw ValidationException::withMessages([$field => __('This estimate belongs to another lead.')]);
         }
 
         if ($proposal->isAddedInError()) {
-            throw ValidationException::withMessages([$field => __('This proposal was marked "added in error".')]);
+            throw ValidationException::withMessages([$field => __('This estimate was marked "added in error".')]);
         }
 
         // Only this Lead's appointments, and only ones that were run.
@@ -81,7 +81,7 @@ class PresentProposalAgain
         }
 
         if ($proposal->appointments()->whereKey($appointment->id)->exists()) {
-            throw ValidationException::withMessages([$field => __('This proposal is already recorded at that appointment.')]);
+            throw ValidationException::withMessages([$field => __('This estimate is already recorded at that appointment.')]);
         }
 
         $proposal->appointments()->attach($appointment->id, [

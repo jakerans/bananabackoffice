@@ -294,6 +294,9 @@ enum AuditAction: string
     {
         [$kind, $what] = explode('.', $this->value, 2);
 
+        // The stored values keep "proposal"; people read "Estimate" (step 31e; decision 207, question 5).
+        $what = $what === 'proposal_added' ? 'estimate_presented' : str_replace('proposal', 'estimate', $what);
+
         return __(self::NOUNS[$kind]).' · '.__(Str::ucfirst(str_replace('_', ' ', $what)));
     }
 

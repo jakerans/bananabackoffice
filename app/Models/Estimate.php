@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use App\Enums\EstimateType;
+use App\Enums\ProposalResult;
 use Database\Factories\EstimateFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -17,6 +19,10 @@ use Illuminate\Support\Carbon;
  * discounts, the tax and the hourly rate are the estimate's and apply to
  * every option. It keeps the prices it was built with: a change in the price
  * book reaches it only when someone reprices it.
+ *
+ * Once presented it has a proposal, the record of what became of it (step
+ * 31e; decision 207). While that is pending it can still be changed; once
+ * sold or lost it cannot.
  *
  * @property int $id
  * @property int $lead_id
@@ -34,6 +40,7 @@ use Illuminate\Support\Carbon;
  * @property-read Lead $lead
  * @property-read Location $location
  * @property-read PriceBook|null $priceBook
+ * @property-read Proposal|null $proposal
  */
 class Estimate extends Model
 {
@@ -104,5 +111,24 @@ class Estimate extends Model
     public function discounts(): HasMany
     {
         return $this->hasMany(EstimateDiscount::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    /**
+     * The record of it having been presented, and of what became of it: the
+     * one a manager has not marked "added in error". None until presented.
+     *
+     * @return HasOne<Proposal, $this>
+     */
+    public function proposal(): HasOne
+    {
+        return $this->hasOne(Proposal::class)->whereNull('proposals.added_in_error_at')->latestOfMany();
+    }
+
+    /**
+     * Whether it can no longer be changed: sold, or lost (decision 207).
+     */
+    public function isSettled(): bool
+    {
+        return $this->proposal !== null && $this->proposal->result !== ProposalResult::Pending;
     }
 }

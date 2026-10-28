@@ -3,36 +3,39 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-28 · **Branch:** `main`
+**Updated:** 2026-10-28 · **Branch:** `checkpoint-slice-31e-estimates`
 
-**State:** step 31d, the presentation, is merged and on staging (decision
-208). As built:
-[../slice-31-estimating-plan.md](../slice-31-estimating-plan.md), "Step 31d
+**State:** step 31e, estimates take over from proposals (decision 207), is
+built and waiting for Jacob's review. As built:
+[../slice-31-estimating-plan.md](../slice-31-estimating-plan.md), "Step 31e
 as built".
 
 ## In short
 
-"Present" on an estimate opens a page for the homeowner: no menus, the
-options down the page with the highest price first, each with its name,
-description, rooms and areas, written line items and its price after
-discounts (each discount shown as a saving, "Tax included"). Buttons at the
-top jump to each option. Hours, rates, paint and costs never show. Opening it
-records nothing.
+The after-action report now lists the lead's estimates: tick the one
+presented, then Sold (choose the option), Lost or Still pending. The
+Proposals card is gone; one Estimates card on the lead does everything it
+did, plus "Mark presented". A pending estimate shows its range of prices and
+can still be changed, its price following; once sold or lost it is locked
+until a manager corrects it. "Estimate" replaces "proposal" on every screen.
+Older proposals stay, marked "Recorded by hand".
 
-## In the browser (Jacob, on staging)
+## In the browser
 
-1. Open a sample lead with a run appointment (41–50), start or open an
-   estimate, add a room with work, and copy the option once.
-2. Press **Present**: the options, highest price first, with the buttons at
-   the top; tap one to jump to it.
-3. Tick a discount on the estimate and present again: the saving shows under
-   the price.
-4. **Back to the estimate** returns to the builder.
+Checked locally at phone and tablet sizes (report, card, sold dialog, locked
+estimate, mark presented, recorded by hand). On staging after the merge:
+
+1. Open a sample lead whose appointment waits for its report, with an
+   estimate on it; open the report: Run, Yes, tick the estimate, Still
+   pending, save.
+2. On the lead's Estimates card: the range of prices and Pending. Press
+   **Sold**, choose an option, Mark sold: the card shows the option and its
+   Project.
+3. Open the estimate: it says it is sold and can no longer be changed.
 
 ## Next
 
-- **31e:** estimates take over from proposals (decision 207), when Jacob
-  says go.
+- Merge 31e when Jacob says so.
 
 ## Also waiting for Jacob
 
@@ -42,3 +45,4 @@ records nothing.
   insurance deduction moves (decision 202, point 3).
 - QuickBooks's live keys, after Intuit's review.
 - 30c, recovery and first use, when he chooses.
+- The app's top bar is wider than a phone screen on every page.

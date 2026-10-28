@@ -16,7 +16,7 @@ class SubmitAfterActionReport
     public function __construct(
         private ChangeLeadLifecycle $changeLeadLifecycle,
         private CloseOutAppointment $closeOutAppointment,
-        private AddProposal $addProposal,
+        private PresentEstimate $presentEstimate,
         private PresentProposalAgain $presentProposalAgain,
         private RecordProposalResult $recordProposalResult,
         private RecordNoDemoReason $recordNoDemoReason,
@@ -31,8 +31,10 @@ class SubmitAfterActionReport
      * 2. If run: whether anything was presented. If nothing was, the
      *    salesperson says why in their own words (decision 133), the report is
      *    done, and the appointment counts as run with nothing presented.
-     * 3. Each proposal presented, new or one from an earlier visit, with its
-     *    result: sold, lost or still pending, and what each needs.
+     * 3. Each estimate presented, for the first time or again from an
+     *    earlier visit, with its result: sold (with the option chosen), lost
+     *    or still pending, and what each needs (step 31e; decision 207).
+     *    Nothing is typed in by hand any more.
      * 4. Short notes, kept on the appointment.
      *
      * It is not a second copy of anything. It does exactly what the buttons on
@@ -41,8 +43,8 @@ class SubmitAfterActionReport
      * saved and the refusal names the part.
      *
      * @param  array<string, mixed>  $report  outcome ("run" or "no_show"), note, presented ("yes" or "no"), noDemoReason,
-     *                                        proposals (a list of: name, price, propertyId, result, soldAmount, lossReasonId, lostTo, objectionId, note),
-     *                                        existing (by proposal ID: presented, result, soldAmount, lossReasonId, lostTo, objectionId, note).
+     *                                        estimates (by estimate ID: presented, result, optionId, lossReasonId, lostTo, objectionId, note),
+     *                                        existing (by proposal ID: presented, result, optionId, soldAmount, lossReasonId, lostTo, objectionId, note).
      *
      * @throws ValidationException
      * @throws AuthorizationException
@@ -71,7 +73,10 @@ class SubmitAfterActionReport
                 return true;
             }
 
-            $new = array_values(array_filter(is_array($report['proposals'] ?? null) ? $report['proposals'] : [], is_array(...)));
+            $new = array_filter(
+                is_array($report['estimates'] ?? null) ? $report['estimates'] : [],
+                fn (mixed $row): bool => is_array($row) && filter_var($row['presented'] ?? false, FILTER_VALIDATE_BOOL),
+            );
             $again = array_filter(
                 is_array($report['existing'] ?? null) ? $report['existing'] : [],
                 fn (mixed $row): bool => is_array($row) && filter_var($row['presented'] ?? false, FILTER_VALIDATE_BOOL),
@@ -79,31 +84,27 @@ class SubmitAfterActionReport
 
             if ($new === [] && $again === []) {
                 throw ValidationException::withMessages([
-                    'presented' => __('Add what was presented, or answer that nothing was.'),
+                    'presented' => __('Tick the estimate that was presented, or answer that nothing was.'),
                 ]);
             }
 
             foreach ($again as $id => $row) {
                 $proposal = $lead->proposals()->counted()->find((int) $id) ?? throw ValidationException::withMessages([
-                    "existing.{$id}.presented" => __('This proposal is no longer here. Reload the page.'),
+                    "existing.{$id}.presented" => __('This estimate is no longer here. Reload the page.'),
                 ]);
 
                 $this->presentProposalAgain->apply($lead, $proposal, $appointment->id, $actor, "existing.{$id}.presented");
                 $this->recordProposalResult->apply($lead, $proposal, is_string($row['result'] ?? null) ? $row['result'] : null, $row, $actor, "existing.{$id}.");
             }
 
-            foreach ($new as $index => $row) {
-                $proposal = $this->addProposal->apply(
-                    $lead,
-                    is_string($row['name'] ?? null) ? $row['name'] : null,
-                    is_string($row['price'] ?? null) ? $row['price'] : null,
-                    [$appointment->id],
-                    $actor,
-                    "proposals.{$index}.",
-                    is_numeric($row['propertyId'] ?? null) ? (int) $row['propertyId'] : null,
-                );
+            foreach ($new as $id => $row) {
+                $estimate = $lead->estimates()->find((int) $id) ?? throw ValidationException::withMessages([
+                    "estimates.{$id}.estimate" => __('This estimate is no longer here. Reload the page.'),
+                ]);
 
-                $this->recordProposalResult->apply($lead, $proposal, is_string($row['result'] ?? null) ? $row['result'] : null, $row, $actor, "proposals.{$index}.");
+                $proposal = $this->presentEstimate->apply($lead, $estimate, [$appointment->id], $actor, "estimates.{$id}.");
+
+                $this->recordProposalResult->apply($lead, $proposal, is_string($row['result'] ?? null) ? $row['result'] : null, $row, $actor, "estimates.{$id}.");
             }
 
             return true;

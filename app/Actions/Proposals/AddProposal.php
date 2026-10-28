@@ -32,6 +32,12 @@ class AddProposal
      * (docs/slice-7-appointment-results-plan.md, step 7b). The salesperson the
      * Lead is with, or a manager. It can be added on the day or later.
      *
+     * Since step 31e no screen offers this: what is presented is an
+     * estimate, recorded by PresentEstimate (decision 206). This is how the
+     * proposals recorded by hand before then were made, and the tests still
+     * make them this way, since they are kept and still given results
+     * (decision 207, question 4).
+     *
      * A proposal always has a name, a price and at least one run appointment
      * of this Lead (decision 125, answers 4 and 5), so every proposal counts
      * for Demo Rate from the moment it is saved (decision 124). It starts

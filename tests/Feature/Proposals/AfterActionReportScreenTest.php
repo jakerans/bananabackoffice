@@ -16,7 +16,8 @@ use Livewire\Livewire;
 
 /*
  * The after-action report page
- * (docs/slice-7-appointment-results-plan.md, step 7c).
+ * (docs/slice-7-appointment-results-plan.md, step 7c), where what was
+ * presented is ticked from the Lead's estimates (step 31e; decision 207).
  *
  * The appointment is on Thursday 8 October 2026 at 3:00 pm Eastern with Sam
  * Sales. Tests start at 4:35 pm that day, just after it ended, with nothing
@@ -38,6 +39,10 @@ beforeEach(function () {
     $this->lead = bookableLead($this->lakeview);
     $this->lead->account->forceFill(['display_name' => 'Pat Customer'])->save();
     $this->appointment = bookAppointment($this->lead, $this->sam, $this->manager)->appointment;
+
+    // Built before the visit: two options, $8,450 and $3,200 (step 31e).
+    $this->exterior = estimateFor($this->lead->fresh(), $this->sam, ['Whole exterior' => '8450', 'Front only' => '3200']);
+    [$this->wholeExterior, $this->frontOnly] = $this->exterior->options->all();
 
     $this->travelTo('2026-10-08 20:35:00');
     $this->lead = $this->lead->fresh();
@@ -106,22 +111,31 @@ test('the report asks only what the answers so far make necessary', function () 
         ->assertSee('Pat Customer')
         ->assertSee('1. What happened?')
         ->assertDontSeeHtml('data-test="report-presented"')
-        ->assertDontSeeHtml('data-test="report-proposals"')
+        ->assertDontSeeHtml('data-test="report-estimates"')
         ->assertDontSeeHtml('data-test="report-submit"')
         ->set('outcome', 'run')
         ->assertSee('2. Was anything presented?')
-        ->assertDontSeeHtml('data-test="report-proposals"')
+        ->assertDontSeeHtml('data-test="report-estimates"')
         ->assertSeeHtml('data-test="report-submit"')
         ->set('presented', 'yes')
-        ->assertSee('3. What was presented?')
+        ->assertSee('3. Which estimate was presented?')
+        // The estimate as it is: its options' range, and its options by name.
+        ->assertSee('Residential Exterior estimate, $3,200 to $8,450')
+        ->assertSee('Whole exterior · Front only')
+        ->assertDontSee('What became of it?')
+        ->set('estimates.'.$this->exterior->id.'.presented', true)
+        ->assertSee('What became of it?')
+        ->assertDontSeeHtml('data-test="result-option"')
+        ->set('estimates.'.$this->exterior->id.'.result', 'sold')
+        // Sold for the option the customer chose, never a typed amount.
+        ->assertSeeHtml('data-test="result-option"')
+        ->assertSee('Front only, $3,200')
         ->assertDontSeeHtml('data-test="result-sold-amount"')
-        ->set('proposals.0.result', 'sold')
-        ->assertSeeHtml('data-test="result-sold-amount"')
-        ->set('proposals.0.result', 'lost')
+        ->set('estimates.'.$this->exterior->id.'.result', 'lost')
         ->assertSeeHtml('data-test="result-loss-reason"')
         ->assertSeeHtml('data-test="result-objection"')
         ->set('presented', 'no')
-        ->assertDontSeeHtml('data-test="report-proposals"')
+        ->assertDontSeeHtml('data-test="report-estimates"')
         ->assertSee('Why was nothing presented? (required)')
         ->assertSee('The appointment will count as run with nothing presented, whatever the reason.')
         ->set('presented', 'yes')
@@ -145,13 +159,13 @@ test('a no-show is reported and the page goes back to the lead', function () {
     expect($this->lead->fresh()->status)->toBe(LeadStatus::AppointmentCancelled);
 });
 
-test('run, one proposal, sold: the whole report in one save', function () {
+test('run, the estimate presented and sold: the whole report in one save', function () {
     reportPage($this->sam, $this->lead, $this->appointment)
         ->set('outcome', 'run')
         ->set('presented', 'yes')
-        ->set('proposals.0.name', 'Whole exterior')
-        ->set('proposals.0.price', '8,450')
-        ->set('proposals.0.result', 'sold')
+        ->set('estimates.'.$this->exterior->id.'.presented', true)
+        ->set('estimates.'.$this->exterior->id.'.result', 'sold')
+        ->set('estimates.'.$this->exterior->id.'.optionId', (string) $this->wholeExterior->id)
         ->set('note', 'Signed on the spot.')
         ->call('submit')
         ->assertHasNoErrors()
@@ -159,30 +173,30 @@ test('run, one proposal, sold: the whole report in one save', function () {
 
     expect($this->appointment->fresh()->state)->toBe(AppointmentState::Run);
     expect($this->appointment->fresh()->state_note)->toBe('Signed on the spot.');
-    expect(Proposal::query()->sole()->only(['name', 'price_cents', 'sold_cents']))->toBe(['name' => 'Whole exterior', 'price_cents' => 845000, 'sold_cents' => 845000]);
+    expect(Proposal::query()->sole()->only(['estimate_id', 'estimate_option_id', 'sold_cents']))->toBe(['estimate_id' => $this->exterior->id, 'estimate_option_id' => $this->wholeExterior->id, 'sold_cents' => 845000]);
     expect($this->lead->fresh()->status)->toBe(LeadStatus::Sold);
 });
 
-test('a refusal lands on the proposal it is about, and nothing is saved', function () {
+test('a refusal lands on the estimate it is about, and nothing is saved', function () {
+    $cabinets = estimateFor($this->lead, $this->sam, ['Cabinets only' => '3200']);
+
     reportPage($this->sam, $this->lead, $this->appointment)
         ->set('outcome', 'run')
         ->set('presented', 'yes')
-        ->set('proposals.0.name', 'Whole exterior')
-        ->set('proposals.0.price', '8450')
-        ->set('proposals.0.result', 'pending')
-        ->set('proposals.0.objectionId', (string) $this->thinking->id)
-        ->call('addProposal')
-        ->set('proposals.1.name', 'Cabinets only')
-        ->set('proposals.1.price', 'about three')
-        ->set('proposals.1.result', 'lost')
+        ->set('estimates.'.$this->exterior->id.'.presented', true)
+        ->set('estimates.'.$this->exterior->id.'.result', 'pending')
+        ->set('estimates.'.$this->exterior->id.'.objectionId', (string) $this->thinking->id)
+        ->set('estimates.'.$cabinets->id.'.presented', true)
+        ->set('estimates.'.$cabinets->id.'.result', 'sold')
         ->call('submit')
-        ->assertHasErrors('proposals.1.proposalPrice')
-        ->assertHasNoErrors('proposals.0.proposalPrice')
+        ->assertHasErrors('estimates.'.$cabinets->id.'.optionId')
+        ->assertHasNoErrors('estimates.'.$this->exterior->id.'.optionId')
+        ->assertSee('Choose the option the customer chose.')
         ->assertNoRedirect()
-        ->set('proposals.1.price', '3200')
+        ->set('estimates.'.$cabinets->id.'.result', 'lost')
         ->assertHasNoErrors()
         ->call('submit')
-        ->assertHasErrors('proposals.1.lossReasonId')
+        ->assertHasErrors('estimates.'.$cabinets->id.'.lossReasonId')
         ->assertNoRedirect();
 
     expect($this->appointment->fresh()->state)->toBe(AppointmentState::Booked);
@@ -190,36 +204,29 @@ test('a refusal lands on the proposal it is about, and nothing is saved', functi
     expect($this->lead->fresh()->status)->toBe(LeadStatus::AppointmentBooked);
 });
 
-test('something presented with nothing filled in is refused at the first proposal', function () {
+test('something presented with nothing ticked is refused', function () {
     reportPage($this->sam, $this->lead, $this->appointment)
         ->set('outcome', 'run')
         ->set('presented', 'yes')
         ->call('submit')
-        ->assertHasErrors('proposals.0.proposalName')
-        ->assertSee('Say what was pitched.')
+        ->assertHasErrors('presented')
+        ->assertSee('Tick the estimate that was presented, or answer that nothing was.')
         ->assertNoRedirect();
 
     expect($this->appointment->fresh()->state)->toBe(AppointmentState::Booked);
 });
 
-test('a proposal left empty is dropped, and one can be removed', function () {
-    reportPage($this->sam, $this->lead, $this->appointment)
+test('with no estimate on the lead, the report says to build it first', function () {
+    $lead = bookableLead($this->lakeview);
+    $this->travelTo('2026-10-07 14:00:00');
+    $appointment = bookAppointment($lead, $this->sam, $this->manager, '2026-10-08', '17:00', 30)->appointment;
+    $this->travelTo('2026-10-08 22:00:00');
+
+    reportPage($this->sam, $lead->fresh(), $appointment)
         ->set('outcome', 'run')
         ->set('presented', 'yes')
-        ->set('proposals.0.name', 'Not this one')
-        ->call('addProposal')
-        ->set('proposals.1.name', 'Whole exterior')
-        ->set('proposals.1.price', '8450')
-        ->set('proposals.1.result', 'sold')
-        ->call('addProposal')
-        ->call('removeProposal', 0)
-        ->assertSet('proposals.0.name', 'Whole exterior')
-        ->assertCount('proposals', 2)
-        ->call('submit')
-        ->assertHasNoErrors()
-        ->assertRedirect(route('leads.show', $this->lead));
-
-    expect(Proposal::query()->pluck('name')->all())->toBe(['Whole exterior']);
+        ->assertSeeHtml('data-test="report-no-estimates"')
+        ->assertSee('This lead has no estimate yet. Build it from the Estimates card on the lead, then come back to this report.');
 });
 
 test('on a return visit the report lists what is still pending and can sell it', function () {
@@ -234,6 +241,8 @@ test('on a return visit the report lists what is still pending and can sell it',
         ->set('presented', 'yes')
         ->assertSee('From an earlier visit')
         ->assertSee('Whole exterior, $8,450')
+        // Recorded by hand before step 31e, and still given its result here.
+        ->assertSee('Recorded by hand')
         ->assertSee('New today')
         ->set('existing.'.$exterior->id.'.presented', true)
         ->assertSee('What became of it?')
@@ -249,7 +258,7 @@ test('on a return visit the report lists what is still pending and can sell it',
     expect($exterior->fresh()->result)->toBe(ProposalResult::Sold);
     expect($exterior->fresh()->sold_cents)->toBe(800000);
     expect($exterior->appointments()->count())->toBe(2);
-    // The empty "new today" proposal was not needed.
+    // The estimate not ticked was not presented.
     expect(Proposal::query()->count())->toBe(1);
     expect($this->lead->fresh()->status)->toBe(LeadStatus::Sold);
 });

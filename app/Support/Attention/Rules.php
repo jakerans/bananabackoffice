@@ -121,7 +121,7 @@ final class Rules
                 'lead:'.$proposal->lead_id,
                 $proposal->lead->location_id,
                 AttentionItem::ATTENTION,
-                $proposal->lead->account->display_name.': a pending proposal is past its validity, with no visit booked.',
+                $proposal->lead->account->display_name.': a pending estimate is past its validity, with no visit booked.',
                 route('leads.show', $proposal->lead),
                 [(int) $proposal->lead->assigned_user_id],
             ))

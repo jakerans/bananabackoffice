@@ -78,7 +78,7 @@ class ReleasePendingLead
             $pending = ProposalValidity::latestPending($lead);
 
             $note = match (true) {
-                $pending !== null => __('Nothing was sold, lost or booked before the last pending proposal expired on :day.', ['day' => $pending->format('M j, Y')]),
+                $pending !== null => __('Nothing was sold, lost or booked before the last pending estimate expired on :day.', ['day' => $pending->format('M j, Y')]),
                 $lead->proposals()->counted()->exists() => __('Nothing is pending and nothing was booked by :day.', ['day' => $until->format('M j, Y')]),
                 default => __('Nothing was presented and nothing was booked by :day.', ['day' => $until->format('M j, Y')]),
             };

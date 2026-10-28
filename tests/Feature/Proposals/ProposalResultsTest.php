@@ -127,7 +127,7 @@ test('marking a proposal sold records the amount, and the lead shows Sold on its
     expect($event->actor_id)->toBe($this->sam->id);
     expect($event->reason)->toBe('Signed at the kitchen table.');
     expect($event->values_after)->toMatchArray(['status' => 'sold', 'result' => 'sold', 'proposal' => 'Whole exterior', 'price' => '$8,450', 'sold_for' => '$8,450']);
-    expect(CustomerActivity::label(AuditAction::LeadProposalSold))->toBe('Proposal sold');
+    expect(CustomerActivity::label(AuditAction::LeadProposalSold))->toBe('Estimate sold');
 });
 
 test('the sold amount can differ from the price, and must be an amount', function () {
@@ -287,9 +287,9 @@ test('a result is given once, and changing it takes a manager', function () {
     recordResult($this->lead, $this->proposal, $this->sam, 'sold');
 
     expect(fn () => recordResult($this->lead->fresh(), $this->proposal, $this->sam, 'lost', lostForPrice()))
-        ->toThrow(ValidationException::class, 'This proposal is already sold. A manager can correct that.');
+        ->toThrow(ValidationException::class, 'This estimate is already sold. A manager can correct that.');
     expect(fn () => recordResult($this->lead->fresh(), $this->proposal, $this->manager, 'pending', ['objectionId' => $this->thinking->id]))
-        ->toThrow(ValidationException::class, 'This proposal is already sold. A manager can correct that.');
+        ->toThrow(ValidationException::class, 'This estimate is already sold. A manager can correct that.');
 
     expect($this->proposal->fresh()->result)->toBe(ProposalResult::Sold);
 });
@@ -322,7 +322,7 @@ test('a proposal of another lead is refused, and so is a lead that changed since
     Appointment::factory()->forLead($other)->with($this->sam)->create(['state' => AppointmentState::Run]);
     $theirs = Proposal::factory()->forLead($other)->create();
 
-    expect(fn () => recordResult($this->lead, $theirs, $this->manager, 'sold'))->toThrow(ValidationException::class, 'This proposal belongs to another lead.');
+    expect(fn () => recordResult($this->lead, $theirs, $this->manager, 'sold'))->toThrow(ValidationException::class, 'This estimate belongs to another lead.');
     expect(fn () => app(RecordProposalResult::class)->handle($this->lead, $this->proposal, 'sold', [], $this->sam, $this->lead->lifecycle_version - 1))
         ->toThrow(ValidationException::class, 'This lead was just changed by someone else');
 
@@ -334,7 +334,7 @@ test('once the lead has left Sales its proposals are no longer given a result', 
     app(SendLeadBackToContactCenter::class)->handle($this->lead, StopCountingLeadAsIssued::ANOTHER_REASON, 'The customer wants a call first.', $this->manager);
 
     expect(fn () => recordResult($this->lead->fresh(), $this->proposal, $this->manager, 'sold'))
-        ->toThrow(ValidationException::class, 'This lead is no longer with Sales, so its proposals cannot be given a result.');
+        ->toThrow(ValidationException::class, 'This lead is no longer with Sales, so its estimates cannot be given a result.');
 });
 
 /*
@@ -397,7 +397,7 @@ test('a lost proposal is corrected back to pending and the lead is untouched', f
 
 test('only a manager corrects a result, with a note, and only a result that was given', function () {
     expect(fn () => app(CorrectProposalResult::class)->handle($this->lead, $this->proposal, 'No result yet.', $this->manager))
-        ->toThrow(ValidationException::class, 'This proposal has no result to correct.');
+        ->toThrow(ValidationException::class, 'This estimate has no result to correct.');
 
     recordResult($this->lead, $this->proposal, $this->sam, 'sold');
     $lead = $this->lead->fresh();
@@ -449,7 +449,7 @@ test('a proposal that is sold, lost or added in error is no longer changed', fun
     $finish($this);
 
     expect(fn () => app(EditProposal::class)->handle($this->lead->fresh(), $this->proposal, 'Cabinets', '100', $this->manager))
-        ->toThrow(ValidationException::class, 'Only a proposal that is still pending can be changed.');
+        ->toThrow(ValidationException::class, 'Only an estimate that is still pending can be changed.');
 
     expect($this->proposal->fresh()->name)->toBe('Whole exterior');
 })->with([
@@ -491,18 +491,18 @@ test('a manager marks a proposal added in error: it stays on the record and coun
     expect($event->values_before)->toEqual(['proposal' => 'Whole exterior', 'price' => '$8,450']);
 
     // It has no result and cannot be marked twice.
-    expect(fn () => recordResult($this->lead, $proposal, $this->manager, 'sold'))->toThrow(ValidationException::class, 'This proposal was marked "added in error" and has no result.');
-    expect(fn () => app(MarkProposalAddedInError::class)->handle($this->lead, $proposal, 'Again.', $this->manager))->toThrow(ValidationException::class, 'This proposal is no longer here to be marked.');
+    expect(fn () => recordResult($this->lead, $proposal, $this->manager, 'sold'))->toThrow(ValidationException::class, 'This estimate was marked "added in error" and has no result.');
+    expect(fn () => app(MarkProposalAddedInError::class)->handle($this->lead, $proposal, 'Again.', $this->manager))->toThrow(ValidationException::class, 'This estimate is no longer here to be marked.');
 });
 
 test('only a manager marks one added in error, with a note, and only while it is pending', function () {
     expect(fn () => app(MarkProposalAddedInError::class)->handle($this->lead, $this->proposal, 'I added the wrong one.', $this->sam))->toThrow(AuthorizationException::class);
-    expect(fn () => app(MarkProposalAddedInError::class)->handle($this->lead, $this->proposal, ' ', $this->manager))->toThrow(ValidationException::class, 'Say why this proposal should not be here.');
+    expect(fn () => app(MarkProposalAddedInError::class)->handle($this->lead, $this->proposal, ' ', $this->manager))->toThrow(ValidationException::class, 'Say why this estimate should not be here.');
 
     recordResult($this->lead, $this->proposal, $this->sam, 'sold');
 
     expect(fn () => app(MarkProposalAddedInError::class)->handle($this->lead->fresh(), $this->proposal, 'Wrong lead.', $this->manager))
-        ->toThrow(ValidationException::class, 'This proposal is sold. Correct its result first.');
+        ->toThrow(ValidationException::class, 'This estimate is sold. Correct its result first.');
 
     expect($this->proposal->fresh()->isAddedInError())->toBeFalse();
 });
@@ -720,7 +720,7 @@ test('the salesperson is told in the app when a manager changes a proposal or a 
     Notification::assertNotSentTo($this->manager, AppointmentChanged::class);
     Notification::assertSentTo($this->sam, AppointmentChanged::class, fn (AppointmentChanged $notice) => $notice->kind === AppointmentChanged::SALES_RECORD_CHANGED
         && $notice->channel === AppointmentChanged::IN_APP
-        && $notice->toArray($this->sam)['message'] === 'A manager changed the proposals or the result on a lead of yours.'
+        && $notice->toArray($this->sam)['message'] === 'A manager changed the estimates or the result on a lead of yours.'
         && $notice->toArray($this->sam)['url'] === route('leads.show', $this->lead->id));
 })->with([
     'a result' => [fn ($test) => recordResult($test->lead, $test->proposal, $test->manager, 'sold')],

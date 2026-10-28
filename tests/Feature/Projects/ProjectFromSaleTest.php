@@ -145,16 +145,19 @@ test('a sale reported in the after-action report makes its project too', functio
     $lead = bookableLead($this->lakeview);
     $this->travelTo('2026-10-08 20:00:00');
     $appointment = bookAppointment($lead, $this->riley, $this->manager, '2026-10-08', '17:00', 30)->appointment;
+    $exterior = estimateFor($lead->fresh(), $this->riley);
+    $deck = estimateFor($lead->fresh(), $this->riley, ['Deck' => '1800', 'Deck and railings' => '2400']);
     $this->travelTo('2026-10-08 22:00:00');
 
-    app(SubmitAfterActionReport::class)->handle($lead->fresh(), $appointment, ['outcome' => 'run', 'presented' => 'yes', 'proposals' => [
-        ['name' => 'Whole exterior', 'price' => '8450', 'result' => 'sold'],
-        ['name' => 'Deck', 'price' => '1800', 'result' => 'sold', 'soldAmount' => '1,750'],
+    app(SubmitAfterActionReport::class)->handle($lead->fresh(), $appointment, ['outcome' => 'run', 'presented' => 'yes', 'estimates' => [
+        $exterior->id => ['presented' => true, 'result' => 'sold', 'optionId' => $exterior->options->sole()->id],
+        $deck->id => ['presented' => true, 'result' => 'sold', 'optionId' => $deck->options->last()->id],
     ]], $this->riley);
 
     $projects = $lead->projects()->get();
 
-    expect($projects->pluck('sold_cents')->all())->toBe([845000, 175000]);
+    expect($projects->pluck('sold_cents')->all())->toBe([845000, 240000]);
+    expect($projects->pluck('title')->map(fn (string $title): string => explode(' — ', $title)[0])->all())->toBe(['Whole exterior', 'Deck and railings']);
     expect($projects->pluck('salesperson_name')->unique()->all())->toBe(['Riley Rep']);
 });
 

@@ -152,8 +152,8 @@ class AppointmentChanged extends Notification
             self::MARKED_NO_SHOW => __('A manager marked your appointment on :when as a no-show.', ['when' => $this->when()]),
             self::CLOSE_OUT_CORRECTED => __('A manager corrected what happened at your appointment on :when.', ['when' => $this->when()]),
             self::BOOKED_IN_ERROR => __('A manager marked your appointment on :when as booked in error, and the lead went back as it was.', ['when' => $this->when()]),
-            self::PROPOSAL_RECORDED => __('A manager recorded a proposal at your appointment on :when.', ['when' => $this->when()]),
-            self::SALES_RECORD_CHANGED => __('A manager changed the proposals or the result on a lead of yours.'),
+            self::PROPOSAL_RECORDED => __('A manager recorded an estimate at your appointment on :when.', ['when' => $this->when()]),
+            self::SALES_RECORD_CHANGED => __('A manager changed the estimates or the result on a lead of yours.'),
             self::LEAD_RELEASED => __('A cancelled lead of yours was not booked again in time and went back to the Contact Center. You can take it back from the lead.'),
             self::PENDING_RELEASE_WARNING => trans_choice('{0} Today is the last day a lead of yours stays with you.|{1} Tomorrow is the last day a lead of yours stays with you.|[2,*] A lead of yours stays with you for :count more days.', (int) $this->days, ['count' => (int) $this->days])
                 .' '.__('It then goes to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.'),

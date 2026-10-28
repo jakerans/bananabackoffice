@@ -550,7 +550,10 @@ Rules:
     proposal, or recording that one was presented at another appointment, is
     for a manager where the Lead is (`appointments.manage`) or the salesperson
     the Lead is with while it is with Sales. Anyone who may see the Lead sees
-    its proposals and their prices. No permission was added.
+    its proposals and their prices. No permission was added. Since step 31e
+    (decision 207) these are estimates: the same people mark an estimate
+    presented, start one, and change one while it is pending; once sold or
+    lost nobody changes it until a manager corrects the result.
 20. **Results** (slice 7 step 7c). The same people as rule 19 give a proposal
     its result (sold, lost, still pending), change one that is still pending,
     and mark the Lead lost; the salesperson can still do so on their own Lead

@@ -582,8 +582,8 @@ new #[Title('Contact Center settings')] class extends Component {
     {{-- Pending proposals --}}
     <form wire:submit="saveProposalValidDays" class="flex flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-6" data-test="proposal-valid-section">
         <div>
-            <flux:heading size="lg" level="2">{{ __('Pending proposals') }}</flux:heading>
-            <flux:text>{{ __('How many days a proposal is valid from the day it was presented. A lead stays with its salesperson until its last pending proposal expires, and the salesperson is warned :days days before. A new number applies to proposals presented from then on; the salesperson can change the day on any one proposal.', ['days' => ContactCenterSettings::PENDING_WARNING_DAYS]) }}</flux:text>
+            <flux:heading size="lg" level="2">{{ __('Pending estimates') }}</flux:heading>
+            <flux:text>{{ __('How many days an estimate is valid from the day it was presented. A lead stays with its salesperson until its last pending estimate expires, and the salesperson is warned :days days before. A new number applies to estimates presented from then on; the salesperson can change the day on any one estimate.', ['days' => ContactCenterSettings::PENDING_WARNING_DAYS]) }}</flux:text>
         </div>
 
         <flux:input
@@ -592,7 +592,7 @@ new #[Title('Contact Center settings')] class extends Component {
             inputmode="numeric"
             :min="ContactCenterSettings::MINIMUM_PROPOSAL_VALID_DAYS"
             :max="ContactCenterSettings::MAXIMUM_PROPOSAL_VALID_DAYS"
-            :label="__('Days a proposal is valid')"
+            :label="__('Days an estimate is valid')"
             class="max-w-40 tabular-nums"
             data-test="proposal-valid-days"
         />

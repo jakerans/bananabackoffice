@@ -203,8 +203,8 @@ test('a day is refused when it is not a day, is in the past, or is further than 
     expect(validUntil($proposal))->toBe('2026-10-15');
     expect(AuditEvent::query()->where('action', AuditAction::LeadProposalEdited)->count())->toBe(0);
 })->with([
-    'words' => ['next week', 'Choose the day the proposal is valid until.'],
-    'a day that does not exist' => ['2026-02-31', 'Choose the day the proposal is valid until.'],
+    'words' => ['next week', 'Choose the day the estimate is valid until.'],
+    'a day that does not exist' => ['2026-02-31', 'Choose the day the estimate is valid until.'],
     'yesterday' => ['2026-10-07', 'Choose today or a later day.'],
     'thirty-one days ahead' => ['2026-11-08', 'You can move it up to 30 days ahead, to Nov 7, 2026. A manager can set a later day.'],
 ]);
@@ -238,7 +238,7 @@ test('only the lead\'s salesperson or a manager there may move the day, and only
 
     app(RecordProposalResult::class)->handle($this->lead->fresh(), $proposal, 'sold', [], $this->sam);
 
-    expect(fn () => moveValidUntil($proposal, '2026-10-20', $this->manager))->toThrow(ValidationException::class, 'Only a proposal that is still pending can be changed.');
+    expect(fn () => moveValidUntil($proposal, '2026-10-20', $this->manager))->toThrow(ValidationException::class, 'Only an estimate that is still pending can be changed.');
     expect(validUntil($proposal))->toBe('2026-10-15');
 });
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Estimates\StartEstimate;
 use App\Actions\Proposals\SubmitAfterActionReport;
 use App\Enums\AppointmentState;
 use App\Enums\AuditAction;
@@ -24,7 +25,8 @@ use Illuminate\Validation\ValidationException;
  *
  * The appointment is on Thursday 8 October 2026 at 3:00 pm Eastern with Sam
  * Sales. Tests start at 4:35 pm that day, just after it ended, with nothing
- * said about it yet.
+ * said about it yet. What was presented is ticked from the Lead's estimates
+ * (step 31e; decision 207).
  */
 
 beforeEach(function () {
@@ -40,6 +42,10 @@ beforeEach(function () {
 
     $this->lead = bookableLead($this->lakeview);
     $this->appointment = bookAppointment($this->lead, $this->sam, $this->manager)->appointment;
+
+    // Built before the visit, as it would be: two options, $8,450 and $3,200 (step 31e).
+    $this->exterior = estimateFor($this->lead->fresh(), $this->sam, ['Whole exterior' => '8450', 'Front only' => '3200']);
+    [$this->wholeExterior, $this->frontOnly] = $this->exterior->options->all();
 
     $this->travelTo('2026-10-08 20:35:00');
     $this->lead = $this->lead->fresh();
@@ -67,7 +73,7 @@ function expectNothingSaved(): void
 }
 
 test('a no-show is the whole report', function () {
-    submitReport($this->lead, $this->appointment, $this->sam, ['outcome' => 'no_show', 'note' => 'Nobody home.', 'presented' => 'yes', 'proposals' => [['name' => 'Ignored', 'price' => '100', 'result' => 'sold']]]);
+    submitReport($this->lead, $this->appointment, $this->sam, ['outcome' => 'no_show', 'note' => 'Nobody home.', 'presented' => 'yes', 'estimates' => [$this->exterior->id => ['presented' => true, 'result' => 'sold', 'optionId' => $this->wholeExterior->id]]]);
 
     expect($this->appointment->fresh()->state)->toBe(AppointmentState::NoShow);
     expect($this->appointment->fresh()->state_note)->toBe('Nobody home.');
@@ -87,12 +93,12 @@ test('run with nothing presented ends the report, and the appointment counts as 
     expect($this->appointment->fresh()->no_demo_reason)->toBe('Only one of the two owners was home.');
 });
 
-test('run, one proposal, sold: the appointment, the proposal, its result and the lead in one go', function () {
+test('run, one estimate presented, sold: the appointment, the estimate, the option chosen and the lead in one go', function () {
     submitReport($this->lead, $this->appointment, $this->sam, [
         'outcome' => 'run',
         'note' => 'Signed on the spot.',
         'presented' => 'yes',
-        'proposals' => [['name' => 'Whole exterior', 'price' => '8,450', 'result' => 'sold', 'soldAmount' => '8,200']],
+        'estimates' => [$this->exterior->id => ['presented' => true, 'result' => 'sold', 'optionId' => $this->frontOnly->id]],
     ]);
 
     expect($this->appointment->fresh()->state)->toBe(AppointmentState::Run);
@@ -100,10 +106,13 @@ test('run, one proposal, sold: the appointment, the proposal, its result and the
 
     $proposal = Proposal::query()->sole();
 
-    expect($proposal->only(['name', 'price_cents', 'sold_cents', 'created_by_name', 'result_by_name']))
-        ->toBe(['name' => 'Whole exterior', 'price_cents' => 845000, 'sold_cents' => 820000, 'created_by_name' => 'Sam Sales', 'result_by_name' => 'Sam Sales']);
+    // The record of the estimate: its options' range while pending, the option chosen once sold.
+    expect($proposal->only(['estimate_id', 'estimate_option_id', 'name', 'price_from_cents', 'price_cents', 'sold_cents', 'created_by_name', 'result_by_name']))
+        ->toBe(['estimate_id' => $this->exterior->id, 'estimate_option_id' => $this->frontOnly->id, 'name' => 'Residential Exterior estimate', 'price_from_cents' => 320000, 'price_cents' => 845000, 'sold_cents' => 320000, 'created_by_name' => 'Sam Sales', 'result_by_name' => 'Sam Sales']);
     expect($proposal->result)->toBe(ProposalResult::Sold);
+    expect($proposal->price())->toBe('$3,200');
     expect($proposal->appointments()->sole()->id)->toBe($this->appointment->id);
+    expect($proposal->project->title)->toStartWith('Front only');
     expect($this->lead->fresh()->status)->toBe(LeadStatus::Sold);
 
     // The same records the buttons write, each once.
@@ -112,118 +121,145 @@ test('run, one proposal, sold: the appointment, the proposal, its result and the
     }
 });
 
-test('several proposals, each with its own result', function () {
+test('several estimates, each with its own result, and one not ticked is not presented', function () {
+    $cabinets = estimateFor($this->lead, $this->sam, ['Cabinets only' => '3200']);
+    $deck = estimateFor($this->lead, $this->sam, ['Deck' => '1800']);
+
     submitReport($this->lead, $this->appointment, $this->sam, [
         'outcome' => 'run',
         'presented' => 'yes',
-        'proposals' => [
-            ['name' => 'Whole exterior', 'price' => '8450', 'result' => 'pending', 'objectionId' => $this->thinking->id],
-            ['name' => 'Cabinets only', 'price' => '3200', 'result' => 'lost', 'lossReasonId' => $this->price->id, 'objectionId' => $this->thinking->id, 'note' => 'Too much for cabinets.'],
+        'estimates' => [
+            $this->exterior->id => ['presented' => true, 'result' => 'pending', 'objectionId' => $this->thinking->id],
+            $cabinets->id => ['presented' => true, 'result' => 'lost', 'lossReasonId' => $this->price->id, 'objectionId' => $this->thinking->id, 'note' => 'Too much for cabinets.'],
+            // Not presented: whatever else is sent, it stays unpresented.
+            $deck->id => ['presented' => false, 'result' => 'sold'],
         ],
     ]);
 
-    [$exterior, $cabinets] = Proposal::query()->orderBy('id')->get()->all();
+    $exterior = Proposal::query()->where('estimate_id', $this->exterior->id)->sole();
+    $lost = Proposal::query()->where('estimate_id', $cabinets->id)->sole();
 
     expect($exterior->result)->toBe(ProposalResult::Pending);
     expect($exterior->objection_name)->toBe('Wants to think it over');
-    expect($cabinets->result)->toBe(ProposalResult::Lost);
-    expect($cabinets->only(['loss_reason_name', 'result_note']))->toBe(['loss_reason_name' => 'Price', 'result_note' => 'Too much for cabinets.']);
+    expect($exterior->price())->toBe('$3,200 to $8,450');
+    expect($lost->result)->toBe(ProposalResult::Lost);
+    expect($lost->only(['loss_reason_name', 'result_note']))->toBe(['loss_reason_name' => 'Price', 'result_note' => 'Too much for cabinets.']);
+    expect(Proposal::query()->where('estimate_id', $deck->id)->exists())->toBeFalse();
     expect($this->appointment->proposals()->count())->toBe(2);
     // Nothing sold and the Lead not marked lost: it stays with its salesperson.
     expect($this->lead->fresh()->status)->toBe(LeadStatus::AppointmentRun);
 });
 
-test('a return visit: a proposal from the first visit is presented again and sold, beside a new one', function () {
-    submitReport($this->lead, $this->appointment, $this->sam, ['outcome' => 'run', 'presented' => 'yes', 'proposals' => [
-        ['name' => 'Whole exterior', 'price' => '8450', 'result' => 'pending', 'objectionId' => $this->thinking->id],
-        ['name' => 'Deck', 'price' => '1800', 'result' => 'pending', 'objectionId' => $this->thinking->id],
+test('a return visit: an estimate from the first visit is presented again and sold, beside a new one', function () {
+    $deck = estimateFor($this->lead, $this->sam, ['Deck' => '1800']);
+
+    submitReport($this->lead, $this->appointment, $this->sam, ['outcome' => 'run', 'presented' => 'yes', 'estimates' => [
+        $this->exterior->id => ['presented' => true, 'result' => 'pending', 'objectionId' => $this->thinking->id],
+        $deck->id => ['presented' => true, 'result' => 'pending', 'objectionId' => $this->thinking->id],
     ]]);
 
-    [$exterior, $deck] = Proposal::query()->orderBy('id')->get()->all();
+    $exterior = Proposal::query()->where('estimate_id', $this->exterior->id)->sole();
+    $deckProposal = Proposal::query()->where('estimate_id', $deck->id)->sole();
 
     $second = bookAppointment($this->lead->fresh(), $this->sam, $this->sam, '2026-10-12', '10:00')->appointment;
+    $gutters = estimateFor($this->lead->fresh(), $this->sam, ['Gutters' => '900']);
     $this->travelTo('2026-10-12 15:35:00');
 
     submitReport($this->lead->fresh(), $second, $this->sam, [
         'outcome' => 'run',
         'presented' => 'yes',
         'existing' => [
-            $exterior->id => ['presented' => true, 'result' => 'sold'],
+            $exterior->id => ['presented' => true, 'result' => 'sold', 'optionId' => $this->wholeExterior->id],
             // Not presented at this visit: left exactly as it was, whatever else is sent.
-            $deck->id => ['presented' => false, 'result' => 'sold'],
+            $deckProposal->id => ['presented' => false, 'result' => 'sold'],
         ],
-        'proposals' => [['name' => 'Gutters', 'price' => '900', 'result' => 'sold']],
+        'estimates' => [$gutters->id => ['presented' => true, 'result' => 'sold', 'optionId' => $gutters->options->sole()->id]],
     ]);
 
     expect($exterior->fresh()->result)->toBe(ProposalResult::Sold);
+    expect($exterior->fresh()->sold_cents)->toBe(845000);
     expect($exterior->appointments()->pluck('appointments.id')->all())->toBe([$this->appointment->id, $second->id]);
-    expect($deck->fresh()->result)->toBe(ProposalResult::Pending);
-    expect($deck->appointments()->count())->toBe(1);
-    expect(Proposal::query()->where('name', 'Gutters')->sole()->result)->toBe(ProposalResult::Sold);
+    expect($deckProposal->fresh()->result)->toBe(ProposalResult::Pending);
+    expect($deckProposal->appointments()->count())->toBe(1);
+    expect(Proposal::query()->where('estimate_id', $gutters->id)->sole()->result)->toBe(ProposalResult::Sold);
     expect($this->lead->fresh()->status)->toBe(LeadStatus::Sold);
 });
 
-test('the report is saved whole or not at all', function (Closure $report, string $field, string $message) {
+test('an estimate presented before is not presented again as new', function () {
+    $proposal = presentEstimate($this->exterior, $this->sam, [Appointment::factory()->forLead($this->lead)->with($this->sam)->create(['state' => AppointmentState::Run, 'starts_at' => now()->subDays(3)])->id]);
+
+    expect(fn () => submitReport($this->lead->fresh(), $this->appointment, $this->sam, ['outcome' => 'run', 'presented' => 'yes', 'estimates' => [$this->exterior->id => ['presented' => true, 'result' => 'pending', 'objectionId' => $this->thinking->id]]]))
+        ->toThrow(ValidationException::class, 'This estimate is already recorded as presented.');
+
+    expect(Proposal::query()->count())->toBe(1);
+    expect($proposal->appointments()->count())->toBe(1);
+});
+
+test('the report is saved whole or not at all', function (Closure $report, Closure $field, string $message) {
     try {
         submitReport($this->lead, $this->appointment, $this->sam, $report($this));
 
         $this->fail('The report was not refused.');
     } catch (ValidationException $refusal) {
-        expect($refusal->errors())->toHaveKey($field);
-        expect($refusal->errors()[$field][0])->toContain($message);
+        expect($refusal->errors())->toHaveKey($field($this));
+        expect($refusal->errors()[$field($this)][0])->toContain($message);
     }
 
     expectNothingSaved();
 })->with([
-    'no answer about the appointment' => [fn ($test) => ['presented' => 'no'], 'closeOutOutcome', 'Say whether the appointment was run or was a no-show.'],
-    'run, and nothing said about what was presented' => [fn ($test) => ['outcome' => 'run'], 'presented', 'Say whether anything was presented.'],
-    'something was presented, and nothing is listed' => [fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'proposals' => []], 'presented', 'Add what was presented, or answer that nothing was.'],
-    'a proposal with no name' => [
-        fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'proposals' => [['name' => ' ', 'price' => '8450', 'result' => 'sold']]],
-        'proposals.0.proposalName', 'Say what was pitched.',
+    'no answer about the appointment' => [fn ($test) => ['presented' => 'no'], fn ($test) => 'closeOutOutcome', 'Say whether the appointment was run or was a no-show.'],
+    'run, and nothing said about what was presented' => [fn ($test) => ['outcome' => 'run'], fn ($test) => 'presented', 'Say whether anything was presented.'],
+    'something was presented, and nothing is ticked' => [
+        fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'estimates' => [$test->exterior->id => ['presented' => false]]],
+        fn ($test) => 'presented', 'Tick the estimate that was presented, or answer that nothing was.',
     ],
-    'the second proposal has a price that is not an amount' => [
-        fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'proposals' => [
-            ['name' => 'Whole exterior', 'price' => '8450', 'result' => 'sold'],
-            ['name' => 'Cabinets only', 'price' => 'about three', 'result' => 'sold'],
-        ]],
-        'proposals.1.proposalPrice', 'Enter the price in dollars',
+    'an estimate with no result' => [
+        fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'estimates' => [$test->exterior->id => ['presented' => true]]],
+        fn ($test) => "estimates.{$test->exterior->id}.proposalResult", 'Say whether it is sold, lost or still pending.',
     ],
-    'a proposal with no result' => [
-        fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'proposals' => [['name' => 'Whole exterior', 'price' => '8450']]],
-        'proposals.0.proposalResult', 'Say whether it is sold, lost or still pending.',
+    'sold, with no option chosen' => [
+        fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'estimates' => [$test->exterior->id => ['presented' => true, 'result' => 'sold']]],
+        fn ($test) => "estimates.{$test->exterior->id}.optionId", 'Choose the option the customer chose.',
+    ],
+    'sold, with an option of another estimate' => [
+        fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'estimates' => [$test->exterior->id => ['presented' => true, 'result' => 'sold', 'optionId' => estimateFor($test->lead, $test->sam)->options->sole()->id]]],
+        fn ($test) => "estimates.{$test->exterior->id}.optionId", 'Choose the option the customer chose.',
     ],
     'still pending with no objection' => [
-        fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'proposals' => [['name' => 'Whole exterior', 'price' => '8450', 'result' => 'pending']]],
-        'proposals.0.objectionId', 'Choose the main objection',
+        fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'estimates' => [$test->exterior->id => ['presented' => true, 'result' => 'pending']]],
+        fn ($test) => "estimates.{$test->exterior->id}.objectionId", 'Choose the main objection',
     ],
-    'lost with no reason, after a proposal that was fine' => [
-        fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'proposals' => [
-            ['name' => 'Whole exterior', 'price' => '8450', 'result' => 'sold'],
-            ['name' => 'Cabinets only', 'price' => '3200', 'result' => 'lost', 'objectionId' => $test->thinking->id],
+    'lost with no reason, after an estimate that was fine' => [
+        fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'estimates' => [
+            $test->exterior->id => ['presented' => true, 'result' => 'sold', 'optionId' => $test->wholeExterior->id],
+            ($test->cabinets = estimateFor($test->lead, $test->sam, ['Cabinets only' => '3200']))->id => ['presented' => true, 'result' => 'lost', 'objectionId' => $test->thinking->id],
         ]],
-        'proposals.1.lossReasonId', 'Choose why it was lost.',
+        fn ($test) => "estimates.{$test->cabinets->id}.lossReasonId", 'Choose why it was lost.',
     ],
-    'a sold amount that is not an amount' => [
-        fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'proposals' => [['name' => 'Whole exterior', 'price' => '8450', 'result' => 'sold', 'soldAmount' => 'less']]],
-        'proposals.0.soldAmount', 'Enter the sold amount in dollars',
+    'an estimate with no price yet' => [
+        fn ($test) => ['outcome' => 'run', 'presented' => 'yes', 'estimates' => [($test->empty = app(StartEstimate::class)->handle($test->lead, 'residential_interior', $test->sam))->id => ['presented' => true, 'result' => 'pending', 'objectionId' => $test->thinking->id]]],
+        fn ($test) => "estimates.{$test->empty->id}.estimate", 'This estimate has no price yet.',
     ],
 ]);
 
-test('a proposal from another lead cannot be reported on', function () {
+test('an estimate or a proposal from another lead cannot be reported on', function () {
     $other = bookableLead($this->lakeview);
     Appointment::factory()->forLead($other)->with($this->sam)->create(['state' => AppointmentState::Run]);
     $theirs = Proposal::factory()->forLead($other)->create();
+    $theirEstimate = estimateFor($other, $this->manager);
 
     expect(fn () => submitReport($this->lead, $this->appointment, $this->sam, ['outcome' => 'run', 'presented' => 'yes', 'existing' => [$theirs->id => ['presented' => true, 'result' => 'sold']]]))
-        ->toThrow(ValidationException::class, 'This proposal is no longer here.');
+        ->toThrow(ValidationException::class, 'This estimate is no longer here.');
+    expect(fn () => submitReport($this->lead, $this->appointment, $this->sam, ['outcome' => 'run', 'presented' => 'yes', 'estimates' => [$theirEstimate->id => ['presented' => true, 'result' => 'sold', 'optionId' => $theirEstimate->options->sole()->id]]]))
+        ->toThrow(ValidationException::class, 'This estimate is no longer here.');
 
     expectNothingSaved();
     expect($theirs->fresh()->result)->toBe(ProposalResult::Pending);
+    expect(Proposal::query()->where('estimate_id', $theirEstimate->id)->exists())->toBeFalse();
 });
 
 test('who may send the report', function (Closure $person, bool $allowed) {
-    $report = ['outcome' => 'run', 'presented' => 'yes', 'proposals' => [['name' => 'Whole exterior', 'price' => '8450', 'result' => 'sold']]];
+    $report = ['outcome' => 'run', 'presented' => 'yes', 'estimates' => [$this->exterior->id => ['presented' => true, 'result' => 'sold', 'optionId' => $this->wholeExterior->id]]];
     $actor = $person($this);
 
     if ($allowed) {

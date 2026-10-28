@@ -93,7 +93,7 @@ final class MorningBriefing
             ->count();
 
         return ['title' => 'Sales', 'lines' => [
-            ['label' => 'Customers with a pending proposal', 'count' => $pending, 'url' => route('leads')],
+            ['label' => 'Customers with a pending estimate', 'count' => $pending, 'url' => route('leads')],
             ['label' => 'Appointments to confirm, today to '.self::CONFIRM_DAYS.' days out', 'count' => $toConfirm, 'url' => route('sales.calendar')],
             ['label' => 'Visits waiting for you to say what happened', 'count' => $toCloseOut, 'url' => route('sales.calendar')],
         ]];

@@ -86,13 +86,15 @@ class CreateProjectForSoldProposal
      * address of the property it is for, "Lake house deck — 9 Lake Rd"
      * (decision 134, which changes answer 3 of decision 130). One Lead can
      * have several Projects, so each is named for its own proposal, not for
-     * the Lead's main service. It can be edited afterwards.
+     * the Lead's main service; an estimate's, for the option the customer
+     * chose (step 31e). It can be edited afterwards.
      */
     public static function titleFor(Proposal $proposal): string
     {
         $property = $proposal->property;
         $street = $property === null ? null : ($property->address_line1 === null ? $property->address : AddressKey::shortStreet($property->address_line1));
-        $title = $street === null || $street === '' ? $proposal->name : $proposal->name.' — '.$street;
+        $what = $proposal->option->name ?? $proposal->name;
+        $title = $street === null || $street === '' ? $what : $what.' — '.$street;
 
         return mb_substr($title, 0, Project::TITLE_LENGTH);
     }

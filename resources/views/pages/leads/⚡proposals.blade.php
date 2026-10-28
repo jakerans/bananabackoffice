@@ -1,10 +1,11 @@
 <?php
 
-use App\Actions\Proposals\AddProposal;
+use App\Actions\Estimates\StartEstimate;
 use App\Actions\Proposals\CorrectProposalResult;
 use App\Actions\Proposals\EditProposal;
 use App\Actions\Proposals\MarkLeadLost;
 use App\Actions\Proposals\MarkProposalAddedInError;
+use App\Actions\Proposals\PresentEstimate;
 use App\Actions\Proposals\PresentProposalAgain;
 use App\Actions\Proposals\RecordNoDemoReason;
 use App\Actions\Proposals\RecordProposalResult;
@@ -13,11 +14,13 @@ use App\Enums\LeadStatus;
 use App\Enums\ProposalResult;
 use App\Models\Appointment;
 use App\Models\ContactCenterSettings;
+use App\Models\Estimate;
 use App\Models\Lead;
 use App\Models\Objection;
 use App\Models\Property;
 use App\Models\Proposal;
 use App\Models\SalesLossReason;
+use App\Support\Money;
 use App\Support\Projects\RoughTimeframe;
 use App\Support\Proposals\ProposalValidity;
 use Flux\Flux;
@@ -29,30 +32,39 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
- * The Proposals card on a Lead (docs/slice-7-appointment-results-plan.md,
- * steps 7b and 7c): what was pitched and for how much, at which of the Lead's
- * run appointments, and what became of it. It is shown once the Lead has an
- * appointment that was run, or a proposal.
+ * The Estimates card on a Lead (docs/slice-31-estimating-plan.md, steps 31c
+ * and 31e; decision 207), which took over the Proposals card of
+ * docs/slice-7-appointment-results-plan.md: the Lead's estimates, each with
+ * its options and prices, whether it was presented, at which of the Lead's
+ * run appointments, and what became of it. The proposals recorded by hand
+ * before step 31e are shown after them, as "Recorded by hand".
  *
  * Anyone who may see the Lead sees it. The salesperson the Lead is with, or a
- * manager, adds proposals, changes one that is still pending (the day it is
- * valid until among the rest, step 9a of slice 9), gives each its
- * result, says why nothing was presented at a run appointment, and marks the
- * Lead lost. A manager alone corrects a result, marks a proposal "added in
+ * manager, starts an estimate, marks one presented at a run appointment,
+ * changes the day a pending one is valid until (step 9a of slice 9), gives
+ * each its result, says why nothing was presented at a run appointment, and
+ * marks the Lead lost. A manager alone corrects a result, marks one "added in
  * error" and undoes a lost Lead.
  */
 new class extends Component {
     /** What a result dialog starts with. */
-    private const array NO_RESULT = ['soldAmount' => '', 'ambassadorTier' => 'none', 'ambassadorDiscount' => '', 'ambassadorItems' => [], 'ambassadorReason' => '', 'lossReasonId' => '', 'lostTo' => '', 'objectionId' => '', 'note' => ''];
+    private const array NO_RESULT = ['optionId' => '', 'soldAmount' => '', 'ambassadorTier' => 'none', 'ambassadorDiscount' => '', 'ambassadorItems' => [], 'ambassadorReason' => '', 'lossReasonId' => '', 'lostTo' => '', 'objectionId' => '', 'note' => ''];
 
     #[Locked]
     public int $leadId;
+
+    /** Interior or Exterior, for a new estimate. */
+    public string $estimateType = '';
+
+    /** The estimate the "mark presented" dialog is about. */
+    #[Locked]
+    public ?int $presentEstimateId = null;
 
     public string $proposalName = '';
 
     public string $proposalPrice = '';
 
-    /** @var list<int|string> The run appointments the new proposal was presented at. */
+    /** @var list<int|string> The run appointments the estimate was presented at. */
     public array $proposalAppointmentIds = [];
 
     /** Which of the customer's properties the proposal is for. */
@@ -130,7 +142,44 @@ new class extends Component {
     #[Computed]
     public function proposals(): Collection
     {
-        return $this->lead->proposals()->with(['appointments', 'property', 'project.location', 'project.handoff'])->get();
+        return $this->lead->proposals()->with(['appointments', 'property', 'option', 'estimate.options', 'project.location', 'project.handoff'])->get();
+    }
+
+    /**
+     * The Lead's estimates, each with its options, oldest first.
+     *
+     * @return Collection<int, Estimate>
+     */
+    #[Computed]
+    public function estimates(): Collection
+    {
+        return $this->lead->estimates()->with('options')->oldest('id')->get();
+    }
+
+    /**
+     * What the card lists: each estimate with the record of its presentation,
+     * if it was presented, then each proposal recorded by hand before step
+     * 31e (decision 207, question 4).
+     *
+     * @return list<array{estimate: Estimate|null, proposal: Proposal|null}>
+     */
+    #[Computed]
+    public function entries(): array
+    {
+        $entries = [];
+
+        foreach ($this->estimates as $estimate) {
+            $entries[] = [
+                'estimate' => $estimate,
+                'proposal' => $this->proposals->first(fn (Proposal $proposal): bool => $proposal->estimate_id === $estimate->id && ! $proposal->isAddedInError()),
+            ];
+        }
+
+        foreach ($this->proposals->whereNull('estimate_id') as $proposal) {
+            $entries[] = ['estimate' => null, 'proposal' => $proposal];
+        }
+
+        return $entries;
     }
 
     /**
@@ -142,16 +191,6 @@ new class extends Component {
     public function properties(): Collection
     {
         return $this->lead->account?->properties()->notArchived()->orderBy('id')->get() ?? new Collection;
-    }
-
-    /**
-     * Whether there is anything to show: the card appears once the Lead has
-     * an appointment that was run, or a proposal.
-     */
-    #[Computed]
-    public function shown(): bool
-    {
-        return $this->runAppointments->isNotEmpty() || $this->proposals->isNotEmpty();
     }
 
     /**
@@ -221,35 +260,56 @@ new class extends Component {
         return $this->runAppointments->whereNotIn('id', $proposal->appointments->modelKeys())->values();
     }
 
-    public function openAdd(): void
+    /**
+     * Start an estimate, Interior or Exterior, and open it.
+     */
+    public function start(StartEstimate $startEstimate): void
+    {
+        $estimate = $startEstimate->handle($this->lead, $this->estimateType, Auth::user());
+
+        $this->redirectRoute('leads.estimate', ['lead' => $this->leadId, 'estimate' => $estimate->id], navigate: true);
+    }
+
+    /**
+     * Open the dialog that marks an estimate presented, at a run appointment
+     * whose report did not say so.
+     */
+    public function openPresent(int $estimateId): void
     {
         $this->authorize('manageProposals', $this->lead);
 
-        $this->reset('proposalName', 'proposalPrice', 'proposalAppointmentIds');
+        $estimate = $this->estimates->firstWhere('id', $estimateId) ?? abort(404);
+
+        if (collect($this->entries)->contains(fn (array $entry): bool => $entry['estimate']?->id === $estimate->id && $entry['proposal'] !== null)) {
+            abort(409, __('This estimate is already recorded as presented. Reload the page.'));
+        }
+
+        $this->presentEstimateId = $estimate->id;
         $this->resetValidation();
 
         // With one run appointment, it is the one. With several, the latest is the likely one.
         $latest = $this->runAppointments->last();
         $this->proposalAppointmentIds = $latest === null ? [] : [(string) $latest->id];
-        $this->proposalPropertyId = $this->lead->property_id;
 
         $this->knownLifecycleVersion = (int) $this->lead->lifecycle_version;
 
-        Flux::modal('add-proposal')->show();
+        Flux::modal('present-estimate')->show();
     }
 
     /**
-     * Add the proposal. The action checks everything again on the Lead as it
-     * is at that moment, and saves all of it or none.
+     * Record that the estimate was presented. The action checks everything
+     * again on the Lead as it is at that moment, and saves all of it or none.
      */
-    public function add(AddProposal $addProposal): void
+    public function present(PresentEstimate $presentEstimate): void
     {
         $this->authorize('manageProposals', $this->lead);
         $this->resetValidation();
 
-        $proposal = $addProposal->handle($this->lead, $this->proposalName, $this->proposalPrice, $this->proposalAppointmentIds, Auth::user(), $this->knownLifecycleVersion, $this->proposalPropertyId);
+        $estimate = $this->estimates->firstWhere('id', $this->presentEstimateId) ?? abort(409, __('This estimate is no longer here. Reload the page.'));
 
-        $this->saved('add-proposal', __('Proposal added: :name, :price.', ['name' => $proposal->name, 'price' => $proposal->price()]));
+        $proposal = $presentEstimate->handle($this->lead, $estimate, $this->proposalAppointmentIds, Auth::user(), $this->knownLifecycleVersion);
+
+        $this->saved('present-estimate', __('Marked presented: :name, :price.', ['name' => $proposal->name, 'price' => $proposal->price()]));
     }
 
     public function openAgain(int $proposalId): void
@@ -260,7 +320,7 @@ new class extends Component {
         $others = $this->otherAppointmentsFor($proposal);
 
         if ($proposal->isAddedInError() || $others->isEmpty()) {
-            abort(409, __('This proposal is already recorded at every appointment that was run. Reload the page.'));
+            abort(409, __('This estimate is already recorded at every appointment that was run. Reload the page.'));
         }
 
         $this->againAppointmentId = $others->last()->id;
@@ -291,7 +351,7 @@ new class extends Component {
         $proposal = $this->open($proposalId);
 
         if (! $proposal->isOpen() || ProposalResult::tryFrom($result) === null) {
-            abort(409, __('This proposal already has a result. Reload the page.'));
+            abort(409, __('This estimate already has a result. Reload the page.'));
         }
 
         $this->proposalResult = $result;
@@ -326,7 +386,7 @@ new class extends Component {
         $proposal = $this->open($proposalId);
 
         if (! $proposal->isOpen()) {
-            abort(409, __('Only a proposal that is still pending can be changed. Reload the page.'));
+            abort(409, __('Only an estimate that is still pending can be changed. Reload the page.'));
         }
 
         $this->proposalName = $proposal->name;
@@ -348,7 +408,7 @@ new class extends Component {
 
         $editProposal->handle($this->lead, $this->chosen(), $this->proposalName, $this->proposalPrice, Auth::user(), $this->knownLifecycleVersion, $this->proposalPropertyId, $this->proposalValidUntil);
 
-        $this->saved('edit-proposal', __('Proposal changed.'));
+        $this->saved('edit-proposal', __('Estimate changed.'));
     }
 
     public function openAddedInError(int $proposalId): void
@@ -356,7 +416,7 @@ new class extends Component {
         $this->authorize('manageAppointment', $this->lead);
 
         if (! $this->open($proposalId)->isOpen()) {
-            abort(409, __('Only a proposal that is still pending can be marked. Reload the page.'));
+            abort(409, __('Only an estimate that is still pending can be marked. Reload the page.'));
         }
 
         $this->addedInErrorNote = '';
@@ -384,7 +444,7 @@ new class extends Component {
         $proposal = $this->open($proposalId);
 
         if ($proposal->isAddedInError() || $proposal->result === ProposalResult::Pending) {
-            abort(409, __('This proposal has no result to correct. Reload the page.'));
+            abort(409, __('This estimate has no result to correct. Reload the page.'));
         }
 
         $this->correctionNote = '';
@@ -402,7 +462,7 @@ new class extends Component {
 
         $correctProposalResult->handle($this->lead, $this->chosen(), $this->correctionNote, Auth::user(), $this->knownLifecycleVersion);
 
-        $this->saved('correct-proposal-result', __('Corrected. The proposal is pending again.'));
+        $this->saved('correct-proposal-result', __('Corrected. The estimate is pending again.'));
     }
 
     public function openLost(): void
@@ -484,7 +544,7 @@ new class extends Component {
         $this->authorize('manageProposals', $this->lead);
 
         $appointment = $this->runAppointments->where('proposals_count', 0)->firstWhere('id', $appointmentId)
-            ?? abort(409, __('This appointment now has a proposal. Reload the page.'));
+            ?? abort(409, __('This appointment now has an estimate presented. Reload the page.'));
 
         $this->noDemoAppointmentId = $appointment->id;
         $this->noDemoReason = (string) $appointment->no_demo_reason;
@@ -547,7 +607,7 @@ new class extends Component {
 
     private function chosen(): Proposal
     {
-        return $this->proposals->firstWhere('id', $this->proposalId) ?? abort(409, __('This proposal is no longer here. Reload the page.'));
+        return $this->proposals->firstWhere('id', $this->proposalId) ?? abort(409, __('This estimate is no longer here. Reload the page.'));
     }
 
     /**
@@ -567,20 +627,41 @@ new class extends Component {
 
     private function changed(): void
     {
-        unset($this->lead, $this->runAppointments, $this->proposals, $this->properties, $this->shown, $this->manages, $this->returnVisit, $this->canBeLost, $this->canBeLostFromRehash);
+        unset($this->lead, $this->runAppointments, $this->proposals, $this->estimates, $this->entries, $this->properties, $this->manages, $this->returnVisit, $this->canBeLost, $this->canBeLostFromRehash);
     }
 }; ?>
 
-{{-- Nothing is shown until an appointment has been run, but the card stays on the page so it appears the moment one is. --}}
-<div @class(['hidden' => ! $this->shown, 'flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5' => $this->shown]) data-test="lead-proposals">
-    @if ($this->shown)
+<div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="estimates">
         @php
             $lead = $this->lead;
             $when = fn (Appointment $appointment): string => $appointment->starts_at->copy()->timezone($appointment->timezone)->format('D, M j, Y \a\t g:i A T');
             $chosen = $this->proposals->firstWhere('id', $this->proposalId);
+            $presenting = $this->estimates->firstWhere('id', $this->presentEstimateId);
+            $range = fn (Estimate $estimate): string => $estimate->options->min('total_cents') === $estimate->options->max('total_cents')
+                ? Money::format((int) $estimate->options->max('total_cents'))
+                : __(':from to :to', ['from' => Money::format((int) $estimate->options->min('total_cents')), 'to' => Money::format((int) $estimate->options->max('total_cents'))]);
         @endphp
 
-        <flux:heading size="lg" level="2">{{ __('Proposals') }}</flux:heading>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <flux:heading size="lg" level="2">{{ __('Estimates') }}</flux:heading>
+
+            @can('create', [Estimate::class, $lead])
+                <form wire:submit="start" class="flex flex-wrap items-end gap-2">
+                    <flux:select wire:model="estimateType" :placeholder="__('Interior or Exterior')" size="sm" class="min-w-44" data-test="estimate-type">
+                        @foreach (Estimate::offeredTypes() as $type)
+                            <flux:select.option :value="$type->value">{{ $type->label() }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:button type="submit" size="sm" variant="primary" icon="plus" data-test="start-estimate">{{ __('New estimate') }}</flux:button>
+                </form>
+            @endcan
+        </div>
+
+        <flux:error name="estimateType" />
+
+        @if ($this->entries === [])
+            <flux:text class="text-sm">{{ __('No estimates yet.') }}</flux:text>
+        @endif
 
         @if ($lead->status === LeadStatus::Lost)
             <flux:callout icon="x-circle" data-test="lead-lost">
@@ -609,7 +690,7 @@ new class extends Component {
         @foreach ($this->runAppointments->where('proposals_count', 0) as $appointment)
             <div wire:key="no-proposal-{{ $appointment->id }}" class="flex flex-col gap-1" data-test="no-proposal-yet">
                 <flux:text>
-                    {{ __('The appointment on :when was run and has no proposal yet. Until one is added it counts as run with nothing presented.', ['when' => $when($appointment)]) }}
+                    {{ __('The appointment on :when was run and has no estimate marked presented yet. Until one is, it counts as run with nothing presented.', ['when' => $when($appointment)]) }}
                 </flux:text>
 
                 {{-- Why nothing was presented, for coaching (decision 133). It counts the same whatever is written. --}}
@@ -638,8 +719,8 @@ new class extends Component {
                 {{ match (true) {
                     $somethingPending && $ownedUntil->lessThan(ProposalValidity::today($lead->location)) => __('Everything pending on this lead has expired. It is due to go to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.'),
                     $somethingPending => __('After :day this lead goes to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.', ['day' => $ownedUntil->format('D, M j')]),
-                    $ownedUntil->lessThan(ProposalValidity::today($lead->location)) => __('Nothing is pending on this lead. It is due to go to the Contact Center for rehash, unless a proposal is added, a return visit is booked or it is marked lost.'),
-                    default => __('Nothing is pending on this lead. After :day it goes to the Contact Center for rehash, unless a proposal is added, a return visit is booked or it is marked lost.', ['day' => $ownedUntil->format('D, M j')]),
+                    $ownedUntil->lessThan(ProposalValidity::today($lead->location)) => __('Nothing is pending on this lead. It is due to go to the Contact Center for rehash, unless an estimate is marked presented, a return visit is booked or it is marked lost.'),
+                    default => __('Nothing is pending on this lead. After :day it goes to the Contact Center for rehash, unless an estimate is marked presented, a return visit is booked or it is marked lost.', ['day' => $ownedUntil->format('D, M j')]),
                 } }}
             </flux:text>
         @endif
@@ -655,113 +736,143 @@ new class extends Component {
             </div>
         @endif
 
-        @if ($this->proposals->isNotEmpty())
+        @if ($this->entries !== [])
             <ul class="flex flex-col gap-4">
-                @foreach ($this->proposals as $proposal)
-                    <li wire:key="proposal-{{ $proposal->id }}" class="flex flex-col gap-1 border-t border-zinc-200 pt-4 first:border-t-0 first:pt-0" data-test="proposal">
+                @foreach ($this->entries as ['estimate' => $estimate, 'proposal' => $proposal])
+                    <li wire:key="{{ $estimate === null ? 'proposal-'.$proposal->id : 'estimate-'.$estimate->id }}" class="flex flex-col gap-1 border-t border-zinc-200 pt-4 first:border-t-0 first:pt-0" data-test="{{ $estimate === null ? 'proposal' : 'estimate-'.$estimate->id }}">
+                        @php($struck = $proposal?->isAddedInError() ?? false)
                         <div class="flex flex-wrap items-baseline justify-between gap-x-4">
-                            <span @class(['font-semibold', 'text-ink' => ! $proposal->isAddedInError(), 'text-zinc-500 line-through' => $proposal->isAddedInError()]) data-test="proposal-name">{{ $proposal->name }}</span>
-                            <span @class(['tabular-nums', 'text-ink' => ! $proposal->isAddedInError(), 'text-zinc-500 line-through' => $proposal->isAddedInError()]) data-test="proposal-price">{{ $proposal->price() }}</span>
+                            @if ($estimate !== null)
+                                <flux:link :href="route('leads.estimate', ['lead' => $lead->id, 'estimate' => $estimate->id])" wire:navigate class="font-semibold" data-test="proposal-name">{{ __(':type estimate', ['type' => $estimate->estimate_type->label()]) }}</flux:link>
+                            @else
+                                <span @class(['font-semibold', 'text-ink' => ! $struck, 'text-zinc-500 line-through' => $struck]) data-test="proposal-name">{{ $proposal->name }}</span>
+                            @endif
+                            <span @class(['tabular-nums', 'text-ink' => ! $struck, 'text-zinc-500 line-through' => $struck]) data-test="proposal-price">{{ $proposal?->price() ?? $range($estimate) }}</span>
                         </div>
 
+                        @if ($estimate !== null)
+                            <ul class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-600" data-test="estimate-options">
+                                @foreach ($estimate->options as $option)
+                                    <li wire:key="estimate-option-{{ $option->id }}" @class(['font-semibold text-ink' => $proposal?->estimate_option_id === $option->id])>{{ $option->name }} · <span class="tabular-nums">{{ Money::format($option->total_cents) }}</span></li>
+                                @endforeach
+                            </ul>
+                        @endif
+
                         <div data-test="proposal-result">
-                            @if ($proposal->isAddedInError())
+                            @if ($proposal === null)
+                                <flux:badge size="sm" color="zinc">{{ __('Not presented yet') }}</flux:badge>
+                            @elseif ($proposal->isAddedInError())
                                 <flux:badge size="sm" color="zinc">{{ __('Added in error') }}</flux:badge>
                             @elseif ($proposal->result === ProposalResult::Sold)
-                                <flux:badge size="sm" color="emerald">{{ __('Sold for :amount', ['amount' => $proposal->soldFor()]) }}</flux:badge>
+                                <flux:badge size="sm" color="emerald">{{ $proposal->option === null ? __('Sold for :amount', ['amount' => $proposal->soldFor()]) : __('Sold: :option, :amount', ['option' => $proposal->option->name, 'amount' => $proposal->soldFor()]) }}</flux:badge>
                             @elseif ($proposal->result === ProposalResult::Lost)
                                 <flux:badge size="sm" color="rose">{{ __('Lost: :reason', ['reason' => $proposal->loss_reason_name ?? __('no reason recorded')]) }}</flux:badge>
                             @else
                                 <flux:badge size="sm" color="amber">{{ __('Pending') }}</flux:badge>
                             @endif
+
+                            @if ($estimate === null)
+                                <flux:badge size="sm" color="zinc" data-test="recorded-by-hand">{{ __('Recorded by hand') }}</flux:badge>
+                            @endif
                         </div>
 
-                        {{-- A sold proposal has a Project of its own (decision 130). --}}
-                        @if ($proposal->project !== null && ! $proposal->project->isCancelled())
-                            <span class="text-sm text-zinc-700" data-test="proposal-project">
-                                {{ __('Project:') }}
-                                @can('view', $proposal->project)
-                                    <flux:link :href="route('projects.show', $proposal->project)" wire:navigate>{{ $proposal->project->title }}</flux:link>
-                                @else
-                                    {{ $proposal->project->title }}
-                                @endcan
-                            </span>
-
-                            {{-- The dates the customer confirmed, so Sales can answer the customer (slice 11, step 11b). --}}
-                            @if (($scheduledDays = $proposal->project->scheduledDays()) !== null)
-                                <span class="text-sm font-medium text-ink" data-test="proposal-scheduled">{{ __('Scheduled: :days. Confirmed with the customer.', ['days' => \App\Models\WorkPackageWindow::describe($scheduledDays[0], $scheduledDays[1])]) }}</span>
-                            {{-- When the work is roughly expected, so Sales can answer the customer (slice 10, step 10a). --}}
-                            @elseif (RoughTimeframe::of($proposal->project) !== null)
-                                <span class="text-sm text-zinc-700" data-test="proposal-timeframe">{{ __('Rough timeframe: :when. Not a booked date.', ['when' => RoughTimeframe::of($proposal->project)]) }}</span>
-                            @endif
-
-                            {{-- Production cannot take the Project until the salesperson's handoff is complete (decision 132). --}}
-                            @if ($proposal->project->handoff === null)
-                                <span class="text-sm" data-test="proposal-handoff-needed">
-                                    @can('completeHandoff', $proposal->project)
-                                        <flux:link :href="route('projects.handoff', $proposal->project)" wire:navigate>{{ __('Complete the handoff for Production') }}</flux:link>
+                        @if ($proposal !== null)
+                            {{-- A sold estimate has a Project of its own (decision 130). --}}
+                            @if ($proposal->project !== null && ! $proposal->project->isCancelled())
+                                <span class="text-sm text-zinc-700" data-test="proposal-project">
+                                    {{ __('Project:') }}
+                                    @can('view', $proposal->project)
+                                        <flux:link :href="route('projects.show', $proposal->project)" wire:navigate>{{ $proposal->project->title }}</flux:link>
                                     @else
-                                        <span class="text-zinc-700">{{ __('Waiting for the salesperson\'s handoff.') }}</span>
+                                        {{ $proposal->project->title }}
                                     @endcan
                                 </span>
+
+                                {{-- The dates the customer confirmed, so Sales can answer the customer (slice 11, step 11b). --}}
+                                @if (($scheduledDays = $proposal->project->scheduledDays()) !== null)
+                                    <span class="text-sm font-medium text-ink" data-test="proposal-scheduled">{{ __('Scheduled: :days. Confirmed with the customer.', ['days' => \App\Models\WorkPackageWindow::describe($scheduledDays[0], $scheduledDays[1])]) }}</span>
+                                {{-- When the work is roughly expected, so Sales can answer the customer (slice 10, step 10a). --}}
+                                @elseif (RoughTimeframe::of($proposal->project) !== null)
+                                    <span class="text-sm text-zinc-700" data-test="proposal-timeframe">{{ __('Rough timeframe: :when. Not a booked date.', ['when' => RoughTimeframe::of($proposal->project)]) }}</span>
+                                @endif
+
+                                {{-- Production cannot take the Project until the salesperson's handoff is complete (decision 132). --}}
+                                @if ($proposal->project->handoff === null)
+                                    <span class="text-sm" data-test="proposal-handoff-needed">
+                                        @can('completeHandoff', $proposal->project)
+                                            <flux:link :href="route('projects.handoff', $proposal->project)" wire:navigate>{{ __('Complete the handoff for Production') }}</flux:link>
+                                        @else
+                                            <span class="text-zinc-700">{{ __('Waiting for the salesperson\'s handoff.') }}</span>
+                                        @endcan
+                                    </span>
+                                @endif
                             @endif
-                        @endif
 
-                        @if ($this->properties->count() > 1 && $proposal->property !== null)
-                            <span class="text-sm text-zinc-700" data-test="proposal-property">{{ __('For:') }} {{ $proposal->property->summary() }}</span>
-                        @endif
+                            @if ($this->properties->count() > 1 && $proposal->property !== null)
+                                <span class="text-sm text-zinc-700" data-test="proposal-property">{{ __('For:') }} {{ $proposal->property->summary() }}</span>
+                            @endif
 
-                        @if ($proposal->isOpen() && $proposal->valid_until !== null)
-                            @php($daysLeft = ProposalValidity::daysLeft($proposal, $lead->location))
-                            <span @class(['text-sm', 'font-semibold text-ink' => $daysLeft <= ContactCenterSettings::PENDING_WARNING_DAYS, 'text-zinc-700' => $daysLeft > ContactCenterSettings::PENDING_WARNING_DAYS]) data-test="proposal-validity">{{ ProposalValidity::label(ProposalValidity::of($proposal), $lead->location) }}</span>
-                        @endif
+                            @if ($proposal->isOpen() && $proposal->valid_until !== null)
+                                @php($daysLeft = ProposalValidity::daysLeft($proposal, $lead->location))
+                                <span @class(['text-sm', 'font-semibold text-ink' => $daysLeft <= ContactCenterSettings::PENDING_WARNING_DAYS, 'text-zinc-700' => $daysLeft > ContactCenterSettings::PENDING_WARNING_DAYS]) data-test="proposal-validity">{{ ProposalValidity::label(ProposalValidity::of($proposal), $lead->location) }}</span>
+                            @endif
 
-                        <span class="text-sm text-zinc-700" data-test="proposal-appointments">
-                            {{ __('Presented at:') }} {{ $proposal->appointments->map($when)->implode('; ') }}
-                        </span>
-
-                        <span class="text-sm text-zinc-500">
-                            {{ __('Added by') }} {{ $proposal->created_by_name }}@if ($proposal->created_at !== null) &middot; <x-local-time :at="$proposal->created_at" />@endif
-                        </span>
-
-                        @if ($proposal->isAddedInError())
-                            <span class="text-sm text-zinc-700" data-test="proposal-added-in-error">
-                                {{ __('Marked by') }} {{ $proposal->added_in_error_by_name ?? __('Unknown') }}: &ldquo;{{ $proposal->added_in_error_note }}&rdquo; {{ __('It counts for nothing.') }}
+                            <span class="text-sm text-zinc-700" data-test="proposal-appointments">
+                                {{ __('Presented at:') }} {{ $proposal->appointments->map($when)->implode('; ') }}
                             </span>
-                        @elseif ($proposal->result_at !== null)
-                            <span class="text-sm text-zinc-700" data-test="proposal-result-details">
-                                @if ($proposal->result === ProposalResult::Lost && $proposal->lost_to !== null)
-                                    {{ __('Went with :name.', ['name' => $proposal->lost_to]) }}
-                                @endif
-                                @if ($proposal->objection_name !== null)
-                                    {{ __('Main objection: :objection.', ['objection' => $proposal->objection_name]) }}
-                                @endif
-                                @if ($proposal->result_note !== null)
-                                    &ldquo;{{ $proposal->result_note }}&rdquo;
-                                @endif
-                                {{ $proposal->result === ProposalResult::Pending && $proposal->objection_name === null ? __('Put back to pending by') : __('Recorded by') }} {{ $proposal->result_by_name ?? __('Unknown') }} &middot; <x-local-time :at="$proposal->result_at" />
+
+                            <span class="text-sm text-zinc-500">
+                                {{ $estimate === null ? __('Added by') : __('Marked presented by') }} {{ $proposal->created_by_name }}@if ($proposal->created_at !== null) &middot; <x-local-time :at="$proposal->created_at" />@endif
                             </span>
+
+                            @if ($proposal->isAddedInError())
+                                <span class="text-sm text-zinc-700" data-test="proposal-added-in-error">
+                                    {{ __('Marked by') }} {{ $proposal->added_in_error_by_name ?? __('Unknown') }}: &ldquo;{{ $proposal->added_in_error_note }}&rdquo; {{ __('It counts for nothing.') }}
+                                </span>
+                            @elseif ($proposal->result_at !== null)
+                                <span class="text-sm text-zinc-700" data-test="proposal-result-details">
+                                    @if ($proposal->result === ProposalResult::Lost && $proposal->lost_to !== null)
+                                        {{ __('Went with :name.', ['name' => $proposal->lost_to]) }}
+                                    @endif
+                                    @if ($proposal->objection_name !== null)
+                                        {{ __('Main objection: :objection.', ['objection' => $proposal->objection_name]) }}
+                                    @endif
+                                    @if ($proposal->result_note !== null)
+                                        &ldquo;{{ $proposal->result_note }}&rdquo;
+                                    @endif
+                                    {{ $proposal->result === ProposalResult::Pending && $proposal->objection_name === null ? __('Put back to pending by') : __('Recorded by') }} {{ $proposal->result_by_name ?? __('Unknown') }} &middot; <x-local-time :at="$proposal->result_at" />
+                                </span>
+                            @endif
+                        @else
+                            <span class="text-sm text-zinc-500">{{ __('Started :date by :name', ['date' => $estimate->created_at?->timezone(config('app.display_timezone'))->format('M j, Y'), 'name' => $estimate->created_by_name]) }}</span>
                         @endif
 
                         <div class="mt-1 flex flex-wrap gap-2" data-test="proposal-actions">
                             @can('manageProposals', $lead)
-                                {{-- A result is given while the Lead is with Sales. In the Rehash queue it is booked again or marked lost. --}}
-                                @if ($proposal->isOpen() && ($lead->isWithSales() || $lead->status === LeadStatus::Sold))
-                                    <flux:button size="sm" variant="primary" wire:click="openResult({{ $proposal->id }}, 'sold')" data-test="proposal-sold">{{ __('Sold') }}</flux:button>
-                                    <flux:button size="sm" wire:click="openResult({{ $proposal->id }}, 'lost')" data-test="proposal-lost">{{ __('Lost') }}</flux:button>
-                                    <flux:button size="sm" wire:click="openResult({{ $proposal->id }}, 'pending')" data-test="proposal-pending">{{ __('Still pending') }}</flux:button>
+                                {{-- Presented at a run appointment whose report did not say so. --}}
+                                @if ($proposal === null && $this->runAppointments->isNotEmpty() && $lead->status !== LeadStatus::Lost)
+                                    <flux:button size="sm" wire:click="openPresent({{ $estimate->id }})" data-test="mark-presented">{{ __('Mark presented') }}</flux:button>
                                 @endif
 
-                                @if ($proposal->isOpen() && $lead->status !== LeadStatus::Lost)
-                                    <flux:button size="sm" variant="ghost" wire:click="openEdit({{ $proposal->id }})" data-test="edit-proposal">{{ __('Change') }}</flux:button>
-                                @endif
+                                @if ($proposal !== null)
+                                    {{-- A result is given while the Lead is with Sales. In the Rehash queue it is booked again or marked lost. --}}
+                                    @if ($proposal->isOpen() && ($lead->isWithSales() || $lead->status === LeadStatus::Sold))
+                                        <flux:button size="sm" variant="primary" wire:click="openResult({{ $proposal->id }}, 'sold')" data-test="proposal-sold">{{ __('Sold') }}</flux:button>
+                                        <flux:button size="sm" wire:click="openResult({{ $proposal->id }}, 'lost')" data-test="proposal-lost">{{ __('Lost') }}</flux:button>
+                                        <flux:button size="sm" wire:click="openResult({{ $proposal->id }}, 'pending')" data-test="proposal-pending">{{ __('Still pending') }}</flux:button>
+                                    @endif
 
-                                @if (! $proposal->isAddedInError() && $this->otherAppointmentsFor($proposal)->isNotEmpty())
-                                    <flux:button size="sm" variant="ghost" wire:click="openAgain({{ $proposal->id }})" data-test="present-proposal-again">{{ __('Presented at another appointment') }}</flux:button>
+                                    @if ($proposal->isOpen() && $lead->status !== LeadStatus::Lost)
+                                        <flux:button size="sm" variant="ghost" wire:click="openEdit({{ $proposal->id }})" data-test="edit-proposal">{{ __('Change') }}</flux:button>
+                                    @endif
+
+                                    @if (! $proposal->isAddedInError() && $this->otherAppointmentsFor($proposal)->isNotEmpty())
+                                        <flux:button size="sm" variant="ghost" wire:click="openAgain({{ $proposal->id }})" data-test="present-proposal-again">{{ __('Presented at another appointment') }}</flux:button>
+                                    @endif
                                 @endif
                             @endcan
 
-                            @if ($this->manages)
+                            @if ($this->manages && $proposal !== null)
                                 @if ($proposal->isOpen())
                                     <flux:button size="sm" variant="ghost" wire:click="openAddedInError({{ $proposal->id }})" data-test="proposal-added-in-error-button">{{ __('Added in error') }}</flux:button>
                                 @elseif (! $proposal->isAddedInError() && $lead->status !== LeadStatus::Lost)
@@ -784,37 +895,24 @@ new class extends Component {
         @endif
 
         @can('manageProposals', $lead)
-            <div class="flex flex-wrap gap-2">
-                @if ($this->runAppointments->isNotEmpty() && $lead->status !== LeadStatus::Lost)
-                    <flux:button :variant="$this->proposals->isEmpty() ? 'primary' : 'filled'" wire:click="openAdd" data-test="add-proposal">{{ __('Add proposal') }}</flux:button>
-                @endif
-
-                @if ($this->canBeLost)
+            @if ($this->canBeLost)
+                <div class="flex flex-wrap gap-2">
                     <flux:button variant="ghost" wire:click="openLost" data-test="mark-lead-lost">{{ __('Mark lead lost') }}</flux:button>
-                @endif
-            </div>
+                </div>
+            @endif
 
-            <flux:modal name="add-proposal" class="w-full max-w-lg">
-                <form wire:submit="add" class="flex flex-col gap-5">
+            <flux:modal name="present-estimate" class="w-full max-w-lg">
+                <form wire:submit="present" class="flex flex-col gap-5">
                     <flux:error name="stale" />
+                    <flux:error name="estimate" />
 
                     <div>
-                        <flux:heading size="lg">{{ __('Add a proposal') }}</flux:heading>
-                        <flux:subheading>{{ __('What was pitched and for how much. An appointment that was run counts as presented once it has a proposal.') }}</flux:subheading>
+                        <flux:heading size="lg">{{ __('Mark this estimate presented') }}</flux:heading>
+                        <flux:subheading>
+                            {{ $presenting === null ? '' : __(':type estimate, :price.', ['type' => $presenting->estimate_type->label(), 'price' => $range($presenting)]).' ' }}{{ __('For an appointment whose report did not say so. An appointment that was run counts as presented once an estimate is presented at it.') }}
+                        </flux:subheading>
                     </div>
 
-                    <flux:input wire:model="proposalName" maxlength="{{ Proposal::NAME_LENGTH }}" :label="__('What was pitched')" :placeholder="__('Whole exterior')" data-test="proposal-name-field" />
-
-                    <flux:input wire:model="proposalPrice" inputmode="decimal" :label="__('Price, in dollars')" placeholder="8,450" data-test="proposal-price-field" />
-
-                    {{-- One proposal is for one of the customer's properties (decision 132). Asked only when there is a choice. --}}
-                    @if ($this->properties->count() > 1)
-                        <flux:select wire:model="proposalPropertyId" :label="__('Property')" data-test="proposal-property-field">
-                            @foreach ($this->properties as $property)
-                                <flux:select.option :value="$property->id" wire:key="add-proposal-property-{{ $property->id }}">{{ $property->summary() }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-                    @endif
                     <fieldset class="flex flex-col gap-2" data-test="proposal-appointment-choices">
                         <legend class="text-sm font-medium text-ink">
                             {{ __('Presented at') }}
@@ -833,7 +931,7 @@ new class extends Component {
                             <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
                         </flux:modal.close>
 
-                        <flux:button type="submit" variant="primary" data-test="save-proposal">{{ __('Add proposal') }}</flux:button>
+                        <flux:button type="submit" variant="primary" data-test="save-presented">{{ __('Mark presented') }}</flux:button>
                     </div>
                 </form>
             </flux:modal>
@@ -844,7 +942,7 @@ new class extends Component {
 
                     <div>
                         <flux:heading size="lg">{{ __('Why was nothing presented?') }}</flux:heading>
-                        <flux:subheading>{{ __('In your own words, for coaching. The appointment still counts as run with nothing presented until a proposal is added.') }}</flux:subheading>
+                        <flux:subheading>{{ __('In your own words, for coaching. The appointment still counts as run with nothing presented until an estimate is marked presented.') }}</flux:subheading>
                     </div>
 
                     <flux:textarea wire:model="noDemoReason" rows="3" maxlength="{{ RecordNoDemoReason::LENGTH }}" :label="__('What happened (required)')" data-test="no-demo-reason-field" />
@@ -894,21 +992,21 @@ new class extends Component {
                     <div>
                         <flux:heading size="lg">
                             {{ match ($proposalResult) {
-                                ProposalResult::Sold->value => __('Mark this proposal sold?'),
-                                ProposalResult::Lost->value => __('Mark this proposal lost?'),
+                                ProposalResult::Sold->value => __('Mark this estimate sold?'),
+                                ProposalResult::Lost->value => __('Mark this estimate lost?'),
                                 default => __('Still pending: what is holding it up?'),
                             } }}
                         </flux:heading>
                         <flux:subheading>
                             {{ $chosen === null ? '' : $chosen->name.', '.$chosen->price().'. ' }}{{ match ($proposalResult) {
-                                ProposalResult::Sold->value => __('The lead will show Sold. Its other proposals stay as they are.'),
-                                ProposalResult::Lost->value => __('Only this proposal is lost. To say the customer will not buy at all, mark the lead lost.'),
+                                ProposalResult::Sold->value => __('The lead will show Sold. Its other estimates stay as they are.'),
+                                ProposalResult::Lost->value => __('Only this estimate is lost. To say the customer will not buy at all, mark the lead lost.'),
                                 default => __('It stays pending, with the reason written down.'),
                             } }}
                         </flux:subheading>
                     </div>
 
-                    <x-proposal.result-fields model="result" :result="$proposalResult" :values="$result" :reasons="$this->lossReasons" :objections="$this->objections" :price="$chosen === null ? null : ltrim($chosen->price(), '$')" />
+                    <x-proposal.result-fields model="result" :result="$proposalResult" :values="$result" :reasons="$this->lossReasons" :objections="$this->objections" :price="$chosen === null ? null : ltrim($chosen->price(), '$')" :options="$chosen?->estimate?->options" />
 
                     <div class="flex justify-end gap-2">
                         <flux:modal.close>
@@ -930,14 +1028,22 @@ new class extends Component {
                 <form wire:submit="saveEdit" class="flex flex-col gap-5">
                     <flux:error name="stale" />
 
-                    <div>
-                        <flux:heading size="lg">{{ __('Change this proposal') }}</flux:heading>
-                        <flux:subheading>{{ __('For a wrong name or price, or to move the day it is valid until. What it was before is kept in the record.') }}</flux:subheading>
-                    </div>
+                    {{-- An estimate's name and price are its own and follow it (step 31e): only one recorded by hand has them typed here. --}}
+                    @if ($chosen?->isFromEstimate())
+                        <div>
+                            <flux:heading size="lg">{{ __('Change this estimate') }}</flux:heading>
+                            <flux:subheading>{{ __(':name, :price. Its price follows the estimate; here, the property it is for and the day it is valid until. What it was before is kept in the record.', ['name' => $chosen->name, 'price' => $chosen->price()]) }}</flux:subheading>
+                        </div>
+                    @else
+                        <div>
+                            <flux:heading size="lg">{{ __('Change this estimate') }}</flux:heading>
+                            <flux:subheading>{{ __('Recorded by hand. For a wrong name or price, or to move the day it is valid until. What it was before is kept in the record.') }}</flux:subheading>
+                        </div>
 
-                    <flux:input wire:model="proposalName" maxlength="{{ Proposal::NAME_LENGTH }}" :label="__('What was pitched')" data-test="edit-proposal-name" />
+                        <flux:input wire:model="proposalName" maxlength="{{ Proposal::NAME_LENGTH }}" :label="__('What was pitched')" data-test="edit-proposal-name" />
 
-                    <flux:input wire:model="proposalPrice" inputmode="decimal" :label="__('Price, in dollars')" data-test="edit-proposal-price" />
+                        <flux:input wire:model="proposalPrice" inputmode="decimal" :label="__('Price, in dollars')" data-test="edit-proposal-price" />
+                    @endif
 
                     {{-- One proposal is for one of the customer's properties (decision 132). Asked only when there is a choice. --}}
                     @if ($this->properties->count() > 1)
@@ -953,7 +1059,7 @@ new class extends Component {
                         wire:model="proposalValidUntil"
                         type="date"
                         :label="__('Valid until')"
-                        :description="$this->manages ? __('The lead stays with its salesperson until its last pending proposal expires.') : __('You can move it up to :days days ahead. A manager can set a later day.', ['days' => ProposalValidity::SALESPERSON_MAX_DAYS])"
+                        :description="$this->manages ? __('The lead stays with its salesperson until its last pending estimate expires.') : __('You can move it up to :days days ahead. A manager can set a later day.', ['days' => ProposalValidity::SALESPERSON_MAX_DAYS])"
                         class="max-w-52"
                         data-test="edit-proposal-valid-until"
                     />
@@ -978,7 +1084,7 @@ new class extends Component {
 
                     <div>
                         <flux:heading size="lg">{{ __('Mark this lead lost?') }}</flux:heading>
-                        <flux:subheading>{{ __('The customer will not buy. Every proposal still pending becomes lost with this reason, and the lead is finished. A manager can undo it.') }}</flux:subheading>
+                        <flux:subheading>{{ __('The customer will not buy. Every estimate still pending becomes lost with this reason, and the lead is finished. A manager can undo it.') }}</flux:subheading>
                     </div>
 
                     <x-proposal.result-fields model="result" result="lost" :values="$result" :reasons="$this->lossReasons" :objections="$this->objections" />
@@ -998,7 +1104,7 @@ new class extends Component {
         @if ($this->manages)
             <x-confirmation-modal
                 name="proposal-added-in-error"
-                :title="__('Mark this proposal added in error?')"
+                :title="__('Mark this estimate added in error?')"
                 :description="($chosen === null ? '' : $chosen->name.', '.$chosen->price().'. ').__('It stays on the record, shown as added in error, and counts for nothing from now on. This cannot be undone.')"
                 action="markAddedInError"
                 :confirm-label="__('Added in error')"
@@ -1010,7 +1116,7 @@ new class extends Component {
             <x-confirmation-modal
                 name="correct-proposal-result"
                 :title="__('Correct this result?')"
-                :description="($chosen === null ? '' : $chosen->name.'. ').__('The proposal goes back to pending, to be answered again. If it was the only sale, the lead goes back to Appointment run.')"
+                :description="($chosen === null ? '' : $chosen->name.'. ').__('The estimate goes back to pending, to be answered again. If it was the only sale, the lead goes back to Appointment run.')"
                 action="correct"
                 :confirm-label="__('Back to pending')"
                 confirm-variant="primary"
@@ -1022,7 +1128,7 @@ new class extends Component {
             <x-confirmation-modal
                 name="undo-lead-lost"
                 :title="__('This lead is not lost?')"
-                :description="__('It goes back to its salesperson as Appointment run, and the proposals that were lost with it are pending again.')"
+                :description="__('It goes back to its salesperson as Appointment run, and the estimates that were lost with it are pending again.')"
                 action="undoLost"
                 :confirm-label="__('Undo')"
                 confirm-variant="primary"
@@ -1031,5 +1137,4 @@ new class extends Component {
                 <flux:textarea wire:model="undoLostNote" rows="2" :label="__('Why this is being undone (required)')" data-test="undo-lost-note" />
             </x-confirmation-modal>
         @endif
-    @endif
 </div>

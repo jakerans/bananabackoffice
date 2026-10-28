@@ -3,7 +3,8 @@
 Status: **proposed on 2026-10-27 (decision 196) and approved the same day
 (decision 197). Steps 31a, 31b and 31c are built and merged (decisions 199,
 203 and 205); the plan for 31d and 31e is approved (decision 207); 31d is
-merged (decision 208) and 31e is next.**
+merged (decision 208); 31e is built on branch
+`checkpoint-slice-31e-estimates`, waiting for review.**
 Written as what the implementation agent recommends, after reading Banana
 Painting ABQ's PaintScout settings with Jacob signed in.
 
@@ -544,3 +545,50 @@ applies. Rate names, hours, paint, costs and the hourly rate never appear.
 page needs a connection, like the estimate.
 
 **Merged** into `main` on 2026-10-28 (decision 208).
+
+## Step 31e as built
+
+**What was presented is an estimate.** The after-action report lists the
+Lead's estimates not yet presented, each with its options' range of prices
+and its options by name; the salesperson ticks each one presented and says
+what became of it: **Sold** asks which option the customer chose (never a
+typed amount), **Lost** asks the reason and objection, **Still pending** the
+objection. Pending estimates from an earlier visit are listed to tick again,
+as before. With no estimate on the Lead, the report says to build one from
+the Estimates card first. Nothing is typed in by hand any more.
+
+- **One Estimates card** on the Lead. The Proposals card is gone: its
+  buttons and dialogs moved here. Each estimate shows its options and
+  prices, whether it was presented, and then exactly what a proposal showed
+  (Pending with its "valid until" day, Sold for the option chosen with its
+  Project, Lost with its reason, where it was presented, who recorded what).
+  **Mark presented** records an estimate at a run appointment whose report
+  did not say so. "Change" moves the day it is valid until and, for a
+  customer with several properties, the property it is for; its name and
+  price come from the estimate. The proposals recorded by hand before 31e
+  follow the estimates, marked **Recorded by hand**, with their old "Change".
+- **Prices:** while pending, the range of its options ("$3,900 to $6,400");
+  once sold, the chosen option's price, which is also the Project's sold
+  price. The Project is named for the option chosen ("Main floor — 1074 Oak
+  St").
+- **After it is presented:** while pending, the estimate can still be
+  changed, and its presented price follows; the change is kept in the Audit
+  Log as a change of its price. Once sold or lost nobody changes it (the
+  estimate page says so and offers no edits; Present still works) until a
+  manager corrects the result. A record marked "added in error" no longer
+  counts, and the estimate can be presented again.
+- **Inside:** the proposal record stays, linked to its estimate and, once
+  sold, to the option (`proposals.estimate_id`, `estimate_option_id`, and
+  `price_from_cents` beside `price_cents` for the range). Counting, Pending,
+  Rehash, sales, commission and Projects read it as before.
+- **The word:** "Estimate" wherever people read "proposal": the Lead, the
+  report, Sales Performance and Calendar, the morning briefing, Needs
+  Attention, notices, Projects, Customers, Settings and the Audit Log's
+  descriptions ("Lead · Estimate presented"). Stored values keep
+  "proposal" (decision 207, question 5).
+
+**Known limits:** an estimate is presented for the Lead's own property; a
+customer with several properties has it moved with "Change" on the card.
+`AddProposal`, the hand-recorded way, stays in the code because the tests
+still make the old records with it; no screen offers it. On a phone the
+app's top bar is wider than the screen on every page (not from this step).

@@ -6,11 +6,12 @@ use App\Enums\AppointmentState;
 use App\Enums\LeadStatus;
 use App\Enums\ProposalResult;
 use App\Models\Appointment;
+use App\Models\Estimate;
 use App\Models\Lead;
 use App\Models\Objection;
-use App\Models\Property;
 use App\Models\Proposal;
 use App\Models\SalesLossReason;
+use App\Support\Money;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -25,13 +26,14 @@ use Livewire\Component;
  * appointment whose time has come, made to be filled in on a phone straight
  * after it. It asks only what the answers so far make necessary.
  *
- * It does what the buttons on the Lead page do, through the same rules, and
- * is saved whole or not at all. For the salesperson whose appointment it is,
- * or a manager.
+ * What was presented is ticked from the Lead's estimates (step 31e;
+ * decision 207); nothing is typed in by hand. It does what the buttons on the
+ * Lead page do, through the same rules, and is saved whole or not at all. For
+ * the salesperson whose appointment it is, or a manager.
  */
 new #[Title('After-action report')] class extends Component {
-    /** What a proposal in the report starts with. */
-    private const array BLANK = ['name' => '', 'price' => '', 'propertyId' => null, 'result' => '', 'soldAmount' => '', 'ambassadorTier' => 'none', 'ambassadorDiscount' => '', 'ambassadorItems' => [], 'ambassadorReason' => '', 'lossReasonId' => '', 'lostTo' => '', 'objectionId' => '', 'note' => ''];
+    /** What an estimate in the report starts with. */
+    private const array BLANK = ['presented' => false, 'result' => '', 'optionId' => '', 'soldAmount' => '', 'ambassadorTier' => 'none', 'ambassadorDiscount' => '', 'ambassadorItems' => [], 'ambassadorReason' => '', 'lossReasonId' => '', 'lostTo' => '', 'objectionId' => '', 'note' => ''];
 
     #[Locked]
     public int $leadId;
@@ -48,10 +50,10 @@ new #[Title('After-action report')] class extends Component {
     /** Why nothing was presented, when the answer is "no" (decision 133). */
     public string $noDemoReason = '';
 
-    /** @var list<array<string, mixed>> What was presented for the first time at this appointment. */
-    public array $proposals = [];
+    /** @var array<int, array<string, mixed>> The Lead's estimates not presented before, by ID. */
+    public array $estimates = [];
 
-    /** @var array<int, array<string, mixed>> The Lead's proposals from earlier visits that are still pending, by ID. */
+    /** @var array<int, array<string, mixed>> The Lead's estimates from earlier visits that are still pending, by proposal ID. */
     public array $existing = [];
 
     public string $note = '';
@@ -77,10 +79,12 @@ new #[Title('After-action report')] class extends Component {
             return;
         }
 
-        $this->proposals = [$this->blank()];
+        foreach ($this->newEstimates as $estimate) {
+            $this->estimates[$estimate->id] = self::BLANK;
+        }
 
         foreach ($this->earlierProposals as $proposal) {
-            $this->existing[$proposal->id] = ['presented' => false, ...self::BLANK];
+            $this->existing[$proposal->id] = self::BLANK;
         }
     }
 
@@ -115,14 +119,26 @@ new #[Title('After-action report')] class extends Component {
     }
 
     /**
-     * The Lead's proposals from earlier visits that are still pending.
+     * The Lead's estimates that have not been presented yet, oldest first.
+     *
+     * @return Collection<int, Estimate>
+     */
+    #[Computed]
+    public function newEstimates(): Collection
+    {
+        return $this->lead->estimates()->with('options')->whereDoesntHave('proposal')->oldest('id')->get();
+    }
+
+    /**
+     * The Lead's estimates from earlier visits that are still pending, and
+     * any proposal recorded by hand before step 31e.
      *
      * @return Collection<int, Proposal>
      */
     #[Computed]
     public function earlierProposals(): Collection
     {
-        return $this->lead->proposals()->counted()->where('result', ProposalResult::Pending)->get();
+        return $this->lead->proposals()->with('estimate.options')->counted()->where('result', ProposalResult::Pending)->get();
     }
 
     /**
@@ -144,41 +160,6 @@ new #[Title('After-action report')] class extends Component {
     }
 
     /**
-     * The customer's properties a proposal can be for (decision 132).
-     *
-     * @return Collection<int, Property>
-     */
-    #[Computed]
-    public function properties(): Collection
-    {
-        return $this->lead->account?->properties()->notArchived()->orderBy('id')->get() ?? new Collection;
-    }
-
-    public function addProposal(): void
-    {
-        $this->proposals[] = $this->blank();
-        $this->resetValidation();
-    }
-
-    /**
-     * A new proposal to fill in, on the Lead's property until another is chosen.
-     *
-     * @return array<string, mixed>
-     */
-    private function blank(): array
-    {
-        return [...self::BLANK, 'propertyId' => $this->lead->property_id];
-    }
-
-    public function removeProposal(int $index): void
-    {
-        unset($this->proposals[$index]);
-
-        $this->proposals = array_values($this->proposals);
-        $this->resetValidation();
-    }
-
-    /**
      * Save the report. The action checks everything again on the Lead as it
      * is at that moment, and saves all of it or none.
      */
@@ -187,24 +168,12 @@ new #[Title('After-action report')] class extends Component {
         $this->authorize('closeOutAppointment', [$this->lead, $this->appointment]);
         $this->resetValidation();
 
-        // A new proposal left completely empty was not meant: it is dropped, here and on the page, so every refusal lands on the right one.
-        $filled = array_values(array_filter(
-            $this->proposals,
-            fn (array $row): bool => trim((string) ($row['name'] ?? '')) !== '' || trim((string) ($row['price'] ?? '')) !== '' || ($row['result'] ?? '') !== '',
-        ));
-
-        $this->proposals = $filled === [] ? [$this->blank()] : $filled;
-
-        // With one from an earlier visit presented again, the empty new proposal is not missing anything.
-        $again = array_filter($this->existing, fn (array $row): bool => (bool) ($row['presented'] ?? false));
-        $new = $filled === [] && $again !== [] ? [] : $this->proposals;
-
         $submitAfterActionReport->handle($this->lead, $this->appointment, [
             'outcome' => $this->outcome,
             'note' => $this->note,
             'presented' => $this->presented,
             'noDemoReason' => $this->noDemoReason,
-            'proposals' => $new,
+            'estimates' => $this->estimates,
             'existing' => $this->existing,
         ], Auth::user(), $this->knownLifecycleVersion);
 
@@ -228,6 +197,9 @@ new #[Title('After-action report')] class extends Component {
         $startsAt = $appointment->starts_at->copy()->timezone($appointment->timezone);
         $run = $outcome === AppointmentState::Run->value;
         $results = [ProposalResult::Sold->value => __('Sold'), ProposalResult::Pending->value => __('Still pending'), ProposalResult::Lost->value => __('Lost')];
+        $range = fn (Estimate $estimate): string => $estimate->options->min('total_cents') === $estimate->options->max('total_cents')
+            ? Money::format((int) $estimate->options->max('total_cents'))
+            : __(':from to :to', ['from' => Money::format((int) $estimate->options->min('total_cents')), 'to' => Money::format((int) $estimate->options->max('total_cents'))]);
     @endphp
 
     <div>
@@ -269,7 +241,7 @@ new #[Title('After-action report')] class extends Component {
                 @if ($presented === 'no')
                     <flux:textarea wire:model="noDemoReason" rows="3" maxlength="{{ RecordNoDemoReason::LENGTH }}" :label="__('Why was nothing presented? (required)')" :description="__('In your own words, for coaching.')" data-test="report-no-demo-reason" />
 
-                    <flux:text class="text-sm">{{ __('The appointment will count as run with nothing presented, whatever the reason. A proposal can still be added later from the lead.') }}</flux:text>
+                    <flux:text class="text-sm">{{ __('The appointment will count as run with nothing presented, whatever the reason. An estimate can still be marked presented later from the lead.') }}</flux:text>
                 @endif
             </div>
         @endif
@@ -284,7 +256,11 @@ new #[Title('After-action report')] class extends Component {
 
                     @foreach ($this->earlierProposals as $proposal)
                         <div wire:key="report-existing-{{ $proposal->id }}" class="flex flex-col gap-4 border-t border-zinc-200 pt-4 first:border-t-0 first:pt-0" data-test="report-existing-proposal">
-                            <flux:checkbox wire:model.live="existing.{{ $proposal->id }}.presented" :label="$proposal->name.', '.$proposal->price()" />
+                            <flux:checkbox
+                                wire:model.live="existing.{{ $proposal->id }}.presented"
+                                :label="$proposal->name.', '.$proposal->price()"
+                                :description="$proposal->isFromEstimate() ? null : __('Recorded by hand')"
+                            />
                             <flux:error name="existing.{{ $proposal->id }}.presented" />
 
                             @if ($existing[$proposal->id]['presented'] ?? false)
@@ -305,6 +281,7 @@ new #[Title('After-action report')] class extends Component {
                                     :reasons="$this->lossReasons"
                                     :objections="$this->objections"
                                     :price="ltrim($proposal->price(), '$')"
+                                    :options="$proposal->estimate?->options"
                                 />
                             @endif
                         </div>
@@ -312,65 +289,50 @@ new #[Title('After-action report')] class extends Component {
                 </div>
             @endif
 
-            <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="report-proposals">
+            <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="report-estimates">
                 <div>
-                    <flux:heading size="lg" level="2">{{ $this->earlierProposals->isEmpty() ? __('3. What was presented?') : __('New today') }}</flux:heading>
-                    <flux:subheading>{{ __('One for each thing pitched, with its price and what became of it.') }}</flux:subheading>
+                    <flux:heading size="lg" level="2">{{ $this->earlierProposals->isEmpty() ? __('3. Which estimate was presented?') : __('New today') }}</flux:heading>
+                    <flux:subheading>{{ __('Tick each estimate presented, and say what became of it.') }}</flux:subheading>
                 </div>
 
-                @foreach ($proposals as $index => $row)
-                    <div wire:key="report-proposal-{{ $index }}" class="flex flex-col gap-4 border-t border-zinc-200 pt-4 first:border-t-0 first:pt-0" data-test="report-proposal">
-                        <div class="flex flex-col gap-1">
-                            <flux:input wire:model="proposals.{{ $index }}.name" maxlength="{{ Proposal::NAME_LENGTH }}" :label="__('What was pitched')" :placeholder="__('Whole exterior')" data-test="report-proposal-name" />
-                            <flux:error name="proposals.{{ $index }}.proposalName" />
-                        </div>
-
-                        <div class="flex flex-col gap-1">
-                            <flux:input wire:model="proposals.{{ $index }}.price" inputmode="decimal" :label="__('Price, in dollars')" placeholder="8,450" data-test="report-proposal-price" />
-                            <flux:error name="proposals.{{ $index }}.proposalPrice" />
-                        </div>
-
-                        {{-- One proposal is for one of the customer's properties (decision 132). Asked only when there is a choice. --}}
-                        @if ($this->properties->count() > 1)
-                            <div class="flex flex-col gap-1">
-                                <flux:select wire:model="proposals.{{ $index }}.propertyId" :label="__('Property')" data-test="report-proposal-property">
-                                    @foreach ($this->properties as $property)
-                                        <flux:select.option :value="$property->id" wire:key="report-proposal-{{ $index }}-property-{{ $property->id }}">{{ $property->summary() }}</flux:select.option>
-                                    @endforeach
-                                </flux:select>
-                                <flux:error name="proposals.{{ $index }}.proposalPropertyId" />
-                            </div>
-                        @endif
-
-                        <div class="flex flex-col gap-1">
-                            <flux:radio.group wire:model.live="proposals.{{ $index }}.result" :label="__('What became of it?')">
-                                @foreach ($results as $value => $label)
-                                    <flux:radio :value="$value" :label="$label" wire:key="report-proposal-{{ $index }}-{{ $value }}" data-test="report-proposal-{{ $value }}" />
-                                @endforeach
-                            </flux:radio.group>
-                            <flux:error name="proposals.{{ $index }}.proposalResult" />
-                        </div>
-
-                        <x-proposal.result-fields
-                            model="proposals.{{ $index }}"
-                            error-prefix="proposals.{{ $index }}."
-                            :result="$row['result'] ?? ''"
-                            :values="$row"
-                            :reasons="$this->lossReasons"
-                            :objections="$this->objections"
+                @forelse ($this->newEstimates as $estimate)
+                    <div wire:key="report-estimate-{{ $estimate->id }}" class="flex flex-col gap-4 border-t border-zinc-200 pt-4 first:border-t-0 first:pt-0" data-test="report-estimate">
+                        <flux:checkbox
+                            wire:model.live="estimates.{{ $estimate->id }}.presented"
+                            :label="__(':type estimate, :price', ['type' => $estimate->estimate_type->label(), 'price' => $range($estimate)])"
+                            :description="$estimate->options->pluck('name')->implode(' · ')"
+                            data-test="report-estimate-{{ $estimate->id }}"
                         />
+                        <flux:error name="estimates.{{ $estimate->id }}.estimate" />
 
-                        @if (count($proposals) > 1)
-                            <div>
-                                <flux:button type="button" size="sm" variant="ghost" wire:click="removeProposal({{ $index }})" data-test="report-remove-proposal">{{ __('Remove this one') }}</flux:button>
+                        @if ($estimates[$estimate->id]['presented'] ?? false)
+                            <div class="flex flex-col gap-1">
+                                <flux:radio.group wire:model.live="estimates.{{ $estimate->id }}.result" :label="__('What became of it?')">
+                                    @foreach ($results as $value => $label)
+                                        <flux:radio :value="$value" :label="$label" wire:key="report-estimate-{{ $estimate->id }}-{{ $value }}" data-test="report-estimate-{{ $estimate->id }}-{{ $value }}" />
+                                    @endforeach
+                                </flux:radio.group>
+                                <flux:error name="estimates.{{ $estimate->id }}.proposalResult" />
                             </div>
+
+                            <x-proposal.result-fields
+                                model="estimates.{{ $estimate->id }}"
+                                error-prefix="estimates.{{ $estimate->id }}."
+                                :result="$estimates[$estimate->id]['result'] ?? ''"
+                                :values="$estimates[$estimate->id]"
+                                :reasons="$this->lossReasons"
+                                :objections="$this->objections"
+                                :options="$estimate->options"
+                            />
                         @endif
                     </div>
-                @endforeach
-
-                <div>
-                    <flux:button type="button" size="sm" icon="plus" wire:click="addProposal" data-test="report-add-proposal">{{ __('Another proposal') }}</flux:button>
-                </div>
+                @empty
+                    <flux:text class="text-sm" data-test="report-no-estimates">
+                        {{ $this->earlierProposals->isEmpty()
+                            ? __('This lead has no estimate yet. Build it from the Estimates card on the lead, then come back to this report.')
+                            : __('Nothing new: every estimate on this lead was presented before.') }}
+                    </flux:text>
+                @endforelse
             </div>
         @endif
 
