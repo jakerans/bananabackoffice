@@ -412,3 +412,7 @@ estimate that already has it.
 **Known limits:** nothing is shown to the homeowner yet and options do not
 become proposals; both are 31d. Work cannot be reordered or moved between
 areas. An estimate cannot be deleted. The page needs a connection.
+
+**Merged** into `main` on 2026-10-28 (decision 205). For 31d, Jacob's
+direction is one word, "Estimate", in place of "Proposal" (decision 205,
+point 4); the 31d plan proposes how before anything is built.
