@@ -377,7 +377,7 @@ new #[Title('Pricing Settings')] class extends Component {
     }
 }; ?>
 
-<section class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+<section class="mx-auto flex w-full flex-col gap-6">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
             <flux:heading size="xl" level="1">{{ __('Pricing Settings') }}</flux:heading>

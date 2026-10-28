@@ -188,6 +188,30 @@ test('the all locations view lists every routed lead for company-wide staff', fu
         ->assertDontSee('Unrouted Una');
 });
 
+test('the location column shows only when the list reaches beyond the location being viewed', function () {
+    $lakeview = Location::factory()->create(['name' => 'Lakeview']);
+    $northside = Location::factory()->create(['name' => 'Northside']);
+    $agent = User::factory()->withRoleEverywhere(Role::CallCenterAgent)->create();
+
+    Lead::factory()->at($lakeview)->create(['inquiry_name' => 'Lakeview Lena']);
+    Lead::factory()->at($northside)->create(['inquiry_name' => 'Northside Nora']);
+
+    session([CurrentLocation::SESSION_KEY => $lakeview->id]);
+
+    Livewire::actingAs($agent)
+        ->withQueryParams(['view' => 'all'])
+        ->test('pages::leads.index')
+        ->assertSee('Lakeview Lena')
+        ->assertDontSeeHtml('data-test="location-column"');
+
+    session([CurrentLocation::SESSION_KEY => CurrentLocation::ALL_LOCATIONS]);
+
+    Livewire::actingAs($agent)
+        ->withQueryParams(['view' => 'all'])
+        ->test('pages::leads.index')
+        ->assertSeeHtml('data-test="location-column"');
+});
+
 test('in the all locations view a single-location grant adds nothing', function () {
     $lakeview = Location::factory()->create(['name' => 'Lakeview']);
     $northside = Location::factory()->create(['name' => 'Northside']);

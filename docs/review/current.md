@@ -3,26 +3,45 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-28 · **Branch:** `main`
+**Updated:** 2026-10-28 · **Branch:** `checkpoint-wider-lists`
 
-**State:** step 31c is merged (decision 205). Next: the wider lists
-(decision 205, point 3), on a branch of their own.
+**State:** step 31c is merged and on staging (decision 205). The wider
+lists (decision 205, point 3) are built and wait for Jacob's review.
 
-## In the browser (Jacob, on staging)
+## The wider lists, as built
 
-1. Open one of the sample leads whose appointment was run (Sales →
-   Workspace; their status is "Appointment run").
-2. On its **Estimates** card choose Interior and press **New estimate**.
-3. **Add a room or area** (Bedroom, 12 × 14 × 8), then **Add work**: Interior
-   Wall Rates, a walls rate; then a door rate with how many.
-4. **Copy this option**, change the copy, and name it with **Name and
-   describe**.
-5. Tick a discount and choose a tax; both options change.
+Measured at 1024, 1280 and 1440 pixels wide: no list scrolls sideways.
+
+- **Leads:** the status sits under each name; the Location column shows only
+  when the list reaches beyond the Location being viewed (all locations, or
+  your own leads elsewhere); the list uses the window's width; below 1024
+  pixels it is one card per lead.
+- **Customers:** the window's width; names wrap; cards below 1024 pixels.
+- **Settings → Locations:** one card per location, each setting beside its
+  own Change button, in place of a ten-column row of buttons.
+- **Settings → Pricing:** the window's width; long rate and paint names
+  wrap; "Switched off" shows under a rate's name in place of a Status
+  column.
+
+**Known limit:** on a screen under about 800 pixels, Settings pages still
+scroll sideways because of the row of Settings tabs; that is the Settings
+side menu still waiting for Jacob.
+
+## Decisions needed
+
+1. **Merge the wider lists?**
+
+## In the browser (Jacob, on staging, after merging)
+
+1. **Sales → Workspace → Leads:** nothing is cut off on the right; each
+   lead's status is under its name.
+2. **Settings → Locations:** each location is a card.
+3. Sample leads 41–50 (appointment run) are ready to try an estimate on.
 
 ## Next
 
-- **The wider lists,** then **31d** (the presentation, and "Estimate" in
-  place of "Proposal", planned and approved first).
+- **31d** (the presentation, and "Estimate" in place of "Proposal", planned
+  and approved first).
 - **30c, recovery and first use,** with Jacob, when he chooses.
 
 ## Also waiting for Jacob

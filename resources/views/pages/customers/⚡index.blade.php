@@ -184,7 +184,7 @@ new #[Title('Customers')] class extends Component {
     }
 }; ?>
 
-<section class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+<section class="mx-auto flex w-full flex-col gap-6">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
             <flux:heading size="xl" level="1">{{ __('Customers') }}</flux:heading>
@@ -258,7 +258,7 @@ new #[Title('Customers')] class extends Component {
         </div>
     @else
         {{-- Wide screens: a table. --}}
-        <div class="hidden overflow-hidden rounded-xl border border-zinc-200 bg-card px-4 md:block">
+        <div class="hidden overflow-hidden rounded-xl border border-zinc-200 bg-card px-4 lg:block">
             <flux:table>
                 <flux:table.columns>
                     <flux:table.column>{{ __('Customer') }}</flux:table.column>
@@ -278,7 +278,7 @@ new #[Title('Customers')] class extends Component {
                         @endphp
 
                         <flux:table.row :key="'row-'.$customer->id">
-                            <flux:table.cell variant="strong">
+                            <flux:table.cell variant="strong" class="min-w-40 whitespace-normal">
                                 <a href="{{ route('customers.show', $customer) }}" wire:navigate class="underline decoration-zinc-300 underline-offset-2 hover:decoration-ink">
                                     {{ $customer->display_name }}
                                 </a>
@@ -290,7 +290,7 @@ new #[Title('Customers')] class extends Component {
                                 </div>
                             </flux:table.cell>
 
-                            <flux:table.cell>{{ $primary?->fullName() ?? '—' }}</flux:table.cell>
+                            <flux:table.cell class="min-w-32 whitespace-normal">{{ $primary?->fullName() ?? '—' }}</flux:table.cell>
 
                             <flux:table.cell class="tabular-nums">
                                 <div>{{ $primary?->displayPhone() ?? '—' }}</div>
@@ -319,7 +319,7 @@ new #[Title('Customers')] class extends Component {
         </div>
 
         {{-- Narrow screens: one card per customer, no sideways scrolling. --}}
-        <ul class="flex flex-col gap-3 md:hidden">
+        <ul class="flex flex-col gap-3 lg:hidden">
             @foreach ($this->customers as $customer)
                 @php
                     $primary = $customer->primaryContact();
