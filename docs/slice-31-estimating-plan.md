@@ -266,10 +266,11 @@ estimates now match to the cent.
   the quantity times the price for each; the hours do not change the price.
 - A line item priced by hours keeps its hours as typed (1.75).
 
-## Step 31c — proposed plan (for Jacob's approval)
+## Step 31c — plan (approved, decision 204)
 
 The estimate in the Sales Workspace, built on the pricing engine. Proposed
-on 2026-10-27; nothing is built until Jacob approves it.
+and approved on 2026-10-27 with the recommendation on every question
+(decision 204), split into 31c and 31d.
 
 ### What the salesperson does
 
@@ -325,7 +326,7 @@ deleted.
 | 31c | **The estimate:** starting one, areas, surfaces, coats, paint, prep, line items, options by copying, discounts and tax, live prices from the engine, saved as it is built, repricing. Checked against the PaintScout test estimates by building them again in Backoffice. |
 | 31d | **The presentation and the proposals:** the presentation view with the quick buttons, and the after-action report taking its proposals from the options presented. |
 
-### Decisions needed
+### Decisions (settled by decision 204)
 
 1. **Options: copies, or one list with each option choosing from it?**
    *Recommended: copies.* Each option is its own set of areas and items,

@@ -4067,6 +4067,27 @@ may build as many estimates as you want. yes you can rerun on staging".
    Connect, Disconnect and Connect again were tried on staging with an
    Intuit sandbox company.
 
+## 204. Step 31c is approved: the estimate, with options as copies (2026-10-27)
+
+**Decided by Jacob,** on the proposed plan for step 31c
+([slice-31-estimating-plan.md](slice-31-estimating-plan.md), "Step 31c —
+proposed plan"): "recommended on all, split is fine".
+
+1. **Options are copies:** each option is its own set of areas and items,
+   started by copying another and then changed.
+2. **No optional extras inside an option;** an extra is an option of its own.
+3. **Discounts and tax are chosen once for the estimate** and apply to every
+   option.
+4. **Only a manager changes the hourly rate on an estimate;** a salesperson
+   does not.
+5. **Nobody types over a surface's hours or price in 31c;** the price always
+   comes from the rates.
+6. **A pending option changed after it was presented** updates its
+   proposal's price through the correction that exists today; a sold
+   proposal never changes.
+7. **Split in two:** 31c is the estimate; 31d is the presentation view and
+   the proposals taken from the options presented.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
