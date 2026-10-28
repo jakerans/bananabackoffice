@@ -249,6 +249,16 @@ class Lead extends Model
     }
 
     /**
+     * Its estimates, newest first (docs/slice-31-estimating-plan.md, step 31c).
+     *
+     * @return HasMany<Estimate, $this>
+     */
+    public function estimates(): HasMany
+    {
+        return $this->hasMany(Estimate::class)->latest('id');
+    }
+
+    /**
      * Everyone who has been responsible for the Lead, and when.
      *
      * @return HasMany<LeadAssignment, $this>

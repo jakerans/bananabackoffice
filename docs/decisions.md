@@ -4067,6 +4067,49 @@ may build as many estimates as you want. yes you can rerun on staging".
    Connect, Disconnect and Connect again were tried on staging with an
    Intuit sandbox company.
 
+## 204. Step 31c is approved: the estimate, with options as copies (2026-10-27)
+
+**Decided by Jacob,** on the proposed plan for step 31c
+([slice-31-estimating-plan.md](slice-31-estimating-plan.md), "Step 31c —
+proposed plan"): "recommended on all, split is fine".
+
+1. **Options are copies:** each option is its own set of areas and items,
+   started by copying another and then changed.
+2. **No optional extras inside an option;** an extra is an option of its own.
+3. **Discounts and tax are chosen once for the estimate** and apply to every
+   option.
+4. **Only a manager changes the hourly rate on an estimate;** a salesperson
+   does not.
+5. **Nobody types over a surface's hours or price in 31c;** the price always
+   comes from the rates.
+6. **A pending option changed after it was presented** updates its
+   proposal's price through the correction that exists today; a sold
+   proposal never changes.
+7. **Split in two:** 31c is the estimate; 31d is the presentation view and
+   the proposals taken from the options presented.
+
+## 205. Merge 31c; sample leads on staging; wider lists; "Estimate", not "Proposal" (2026-10-28)
+
+**Decided by Jacob.**
+
+1. **Step 31c merges** into `main` and deploys to staging: "Make the fixes,
+   both of them, and then merge 31C."
+2. **Staging gets made-up sample data:** sixty leads at its one Location in
+   every stage, with two sample Sales Consultants to book them with, nobody
+   able to sign in as them, and no email sent while it was made. Made up
+   only; no real customer ever goes on staging.
+3. **Long lists fit the window without scrolling sideways:** on the Leads
+   list the Location column is hidden when one Location is shown, the status
+   sits under the name, and the list uses the window's width. Other lists
+   with the same problem get the same treatment. Layout only.
+4. **Direction for 31d: one word, "Estimate".** Jacob: "A proposal is just a
+   record of an estimate. Why wouldn't we just call it an estimate?" The
+   proposed shape, to be planned in 31d and approved before it is built:
+   the result (Pending, Sold with the option chosen, Lost) belongs to the
+   estimate; the Proposals card folds into the Estimates card; the counting
+   rules stay as they are, in the new words. Still open: whether a quick
+   estimate (just a name and a price, priced outside the builder) remains.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

@@ -47,6 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('leads/{lead}', 'pages::leads.show')->can('view', 'lead')->name('leads.show');
     Route::livewire('leads/{lead}/customer', 'pages::leads.customer')->can('resolveCustomer', 'lead')->name('leads.customer');
     Route::livewire('leads/{lead}/appointments/{appointment}/report', 'pages::leads.report')->can('view', 'lead')->name('leads.report');
+    Route::livewire('leads/{lead}/estimates/{estimate}', 'pages::leads.estimate')->can('view', 'estimate')->scopeBindings()->name('leads.estimate');
 
     // A Location's weekly scorecard (slice 27, step 27a) is reached from Home and Company > Leadership Scorecards.
     // Its owner, the Owner and Leadership may open it; the page checks.
