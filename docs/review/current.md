@@ -3,36 +3,45 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-28 · **Branch:** `plan-31d`
+**Updated:** 2026-10-28 · **Branch:** `step-31d`
 
-**State:** the plan for step 31d is written and waits for Jacob's review:
-[../slice-31-estimating-plan.md](../slice-31-estimating-plan.md), "Step 31d —
-plan (proposed)". Nothing is built.
+**State:** step 31d, the presentation, is built (decision 207) and waits for
+Jacob's review. As built:
+[../slice-31-estimating-plan.md](../slice-31-estimating-plan.md), "Step 31d
+as built".
 
-## The plan in short
+## In short
 
-One word, "Estimate" (decisions 205 and 206). The salesperson builds an
-estimate, presents it on a screen made for the homeowner, and records in the
-after-action report which estimates were presented and what happened: Sold
-with the option chosen, Lost, or Pending. The Proposals card goes; the
-Estimates card does what it did. The counting rules do not change. Two
-steps: 31d is the presentation view, 31e moves results onto estimates and
-changes the word everywhere.
+"Present" on an estimate opens a page for the homeowner: no menus, the
+options down the page with the highest price first, each with its name,
+description, rooms and areas, written line items and its price after
+discounts (each discount shown as a saving, "Tax included"). Buttons at the
+top jump to each option. Hours, rates, paint and costs never show. Opening it
+records nothing.
 
 ## Decisions needed
 
-1. **What the homeowner sees for each option.** *Recommended:* name,
-   description, rooms and areas by name, written line items and price; no
-   rate names.
-2. **Discounts on the presentation.** *Recommended:* the price after
-   discounts, each discount listed under it as a saving, "tax included".
-3. **When an estimate counts as presented.** *Recommended:* when ticked in
-   the after-action report, not when the presentation view is opened.
-4. **Proposals recorded by hand before 31d.** *Recommended:* kept as they
-   are, shown as "Recorded by hand".
-5. **The word inside the code.** *Recommended:* the code and database keep
-   "proposal"; only what people see changes.
-6. **Approve the plan** with these answers, and the split into 31d and 31e.
+1. **Merge 31d?**
+2. **The rates' customer wording** (optional): every rate already has a
+   customer label from PaintScout ("Paint Walls", "Paint Doors", "Prep
+   Work"). Under each room the presentation could list them ("Bedroom:
+   Paint Walls, Paint Doors"). Decision 207 shows rooms by name only, so it
+   is left out unless Jacob wants it.
+
+## In the browser (Jacob, on staging, after merging)
+
+1. Open a sample lead with a run appointment (41–50), start or open an
+   estimate, add a room with work, and copy the option once.
+2. Press **Present**: the options, highest price first, with the buttons at
+   the top; tap one to jump to it.
+3. Tick a discount on the estimate and present again: the saving shows under
+   the price.
+4. **Back to the estimate** returns to the builder.
+
+## Next
+
+- **31e:** estimates take over from proposals (decision 207), after 31d is
+  merged and Jacob says go.
 
 ## Also waiting for Jacob
 

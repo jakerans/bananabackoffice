@@ -605,11 +605,14 @@ new #[Title('Estimate')] class extends Component {
                     {{ __('prices from :date', ['date' => $estimate->priced_at->timezone(config('app.display_timezone'))->format('M j, Y g:i a')]) }}
                 </flux:text>
             </div>
-            @if ($editable)
-                <flux:modal.trigger name="estimate-reprice">
-                    <flux:button size="sm" icon="arrow-path" data-test="reprice">{{ __('Reprice with today\'s prices') }}</flux:button>
-                </flux:modal.trigger>
-            @endif
+            <div class="flex flex-wrap gap-2">
+                <flux:button size="sm" variant="primary" icon="presentation-chart-bar" :href="route('leads.estimate.present', [$leadId, $estimateId])" wire:navigate data-test="present">{{ __('Present') }}</flux:button>
+                @if ($editable)
+                    <flux:modal.trigger name="estimate-reprice">
+                        <flux:button size="sm" icon="arrow-path" data-test="reprice">{{ __('Reprice with today\'s prices') }}</flux:button>
+                    </flux:modal.trigger>
+                @endif
+            </div>
         </div>
     </div>
 

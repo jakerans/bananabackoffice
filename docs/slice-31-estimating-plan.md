@@ -2,7 +2,8 @@
 
 Status: **proposed on 2026-10-27 (decision 196) and approved the same day
 (decision 197). Steps 31a, 31b and 31c are built and merged (decisions 199,
-203 and 205); the plan for 31d waits for Jacob's review.**
+203 and 205); the plan for 31d and 31e is approved (decision 207); 31d is
+built and waits for Jacob's review.**
 Written as what the implementation agent recommends, after reading Banana
 Painting ABQ's PaintScout settings with Jacob signed in.
 
@@ -418,7 +419,7 @@ direction is one word, "Estimate", in place of "Proposal" (decision 205,
 point 4), and there is no quick estimate: every estimate is built in the
 builder (decision 206). The 31d plan proposes how before anything is built.
 
-## Step 31d — plan (proposed)
+## Step 31d — plan (approved, decision 207)
 
 Decision 205, point 4, and decision 206 change what 31c's plan said 31d
 would be. There is one word, **Estimate**: what used to be a proposal is now
@@ -479,7 +480,7 @@ moved. People only ever see "Estimate". The proposals recorded by hand
 before 31d stay as they were, shown on the Estimates card as "Recorded by
 hand", and can still be given a result; no new ones can be added.
 
-### Decisions needed
+### Decisions (settled by decision 207, with every recommendation)
 
 1. **What the homeowner sees for each option.** *Recommended:* its name,
    its description, the rooms and areas it covers by name, its written
@@ -518,3 +519,27 @@ reviewed on its own before the change underneath it.
 As in 31c's plan, and also: a copy of a lost estimate to start a new one;
 the homeowner signing or choosing on the tablet (the signed agreement and
 deposit, 5.3, later).
+
+## Step 31d as built
+
+**"Present"** on an estimate opens `/leads/{lead}/estimates/{estimate}/present`,
+a page for the homeowner without Backoffice's menus. Its options follow one
+another down the page, the highest price first (options at the same price
+keep the order they were made in). Each shows its name, its description, its
+rooms and areas by name, its line items with their written text under
+"Details", and its price after discounts, with each discount under it as a
+saving ("Check/ACH Payment Discount: $127 off") and "Tax included" where tax
+applies. Rate names, hours, paint, costs and the hourly rate never appear.
+
+- **The quick buttons** stay at the top while the page scrolls, each with
+  its option's name and price; on a phone they sit in one row that scrolls
+  sideways. "Back to the estimate" is at the top of the page.
+- **It only shows** (decision 207, question 3): opening it records nothing
+  and counts nothing. Anyone who may see the estimate may open it, and only
+  through its own Lead.
+- **Prices are worked out as the page opens,** from the estimate as it is,
+  so they always match the estimate page.
+
+**Known limits:** nothing is recorded as presented yet; that is 31e. The
+page needs a connection, like the estimate.
+
