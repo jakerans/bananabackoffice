@@ -3,7 +3,7 @@
 Status: **proposed on 2026-10-27 (decision 196) and approved the same day
 (decision 197). Steps 31a, 31b and 31c are built and merged (decisions 199,
 203 and 205); the plan for 31d and 31e is approved (decision 207); 31d is
-built and waits for Jacob's review.**
+merged (decision 208) and 31e is next.**
 Written as what the implementation agent recommends, after reading Banana
 Painting ABQ's PaintScout settings with Jacob signed in.
 
@@ -543,3 +543,4 @@ applies. Rate names, hours, paint, costs and the hourly rate never appear.
 **Known limits:** nothing is recorded as presented yet; that is 31e. The
 page needs a connection, like the estimate.
 
+**Merged** into `main` on 2026-10-28 (decision 208).

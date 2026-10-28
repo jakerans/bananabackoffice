@@ -4142,6 +4142,13 @@ proposed:
 6. **Two steps:** 31d is the presentation view; 31e moves the results onto
    estimates and changes the word everywhere.
 
+## 208. Merge 31d (2026-10-28)
+
+**Decided by Jacob:** "yes merge 31d". Step 31d, the presentation, merges
+into `main` and deploys to staging. Listing the rates' customer wording
+under each room was offered and is still open; until Jacob asks for it, the
+presentation shows rooms by name only (decision 207, question 1).
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
