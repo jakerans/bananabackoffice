@@ -611,6 +611,11 @@ Rules:
     decision 144) follow the same rule as the colors, and only while the job
     is ready to schedule; everyone else who may see the Project reads them.
     **Confirming dates and rescheduling** (step 11b) follow the same rule.
+26. **Estimates** (`EstimatePolicy`, slice 31 step 31c, decision 204). Anyone
+    who may see the Lead sees its estimates, read-only. Building one follows
+    rule 19: a manager where the Lead is, or the salesperson the Lead is with.
+    **A manager only** (`appointments.manage`) changes an estimate's hourly
+    rate, or a line item's own. No permission was added.
 
 ## Slice 4: the call queue and its settings
 

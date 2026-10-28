@@ -3,25 +3,31 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-27 · **Branch:** `checkpoint-slice-31c-plan`
+**Updated:** 2026-10-28 · **Branch:** `checkpoint-slice-31c-estimate`
 
-**State:** step 31b, the pricing engine, is merged; all eight PaintScout test
-estimates match to the cent (decision 203). Step 31c is planned and waits
-for Jacob's approval: [../slice-31-estimating-plan.md](../slice-31-estimating-plan.md),
-"Step 31c — proposed plan". Nothing is being built.
+**State:** step 31c, the estimate in the Sales Workspace, is built and waits
+for Jacob's review. As built: [../slice-31-estimating-plan.md](../slice-31-estimating-plan.md),
+"Step 31c as built".
 
-## Decisions needed (31c)
+## Decisions needed
 
-1. Options as copies of each other (recommended) or one shared list.
-2. No optional extras inside an option; an extra is its own option (recommended).
-3. Discounts and tax once for the estimate (recommended) or per option.
-4. Changing the hourly rate on an estimate: managers only (recommended).
-5. Typing over a surface's hours or price: not in 31c (recommended).
-6. A pending option changed after it was presented updates its proposal's
-   price through today's correction (recommended).
+1. **Merge 31c?**
 
-Also: split into 31c (the estimate) and 31d (the presentation and the
-proposals), as the plan proposes.
+## In the browser (Jacob, on staging, after merging)
+
+1. Open a Lead with an appointment; on its **Estimates** card choose
+   Interior and press **New estimate**.
+2. **Add a room or area** (Bedroom, 12 × 14 × 8), then **Add work**: Interior
+   Wall Rates, a walls rate; then a door rate with how many.
+3. **Copy this option**, change the copy (one coat, fewer rooms), and give it
+   a name with **Name and describe**.
+4. Tick a discount and choose a tax; both options change.
+5. Try it on a tablet or phone.
+
+## Next
+
+- **31d, the presentation and the proposals,** after 31c.
+- **30c, recovery and first use,** with Jacob, when he chooses.
 
 ## Also waiting for Jacob
 

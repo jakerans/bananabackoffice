@@ -2,7 +2,7 @@
 
 Status: **proposed on 2026-10-27 (decision 196) and approved the same day
 (decision 197). Steps 31a and 31b are built and merged (decisions 199 and
-203).**
+203); step 31c is built and waits for Jacob's review.**
 Written as what the implementation agent recommends, after reading Banana
 Painting ABQ's PaintScout settings with Jacob signed in.
 
@@ -359,3 +359,56 @@ area and line item templates, discounts and tax rates in Settings; working
 without an internet connection (PaintScout's app keeps working offline;
 Backoffice needs a connection, so a weak signal in a customer's home slows
 it down).
+
+## Step 31c as built
+
+**The Estimates card on a Lead** lists its estimates, each with its options'
+prices, and "New estimate", Interior or Exterior, for the salesperson the
+Lead is with or a manager. An estimate opens on a page of its own
+(`/leads/{lead}/estimates/{estimate}`), laid out for a tablet: the work on
+the left, the option's figures, the discounts and tax and the hourly rate on
+the right; on a phone they stack.
+
+- **Building an option:** "Add a room or area" from the area templates (the
+  template names it and sets room or surface), with width, length and
+  height; the area shows its wall and ceiling area and length around. "Add
+  work" picks a category and a rate; the rate brings its default coats,
+  paint and prep, and the dialog asks for coats only where the rate uses
+  them and "how many" only for a count. Line items come from the templates
+  or are typed in, priced by hours, a set price or a quantity. Every figure
+  comes from the pricing engine as the option changes.
+- **Options:** "Copy this option" makes a new option from the one shown,
+  with all its work; each option has a name and a description for the
+  customer, and can be removed (an estimate keeps at least one). Removing an
+  option, an area or a piece of work asks first, in a styled dialog with
+  Cancel focused.
+- **Discounts and tax** are ticked once and apply to every option (decision
+  204, question 3). **The hourly rate** is changed by a manager only
+  (question 4), and so is a line item's own hourly rate.
+- **Never retroactive:** each piece of work keeps a copy of its rate and
+  paint; saving it again with the same rate keeps the copy. "Reprice with
+  today's prices", after a confirmation, takes everything again from the
+  Location's price book as it is now, its own once customized, and says how
+  many prices changed and how many the book no longer has (kept as they
+  were).
+- **Recorded on the Lead** (its Activity and the Audit Log): an estimate
+  started, its discounts and tax changed, its hourly rate changed, and a
+  repricing with each option's total before and after. The work itself is
+  not recorded piece by piece while it is being built.
+- **Who** (`EstimatePolicy`): anyone who may see the Lead sees its estimates,
+  read-only; building follows `LeadPolicy::manageProposals`; the hourly rate
+  needs a manager where the Lead is.
+- **Checked against PaintScout:** all eight test estimates, built again from
+  ABQ's imported settings through the same actions the page uses, come to
+  PaintScout's totals to the cent, on this computer only.
+
+**Decisions made while building:** the work on an estimate is not recorded
+in the Audit Log piece by piece, only the estimate's start, discounts and
+tax, hourly rate and repricing, so the Lead's Activity is not flooded while
+an estimate is built; a line item's own hourly rate is a manager's, like
+the estimate's; a rate or paint switched off in the price book stays on an
+estimate that already has it.
+
+**Known limits:** nothing is shown to the homeowner yet and options do not
+become proposals; both are 31d. Work cannot be reordered or moved between
+areas. An estimate cannot be deleted. The page needs a connection.
