@@ -265,3 +265,96 @@ estimates now match to the cent.
   hours for each, rounded up (3 at 0.4 hours is 1.2, so 2), and its price
   the quantity times the price for each; the hours do not change the price.
 - A line item priced by hours keeps its hours as typed (1.75).
+
+## Step 31c — proposed plan (for Jacob's approval)
+
+The estimate in the Sales Workspace, built on the pricing engine. Proposed
+on 2026-10-27; nothing is built until Jacob approves it.
+
+### What the salesperson does
+
+1. **Starts an estimate from the Lead,** at the appointment: "New
+   estimate", Interior or Exterior. It uses the Lead's Location's price book
+   (the default until that Location is customized) and the book's hourly
+   rate for that type. It is a page of its own (`/leads/{lead}/estimate`),
+   reached from the Lead and from the Sales Workspace, laid out for a tablet
+   first and usable on a phone.
+2. **Builds the first option:** adds areas from the area templates (Bedroom,
+   House Exterior), each a room or a surface with its width, length and
+   height; adds surfaces to each from the rate categories, as in PaintScout
+   (Interior Wall Rates, then "8'-10' Walls Two-Tone"); picks the coats where
+   a rate uses them, the count for doors and repairs, the paint (starting
+   from the rate's), and prep hours. Line items come from the line item
+   templates or are typed in, priced by hours, a set price or a quantity.
+   Every figure updates as it is typed: hours, paint, price.
+3. **Makes more options by copying one** and changing it: fewer rooms, a
+   better paint, walls only. Each option has a name ("Whole interior",
+   "Bedrooms only") and a short description for the customer.
+4. **Chooses the discounts and the tax** for the estimate, from the
+   Location's named ones; they apply to every option.
+5. **Presents:** a presentation view for the homeowner, the options one
+   after another down the page, largest first, each with what is included
+   in the customer's words and its price. Buttons at the top, easy to tap,
+   jump straight to any option. Hours, rates and paint costs are never
+   shown there.
+6. **Records what happened,** as today, in the after-action report: the
+   options presented are offered as the proposals, with their names and
+   prices filled in, instead of typing them by hand. Each becomes a proposal
+   of its own (decision 197, question 1), so results, Pending, Rehash,
+   sales, projects and commission keep working unchanged.
+
+### Never retroactive
+
+Each surface keeps a copy of its rate and paint as they were when it was
+added; the estimate keeps its hourly rate, discounts and tax. A price
+change in Settings never changes a saved estimate. "Reprice with today's
+prices" updates an open estimate when the salesperson chooses, and says
+which figures changed.
+
+### Who
+
+The salesperson the Lead is with, and a manager where the Lead is, as for
+proposals today (`LeadPolicy::manageProposals`). Anyone who may see the Lead
+may see its estimates, read-only. Every estimate is kept; nothing is
+deleted.
+
+### Steps
+
+| Step | Delivers |
+| --- | --- |
+| 31c | **The estimate:** starting one, areas, surfaces, coats, paint, prep, line items, options by copying, discounts and tax, live prices from the engine, saved as it is built, repricing. Checked against the PaintScout test estimates by building them again in Backoffice. |
+| 31d | **The presentation and the proposals:** the presentation view with the quick buttons, and the after-action report taking its proposals from the options presented. |
+
+### Decisions needed
+
+1. **Options: copies, or one list with each option choosing from it?**
+   *Recommended: copies.* Each option is its own set of areas and items,
+   started by copying another and then changed. It handles "fewer rooms",
+   "better paint" and "add the trim" alike. The other way, one list where
+   each option ticks what it includes, cannot give two options different
+   paints for the same walls.
+2. **PaintScout's optional extras inside an option.** *Recommended: not
+   offered.* An extra becomes an option of its own, which is the point of
+   decision 197.
+3. **Discounts and tax: once for the estimate, or per option?**
+   *Recommended: once,* applied to every option, since they follow the
+   customer (a Brand Ambassador, paying by check, the city).
+4. **May the salesperson change the hourly rate on an estimate?**
+   PaintScout allows it. *Recommended: a manager may; a salesperson may not,*
+   so price changes come from the scope, the paint and the named discounts.
+5. **May anyone type over a surface's hours or price?** PaintScout allows
+   it. *Recommended: not in 31c;* the price always comes from the rates.
+   If it is needed later, a manager-only override, recorded.
+6. **When an option is changed after it was presented and is still
+   Pending,** *recommended:* its proposal's price follows, through the
+   correction that exists today (kept in the proposal's history). A sold
+   proposal is never changed.
+
+### Not in 31c or 31d
+
+The signed agreement and deposit (5.3, later); a PDF or email to the
+customer; photos and notes on an estimate; Commercial estimates; editing
+area and line item templates, discounts and tax rates in Settings; working
+without an internet connection (PaintScout's app keeps working offline;
+Backoffice needs a connection, so a weak signal in a customer's home slows
+it down).

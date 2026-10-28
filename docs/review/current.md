@@ -3,27 +3,28 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-27 · **Branch:** `main`
+**Updated:** 2026-10-27 · **Branch:** `checkpoint-slice-31c-plan`
 
-**State:** step 31b, the pricing engine, is merged (decision 203). Two
-more PaintScout test estimates settled prep hours, several discounts, tax
-rounding and line items; all eight match to the cent (plan, "The seventh
-test estimate" and "The eighth test estimate"). The production server is set up except QuickBooks's live keys: Intuit's
-questionnaire is submitted and waits for their review.
+**State:** step 31b, the pricing engine, is merged; all eight PaintScout test
+estimates match to the cent (decision 203). Step 31c is planned and waits
+for Jacob's approval: [../slice-31-estimating-plan.md](../slice-31-estimating-plan.md),
+"Step 31c — proposed plan". Nothing is being built.
 
-## Next
+## Decisions needed (31c)
 
-- **31c, the estimate in the Sales Workspace,** when Jacob says so.
-- **30c, recovery and first use:** the restore drill, the backup and file
-  copy checks, then the first Owner, the Locations and QuickBooks on
-  production. With Jacob, when he chooses.
+1. Options as copies of each other (recommended) or one shared list.
+2. No optional extras inside an option; an extra is its own option (recommended).
+3. Discounts and tax once for the estimate (recommended) or per option.
+4. Changing the hourly rate on an estimate: managers only (recommended).
+5. Typing over a surface's hours or price: not in 31c (recommended).
+6. A pending option changed after it was presented updates its proposal's
+   price through today's correction (recommended).
 
-## Decisions waiting for Jacob
+Also: split into 31c (the estimate) and 31d (the presentation and the
+proposals), as the plan proposes.
+
+## Also waiting for Jacob
 
 - A side menu for Settings, hiding pages not built yet, and where the
   insurance deduction moves (decision 202, point 3).
-
-## In the browser (Jacob, on staging)
-
-Settings > Pricing Settings: the "Discounts" tab lists ABQ's five
-discounts; "Hourly rates and tax" lists the nine city tax rates.
+- QuickBooks's live keys, after Intuit's review.
