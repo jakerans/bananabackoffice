@@ -1,8 +1,8 @@
 # Slice 31 — Estimating and Production Rates: Plan
 
 Status: **proposed on 2026-10-27 (decision 196) and approved the same day
-(decision 197). Steps 31a and 31b are built and merged (decisions 199 and
-203); step 31c is built and waits for Jacob's review.**
+(decision 197). Steps 31a, 31b and 31c are built and merged (decisions 199,
+203 and 205); the plan for 31d waits for Jacob's review.**
 Written as what the implementation agent recommends, after reading Banana
 Painting ABQ's PaintScout settings with Jacob signed in.
 
@@ -417,3 +417,104 @@ areas. An estimate cannot be deleted. The page needs a connection.
 direction is one word, "Estimate", in place of "Proposal" (decision 205,
 point 4), and there is no quick estimate: every estimate is built in the
 builder (decision 206). The 31d plan proposes how before anything is built.
+
+## Step 31d — plan (proposed)
+
+Decision 205, point 4, and decision 206 change what 31c's plan said 31d
+would be. There is one word, **Estimate**: what used to be a proposal is now
+an estimate that has been presented, and the result (Pending, Sold with the
+option chosen, Lost) is the estimate's. Every estimate is built in the
+builder; nothing is typed in by hand any more. The counting rules stay as
+they are, in the new words.
+
+### What the salesperson does
+
+1. **Builds the estimate** as in 31c.
+2. **Presents it:** "Present" on the estimate opens a view for the
+   homeowner, filling the screen, without Backoffice's menus. The options
+   follow one another down the page, largest first, each with its name, its
+   description for the customer, what it covers and its price. Buttons at
+   the top, easy to tap, jump straight to any option. Hours, rates, paint
+   and costs are never shown. One button leads back to the estimate.
+3. **Records what happened,** in the after-action report as today: if the
+   appointment was run, the report lists the Lead's estimates and the
+   salesperson ticks the ones presented, each with its result: Sold (and
+   which option the customer chose), Lost (with the reason), or still
+   Pending (with the objection). Nothing presented means the appointment
+   counts as run with nothing presented, as today.
+4. **Later,** on the Lead's Estimates card: record the result of a pending
+   estimate, mark it presented again at a return visit, correct a result (a
+   manager), or mark one added in error (a manager), as the Proposals card
+   does today. The Proposals card goes; everything on it moves to the
+   Estimates card, including marking the Lead lost and the reason nothing was
+   presented.
+
+### What stays the same
+
+A presented estimate counts exactly as a proposal does today: a run
+appointment with a presented estimate is a demo; a Lead is one win however
+many estimates it is sold; each estimate sold has its own Project, sold for
+the chosen option's price; the salesperson keeps a pending Lead until its
+last pending estimate expires (Settings: "An estimate is valid for 7 days");
+Rehash, Pending, sales, commission and the Audit Log work as they do now.
+
+### After it is presented
+
+- **Pending:** it can still be changed. When an option's price changes, the
+  estimate's presented price follows, kept in its history (decision 204,
+  question 6).
+- **Sold:** it can no longer be changed; the Project's price stays as it was
+  sold.
+- **Lost:** it can no longer be changed, unless a manager corrects the
+  result.
+- **Its price in lists** while pending is its options' range ("$4,200 to
+  $9,800"); once sold, the chosen option's price.
+
+### Inside, for the record
+
+Today's proposal record stays in the database as the record of a presented
+estimate, linked to its estimate and, once sold, to the option chosen, so
+sales, Projects, commission and their history keep working without being
+moved. People only ever see "Estimate". The proposals recorded by hand
+before 31d stay as they were, shown on the Estimates card as "Recorded by
+hand", and can still be given a result; no new ones can be added.
+
+### Decisions needed
+
+1. **What the homeowner sees for each option.** *Recommended:* its name,
+   its description, the rooms and areas it covers by name, its written
+   line items (such as preparation and exclusions) and its price. The
+   rate names ("8'-10' Walls Two-Tone") are left out; the salesperson says
+   the rest out loud.
+2. **Discounts on the presentation.** *Recommended:* the price after
+   discounts, with each discount listed under it as a saving ("Brand
+   Ambassador: $450 off"), and "tax included" where tax applies.
+3. **When an estimate counts as presented.** *Recommended:* when the
+   salesperson ticks it in the after-action report (or marks it presented
+   again later), as proposals today. Opening the presentation view does not
+   count it, so a practice run or a look at the price is never a demo.
+4. **The proposals recorded by hand before 31d.** *Recommended:* kept as
+   they are, with their results, shown as "Recorded by hand". The other
+   way, turning each into an estimate, would make up estimates nobody
+   built.
+5. **The words inside the code.** *Recommended:* the code and the database
+   keep the name "proposal" for the record of a presented estimate; only
+   what people see changes. Renaming it inside touches about a hundred
+   files, the sales history and the Audit Log, for nothing anyone would
+   see.
+
+### Steps
+
+| Step | Delivers |
+| --- | --- |
+| 31d | **The presentation view:** "Present" on an estimate, the options down the page with the quick buttons, read-only. Nothing is counted yet. |
+| 31e | **Estimates take over from proposals:** the after-action report and the Estimates card record presented estimates and their results; the Proposals card goes; "Estimate" everywhere people see "proposal" today (the Lead, the Sales Workspace, Pending, the calendar, Sales Performance, the morning briefing, notices, Projects, Customers, Settings, the Audit Log's descriptions); the plan documents take the new word. |
+
+Split in two so that the presentation, which Jacob looks at, can be
+reviewed on its own before the change underneath it.
+
+### Not in 31d or 31e
+
+As in 31c's plan, and also: a copy of a lost estimate to start a new one;
+the homeowner signing or choosing on the tablet (the signed agreement and
+deposit, 5.3, later).

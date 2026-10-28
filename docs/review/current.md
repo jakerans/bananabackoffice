@@ -3,45 +3,40 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-28 · **Branch:** `main`
+**Updated:** 2026-10-28 · **Branch:** `plan-31d`
 
-**State:** step 31c and the wider lists are merged and on staging
-(decisions 205 and 206). Nothing waits for review.
+**State:** the plan for step 31d is written and waits for Jacob's review:
+[../slice-31-estimating-plan.md](../slice-31-estimating-plan.md), "Step 31d —
+plan (proposed)". Nothing is built.
 
-## The wider lists, as built
+## The plan in short
 
-Measured at 1024, 1280 and 1440 pixels wide: no list scrolls sideways.
+One word, "Estimate" (decisions 205 and 206). The salesperson builds an
+estimate, presents it on a screen made for the homeowner, and records in the
+after-action report which estimates were presented and what happened: Sold
+with the option chosen, Lost, or Pending. The Proposals card goes; the
+Estimates card does what it did. The counting rules do not change. Two
+steps: 31d is the presentation view, 31e moves results onto estimates and
+changes the word everywhere.
 
-- **Leads:** the status sits under each name; the Location column shows only
-  when the list reaches beyond the Location being viewed (all locations, or
-  your own leads elsewhere); the list uses the window's width; below 1024
-  pixels it is one card per lead.
-- **Customers:** the window's width; names wrap; cards below 1024 pixels.
-- **Settings → Locations:** one card per location, each setting beside its
-  own Change button, in place of a ten-column row of buttons.
-- **Settings → Pricing:** the window's width; long rate and paint names
-  wrap; "Switched off" shows under a rate's name in place of a Status
-  column.
+## Decisions needed
 
-**Known limit:** on a screen under about 800 pixels, Settings pages still
-scroll sideways because of the row of Settings tabs; that is the Settings
-side menu still waiting for Jacob.
-
-## In the browser (Jacob, on staging)
-
-1. **Sales → Workspace → Leads:** nothing is cut off on the right; each
-   lead's status is under its name.
-2. **Settings → Locations:** each location is a card.
-3. Sample leads 41–50 (appointment run) are ready to try an estimate on.
-
-## Next
-
-- **31d** (the presentation, and "Estimate" in place of "Proposal", with no
-  quick estimate; planned and approved first).
-- **30c, recovery and first use,** with Jacob, when he chooses.
+1. **What the homeowner sees for each option.** *Recommended:* name,
+   description, rooms and areas by name, written line items and price; no
+   rate names.
+2. **Discounts on the presentation.** *Recommended:* the price after
+   discounts, each discount listed under it as a saving, "tax included".
+3. **When an estimate counts as presented.** *Recommended:* when ticked in
+   the after-action report, not when the presentation view is opened.
+4. **Proposals recorded by hand before 31d.** *Recommended:* kept as they
+   are, shown as "Recorded by hand".
+5. **The word inside the code.** *Recommended:* the code and database keep
+   "proposal"; only what people see changes.
+6. **Approve the plan** with these answers, and the split into 31d and 31e.
 
 ## Also waiting for Jacob
 
 - A side menu for Settings, hiding pages not built yet, and where the
   insurance deduction moves (decision 202, point 3).
 - QuickBooks's live keys, after Intuit's review.
+- 30c, recovery and first use, when he chooses.
