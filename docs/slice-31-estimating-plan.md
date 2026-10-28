@@ -3,8 +3,8 @@
 Status: **proposed on 2026-10-27 (decision 196) and approved the same day
 (decision 197). Steps 31a, 31b and 31c are built and merged (decisions 199,
 203 and 205); the plan for 31d and 31e is approved (decision 207); 31d is
-merged (decision 208); 31e is built on branch
-`checkpoint-slice-31e-estimates`, waiting for review.**
+merged (decision 208); 31e is merged (decision 209). Slice 31 is
+complete.**
 Written as what the implementation agent recommends, after reading Banana
 Painting ABQ's PaintScout settings with Jacob signed in.
 
@@ -592,3 +592,5 @@ customer with several properties has it moved with "Change" on the card.
 `AddProposal`, the hand-recorded way, stays in the code because the tests
 still make the old records with it; no screen offers it. On a phone the
 app's top bar is wider than the screen on every page (not from this step).
+
+**Merged** into `main` on 2026-10-28 (decision 209).
