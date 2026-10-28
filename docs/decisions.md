@@ -4121,6 +4121,34 @@ proposed plan"): "recommended on all, split is fine".
    decision 205, point 4. What happens to quick proposals already recorded
    is part of the 31d plan.
 
+## 207. Step 31d approved, with every recommendation (2026-10-28)
+
+**Decided by Jacob:** "approved with your recommendations, build 31d". The
+plan in docs/slice-31-estimating-plan.md, "Step 31d", is approved as
+proposed:
+
+1. **The homeowner sees, for each option:** its name, its description, the
+   rooms and areas it covers by name, its written line items and its price;
+   rate names are left out.
+2. **Discounts:** the price after discounts, each discount listed under it
+   as a saving, and "tax included" where tax applies.
+3. **An estimate counts as presented** when it is ticked in the after-action
+   report or marked presented again, never when the presentation view is
+   opened.
+4. **Proposals recorded by hand before 31d** are kept as they are, shown as
+   "Recorded by hand".
+5. **The code and the database keep the word "proposal"** for the record of
+   a presented estimate; only what people see changes.
+6. **Two steps:** 31d is the presentation view; 31e moves the results onto
+   estimates and changes the word everywhere.
+
+## 208. Merge 31d (2026-10-28)
+
+**Decided by Jacob:** "yes merge 31d". Step 31d, the presentation, merges
+into `main` and deploys to staging. Listing the rates' customer wording
+under each room was offered and is still open; until Jacob asks for it, the
+presentation shows rooms by name only (decision 207, question 1).
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
