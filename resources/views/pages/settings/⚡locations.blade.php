@@ -679,77 +679,88 @@ new #[Title('Locations')] class extends Component {
             <flux:text class="max-w-md">{{ __('Add your first operating location to open the Marketing, Sales, Production, Finance and Color Studio centers.') }}</flux:text>
         </div>
     @else
-        <div class="overflow-hidden rounded-xl border border-zinc-200 bg-card px-4">
-            <flux:table>
-                <flux:table.columns>
-                    <flux:table.column>{{ __('Location') }}</flux:table.column>
-                    <flux:table.column>{{ __('Status') }}</flux:table.column>
-                    <flux:table.column>{{ __('Timezone') }}</flux:table.column>
-                    <flux:table.column align="end">{{ __('Deposit') }}</flux:table.column>
-                    <flux:table.column align="end">{{ __('Target margin') }}</flux:table.column>
-                    <flux:table.column align="end">{{ __('Monthly sales target') }}</flux:table.column>
-                    <flux:table.column>{{ __('Scorecard owner') }}</flux:table.column>
-                    <flux:table.column align="end">{{ __('ZIP codes served') }}</flux:table.column>
-                    <flux:table.column align="end">{{ __('Access grants') }}</flux:table.column>
-                    <flux:table.column align="end"><span class="sr-only">{{ __('Actions') }}</span></flux:table.column>
-                </flux:table.columns>
+        {{-- One card per location: each setting beside its own Change button, so nothing scrolls sideways (decision 205, point 3). --}}
+        <ul class="flex flex-col gap-4">
+            @foreach ($this->locations as $location)
+                @php
+                    $salesTarget = LocationSalesTarget::for($location->id, PayPeriods::now());
+                @endphp
+                <li wire:key="location-{{ $location->id }}" class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <flux:heading size="lg" level="2">{{ $location->name }}</flux:heading>
+                            @if ($location->is_active)
+                                <flux:badge size="sm" color="green" icon="check-circle">{{ __('Active') }}</flux:badge>
+                            @else
+                                <flux:badge size="sm" color="zinc" icon="pause-circle">{{ __('Inactive') }}</flux:badge>
+                            @endif
+                        </div>
 
-                <flux:table.rows>
-                    @foreach ($this->locations as $location)
-                        <flux:table.row :key="$location->id">
-                            <flux:table.cell variant="strong">{{ $location->name }}</flux:table.cell>
+                        <div class="flex flex-wrap gap-2">
+                            <flux:button size="sm" wire:click="edit({{ $location->id }})">{{ __('Rename') }}</flux:button>
+                            @can(Permission::ViewAuditLog)
+                                <flux:button size="sm" :href="route('settings.audit_log', ['location' => $location->id])" wire:navigate data-test="location-changes-{{ $location->id }}">{{ __('Changes') }}</flux:button>
+                            @endcan
 
-                            <flux:table.cell>
-                                @if ($location->is_active)
-                                    <flux:badge size="sm" color="green" icon="check-circle">{{ __('Active') }}</flux:badge>
-                                @else
-                                    <flux:badge size="sm" color="zinc" icon="pause-circle">{{ __('Inactive') }}</flux:badge>
-                                @endif
-                            </flux:table.cell>
+                            @if ($location->is_active)
+                                <flux:button size="sm" wire:click="openDeactivate({{ $location->id }})">{{ __('Deactivate') }}</flux:button>
+                            @else
+                                <flux:button size="sm" wire:click="reactivate({{ $location->id }})">{{ __('Reactivate') }}</flux:button>
+                            @endif
+                        </div>
+                    </div>
 
-                            <flux:table.cell data-test="location-timezone-{{ $location->id }}">{{ LocationTimezones::label($location->timezone) }}</flux:table.cell>
-                            <flux:table.cell align="end" class="tabular-nums" data-test="location-deposit-{{ $location->id }}">{{ $location->deposit_percent }}%</flux:table.cell>
-                            <flux:table.cell align="end" class="tabular-nums" data-test="location-target-margin-{{ $location->id }}">{{ $location->target_margin_percent }}%</flux:table.cell>
-                            @php
-                                $salesTarget = LocationSalesTarget::for($location->id, PayPeriods::now());
-                            @endphp
-                            <flux:table.cell align="end" class="tabular-nums" data-test="location-sales-target-{{ $location->id }}">{{ $salesTarget === null ? '—' : Money::format($salesTarget) }}</flux:table.cell>
-                            <flux:table.cell data-test="location-scorecard-owner-{{ $location->id }}">{{ $location->scorecardOwner?->name ?? __('The Owner') }}</flux:table.cell>
+                    <dl class="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div class="flex flex-col items-start gap-1">
+                            <dt class="text-sm text-zinc-500">{{ __('Timezone') }}</dt>
+                            <dd data-test="location-timezone-{{ $location->id }}">{{ LocationTimezones::label($location->timezone) }}</dd>
+                            <flux:button size="xs" wire:click="editTimezone({{ $location->id }})" :aria-label="__('Change the timezone')">{{ __('Change') }}</flux:button>
+                        </div>
 
-                            <flux:table.cell align="end" class="tabular-nums">{{ $location->service_postal_codes_count }}</flux:table.cell>
-                            <flux:table.cell align="end" class="tabular-nums">{{ $location->access_grants_count }}</flux:table.cell>
+                        <div class="flex flex-col items-start gap-1">
+                            <dt class="text-sm text-zinc-500">{{ __('Deposit') }}</dt>
+                            <dd class="tabular-nums" data-test="location-deposit-{{ $location->id }}">{{ $location->deposit_percent }}%</dd>
+                            <flux:button size="xs" wire:click="editDeposit({{ $location->id }})" data-test="deposit-policy-{{ $location->id }}" :aria-label="__('Change the deposit')">{{ __('Change') }}</flux:button>
+                        </div>
 
-                            <flux:table.cell align="end">
-                                <div class="flex justify-end gap-2">
-                                    <flux:button size="sm" wire:click="editServiceArea({{ $location->id }})">{{ __('Service area') }}</flux:button>
-                                    <flux:button size="sm" wire:click="editRequirements({{ $location->id }})" data-test="subcontractor-requirements-{{ $location->id }}">{{ __('Subcontractor requirements') }}</flux:button>
-                                    <flux:button size="sm" wire:click="editTimezone({{ $location->id }})">{{ __('Timezone') }}</flux:button>
-                                    <flux:button size="sm" wire:click="editDeposit({{ $location->id }})" data-test="deposit-policy-{{ $location->id }}">{{ __('Deposit') }}</flux:button>
-                                    <flux:button size="sm" wire:click="editTargetMargin({{ $location->id }})" data-test="target-margin-{{ $location->id }}">{{ __('Target margin') }}</flux:button>
-                                    <flux:button size="sm" wire:click="editSalesTarget({{ $location->id }})" data-test="sales-target-{{ $location->id }}">{{ __('Sales target') }}</flux:button>
-                                    <flux:button size="sm" wire:click="editScorecard({{ $location->id }})" data-test="scorecard-setup-{{ $location->id }}">{{ __('Scorecard') }}</flux:button>
-                                    <flux:button size="sm" wire:click="edit({{ $location->id }})">{{ __('Rename') }}</flux:button>
-                                    @can(Permission::ViewAuditLog)
-                                        <flux:button size="sm" :href="route('settings.audit_log', ['location' => $location->id])" wire:navigate data-test="location-changes-{{ $location->id }}">{{ __('Changes') }}</flux:button>
-                                    @endcan
+                        <div class="flex flex-col items-start gap-1">
+                            <dt class="text-sm text-zinc-500">{{ __('Target margin') }}</dt>
+                            <dd class="tabular-nums" data-test="location-target-margin-{{ $location->id }}">{{ $location->target_margin_percent }}%</dd>
+                            <flux:button size="xs" wire:click="editTargetMargin({{ $location->id }})" data-test="target-margin-{{ $location->id }}" :aria-label="__('Change the target margin')">{{ __('Change') }}</flux:button>
+                        </div>
 
-                                    @if ($location->is_active)
-                                        <flux:button
-                                            size="sm"
-                                            wire:click="openDeactivate({{ $location->id }})"
-                                        >
-                                            {{ __('Deactivate') }}
-                                        </flux:button>
-                                    @else
-                                        <flux:button size="sm" wire:click="reactivate({{ $location->id }})">{{ __('Reactivate') }}</flux:button>
-                                    @endif
-                                </div>
-                            </flux:table.cell>
-                        </flux:table.row>
-                    @endforeach
-                </flux:table.rows>
-            </flux:table>
-        </div>
+                        <div class="flex flex-col items-start gap-1">
+                            <dt class="text-sm text-zinc-500">{{ __('Monthly sales target') }}</dt>
+                            <dd class="tabular-nums" data-test="location-sales-target-{{ $location->id }}">{{ $salesTarget === null ? '—' : Money::format($salesTarget) }}</dd>
+                            <flux:button size="xs" wire:click="editSalesTarget({{ $location->id }})" data-test="sales-target-{{ $location->id }}" :aria-label="__('Change the sales target')">{{ __('Change') }}</flux:button>
+                        </div>
+
+                        <div class="flex flex-col items-start gap-1">
+                            <dt class="text-sm text-zinc-500">{{ __('Scorecard owner') }}</dt>
+                            <dd data-test="location-scorecard-owner-{{ $location->id }}">{{ $location->scorecardOwner?->name ?? __('The Owner') }}</dd>
+                            <flux:button size="xs" wire:click="editScorecard({{ $location->id }})" data-test="scorecard-setup-{{ $location->id }}" :aria-label="__('Change the scorecard')">{{ __('Change') }}</flux:button>
+                        </div>
+
+                        <div class="flex flex-col items-start gap-1">
+                            <dt class="text-sm text-zinc-500">{{ __('ZIP codes served') }}</dt>
+                            <dd class="tabular-nums">{{ $location->service_postal_codes_count }}</dd>
+                            <flux:button size="xs" wire:click="editServiceArea({{ $location->id }})" :aria-label="__('Change the service area')">{{ __('Service area') }}</flux:button>
+                        </div>
+
+                        <div class="flex flex-col items-start gap-1">
+                            <dt class="text-sm text-zinc-500">{{ __('Subcontractor requirements') }}</dt>
+                            <dd class="text-sm text-zinc-600">{{ __('Beyond the base checklist') }}</dd>
+                            <flux:button size="xs" wire:click="editRequirements({{ $location->id }})" data-test="subcontractor-requirements-{{ $location->id }}" :aria-label="__('Change the subcontractor requirements')">{{ __('Change') }}</flux:button>
+                        </div>
+
+                        <div class="flex flex-col items-start gap-1">
+                            <dt class="text-sm text-zinc-500">{{ __('Access grants') }}</dt>
+                            <dd class="tabular-nums">{{ $location->access_grants_count }}</dd>
+                        </div>
+                    </dl>
+                </li>
+            @endforeach
+        </ul>
     @endif
 
     {{-- The insurance deduction for a subcontractor using Banana's coverage (slice 13, step 13c; decision 151, question 7). --}}

@@ -169,6 +169,18 @@ new #[Title('Leads')] class extends Component {
         return $query->paginate(25);
     }
 
+    /**
+     * Whether the table needs its Location column: not when every Lead listed
+     * is at the one Location being viewed, which the heading already names.
+     */
+    #[Computed]
+    public function showsLocation(): bool
+    {
+        $location = $this->context?->location;
+
+        return $location === null || collect($this->leads->items())->contains(fn (Lead $lead): bool => $lead->location_id !== $location->id);
+    }
+
     public function show(string $view): void
     {
         $this->view = in_array($view, $this->views, true) ? $view : '';
@@ -277,7 +289,7 @@ new #[Title('Leads')] class extends Component {
     }
 }; ?>
 
-<section class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+<section class="mx-auto flex w-full flex-col gap-6">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
             <flux:heading size="xl" level="1">{{ __('Leads') }}</flux:heading>
@@ -380,7 +392,7 @@ new #[Title('Leads')] class extends Component {
         </div>
     @else
         {{-- Wide screens: a table. --}}
-        <div class="hidden overflow-hidden rounded-xl border border-zinc-200 bg-card px-4 md:block">
+        <div class="hidden overflow-hidden rounded-xl border border-zinc-200 bg-card px-4 lg:block">
             <flux:table>
                 <flux:table.columns>
                     <flux:table.column>{{ __('Received') }}</flux:table.column>
@@ -388,9 +400,10 @@ new #[Title('Leads')] class extends Component {
                     <flux:table.column>{{ __('Contact') }}</flux:table.column>
                     <flux:table.column>{{ __('Service and size') }}</flux:table.column>
                     <flux:table.column>{{ __('Channel and source') }}</flux:table.column>
-                    <flux:table.column>{{ __('Location') }}</flux:table.column>
+                    @if ($this->showsLocation)
+                        <flux:table.column data-test="location-column">{{ __('Location') }}</flux:table.column>
+                    @endif
                     <flux:table.column>{{ __('Assigned to') }}</flux:table.column>
-                    <flux:table.column>{{ __('Status') }}</flux:table.column>
                 </flux:table.columns>
 
                 <flux:table.rows>
@@ -407,6 +420,10 @@ new #[Title('Leads')] class extends Component {
                                 @if ($lead->inquiry_name !== null && $lead->inquiry_business_name !== null)
                                     <div class="text-sm font-normal text-zinc-500">{{ $lead->inquiry_business_name }}</div>
                                 @endif
+                                <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 font-normal">
+                                    <x-lead-status :status="$lead->status" />
+                                    <x-lead-follow-up :lead="$lead" />
+                                </div>
                             </flux:table.cell>
 
                             <flux:table.cell class="tabular-nums">
@@ -429,13 +446,15 @@ new #[Title('Leads')] class extends Component {
                                 <div class="text-sm text-zinc-500">{{ $lead->leadSource->name }}</div>
                             </flux:table.cell>
 
-                            <flux:table.cell>
-                                @if ($lead->location)
-                                    {{ $lead->location->name }}
-                                @else
-                                    <flux:badge size="sm" color="amber">{{ __('Unrouted') }}</flux:badge>
-                                @endif
-                            </flux:table.cell>
+                            @if ($this->showsLocation)
+                                <flux:table.cell>
+                                    @if ($lead->location)
+                                        {{ $lead->location->name }}
+                                    @else
+                                        <flux:badge size="sm" color="amber">{{ __('Unrouted') }}</flux:badge>
+                                    @endif
+                                </flux:table.cell>
+                            @endif
 
                             <flux:table.cell>
                                 @if ($lead->assignee)
@@ -447,11 +466,6 @@ new #[Title('Leads')] class extends Component {
                                     @endif
                                 @endif
                             </flux:table.cell>
-
-                            <flux:table.cell>
-                                <x-lead-status :status="$lead->status" />
-                                <x-lead-follow-up :lead="$lead" class="mt-1" />
-                            </flux:table.cell>
                         </flux:table.row>
                     @endforeach
                 </flux:table.rows>
@@ -459,7 +473,7 @@ new #[Title('Leads')] class extends Component {
         </div>
 
         {{-- Narrow screens: one card per lead, no sideways scrolling. --}}
-        <ul class="flex flex-col gap-3 md:hidden">
+        <ul class="flex flex-col gap-3 lg:hidden">
             @foreach ($this->leads as $lead)
                 <li wire:key="card-{{ $lead->id }}" class="rounded-xl border border-zinc-200 bg-card p-4">
                     <div class="flex items-start justify-between gap-3">
