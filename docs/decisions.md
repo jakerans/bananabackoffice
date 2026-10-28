@@ -4110,6 +4110,17 @@ proposed plan"): "recommended on all, split is fine".
    rules stay as they are, in the new words. Still open: whether a quick
    estimate (just a name and a price, priced outside the builder) remains.
 
+## 206. Merge the wider lists; no quick estimate (2026-10-28)
+
+**Decided by Jacob.**
+
+1. **The wider lists merge** into `main` and deploy to staging: "yes merge".
+2. **No quick estimate in 31d:** "drop the quick estimate". Every estimate is
+   built in the estimate builder, priced from the rates; there is no way to
+   record just a name and a price. This settles the open question in
+   decision 205, point 4. What happens to quick proposals already recorded
+   is part of the 31d plan.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

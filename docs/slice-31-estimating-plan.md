@@ -415,4 +415,5 @@ areas. An estimate cannot be deleted. The page needs a connection.
 
 **Merged** into `main` on 2026-10-28 (decision 205). For 31d, Jacob's
 direction is one word, "Estimate", in place of "Proposal" (decision 205,
-point 4); the 31d plan proposes how before anything is built.
+point 4), and there is no quick estimate: every estimate is built in the
+builder (decision 206). The 31d plan proposes how before anything is built.

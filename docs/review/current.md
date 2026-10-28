@@ -3,10 +3,10 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-28 · **Branch:** `checkpoint-wider-lists`
+**Updated:** 2026-10-28 · **Branch:** `main`
 
-**State:** step 31c is merged and on staging (decision 205). The wider
-lists (decision 205, point 3) are built and wait for Jacob's review.
+**State:** step 31c and the wider lists are merged and on staging
+(decisions 205 and 206). Nothing waits for review.
 
 ## The wider lists, as built
 
@@ -27,11 +27,7 @@ Measured at 1024, 1280 and 1440 pixels wide: no list scrolls sideways.
 scroll sideways because of the row of Settings tabs; that is the Settings
 side menu still waiting for Jacob.
 
-## Decisions needed
-
-1. **Merge the wider lists?**
-
-## In the browser (Jacob, on staging, after merging)
+## In the browser (Jacob, on staging)
 
 1. **Sales → Workspace → Leads:** nothing is cut off on the right; each
    lead's status is under its name.
@@ -40,14 +36,12 @@ side menu still waiting for Jacob.
 
 ## Next
 
-- **31d** (the presentation, and "Estimate" in place of "Proposal", planned
-  and approved first).
+- **31d** (the presentation, and "Estimate" in place of "Proposal", with no
+  quick estimate; planned and approved first).
 - **30c, recovery and first use,** with Jacob, when he chooses.
 
 ## Also waiting for Jacob
 
-- Whether a quick estimate (just a name and a price) stays when proposals
-  become estimates (decision 205, point 4).
 - A side menu for Settings, hiding pages not built yet, and where the
   insurance deduction moves (decision 202, point 3).
 - QuickBooks's live keys, after Intuit's review.
