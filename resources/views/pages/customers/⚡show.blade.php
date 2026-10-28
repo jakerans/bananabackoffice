@@ -1224,7 +1224,7 @@ new #[Title('Customer')] class extends AddressCapturePage {
         <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="customer-projects">
             <div>
                 <flux:heading size="lg" level="2">{{ __('Projects') }}</flux:heading>
-                <flux:subheading>{{ __('Sold jobs for this customer that you can see, newest first. Each sold proposal is a project of its own.') }}</flux:subheading>
+                <flux:subheading>{{ __('Sold jobs for this customer that you can see, newest first. Each sold estimate is a project of its own.') }}</flux:subheading>
             </div>
 
             @if ($this->projects->isEmpty())

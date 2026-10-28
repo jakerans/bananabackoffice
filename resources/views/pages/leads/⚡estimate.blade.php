@@ -11,6 +11,7 @@ use App\Actions\Estimates\SaveEstimateSurface;
 use App\Enums\AreaShape;
 use App\Enums\EstimateType;
 use App\Enums\LineItemPricing;
+use App\Enums\ProposalResult;
 use App\Enums\RateCalculation;
 use App\Enums\RateMeasure;
 use App\Models\AreaTemplate;
@@ -118,7 +119,7 @@ new #[Title('Estimate')] class extends Component {
     #[Computed]
     public function estimate(): Estimate
     {
-        return Estimate::query()->with(['lead.location', 'location', 'priceBook.location', 'discounts'])->where('lead_id', $this->leadId)->findOrFail($this->estimateId);
+        return Estimate::query()->with(['lead.location', 'location', 'priceBook.location', 'discounts', 'proposal.option'])->where('lead_id', $this->leadId)->findOrFail($this->estimateId);
     }
 
     /**
@@ -615,6 +616,19 @@ new #[Title('Estimate')] class extends Component {
             </div>
         </div>
     </div>
+
+    {{-- Once sold or lost it is kept as it was (step 31e; decision 207). --}}
+    @if ($estimate->isSettled())
+        <flux:callout icon="lock-closed" data-test="estimate-settled">
+            <flux:callout.heading>
+                {{ $estimate->proposal->result === ProposalResult::Sold
+                    ? __('Sold: :option, :price. It can no longer be changed.', ['option' => $estimate->proposal->option?->name ?? __('an option'), 'price' => $estimate->proposal->soldFor()])
+                    : __('Lost. It can no longer be changed unless a manager corrects the result.') }}
+            </flux:callout.heading>
+        </flux:callout>
+    @elseif ($estimate->proposal !== null)
+        <flux:text class="text-sm" data-test="estimate-presented">{{ __('Presented, and pending. Its price on the lead follows any change made here.') }}</flux:text>
+    @endif
 
     {{-- The options, each with its price. --}}
     <div class="flex flex-wrap items-center gap-2" data-test="estimate-options">

@@ -48,7 +48,7 @@ test('a salesperson sees their pending proposals, the appointments to confirm an
     bookAppointment(bookableLead($this->lakeview), $this->sam, $this->morgan, '2026-11-12');
 
     expect(briefingLines($this->sam, 'Sales'))->toBe([
-        'Customers with a pending proposal' => 1,
+        'Customers with a pending estimate' => 1,
         'Appointments to confirm, today to 4 days out' => 1,
         'Visits waiting for you to say what happened' => 1,
     ])

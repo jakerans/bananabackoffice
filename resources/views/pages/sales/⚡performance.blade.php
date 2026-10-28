@@ -368,17 +368,17 @@ new #[Title('Performance')] class extends Component {
                 <li>{{ __('The month is the calendar month in :location time.', ['location' => $location->name]) }}</li>
                 <li>{{ __('Leads issued: each lead handed to Sales in the month.') }}</li>
                 <li>{{ __('Appointments run: appointments on a day in the month that were marked run.') }}</li>
-                <li>{{ __('Demo rate: of those, the ones with a proposal. An appointment run with nothing presented counts against it until a proposal is added, whatever the reason given.') }}</li>
-                <li>{{ __('Close rate: demo to close. The leads won in the month, against the leads demoed for the first time in the month. A lead is demoed when an appointment that was run has a proposal; one run with nothing presented counts against demo rate, not close rate. Several proposals for one lead are one demo, and several sold are one win. A lead is won in the month its proposal was accepted, so a sale closed from an earlier month\'s demo counts here, and a month can read above 100%.') }}</li>
-                <li>{{ __('Sold revenue: the sold amounts of the proposals accepted in the month.') }}</li>
+                <li>{{ __('Demo rate: of those, the ones with an estimate. An appointment run with nothing presented counts against it until an estimate is marked presented, whatever the reason given.') }}</li>
+                <li>{{ __('Close rate: demo to close. The leads won in the month, against the leads demoed for the first time in the month. A lead is demoed when an appointment that was run has an estimate; one run with nothing presented counts against demo rate, not close rate. Several estimates for one lead are one demo, and several sold are one win. A lead is won in the month its estimate was accepted, so a sale closed from an earlier month\'s demo counts here, and a month can read above 100%.') }}</li>
+                <li>{{ __('Sold revenue: the sold amounts of the estimates accepted in the month.') }}</li>
                 <li>{{ __('NSLI: sold revenue in the month, divided by leads issued in the month.') }}</li>
                 <li>{{ __('Cancellation rate: of the appointments booked for a day in the month, the ones that were cancelled. No-shows are shown beside it.') }}</li>
-                <li>{{ __('Average job size: sold revenue in the month, divided by the jobs sold in it. A job is a sold proposal; a corrected sale comes off both.') }}</li>
+                <li>{{ __('Average job size: sold revenue in the month, divided by the jobs sold in it. A job is a sold estimate; a corrected sale comes off both.') }}</li>
                 <li>{{ __('Close on the spot: of the leads demoed for the first time in the month, the ones with something sold at that demo, by the end of its day. It is the other side of pending rate.') }}</li>
                 <li>{{ __('Pending rate: of the leads demoed for the first time in the month, the ones that left that demo with nothing sold and something still open. A lead that was sold a week later still left its demo pending.') }}</li>
                 <li>{{ __('Return visit booked: of those pending leads, the ones with another visit booked by the end of the day of the demo.') }}</li>
                 <li>{{ __('Rehash conversion: of the leads that went from a salesperson to the Contact Center for rehash in the month, the ones sold since, by anyone. A past month goes up when one of its leads is sold later. For one salesperson, it is the leads released from them.') }}</li>
-                <li>{{ __('Whose figure it is: a lead issued counts for the salesperson it was issued to, an appointment for the salesperson it is with, and a sale and its win for the salesperson who had the lead when the proposal was accepted.') }}</li>
+                <li>{{ __('Whose figure it is: a lead issued counts for the salesperson it was issued to, an appointment for the salesperson it is with, and a sale and its win for the salesperson who had the lead when the estimate was accepted.') }}</li>
                 <li>{{ __('Corrections: a month that has passed is not rewritten. A sale a manager corrects, or a lead issued that is taken back, stays in the month it was made and comes off the month it was corrected in.') }}</li>
             </ul>
         </div>

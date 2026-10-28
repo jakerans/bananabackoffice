@@ -621,7 +621,7 @@ new class extends Component {
         Flux::modal('take-lead-back')->close();
         // Back from Rehash it has its proposals and a visit already run; back from a cancellation it needs an appointment.
         Flux::toast(variant: 'success', text: $this->lead->status === LeadStatus::AppointmentRun
-            ? __('This lead is yours again, with its proposals. Its time with you starts again today.')
+            ? __('This lead is yours again, with its estimates. Its time with you starts again today.')
             : __('This lead is yours again. Book its appointment when you have a time.'));
     }
 
@@ -741,7 +741,7 @@ new class extends Component {
             name="take-lead-back"
             :title="__('Take this lead back?')"
             :description="$lead->isInRehash()
-                ? __('It becomes yours again, with its proposals, and its time with you starts again. It leaves the call queue and does not count as a new issued lead.')
+                ? __('It becomes yours again, with its estimates, and its time with you starts again. It leaves the call queue and does not count as a new issued lead.')
                 : __('It becomes yours again, to book. It leaves the call queue and does not count as a new issued lead.')"
             action="takeBack"
             :confirm-label="__('Take it back')"
@@ -923,7 +923,7 @@ new class extends Component {
                 :title="$closeOutOutcome === AppointmentState::NoShow->value ? __('Mark this appointment a no-show?') : __('Mark this appointment as run?')"
                 :description="$closeOutOutcome === AppointmentState::NoShow->value
                     ? __('The customer was not there. The lead stays with its salesperson to be booked again, as after a cancellation, and still counts as issued.')
-                    : __('The visit happened. The lead stays with its salesperson. Proposals and their results are recorded separately.')"
+                    : __('The visit happened. The lead stays with its salesperson. Estimates and their results are recorded separately.')"
                 action="closeOut"
                 :confirm-label="$closeOutOutcome === AppointmentState::NoShow->value ? __('No-show') : __('Appointment was run')"
                 confirm-variant="primary"

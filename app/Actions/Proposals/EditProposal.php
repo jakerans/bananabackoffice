@@ -28,7 +28,9 @@ class EditProposal
      * Change a proposal's name, price, property or the day it is valid until,
      * while it is still Pending (decisions 128, 132 and 137). The salesperson
      * the Lead is with, or a manager. A salesperson may move the day up to 30
-     * days ahead on their own; a manager to any day from today.
+     * days ahead on their own; a manager to any day from today. An estimate's
+     * name and price are its own and follow it (step 31e), so for one of
+     * those only the property and the day change here.
      *
      * What it was before is kept in the audit record. Once a proposal is Sold
      * or Lost it is no longer edited; a manager corrects its result first.
@@ -49,11 +51,12 @@ class EditProposal
             $proposal = Proposal::query()->findOrFail($proposal->id);
 
             if ($proposal->lead_id !== $lead->id || $proposal->isAddedInError() || $proposal->result !== ProposalResult::Pending) {
-                throw ValidationException::withMessages(['proposalName' => __('Only a proposal that is still pending can be changed.')]);
+                throw ValidationException::withMessages(['proposalName' => __('Only an estimate that is still pending can be changed.')]);
             }
 
-            $name = ProposalInput::name($name);
-            $cents = ProposalInput::cents($price);
+            // An estimate's name and price come from the estimate itself, and follow it (step 31e).
+            $name = $proposal->isFromEstimate() ? $proposal->name : ProposalInput::name($name);
+            $cents = $proposal->isFromEstimate() ? $proposal->price_cents : ProposalInput::cents($price);
 
             // Nothing given leaves the property as it is.
             $property = $propertyId === null ? null : ProposalInput::property($lead, $propertyId);

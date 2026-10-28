@@ -106,7 +106,7 @@ test('an appointment marked run from the lead page has its reason given afterwar
     $version = $this->lead->fresh()->lifecycle_version;
 
     $card = proposalsCard($this->sam, $this->lead->fresh())
-        ->assertSee('has no proposal yet')
+        ->assertSee('has no estimate marked presented yet')
         ->assertSee('Say why nothing was presented')
         ->assertDontSeeHtml('data-test="no-demo-reason"')
         ->call('openNoDemoReason', $this->appointment->id)

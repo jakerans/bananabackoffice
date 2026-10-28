@@ -84,7 +84,7 @@ test('the openers refuse people who may not take the action, and a proposal that
 test('the salesperson marks a proposal sold from the card, and the lead shows Sold', function () {
     proposalsCard($this->sam, $this->lead)
         ->call('openResult', $this->proposal->id, 'sold')
-        ->assertSee('Mark this proposal sold?')
+        ->assertSee('Mark this estimate sold?')
         ->assertSee('Whole exterior, $8,450.')
         ->set('result.soldAmount', 'a bit less')
         ->call('saveResult')
@@ -100,9 +100,9 @@ test('the salesperson marks a proposal sold from the card, and the lead shows So
         ->assertSee('Recorded by Sam Sales')
         ->assertDontSeeHtml('data-test="proposal-sold"')
         ->assertDontSeeHtml('data-test="edit-proposal"')
-        // A sold Lead is not marked lost, and another proposal can still be added to it.
+        // A sold Lead is not marked lost, and another estimate can still be started on it.
         ->assertDontSeeHtml('data-test="mark-lead-lost"')
-        ->assertSeeHtml('data-test="add-proposal"');
+        ->assertSeeHtml('data-test="start-estimate"');
 
     expect($this->lead->fresh()->status)->toBe(LeadStatus::Sold);
 });
@@ -110,7 +110,7 @@ test('the salesperson marks a proposal sold from the card, and the lead shows So
 test('lost asks for the reason and the objection, and for the competitor only when the reason asks', function () {
     proposalsCard($this->sam, $this->lead)
         ->call('openResult', $this->proposal->id, 'lost')
-        ->assertSee('Mark this proposal lost?')
+        ->assertSee('Mark this estimate lost?')
         ->assertDontSeeHtml('data-test="result-lost-to"')
         ->call('saveResult')
         ->assertHasErrors('lossReasonId')
@@ -187,7 +187,7 @@ test('a manager marks a proposal added in error from the card, and the appointme
     proposalsCard($this->manager, $this->lead)
         ->assertDontSeeHtml('data-test="no-proposal-yet"')
         ->call('openAddedInError', $this->proposal->id)
-        ->assertSee('Mark this proposal added in error?')
+        ->assertSee('Mark this estimate added in error?')
         ->call('markAddedInError')
         ->assertHasErrors('addedInErrorNote')
         ->set('addedInErrorNote', 'Sam added it to the wrong lead.')

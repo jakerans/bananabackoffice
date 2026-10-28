@@ -2,11 +2,11 @@
 
 use App\Actions\Proposals\EditProposal;
 use App\Actions\Proposals\RecordProposalResult;
-use App\Actions\Proposals\SubmitAfterActionReport;
 use App\Enums\AuditAction;
 use App\Enums\Role;
 use App\Models\AuditEvent;
 use App\Models\Location;
+use App\Models\Objection;
 use App\Models\Project;
 use App\Models\Property;
 use App\Models\Proposal;
@@ -102,76 +102,67 @@ test('a pending proposal\'s property can be changed, and what it was is kept', f
 });
 
 test('the card asks which property only when the customer has more than one', function () {
-    proposalsCard($this->sam, $this->lead)
-        ->assertSeeHtml('data-test="proposal-property-field"')
-        ->call('openAdd')
-        // It starts on the Lead's own property.
+    $proposal = presentEstimate(estimateFor($this->lead, $this->sam, ['Lake house deck' => '1800']), $this->sam);
+
+    // Presented for the Lead's own property; moved to another of the customer's from the card.
+    proposalsCard($this->sam, $this->lead->fresh())
+        ->call('openEdit', $proposal->id)
         ->assertSet('proposalPropertyId', $this->lead->property_id)
-        ->set('proposalName', 'Lake house deck')
-        ->set('proposalPrice', '1800')
+        ->assertSeeHtml('data-test="edit-proposal-property"')
+        ->assertDontSeeHtml('data-test="edit-proposal-name"')
         ->set('proposalPropertyId', $this->lakeHouse->id)
-        ->call('add')
+        ->call('saveEdit')
         ->assertHasNoErrors()
         ->assertSee('For: Lake house — 9 Lake Rd');
 
-    expect(Proposal::query()->sole()->property_id)->toBe($this->lakeHouse->id);
+    expect($proposal->fresh()->property_id)->toBe($this->lakeHouse->id);
 
     // A customer with one property is not asked.
     $single = bookableLead($this->lakeview);
     bookAppointment($single, $this->sam, $this->manager, '2026-10-09', '10:00');
     $this->travelTo('2026-10-09 14:00:00');
     runAppointment($single->fresh(), $this->sam);
+    $theirs = presentEstimate(estimateFor($single->fresh(), $this->sam), $this->sam);
 
     proposalsCard($this->sam, $single->fresh())
-        ->assertDontSeeHtml('data-test="proposal-property-field"')
-        ->call('openAdd')
-        ->set('proposalName', 'Whole exterior')
-        ->set('proposalPrice', '8450')
-        ->call('add')
-        ->assertHasNoErrors()
-        ->assertDontSeeHtml('data-test="proposal-property"');
+        ->assertDontSeeHtml('data-test="proposal-property"')
+        ->call('openEdit', $theirs->id)
+        ->assertDontSeeHtml('data-test="edit-proposal-property"');
 });
 
 test('the card refuses another customer\'s property, whatever the browser sends', function () {
-    proposalsCard($this->sam, $this->lead)
-        ->call('openAdd')
-        ->set('proposalName', 'Whole exterior')
-        ->set('proposalPrice', '8450')
+    $proposal = presentEstimate(estimateFor($this->lead, $this->sam), $this->sam);
+
+    proposalsCard($this->sam, $this->lead->fresh())
+        ->call('openEdit', $proposal->id)
         ->set('proposalPropertyId', bookableLead($this->lakeview)->property_id)
-        ->call('add')
+        ->call('saveEdit')
         ->assertHasErrors('proposalPropertyId');
 
-    expect(Proposal::query()->count())->toBe(0);
+    expect($proposal->fresh()->property_id)->toBe($this->lead->property_id);
 });
 
-test('the after-action report asks the property of each proposal and its project takes it', function () {
+test('an estimate presented in the report is for the lead\'s property, and its project takes the one it is moved to', function () {
     $lead = bookableLead($this->lakeview);
     $other = Property::factory()->of($lead->account)->create(['address_line1' => '4 Hill Ct']);
     $appointment = bookAppointment($lead, $this->sam, $this->manager, '2026-10-09', '10:00')->appointment;
+    $estimate = estimateFor($lead->fresh(), $this->sam, ['Hill Ct interior' => '4000']);
     $this->travelTo('2026-10-09 16:00:00');
 
     Livewire::actingAs($this->sam)->test('pages::leads.report', ['lead' => $lead->fresh(), 'appointment' => $appointment])
         ->set('outcome', 'run')
         ->set('presented', 'yes')
-        ->assertSeeHtml('data-test="report-proposal-property"')
-        ->assertSet('proposals.0.propertyId', $lead->property_id)
-        ->set('proposals.0.name', 'Hill Ct interior')
-        ->set('proposals.0.price', '4,000')
-        ->set('proposals.0.propertyId', $other->id)
-        ->set('proposals.0.result', 'sold')
+        ->set('estimates.'.$estimate->id.'.presented', true)
+        ->set('estimates.'.$estimate->id.'.result', 'pending')
+        ->set('estimates.'.$estimate->id.'.objectionId', (string) Objection::query()->where('name', 'Wants to think it over')->sole()->id)
         ->call('submit')
         ->assertHasNoErrors();
 
+    $proposal = Proposal::query()->where('estimate_id', $estimate->id)->sole();
+    expect($proposal->property_id)->toBe($lead->property_id);
+
+    app(EditProposal::class)->handle($lead->fresh(), $proposal, null, null, $this->sam, propertyId: $other->id);
+    app(RecordProposalResult::class)->handle($lead->fresh(), $proposal, 'sold', ['optionId' => $estimate->options->sole()->id], $this->sam);
+
     expect(Project::query()->where('lead_id', $lead->id)->sole()->property_id)->toBe($other->id);
-
-    // Sent straight to the action with someone else's property, the whole report is refused.
-    $second = bookableLead($this->lakeview);
-    $secondAppointment = bookAppointment($second, $this->sam, $this->manager, '2026-10-10', '10:00')->appointment;
-    $this->travelTo('2026-10-10 16:00:00');
-
-    expect(fn () => app(SubmitAfterActionReport::class)->handle($second->fresh(), $secondAppointment, ['outcome' => 'run', 'presented' => 'yes', 'proposals' => [
-        ['name' => 'Interior', 'price' => '4000', 'propertyId' => $other->id, 'result' => 'sold'],
-    ]], $this->sam))->toThrow(ValidationException::class, 'Choose one of this customer\'s properties.');
-
-    expect($second->proposals()->count())->toBe(0);
 });

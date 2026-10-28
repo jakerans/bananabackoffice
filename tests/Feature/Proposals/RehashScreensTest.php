@@ -82,7 +82,7 @@ test('the call queue has a third button with its own count, and its card says wh
         ->assertSee('Rehash: this lead has a bid that is still pending')
         ->assertSee('What was pitched:')
         ->assertSee('Whole exterior, $8,450. Still pending. Main objection: Wants to think it over. Expired yesterday, Thu, Oct 15.')
-        ->assertSee('Nothing was sold, lost or booked before the last pending proposal expired on Oct 15, 2026.')
+        ->assertSee('Nothing was sold, lost or booked before the last pending estimate expired on Oct 15, 2026.')
         // With a Lead on the card, the counts of what is left are still shown.
         ->assertSee('1 other lead due now')
         ->assertSee('0 rehashes due now');
@@ -194,7 +194,7 @@ test('a lead run with nothing presented says when it goes to rehash', function (
 
     proposalsCard($this->sam, $other->fresh())
         ->assertSeeHtml('data-test="pending-ownership"')
-        ->assertSee('Nothing is pending on this lead. After Fri, Oct 16 it goes to the Contact Center for rehash, unless a proposal is added, a return visit is booked or it is marked lost.');
+        ->assertSee('Nothing is pending on this lead. After Fri, Oct 16 it goes to the Contact Center for rehash, unless an estimate is marked presented, a return visit is booked or it is marked lost.');
 });
 
 /*

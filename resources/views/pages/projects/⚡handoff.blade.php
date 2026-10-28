@@ -98,7 +98,7 @@ new #[Title('Handoff to Production')] class extends Component {
         $questions = [
             'includedScope' => [__('1. What exactly is included?'), __('Rooms, sides of the house, surfaces, coats.')],
             'exclusions' => [__('2. What is not included, that the customer might assume is?'), __('Write "None" if there is nothing.')],
-            'promises' => [__('3. What did you promise the customer beyond the proposal?'), __('Dates, extras, touch-ups, a discount. Write "None" if there is nothing.')],
+            'promises' => [__('3. What did you promise the customer beyond the estimate?'), __('Dates, extras, touch-ups, a discount. Write "None" if there is nothing.')],
             'timing' => [__('4. When does the customer expect the work?'), __('Any date that must be hit or avoided.')],
             'access' => [__('5. Access'), __('Who will be home, gate or lockbox codes, parking, pets.')],
         ];

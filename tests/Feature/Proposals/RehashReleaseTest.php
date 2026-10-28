@@ -150,7 +150,7 @@ test('the day after its last pending proposal expires, the lead goes to the cont
     expect($return->isRehash)->toBeTrue();
     expect($return->headline)->toBe('Rehash: this lead has a bid that is still pending');
     expect($return->pitched)->toBe(['Whole exterior, $8,450. Still pending. Main objection: Wants to think it over. Expired yesterday, Thu, Oct 15.']);
-    expect($return->note)->toBe('Nothing was sold, lost or booked before the last pending proposal expired on Oct 15, 2026.');
+    expect($return->note)->toBe('Nothing was sold, lost or booked before the last pending estimate expired on Oct 15, 2026.');
 
     // Once.
     expect(app(RunQueueTick::class)->handle()['released'])->toBe(0);

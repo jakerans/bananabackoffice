@@ -57,7 +57,7 @@ class CorrectProposalResult
             $proposal = Proposal::query()->findOrFail($proposal->id);
 
             if ($proposal->lead_id !== $lead->id || $proposal->isAddedInError() || $proposal->result === ProposalResult::Pending) {
-                throw ValidationException::withMessages(['correctionNote' => __('This proposal has no result to correct.')]);
+                throw ValidationException::withMessages(['correctionNote' => __('This estimate has no result to correct.')]);
             }
 
             if ($lead->status === LeadStatus::Lost) {
@@ -86,6 +86,7 @@ class CorrectProposalResult
                 'result_by' => $actor->id,
                 'result_by_name' => $actor->name,
                 'sold_cents' => null,
+                'estimate_option_id' => null,
                 'loss_reason_id' => null,
                 'loss_reason_name' => null,
                 'lost_to' => null,

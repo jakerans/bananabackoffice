@@ -361,7 +361,7 @@ new #[Title('Calendar')] class extends Component {
         <div class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-5" data-test="calendar-pending">
             <div>
                 <flux:heading size="lg" level="2">{{ __('Pending bids') }}</flux:heading>
-                <flux:subheading>{{ __('Leads with a proposal still pending, soonest to expire first. When the last one expires the lead goes to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.') }}</flux:subheading>
+                <flux:subheading>{{ __('Leads with an estimate still pending, soonest to expire first. When the last one expires the lead goes to the Contact Center for rehash, unless a return visit is booked or it is sold or lost.') }}</flux:subheading>
             </div>
 
             <ul class="divide-y divide-zinc-200">

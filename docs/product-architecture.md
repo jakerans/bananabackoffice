@@ -294,22 +294,22 @@ Of attended appointments, how many actually receive a pricing/options presentati
 Use presentation evidence where possible; draft estimate alone is not enough.
 
 Added 2026-10-11 (LOCKED by decision 124):
-- Demo Rate is counted from appointments marked run. One with no proposal created counts against the salesperson until a proposal exists, and for them from the day it is created.
-- Close Rate counts wins against appointments, not proposals. Several proposals from one appointment with one sold is one win, with nothing counted against the others. Two accepted from one appointment is one win.
+- Demo Rate is counted from appointments marked run. One with no estimate presented counts against the salesperson until one is, and for them from the day it is presented.
+- Close Rate counts wins against appointments, not estimates. Several estimates from one appointment with one sold is one win, with nothing counted against the others. Two accepted from one appointment is one win.
 
 Added 2026-10-13 (slice 7 step 7d; build plan: slice-7-appointment-results-plan.md):
 - Built on Sales > Performance, for a chosen month at one Location, for everyone there or one salesperson: NSLI, Leads Issued, appointments run, Demo Rate, Close Rate, Sold Revenue, Cancellation Rate. A salesperson sees their own; a manager sees their Locations'.
-- Close Rate is demo to close (decision 135), counted for each Lead (decision 125): the Leads won in the month over the Leads demoed for the first time in the month. A Lead run with nothing presented counts against Demo Rate only. Several proposals for one Lead are one demo and at most one win. A Lead is won in the month its proposal was accepted, for the salesperson who had the Lead then (decision 134).
+- Close Rate is demo to close (decision 135), counted for each Lead (decision 125): the Leads won in the month over the Leads demoed for the first time in the month. A Lead run with nothing presented counts against Demo Rate only. Several estimates for one Lead are one demo and at most one win. A Lead is won in the month its estimate was accepted, for the salesperson who had the Lead then (decision 134).
 - The Sales funnel is three rates (decision 135): lead to appointment (booking; kept by channel with Marketing and Contact Center, 4.1 and 4.6, not built), appointment to demo (Demo Rate), demo to close (Close Rate).
 - NSLI is the sold amounts of the month over the Leads issued in the month, each after that month's corrections. There are no refunds to net out yet.
 - A month that has passed is not rewritten (decision 133). A sale corrected later, or a Lead Issued taken back later, stays in its month and comes off the month it was corrected in. Sales and their corrections are kept as lines that are never changed (`sale_entries`).
 - Not built: targets; the Leaderboard (5.8); a figure across all Locations at once.
-- Built in slice 15 (overnight under decision 155, merged 2026-10-15, decision 157): Average Job Size, the month's sold revenue over the proposals sold in it after corrections; Close-on-the-Spot Rate, of the Leads first demoed in the month the ones with something sold at that demo by the end of its day.
+- Built in slice 15 (overnight under decision 155, merged 2026-10-15, decision 157): Average Job Size, the month's sold revenue over the estimates sold in it after corrections; Close-on-the-Spot Rate, of the Leads first demoed in the month the ones with something sold at that demo by the end of its day.
 - Built in slice 9, step 9c (decision 137): Pending Rate, of the Leads first demoed in the month the ones that left that demo with nothing sold and something still open; % Pending with Rehash booked during the appointment, of those the ones with a return visit booked by the end of that day; and Rehash conversion, of the Leads released to Rehash in the month the ones sold since.
 - Attribution is LOCKED by decision 133: Lead Issued stays with the first
   salesperson who received that issued Lead; appointment figures follow the
   salesperson assigned when it ran; Sold Revenue and the win follow the
-  salesperson who owned the Lead when the proposal was sold. Corrections create
+  salesperson who owned the Lead when the estimate was sold. Corrections create
   auditable metric adjustments rather than silently rewriting history.
 
 5.3 Workspace
@@ -354,7 +354,7 @@ Google Calendar is the external conflict source; personal scheduling stays there
 Added 2026-10-11:
 - Built in slice 6: a list of upcoming appointments, cancelled Leads to rebook with the days left, and Leads released to the Contact Center. Rescheduling and cancelling are done on the Lead. Moving an appointment to another salesperson is a manager's.
 - Not built: confirmation, rehash, Google Calendar, a calendar grid, and the booking engine in 12 (today a person picks the salesperson and the time).
-- LOCKED (decisions 121 and 123): an appointment has a status of its own: cancelled, rescheduled, no-show, or run. This is separate from any proposal's result. One proposal can have several appointments and one appointment can produce several proposals.
+- LOCKED (decisions 121 and 123): an appointment has a status of its own: cancelled, rescheduled, no-show, or run. This is separate from any estimate's result. One estimate can have several appointments and one appointment can produce several estimates.
 
 5.5 Pending / Rehash
 Pending is a commercial status.
@@ -367,15 +367,15 @@ Current ownership/validity rule = LOCKED by stakeholder discovery; future
 changes remain configurable.
 
 Added 2026-10-13 from stakeholder discovery:
-- Proposal validity defaults to seven days and a salesperson may change it.
+- Estimate validity defaults to seven days and a salesperson may change it.
 - Sales ownership normally ends with that same expiry. On expiry, the Pending
   opportunity releases to Contact Center Rehash.
 
 Added 2026-10-13 (slice 9; build plan: slice-9-pending-rehash-plan.md; LOCKED by decision 137):
-- The days start the day the proposal was last presented. A Lead with several pending proposals stays with its salesperson until the last expires. A salesperson may move a proposal's day up to 30 days ahead; a manager to any day. A booked return visit keeps the Lead with the salesperson.
-- Built in step 9a: every pending proposal has a "valid until" day, shown with the days left on the Lead and in "Pending bids" on Sales > Calendar; the day can be changed; the salesperson is warned in the bell two days before the last day; the number of days is a Contact Center setting, starting at 7.
+- The days start the day the estimate was last presented. A Lead with several pending estimates stays with its salesperson until the last expires. A salesperson may move an estimate's day up to 30 days ahead; a manager to any day. A booked return visit keeps the Lead with the salesperson.
+- Built in step 9a: every pending estimate has a "valid until" day, shown with the days left on the Lead and in "Pending bids" on Sales > Calendar; the day can be changed; the salesperson is warned in the bell two days before the last day; the number of days is a Contact Center setting, starting at 7.
 - Built in step 9b: the day after a Lead's last day with its salesperson the timer releases it to the Contact Center's Rehash queue; the call center books a return visit (a new Lead Issued, as a cancelled Lead that is rebooked) or marks the Lead lost with a Sales loss reason; the salesperson it was released from can take it back. A Lead run with nothing presented has the same number of days and then goes to Rehash too.
-- A proposal's "valid until" and the salesperson's ownership stay separate, as above: a Lead is never released sooner than that number of days after it last became Appointment run.
+- An estimate's "valid until" and the salesperson's ownership stay separate, as above: a Lead is never released sooner than that number of days after it last became Appointment run.
 - Built in step 9c: Pending Rate, return visit booked at the appointment, and Rehash conversion, on Sales > Performance (5.2).
 
 5.6 After-action report
@@ -394,11 +394,12 @@ Appointment remains operationally incomplete until report is submitted.
 
 Added 2026-10-11 (LOCKED by decisions 121, 123 and 124; these change how the fields above are read):
 - The report first says what happened to the appointment: no-show, or run. (Cancelled and rescheduled are recorded when they happen, not here.)
-- An appointment has no result of its own. It shows as run. Only a proposal is Sold, Pending or Lost, and a proposal cannot be given a result before it exists. "Sold" is the word used for Won.
-- Run with no proposal created is a no-demo. Demo Rate (5.2) is counted from this and is to be watched.
-- One appointment can have several proposals and one proposal several appointments.
-- Build plan: slice-7-appointment-results-plan.md. Built so far (2026-10-12): marking an appointment run or no-show, and proposals (a name and a price, tied to the run appointment or appointments they were presented at). A no-show is treated as a cancellation by the customer (decision 125). Since step 7c (2026-10-13): each proposal is Pending, Sold or Lost, with the sold amount, the Lost Reason and the objection; a Lead shows Sold or Lost; a proposal can be corrected or marked "added in error" (decision 128); and the report itself is one short form opened from the appointment. The "system check whether rehash booked" is shown on the Lead, where the return visit is booked. Not built: the voice note (decision 125), and creating a Project when a sale is Sold (rulebook rule 13).
-- Close Rate is counted for each Lead, not each appointment (decision 125): a return visit that closes the sale does not lower it, and two proposals sold against one Lead are one win.
+- An appointment has no result of its own. It shows as run. Only an estimate is Sold, Pending or Lost, and an estimate cannot be given a result before it is presented. "Sold" is the word used for Won.
+- Run with no estimate presented is a no-demo. Demo Rate (5.2) is counted from this and is to be watched.
+- One appointment can have several estimates and one estimate several appointments.
+- Build plan: slice-7-appointment-results-plan.md. Built so far (2026-10-12): marking an appointment run or no-show, and proposals (a name and a price, tied to the run appointment or appointments they were presented at). A no-show is treated as a cancellation by the customer (decision 125). Since step 7c (2026-10-13): each estimate is Pending, Sold or Lost, with the sold amount, the Lost Reason and the objection; a Lead shows Sold or Lost; an estimate can be corrected or marked "added in error" (decision 128); and the report itself is one short form opened from the appointment. The "system check whether rehash booked" is shown on the Lead, where the return visit is booked. Not built: the voice note (decision 125), and creating a Project when a sale is Sold (rulebook rule 13).
+- Close Rate is counted for each Lead, not each appointment (decision 125): a return visit that closes the sale does not lower it, and two estimates sold against one Lead are one win.
+- Since step 31e (decision 207) the word is **Estimate**: what was a proposal is an estimate built in the Sales Workspace and presented at a run appointment, ticked in the after-action report or marked presented later on the Lead's Estimates card. It is Pending at its options' range of prices, Sold for the option the customer chose, or Lost; once sold or lost the estimate can no longer be changed. The code and the database keep the name "proposal" for the record of a presented estimate (question 5), and the proposals recorded by hand before then are kept, shown as "Recorded by hand" (question 4).
 
 Added 2026-10-12 (LOCKED by decision 126; this is what "operationally incomplete" stops):
 - Close out first. Once an appointment is over and has no answer, its Lead cannot be booked again, sent back, moved, returned to central or disqualified until someone says run or no-show.
@@ -534,15 +535,15 @@ Sold normal project:
 - exact dates typically solidified ~3–6 weeks before start
 
 Added 2026-10-13 (slice 8 step 8a; rulebook rule 13; decision 130; build plan: slice-8-projects-plan.md):
-- Built: a Project is made the moment a proposal is Sold, one for each sold proposal, with what was sold, for how much, for whom and where. It has its own page, and shows on the Lead and the customer. Its states are separate fields; so far only Production: New from Sales.
+- Built: a Project is made the moment an estimate is Sold, one for each sold estimate, with what was sold, for how much, for whom and where. It has its own page, and shows on the Lead and the customer. Its states are separate fields; so far only Production: New from Sales.
 - A corrected sale cancels its Project and keeps it; sold again, the same Project comes back. Jacob accepted this "for now".
 - Not built: the handoff questions and Production's Workspace (step 8b), the confirmation email or text, the Coordinator, colors, readiness, the schedule.
 - Decision 132 settles the step 8b handoff: structured scope, exclusions,
   promises, timing, access, colors, condition/prep and WNBET priorities are
   required before Production can take the Project; an optional final note is
-  allowed. A proposal selects exactly one customer property and its Project
+  allowed. An estimate selects exactly one customer property and its Project
   uses that property.
-- Built in slice 8 step 8b (2026-10-13): the property choice on a proposal; the handoff questions, the gate, the salesperson's prompt and next-morning reminder; Production > Workspace with three lists (waiting for handoff, new from Sales, pre-production); a Production Manager taking a job or a manager assigning one, each telling the new owner and the salesperson (20).
+- Built in slice 8 step 8b (2026-10-13): the property choice on an estimate; the handoff questions, the gate, the salesperson's prompt and next-morning reminder; Production > Workspace with three lists (waiting for handoff, new from Sales, pre-production); a Production Manager taking a job or a manager assigning one, each telling the new owner and the salesperson (20).
 - Still not built from 6.2 and 6.3: the confirmation email or text, the Coordinator, the deposit-paid handoff call, Color Readiness, the exact schedule, work orders and everything after.
 
 Added 2026-10-13 (slice 10; build plan: slice-10-pre-production-plan.md; LOCKED by decision 141):

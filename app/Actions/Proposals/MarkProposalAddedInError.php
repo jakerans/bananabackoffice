@@ -46,17 +46,17 @@ class MarkProposalAddedInError
             $proposal = Proposal::query()->findOrFail($proposal->id);
 
             if ($proposal->lead_id !== $lead->id || $proposal->isAddedInError()) {
-                throw ValidationException::withMessages(['addedInErrorNote' => __('This proposal is no longer here to be marked.')]);
+                throw ValidationException::withMessages(['addedInErrorNote' => __('This estimate is no longer here to be marked.')]);
             }
 
             if ($proposal->result !== ProposalResult::Pending) {
                 throw ValidationException::withMessages([
-                    'addedInErrorNote' => __('This proposal is :result. Correct its result first.', ['result' => mb_strtolower($proposal->result->label())]),
+                    'addedInErrorNote' => __('This estimate is :result. Correct its result first.', ['result' => mb_strtolower($proposal->result->label())]),
                 ]);
             }
 
             if ($note === '') {
-                throw ValidationException::withMessages(['addedInErrorNote' => __('Say why this proposal should not be here.')]);
+                throw ValidationException::withMessages(['addedInErrorNote' => __('Say why this estimate should not be here.')]);
             }
 
             $proposal->forceFill([

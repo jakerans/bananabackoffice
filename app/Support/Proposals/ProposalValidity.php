@@ -145,7 +145,7 @@ final class ProposalValidity
 
         // A day that does not exist, like the 31st of a short month, does not read back the same.
         if (! $day instanceof CarbonImmutable || $day->toDateString() !== $typed) {
-            throw ValidationException::withMessages([$field => __('Choose the day the proposal is valid until.')]);
+            throw ValidationException::withMessages([$field => __('Choose the day the estimate is valid until.')]);
         }
 
         if ($current !== null && $day->equalTo($current)) {

@@ -235,7 +235,7 @@ test('someone who may only see the Lead sees its estimate read-only', function (
 test('from the page, the salesperson builds an option, copies it and removes a surface after confirming', function () {
     $this->actingAs($this->sam);
 
-    Livewire::test('pages::leads.estimates', ['lead' => $this->lead])
+    Livewire::test('pages::leads.proposals', ['lead' => $this->lead])
         ->set('estimateType', EstimateType::ResidentialInterior->value)
         ->call('start')
         ->assertRedirect();

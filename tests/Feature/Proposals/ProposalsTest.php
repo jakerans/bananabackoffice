@@ -96,7 +96,7 @@ test('adding a proposal records what was pitched, the price and the appointment,
     // Valid for seven days from the day it was presented (decision 137).
     expect($event->values_after)->toEqual(['proposal' => 'Whole exterior', 'price' => '$8,450', 'presented_at' => ['2026-10-08T19:00:00+00:00'], 'valid_until' => '2026-10-15']);
     expect(CustomerActivity::actions())->toContain(AuditAction::LeadProposalAdded);
-    expect(CustomerActivity::label(AuditAction::LeadProposalAdded))->toBe('Proposal added');
+    expect(CustomerActivity::label(AuditAction::LeadProposalAdded))->toBe('Estimate presented');
 });
 
 test('the price is read as it is typed and kept in cents', function (string $typed, int $cents, string $shown) {
@@ -247,11 +247,11 @@ test('a proposal is recorded at a return visit later, once', function () {
 
     // Presented again, it is valid for seven days from the return visit (decision 137).
     expect($event->values_after)->toEqual(['proposal' => 'Whole exterior', 'presented_at' => '2026-10-12T14:00:00+00:00', 'valid_until' => '2026-10-19']);
-    expect(CustomerActivity::label(AuditAction::LeadProposalPresentedAgain))->toBe('Proposal presented again');
+    expect(CustomerActivity::label(AuditAction::LeadProposalPresentedAgain))->toBe('Estimate presented again');
 
     // The same pair is not kept twice.
     expect(fn () => app(PresentProposalAgain::class)->handle($this->lead->fresh(), $proposal, $second->id, $this->sam))
-        ->toThrow(ValidationException::class, 'This proposal is already recorded at that appointment.');
+        ->toThrow(ValidationException::class, 'This estimate is already recorded at that appointment.');
     expect($proposal->appointments()->count())->toBe(2);
 });
 
@@ -267,7 +267,7 @@ test('a proposal is recorded again only at a run appointment of its own lead, by
     expect(fn () => app(PresentProposalAgain::class)->handle($lead, $proposal, $upcoming->id, $this->sam))->toThrow(ValidationException::class, $refusal);
     expect(fn () => app(PresentProposalAgain::class)->handle($lead, $proposal, $theirs->id, $this->sam))->toThrow(ValidationException::class, $refusal);
     expect(fn () => app(PresentProposalAgain::class)->handle($lead, $proposal, null, $this->sam))->toThrow(ValidationException::class, $refusal);
-    expect(fn () => app(PresentProposalAgain::class)->handle($other->fresh(), $proposal, $theirs->id, $this->manager))->toThrow(ValidationException::class, 'This proposal belongs to another lead.');
+    expect(fn () => app(PresentProposalAgain::class)->handle($other->fresh(), $proposal, $theirs->id, $this->manager))->toThrow(ValidationException::class, 'This estimate belongs to another lead.');
     expect(fn () => app(PresentProposalAgain::class)->handle($lead, $proposal, $this->appointment->id, $this->agent))->toThrow(AuthorizationException::class);
 
     expect($proposal->appointments()->count())->toBe(1);
@@ -311,7 +311,7 @@ test('the salesperson is told in the app when a manager records a proposal at th
     Notification::assertNotSentTo($this->manager, AppointmentChanged::class);
     Notification::assertSentTo($this->sam, AppointmentChanged::class, fn (AppointmentChanged $notice) => $notice->kind === AppointmentChanged::PROPOSAL_RECORDED
         && $notice->channel === AppointmentChanged::IN_APP
-        && $notice->toArray($this->sam)['message'] === 'A manager recorded a proposal at your appointment on Thu, Oct 8, 2026 at 3:00 PM EDT.');
+        && $notice->toArray($this->sam)['message'] === 'A manager recorded an estimate at your appointment on Thu, Oct 8, 2026 at 3:00 PM EDT.');
 
     $second = returnVisit($this->lead, $this->sam);
     app(PresentProposalAgain::class)->handle($this->lead->fresh(), $proposal, $second->id, $this->manager);

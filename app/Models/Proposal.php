@@ -21,6 +21,11 @@ use LogicException;
  * and was presented at one or more of that Lead's run appointments (decisions
  * 121 and 125).
  *
+ * Since step 31e it is the record of an estimate that was presented: people
+ * see "Estimate", and the code keeps "proposal" (decision 207, question 5).
+ * Those recorded by hand before then have no estimate and are shown as
+ * "Recorded by hand" (question 4).
+ *
  * It is added only by the actions in App\Actions\Proposals and is never
  * deleted. A run appointment with at least one proposal counts for Demo Rate
  * (decision 124).
@@ -50,9 +55,14 @@ use LogicException;
  * @property int|null $added_in_error_by
  * @property string|null $added_in_error_by_name
  * @property string|null $added_in_error_note
+ * @property int|null $estimate_id The estimate it records; none for one recorded by hand before step 31e.
+ * @property int|null $estimate_option_id The option the customer chose, once sold.
+ * @property int|null $price_from_cents Its estimate's lowest option price; price_cents is the highest.
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Lead $lead
+ * @property-read Estimate|null $estimate
+ * @property-read EstimateOption|null $option
  */
 class Proposal extends Model
 {
@@ -83,6 +93,7 @@ class Proposal extends Model
             'result_at' => 'datetime',
             'valid_until' => 'date',
             'added_in_error_at' => 'datetime',
+            'price_from_cents' => 'integer',
         ];
     }
 
@@ -110,6 +121,34 @@ class Proposal extends Model
     public function property(): BelongsTo
     {
         return $this->belongsTo(Property::class);
+    }
+
+    /**
+     * The estimate it records, when it was not recorded by hand.
+     *
+     * @return BelongsTo<Estimate, $this>
+     */
+    public function estimate(): BelongsTo
+    {
+        return $this->belongsTo(Estimate::class);
+    }
+
+    /**
+     * The option of its estimate the customer chose, once sold.
+     *
+     * @return BelongsTo<EstimateOption, $this>
+     */
+    public function option(): BelongsTo
+    {
+        return $this->belongsTo(EstimateOption::class, 'estimate_option_id');
+    }
+
+    /**
+     * Whether it records an estimate, rather than having been recorded by hand.
+     */
+    public function isFromEstimate(): bool
+    {
+        return $this->estimate_id !== null;
     }
 
     /**
@@ -175,10 +214,20 @@ class Proposal extends Model
     }
 
     /**
-     * The price in dollars, as it is shown.
+     * The price in dollars, as it is shown. An estimate's is its options'
+     * range while it is not sold, and the chosen option's once it is
+     * (docs/slice-31-estimating-plan.md, step 31e).
      */
     public function price(): string
     {
+        if ($this->isFromEstimate() && $this->sold_cents !== null && $this->result === ProposalResult::Sold) {
+            return Money::format($this->sold_cents);
+        }
+
+        if ($this->price_from_cents !== null && $this->price_from_cents !== $this->price_cents) {
+            return __(':from to :to', ['from' => Money::format($this->price_from_cents), 'to' => Money::format($this->price_cents)]);
+        }
+
         return Money::format($this->price_cents);
     }
 }

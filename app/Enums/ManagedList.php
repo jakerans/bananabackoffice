@@ -73,7 +73,7 @@ enum ManagedList: string
             self::DisqualificationReasons => 'Why a lead did not become a legitimate sales opportunity. Not for sales that were lost.',
             self::SalesLossReasons => 'Why a qualified opportunity was lost. Not for leads that were disqualified.',
             self::CancellationReasons => 'Why an appointment was cancelled. Not for leads that were disqualified or sales that were lost.',
-            self::Objections => 'What held a customer back from buying, for a proposal that is lost or still pending. Not why the sale was lost.',
+            self::Objections => 'What held a customer back from buying, for an estimate that is lost or still pending. Not why the sale was lost.',
         };
     }
 

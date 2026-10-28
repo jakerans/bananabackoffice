@@ -11,6 +11,7 @@ use App\Enums\AuditAction;
 use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
 use App\Enums\ProposalResult;
+use App\Models\EstimateOption;
 use App\Models\Lead;
 use App\Models\Proposal;
 use App\Models\User;
@@ -40,7 +41,8 @@ class RecordProposalResult
      * 125). The salesperson the Lead is with, or a manager.
      *
      * - Sold: with the sold amount, which starts at the proposal's price and
-     *   can differ. The Lead then shows Sold (answer 6 and 9). Its other
+     *   can differ; an estimate's is the price of the option the customer
+     *   chose (step 31e; decision 207). The Lead then shows Sold (answer 6 and 9). Its other
      *   proposals stay as they are. A Project is made for the proposal in the
      *   same save (decision 130), and the sale is written to the record the
      *   Sales figures count from (decision 134). Its Brand Ambassador
@@ -90,7 +92,7 @@ class RecordProposalResult
         $field = $prefix.'proposalResult';
 
         if ($proposal->lead_id !== $lead->id) {
-            throw ValidationException::withMessages([$field => __('This proposal belongs to another lead.')]);
+            throw ValidationException::withMessages([$field => __('This estimate belongs to another lead.')]);
         }
 
         if ($result === null) {
@@ -98,17 +100,17 @@ class RecordProposalResult
         }
 
         if ($proposal->isAddedInError()) {
-            throw ValidationException::withMessages([$field => __('This proposal was marked "added in error" and has no result.')]);
+            throw ValidationException::withMessages([$field => __('This estimate was marked "added in error" and has no result.')]);
         }
 
         if ($proposal->result !== ProposalResult::Pending) {
             throw ValidationException::withMessages([
-                $field => __('This proposal is already :result. A manager can correct that.', ['result' => mb_strtolower($proposal->result->label())]),
+                $field => __('This estimate is already :result. A manager can correct that.', ['result' => mb_strtolower($proposal->result->label())]),
             ]);
         }
 
         if (! $lead->isWithSales() && $lead->status !== LeadStatus::Sold) {
-            throw ValidationException::withMessages([$field => __('This lead is no longer with Sales, so its proposals cannot be given a result.')]);
+            throw ValidationException::withMessages([$field => __('This lead is no longer with Sales, so its estimates cannot be given a result.')]);
         }
 
         $moment = now();
@@ -122,12 +124,23 @@ class RecordProposalResult
                 ]);
             }
 
+            // An estimate is sold for the option the customer chose, at its price (step 31e; decision 207).
+            $option = $proposal->isFromEstimate()
+                ? EstimateOption::query()->where('estimate_id', $proposal->estimate_id)->find((int) ($details['optionId'] ?? 0))
+                    ?? throw ValidationException::withMessages([$prefix.'optionId' => __('Choose the option the customer chose.')])
+                : null;
+
             $typed = trim((string) ($details['soldAmount'] ?? ''));
-            $cents = $typed === '' ? $proposal->price_cents : ProposalInput::cents($typed, $prefix.'soldAmount', __('Enter the sold amount in dollars, like 8450 or 8,450.50.'));
+            $cents = match (true) {
+                $option !== null => $option->total_cents,
+                $typed === '' => $proposal->price_cents,
+                default => ProposalInput::cents($typed, $prefix.'soldAmount', __('Enter the sold amount in dollars, like 8450 or 8,450.50.')),
+            };
             $with = ResultDetails::forSold($details);
             $package = AmbassadorPackage::fromInput($details, $prefix);
+            $presentedPrice = $proposal->price();
 
-            $proposal->forceFill([...$recorded, 'result' => ProposalResult::Sold, 'sold_cents' => $cents, 'result_note' => $with->note])->save();
+            $proposal->forceFill([...$recorded, 'result' => ProposalResult::Sold, 'sold_cents' => $cents, 'estimate_option_id' => $option?->id, 'result_note' => $with->note])->save();
 
             // A sold proposal has a Project of its own from this moment (rulebook, rule 13; decision 130).
             $project = $this->createProjectForSoldProposal->apply($lead, $proposal, $actor);
@@ -150,7 +163,7 @@ class RecordProposalResult
                 $lead,
                 actor: $actor,
                 before: ['status' => $from->value, 'result' => ProposalResult::Pending->value],
-                after: ['status' => $lead->status->value, 'result' => ProposalResult::Sold->value, 'proposal' => $proposal->name, 'price' => $proposal->price(), 'sold_for' => Money::format($cents)],
+                after: array_filter(['status' => $lead->status->value, 'result' => ProposalResult::Sold->value, 'proposal' => $proposal->name, 'option' => $option?->name, 'price' => $presentedPrice, 'sold_for' => Money::format($cents)], fn (?string $value): bool => $value !== null),
                 location: $lead->location,
                 reason: $with->note,
             );

@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\Permission;
+use App\Enums\ProposalResult;
 use App\Models\Estimate;
 use App\Models\Lead;
 use App\Models\User;
@@ -12,7 +13,9 @@ use Illuminate\Support\Facades\Gate;
  * Who may see and build a Lead's estimates (docs/slice-31-estimating-plan.md,
  * step 31c; decision 204): as for its proposals, anyone who may see the Lead
  * sees them; the salesperson the Lead is with, or a manager where the Lead
- * is, builds them; only a manager changes an estimate's hourly rate.
+ * is, builds them; only a manager changes an estimate's hourly rate. Once
+ * sold or lost, nobody changes it (step 31e; decision 207): a manager first
+ * corrects the result.
  */
 class EstimatePolicy
 {
@@ -31,7 +34,10 @@ class EstimatePolicy
 
     public function update(User $user, Estimate $estimate): bool
     {
-        return Gate::forUser($user)->allows('manageProposals', $estimate->lead);
+        // Read as it is now, not as it was when the estimate was loaded.
+        $result = $estimate->proposal()->first()?->result;
+
+        return ($result === null || $result === ProposalResult::Pending) && Gate::forUser($user)->allows('manageProposals', $estimate->lead);
     }
 
     /**

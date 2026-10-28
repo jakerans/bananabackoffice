@@ -4149,6 +4149,17 @@ into `main` and deploys to staging. Listing the rates' customer wording
 under each room was offered and is still open; until Jacob asks for it, the
 presentation shows rooms by name only (decision 207, question 1).
 
+## 209. Merge 31e (2026-10-28)
+
+**Decided by Jacob:** "yes merge 31e". Step 31e, estimates taking over from
+proposals, merges into `main` and deploys to staging, as built
+([slice-31-estimating-plan.md](slice-31-estimating-plan.md), "Step 31e as
+built"): what was presented is ticked from the Lead's estimates, sold for the
+option chosen; one Estimates card replaces the Proposals card; "Estimate"
+wherever people read "proposal". An estimate presented is for the Lead's own
+property, moved with "Change" on the card when the customer has several.
+Slice 31 is complete.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

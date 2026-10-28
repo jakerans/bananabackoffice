@@ -481,7 +481,7 @@ new #[Title('Project')] class extends Component {
                 <span class="mt-1 block">
                     {{ $project->cancelled_by_name ?? __('Unknown') }}@if ($project->cancelled_at !== null) &middot; <x-local-time :at="$project->cancelled_at" />@endif
                 </span>
-                <span class="mt-1 block">{{ __('It is kept on the record. If the proposal is sold again, this project comes back.') }}</span>
+                <span class="mt-1 block">{{ __('It is kept on the record. If the estimate is sold again, this project comes back.') }}</span>
             </flux:callout.text>
         </flux:callout>
     @endif
@@ -566,7 +566,7 @@ new #[Title('Project')] class extends Component {
                     $answers = [
                         __('What is included') => $handoff->included_scope,
                         __('What is not included') => $handoff->exclusions,
-                        __('Promised beyond the proposal') => $handoff->promises,
+                        __('Promised beyond the estimate') => $handoff->promises,
                         __('When the customer expects the work') => $handoff->timing,
                         __('Access') => $handoff->access,
                         __('Colors') => __($handoff->colors_status->label()).($handoff->colors_details === null ? '' : ': '.$handoff->colors_details),
@@ -724,7 +724,7 @@ new #[Title('Project')] class extends Component {
 
             <dl class="flex flex-col gap-4">
                 <div>
-                    <dt class="text-sm text-zinc-500">{{ __('Proposal') }}</dt>
+                    <dt class="text-sm text-zinc-500">{{ __('Estimate') }}</dt>
                     <dd class="text-ink">{{ $proposal->name }}</dd>
                     <dd class="text-sm text-zinc-600">{{ __('Priced at :price', ['price' => $proposal->price()]) }}</dd>
                 </div>
@@ -916,7 +916,7 @@ new #[Title('Project')] class extends Component {
             <form wire:submit="saveEdit" class="flex flex-col gap-5">
                 <div>
                     <flux:heading size="lg">{{ __('Edit this project') }}</flux:heading>
-                    <flux:subheading>{{ __('The title is how the job is named in every list. What was sold and for how much come from the proposal and are not changed here.') }}</flux:subheading>
+                    <flux:subheading>{{ __('The title is how the job is named in every list. What was sold and for how much come from the estimate and are not changed here.') }}</flux:subheading>
                 </div>
 
                 <flux:input wire:model="projectTitle" maxlength="{{ Project::TITLE_LENGTH }}" :label="__('Title')" data-test="project-title-field" />

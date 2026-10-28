@@ -1904,9 +1904,8 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
         <livewire:pages::leads.appointment :lead="$lead" :key="'appointment-'.$lead->id" />
 
+        {{-- The Estimates card, which took over the Proposals card (step 31e; decision 207). --}}
         <livewire:pages::leads.proposals :lead="$lead" :key="'proposals-'.$lead->id" />
-
-        <livewire:pages::leads.estimates :lead="$lead" :key="'estimates-'.$lead->id" />
 
         <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5">
             <flux:heading size="lg" level="2">{{ __('Where it came from') }}</flux:heading>

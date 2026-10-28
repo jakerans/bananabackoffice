@@ -75,7 +75,8 @@ class AuditLine
             $field = (string) $field;
 
             $rows[] = [
-                'field' => __(Str::headline(Str::replaceLast('_cents', '', $field))),
+                // Recorded as "proposal"; read as "Estimate" (step 31e; decision 207, question 5).
+                'field' => __(Str::headline(str_replace('proposal', 'estimate', Str::replaceLast('_cents', '', $field)))),
                 'before' => self::value($field, $before[$field] ?? null),
                 'after' => self::value($field, $after[$field] ?? null),
             ];
