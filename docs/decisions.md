@@ -4160,6 +4160,28 @@ wherever people read "proposal". An estimate presented is for the Lead's own
 property, moved with "Change" on the card when the customer has several.
 Slice 31 is complete.
 
+## 210. The agreement is next; PaintScout's test estimates archived (2026-10-29)
+
+**Decided by Jacob,** on the plan check after slice 31: "delete test
+estimates. 1: your recc 2: yes take from paintscout 3: i think it gets sent
+to them once they sign. so yes we'll need email but we can set that up
+later. not necessary right now".
+
+1. **The customer signs the agreement on the tablet,** with a finger, in
+   Backoffice.
+2. **Its wording is ABQ's "2026 CONTRACT" from PaintScout,** imported from
+   the saved settings file, kept outside the repository.
+3. **The customer is emailed a copy once they sign, later:** email to
+   customers is set up afterwards, not in this slice.
+4. **The eight PaintScout test estimates (#38 to #43, #45, #46) are
+   archived** in ABQ by the implementation agent. PaintScout offers Archive,
+   which can be undone, or Delete; Archive was used. Their eight test
+   contacts ("Backoffice Test 01" to "08") can only be deleted, which cannot
+   be undone, so they are left for Jacob.
+5. **Slice 33, the agreement, is proposed**
+   ([slice-33-agreement-plan.md](slice-33-agreement-plan.md)) and waits for
+   Jacob's approval and his answers to its five questions.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
