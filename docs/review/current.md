@@ -3,28 +3,58 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-28 · **Branch:** `main`
+**Updated:** 2026-10-29 · **Branch:** `main`
 
-**State:** step 31e, estimates take over from proposals, is merged and on
-staging (decision 209). Slice 31 is complete. As built:
-[../slice-31-estimating-plan.md](../slice-31-estimating-plan.md), "Step 31e
-as built".
+**State:** slice 31, Estimating, is complete and on staging (decision 209).
+This is the plan check after it, against
+[../product-architecture.md](../product-architecture.md). Nothing is being
+built until Jacob chooses the next step.
 
-## In the browser (Jacob, on staging)
+## Plan check after slice 31
 
-1. Open a sample lead whose appointment waits for its report, with an
-   estimate on it; open the report: Run, Yes, tick the estimate, Still
-   pending, save.
-2. On the lead's Estimates card: the range of prices and Pending. Press
-   **Sold**, choose an option, Mark sold: the card shows the option and its
-   Project.
-3. Open the estimate: it says it is sold and can no longer be changed.
+**What 5.3, the Sales Workspace, lists, and where it stands:**
 
-## Next
+| 5.3 lists | Today |
+| --- | --- |
+| Appointment context | Built: the estimate is started and opened from the Lead. |
+| Discovery (WNBET) | Asked only at the handoff (8b), after the sale; nothing during the appointment. |
+| Measurements, pricing engine, options, presentation | Built in slice 31. |
+| **Agreement** | **Not built.** "Sold" is a salesperson pressing a button; nothing is signed. |
+| Deposit | Recorded on the Project from QuickBooks invoices (slice 17); nothing is taken in the home. |
+| After-action report | Built (slice 7), with estimates since 31e. |
 
-- The plan check after slice 31, against
-  [../product-architecture.md](../product-architecture.md), and the next
-  step proposed from it.
+**Also left out of slice 31 on purpose:** a copy of the estimate for the
+customer (PDF or email); changing discounts, tax rates, area templates and
+line item templates in Settings (read-only today); photos and notes on an
+estimate; Commercial estimates; working without an internet connection.
+
+**Built that the plan does not describe:** production rates and a price book
+for each Location, managed in Backoffice, and the one-time PaintScout import
+(Jacob's request, decision 196).
+
+**What still keeps PaintScout in use:** the signed contract (ABQ's PaintScout
+holds a "2026 CONTRACT" for interior and exterior work), the customer's
+copy, and changing discounts and tax rates.
+
+## Proposed next: the agreement (5.3; also 6.6, 6.7 and 13)
+
+The plan's last unbuilt piece of the selling flow, and what the change orders
+of slice 18 already amend ("amendment to accepted agreement"). In outline:
+the option the customer chose, with the contract's wording, signed by the
+customer, kept unchanged, and marking the estimate Sold.
+
+**Decisions needed from Jacob before a plan is written:**
+
+1. **How the customer signs:** with a finger on the tablet in Backoffice
+   (recommended, since the estimate is already on it), or on paper with the
+   signed copy attached, as change orders are today.
+2. **The contract's wording:** taken from ABQ's "2026 CONTRACT" in PaintScout
+   (kept outside the repository), or from somewhere else.
+3. **Whether the customer gets a copy now** (needs email to customers), or
+   later.
+
+**Other candidates, smaller:** changing discounts, tax rates and templates in
+Settings; or slice 32, Reports, which waits for Jacob's answers.
 
 ## Also waiting for Jacob
 
@@ -34,5 +64,6 @@ as built".
   insurance deduction moves (decision 202, point 3).
 - QuickBooks's live keys, after Intuit's review.
 - 30c, recovery and first use, when he chooses.
-- Slice 32, Reports, waits for his answers.
 - The app's top bar is wider than a phone screen on every page.
+- Whether the eight PaintScout test estimates (#38 to #43, #45, #46) are
+  removed from ABQ.
