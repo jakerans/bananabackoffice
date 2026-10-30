@@ -141,10 +141,12 @@ test('unbuilt sections are shown without a link', function () {
     $this->actingAs($owner)
         ->get(route('sales.performance'))
         ->assertOk()
-        ->assertSee('Commissions')
+        ->assertSee('Reports')
         ->assertSee('aria-disabled="true"', escape: false)
-        ->assertDontSee('/sales/commissions')
-        ->assertDontSee('/sales/workspace');
+        ->assertDontSee('/sales/reports')
+        // Built in slice 34 (step 34a): the Workspace's Today, and Commissions at "My pay".
+        ->assertSee('/sales/workspace')
+        ->assertSee(route('pay'), escape: false);
 });
 
 test('the center switcher does not offer centers the staff member cannot open', function () {

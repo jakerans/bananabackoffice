@@ -91,7 +91,7 @@ test('a section with sub-sections opens on its designated primary sub-section', 
     expect(app(Navigation::class)->find($section)->primaryChild()->id)->toBe($primary);
 })->with([
     'contact center' => ['marketing.call_center', 'shared.leads'],
-    'sales workspace' => ['sales.workspace', 'shared.leads'],
+    'sales workspace' => ['sales.workspace', 'sales.workspace.today'],
     'cash management' => ['finance.cash', 'finance.cash.receivables'],
     'settings' => ['settings', 'settings.users'],
 ]);

@@ -92,6 +92,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // like Leads; every action on it checks the permission again and each Lead by its own location.
     Route::livewire('marketing/contact-center/queue', 'pages::marketing.call-queue')->can(Permission::WorkLeadQueue)->name('marketing.call_center.queue');
     Route::livewire('sales/calendar', 'pages::sales.calendar')->can(Permission::SalesAccess)->name('sales.calendar');
+    // Sales > Workspace > Today: the salesperson's day (slice 34, step 34a; decision 212).
+    Route::livewire('sales/workspace', 'pages::sales.workspace')->can(Permission::SalesAccess)->name('sales.workspace');
     Route::livewire('sales/performance-board', 'pages::sales.performance')->can(Permission::SalesAccess)->name('sales.performance');
     // Marketing spend, typed in until ad platforms are connected (slice 25, step 25a).
     Route::livewire('marketing/spend', 'pages::marketing.spend')->can(Permission::MarketingSpendManage)->name('marketing.performance.spend');
