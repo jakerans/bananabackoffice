@@ -142,7 +142,7 @@ new class extends Component {
     #[Computed]
     public function proposals(): Collection
     {
-        return $this->lead->proposals()->with(['appointments', 'property', 'option', 'estimate.options', 'project.location', 'project.handoff'])->get();
+        return $this->lead->proposals()->with(['appointments', 'property', 'option', 'agreement', 'estimate.options', 'project.location', 'project.handoff'])->get();
     }
 
     /**
@@ -775,6 +775,17 @@ new class extends Component {
                                 <flux:badge size="sm" color="zinc" data-test="recorded-by-hand">{{ __('Recorded by hand') }}</flux:badge>
                             @endif
                         </div>
+
+                        {{-- Signed on the tablet, or sold without it (slice 33, step 33b; decision 211, question 2). --}}
+                        @if ($proposal !== null && $proposal->result === ProposalResult::Sold)
+                            @if ($proposal->agreement !== null)
+                                <flux:link :href="route('leads.agreement', [$lead, $proposal->agreement])" wire:navigate class="text-sm" data-test="signed-agreement-link">
+                                    {{ __('Signed agreement: :name, :when', ['name' => $proposal->agreement->signer_name, 'when' => $proposal->agreement->signed_at->copy()->timezone(config('app.display_timezone'))->format('M j, Y')]) }}
+                                </flux:link>
+                            @else
+                                <flux:text class="text-sm" data-test="not-signed">{{ __('Not signed in Backoffice') }}</flux:text>
+                            @endif
+                        @endif
 
                         @if ($proposal !== null)
                             {{-- A sold estimate has a Project of its own (decision 130). --}}

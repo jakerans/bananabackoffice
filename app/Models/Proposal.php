@@ -63,6 +63,7 @@ use LogicException;
  * @property-read Lead $lead
  * @property-read Estimate|null $estimate
  * @property-read EstimateOption|null $option
+ * @property-read Agreement|null $agreement The one signed for it, unless void.
  */
 class Proposal extends Model
 {
@@ -149,6 +150,18 @@ class Proposal extends Model
     public function isFromEstimate(): bool
     {
         return $this->estimate_id !== null;
+    }
+
+    /**
+     * The agreement the customer signed for it, unless it was made void
+     * (docs/slice-33-agreement-plan.md, step 33b). A sale marked Sold without
+     * signing in Backoffice has none.
+     *
+     * @return HasOne<Agreement, $this>
+     */
+    public function agreement(): HasOne
+    {
+        return $this->hasOne(Agreement::class)->whereNull('agreements.voided_at')->latestOfMany('signed_at');
     }
 
     /**

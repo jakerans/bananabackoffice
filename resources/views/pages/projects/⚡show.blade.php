@@ -105,7 +105,7 @@ new #[Title('Project')] class extends Component {
     #[Computed]
     public function project(): Project
     {
-        return Project::query()->with(['location', 'account', 'contact', 'property', 'services', 'proposal', 'lead', 'handoff', 'timeframes'])->findOrFail($this->projectId);
+        return Project::query()->with(['location', 'account', 'contact', 'property', 'services', 'proposal.agreement', 'lead', 'handoff', 'timeframes'])->findOrFail($this->projectId);
     }
 
     /**
@@ -739,6 +739,21 @@ new #[Title('Project')] class extends Component {
                     <dt class="text-sm text-zinc-500">{{ __('Salesperson') }}</dt>
                     <dd class="text-ink" data-test="project-salesperson">{{ $project->salesperson_name ?? __('Nobody recorded') }}</dd>
                 </div>
+
+                {{-- Signed on the tablet, or sold without it (slice 33, step 33b; decision 211, question 2). --}}
+                @unless ($project->isCancelled())
+                    <div data-test="project-agreement">
+                        <dt class="text-sm text-zinc-500">{{ __('Agreement') }}</dt>
+                        @if ($proposal->agreement !== null)
+                            <dd class="text-ink">
+                                <flux:link :href="route('leads.agreement', [$project->lead_id, $proposal->agreement])" wire:navigate data-test="project-agreement-link">{{ __('Signed by :name', ['name' => $proposal->agreement->signer_name]) }}</flux:link>
+                            </dd>
+                            <dd class="text-sm text-zinc-600"><x-local-time :at="$proposal->agreement->signed_at" /></dd>
+                        @else
+                            <dd class="text-ink">{{ __('Not signed in Backoffice') }}</dd>
+                        @endif
+                    </div>
+                @endunless
 
                 <div>
                     <dt class="text-sm text-zinc-500">{{ __('Presented at') }}</dt>

@@ -347,6 +347,17 @@ Added 2026-10-13 from stakeholder discovery:
   2026-10-13: the after-action report asks why nothing was presented, in the
   salesperson's own words, and it counts as a no-demo whatever is written.
 
+Added 2026-10-29 (slice 33; decisions 210 and 211; build plan:
+slice-33-agreement-plan.md):
+- Built: the agreement. The customer signs on the tablet, at the
+  appointment, for the option chosen in the presentation, with Banana's
+  contract wording (versions in Settings > Pricing Settings > Agreement
+  wording, first imported from PaintScout). Signing marks the appointment
+  run, presents the estimate and sells it for that option; the signed
+  agreement is kept unchanged, void if the sale is corrected. The deposit due
+  is shown, not collected. Not built: the customer's emailed copy, signing by
+  a link (13), and taking the deposit at signing.
+
 5.4 Calendar
 Salespeople manage their own confirmation, rescheduling, cancellations, rehashes, and schedule.
 Google Calendar is the external conflict source; personal scheduling stays there.

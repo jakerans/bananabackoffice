@@ -45,6 +45,7 @@ use LogicException;
  * @property LeadStatus $previous_status What the Lead was a moment before the booking.
  * @property int|null $previous_assignee_id
  * @property bool $previous_in_queue Whether the booking took the Lead out of the call queue.
+ * @property bool $rest_of_report_due Marked run when the customer signed at it; the rest of its after-action report is still due (slice 33, step 33b).
  * @property Carbon|null $state_changed_at
  * @property int|null $state_changed_by
  * @property string|null $state_changed_by_name
@@ -107,6 +108,7 @@ class Appointment extends Model
             'state' => AppointmentState::class,
             'previous_status' => LeadStatus::class,
             'previous_in_queue' => 'boolean',
+            'rest_of_report_due' => 'boolean',
             'state_changed_at' => 'datetime',
             'close_out_reminded_at' => 'datetime',
             'no_demo_reason_at' => 'datetime',

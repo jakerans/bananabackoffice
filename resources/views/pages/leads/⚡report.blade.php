@@ -5,6 +5,7 @@ use App\Actions\Proposals\SubmitAfterActionReport;
 use App\Enums\AppointmentState;
 use App\Enums\LeadStatus;
 use App\Enums\ProposalResult;
+use App\Models\Agreement;
 use App\Models\Appointment;
 use App\Models\Estimate;
 use App\Models\Lead;
@@ -79,6 +80,12 @@ new #[Title('After-action report')] class extends Component {
             return;
         }
 
+        // Marked run when the customer signed: what happened is already known (slice 33, step 33b).
+        if ($this->rest) {
+            $this->outcome = AppointmentState::Run->value;
+            $this->presented = 'yes';
+        }
+
         foreach ($this->newEstimates as $estimate) {
             $this->estimates[$estimate->id] = self::BLANK;
         }
@@ -115,7 +122,29 @@ new #[Title('After-action report')] class extends Component {
     #[Computed]
     public function waiting(): bool
     {
-        return $this->lead->status === LeadStatus::AppointmentBooked && $this->appointment->awaitsCloseOutAt(now());
+        return $this->rest || ($this->lead->status === LeadStatus::AppointmentBooked && $this->appointment->awaitsCloseOutAt(now()));
+    }
+
+    /**
+     * Whether the customer signed at the appointment, so it was marked run
+     * then, and only the rest of the report is still due (slice 33, step 33b;
+     * decision 211, question 1).
+     */
+    #[Computed]
+    public function rest(): bool
+    {
+        return $this->appointment->rest_of_report_due && $this->appointment->state === AppointmentState::Run;
+    }
+
+    /**
+     * The agreements signed at this appointment.
+     *
+     * @return Collection<int, Agreement>
+     */
+    #[Computed]
+    public function signedHere(): Collection
+    {
+        return Agreement::query()->where('appointment_id', $this->appointmentId)->whereNull('voided_at')->oldest('signed_at')->get();
     }
 
     /**
@@ -180,6 +209,7 @@ new #[Title('After-action report')] class extends Component {
         $lead = $this->lead->fresh();
 
         Flux::toast(variant: 'success', text: match (true) {
+            $this->rest => __('Report saved.'),
             $this->outcome !== AppointmentState::Run->value => __('Report saved: no-show. The lead stays with its salesperson to be booked again.'),
             $lead->status === LeadStatus::Sold => __('Report saved. The lead now shows Sold.'),
             $this->presented === 'no' => __('Report saved: run, nothing presented.'),
@@ -222,6 +252,17 @@ new #[Title('After-action report')] class extends Component {
     <form wire:submit="submit" class="flex flex-col gap-6">
         <flux:error name="stale" />
 
+        @if ($this->rest)
+            <flux:callout icon="check-circle" color="green" data-test="report-signed">
+                <flux:callout.heading>{{ __('Run, and signed at the appointment') }}</flux:callout.heading>
+                <flux:callout.text>
+                    @foreach ($this->signedHere as $signed)
+                        <span class="block" wire:key="report-signed-{{ $signed->id }}">{{ __(':type estimate: sold for :option, :amount.', ['type' => $signed->details['estimate_type'], 'option' => $signed->details['option']['name'], 'amount' => Money::format($signed->total_cents)]) }}</span>
+                    @endforeach
+                    <span class="mt-1 block">{{ __('Only the rest is left: any other estimate presented, and your notes.') }}</span>
+                </flux:callout.text>
+            </flux:callout>
+        @else
         <div class="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-card p-5" data-test="report-outcome">
             <flux:radio.group wire:model.live="outcome" :label="__('1. What happened?')">
                 <flux:radio value="{{ AppointmentState::Run->value }}" :label="__('The appointment was run')" data-test="report-run" />
@@ -229,8 +270,9 @@ new #[Title('After-action report')] class extends Component {
             </flux:radio.group>
             <flux:error name="closeOutOutcome" />
         </div>
+        @endif
 
-        @if ($run)
+        @if ($run && ! $this->rest)
             <div class="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-card p-5" data-test="report-presented">
                 <flux:radio.group wire:model.live="presented" :label="__('2. Was anything presented?')">
                     <flux:radio value="yes" :label="__('Yes')" data-test="report-presented-yes" />
@@ -291,8 +333,8 @@ new #[Title('After-action report')] class extends Component {
 
             <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="report-estimates">
                 <div>
-                    <flux:heading size="lg" level="2">{{ $this->earlierProposals->isEmpty() ? __('3. Which estimate was presented?') : __('New today') }}</flux:heading>
-                    <flux:subheading>{{ __('Tick each estimate presented, and say what became of it.') }}</flux:subheading>
+                    <flux:heading size="lg" level="2">{{ match (true) { $this->rest => __('Anything else presented?'), $this->earlierProposals->isEmpty() => __('3. Which estimate was presented?'), default => __('New today') } }}</flux:heading>
+                    <flux:subheading>{{ $this->rest ? __('Tick any other estimate presented, if there was one, and say what became of it.') : __('Tick each estimate presented, and say what became of it.') }}</flux:subheading>
                 </div>
 
                 @forelse ($this->newEstimates as $estimate)
@@ -328,9 +370,9 @@ new #[Title('After-action report')] class extends Component {
                     </div>
                 @empty
                     <flux:text class="text-sm" data-test="report-no-estimates">
-                        {{ $this->earlierProposals->isEmpty()
+                        {{ $this->rest ? __('No other estimate on this lead.') : ($this->earlierProposals->isEmpty()
                             ? __('This lead has no estimate yet. Build it from the Estimates card on the lead, then come back to this report.')
-                            : __('Nothing new: every estimate on this lead was presented before.') }}
+                            : __('Nothing new: every estimate on this lead was presented before.')) }}
                     </flux:text>
                 @endforelse
             </div>

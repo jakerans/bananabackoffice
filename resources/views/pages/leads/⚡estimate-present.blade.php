@@ -1,12 +1,17 @@
 <?php
 
+use App\Actions\Agreements\SignAgreement;
+use App\Models\AgreementWording;
 use App\Models\Estimate;
 use App\Models\EstimateOption;
 use App\Models\Lead;
+use App\Models\User;
 use App\Support\Money;
 use App\Support\Pricing\EstimatePricing;
 use App\Support\Pricing\PricedEstimate;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -23,6 +28,10 @@ use Livewire\Component;
  *
  * It only shows: opening it never counts the estimate as presented
  * (decision 207, question 3). Anyone who may see the estimate may open it.
+ *
+ * At the Lead's appointment that day, its salesperson or a manager can take
+ * the option the customer chooses to the agreement, to be signed there
+ * (docs/slice-33-agreement-plan.md, step 33b).
  */
 new #[Title('Your estimate')] #[Layout('layouts::presentation')] class extends Component {
     #[Locked]
@@ -41,6 +50,24 @@ new #[Title('Your estimate')] #[Layout('layouts::presentation')] class extends C
     public function estimate(): Estimate
     {
         return Estimate::query()->with(['lead', 'discounts'])->where('lead_id', $this->leadId)->findOrFail($this->estimateId);
+    }
+
+    /**
+     * Whether the customer can sign for an option here now: by its
+     * salesperson or a manager, at the Lead's appointment that day, while the
+     * estimate is not sold or lost, once there is wording to sign.
+     */
+    #[Computed]
+    public function canSign(): bool
+    {
+        $user = Auth::user();
+        $lead = $this->estimate->lead;
+
+        return $user instanceof User
+            && Gate::forUser($user)->allows('manageProposals', $lead)
+            && ! $this->estimate->isSettled()
+            && AgreementWording::query()->exists()
+            && SignAgreement::appointmentFor($lead, $user) !== null;
     }
 
     /**
@@ -131,6 +158,15 @@ new #[Title('Your estimate')] #[Layout('layouts::presentation')] class extends C
                         @endforeach
                         @if ($priced->taxCents > 0)
                             <span class="text-sm text-zinc-600">{{ __('Tax included') }}</span>
+                        @endif
+                        @if ($this->canSign && $priced->totalCents > 0)
+                            <flux:button
+                                :href="route('leads.estimate.sign', [$leadId, $estimateId, $option->id])"
+                                wire:navigate
+                                variant="primary"
+                                class="mt-2"
+                                data-test="accept-{{ $option->id }}"
+                            >{{ __('Accept this option') }}</flux:button>
                         @endif
                     </div>
                 </div>
