@@ -915,6 +915,19 @@ new class extends Component {
         </div>
     @endif
 
+    {{-- Marked run when the customer signed at it; the rest of the report is still due (slice 33, step 33b). --}}
+    @if ($appointment !== null && $appointment->rest_of_report_due && $appointment->state === AppointmentState::Run)
+        <div class="flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 p-4" data-test="rest-of-report">
+            <flux:text class="text-ink">{{ __('The customer signed at this appointment. Finish its report: any other estimate presented, and your notes.') }}</flux:text>
+
+            @can('closeOutAppointment', [$lead, $appointment])
+                <div>
+                    <flux:button size="sm" variant="primary" :href="route('leads.report', [$lead, $appointment])" wire:navigate data-test="rest-of-report-link">{{ __('Finish the report') }}</flux:button>
+                </div>
+            @endcan
+        </div>
+    @endif
+
     {{-- Kept on the page after the answer is given, so the dialog that was just used can close properly. --}}
     @if ($appointment !== null)
         @can('closeOutAppointment', [$lead, $this->toCloseOut ?? $appointment])

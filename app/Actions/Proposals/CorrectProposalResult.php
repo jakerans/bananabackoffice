@@ -2,6 +2,7 @@
 
 namespace App\Actions\Proposals;
 
+use App\Actions\Agreements\VoidAgreement;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Leads\ChangeLeadLifecycle;
 use App\Actions\Leads\RecordLeadStatusChange;
@@ -27,6 +28,7 @@ class CorrectProposalResult
         private RecordLeadStatusChange $recordLeadStatusChange,
         private RecordAuditEvent $recordAuditEvent,
         private CancelProjectForCorrectedSale $cancelProjectForCorrectedSale,
+        private VoidAgreement $voidAgreement,
         private RecordSaleEntry $recordSaleEntry,
     ) {}
 
@@ -100,6 +102,9 @@ class CorrectProposalResult
             // A sale that is taken back takes its Project with it: cancelled, kept, and brought back if sold again (decision 130).
             if ($was === ProposalResult::Sold) {
                 $this->cancelProjectForCorrectedSale->apply($proposal, $note, $actor);
+
+                // A signed agreement is kept, marked void with the reason (slice 33, step 33b; decision 211, question 5).
+                $this->voidAgreement->apply($lead, $proposal, $note, $actor);
             }
 
             // A Lead is Sold only while one of its proposals is.

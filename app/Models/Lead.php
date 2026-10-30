@@ -440,6 +440,17 @@ class Lead extends Model
     }
 
     /**
+     * The agreements the customer signed for this Lead, void ones included
+     * (docs/slice-33-agreement-plan.md, step 33b).
+     *
+     * @return HasMany<Agreement, $this>
+     */
+    public function agreements(): HasMany
+    {
+        return $this->hasMany(Agreement::class)->orderBy('signed_at');
+    }
+
+    /**
      * The Projects made from this Lead's sold proposals, in the order they
      * were sold (slice 8 step 8a).
      *

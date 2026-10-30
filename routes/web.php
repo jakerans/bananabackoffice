@@ -49,6 +49,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('leads/{lead}/appointments/{appointment}/report', 'pages::leads.report')->can('view', 'lead')->name('leads.report');
     Route::livewire('leads/{lead}/estimates/{estimate}', 'pages::leads.estimate')->can('view', 'estimate')->scopeBindings()->name('leads.estimate');
     Route::livewire('leads/{lead}/estimates/{estimate}/present', 'pages::leads.estimate-present')->can('view', 'estimate')->scopeBindings()->name('leads.estimate.present');
+    // The customer signs for the option chosen, and the signed agreement (slice 33, step 33b; decision 211). Signing checks who may sell; the agreement page checks who may see it.
+    Route::livewire('leads/{lead}/estimates/{estimate}/options/{option}/sign', 'pages::leads.estimate-sign')->can('manageProposals', 'lead')->scopeBindings()->name('leads.estimate.sign');
+    Route::livewire('leads/{lead}/agreements/{agreement}', 'pages::leads.agreement')->scopeBindings()->name('leads.agreement');
 
     // A Location's weekly scorecard (slice 27, step 27a) is reached from Home and Company > Leadership Scorecards.
     // Its owner, the Owner and Leadership may open it; the page checks.

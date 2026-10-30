@@ -119,7 +119,7 @@ new #[Title('Estimate')] class extends Component {
     #[Computed]
     public function estimate(): Estimate
     {
-        return Estimate::query()->with(['lead.location', 'location', 'priceBook.location', 'discounts', 'proposal.option'])->where('lead_id', $this->leadId)->findOrFail($this->estimateId);
+        return Estimate::query()->with(['lead.location', 'location', 'priceBook.location', 'discounts', 'proposal.option', 'proposal.agreement'])->where('lead_id', $this->leadId)->findOrFail($this->estimateId);
     }
 
     /**
@@ -625,6 +625,11 @@ new #[Title('Estimate')] class extends Component {
                     ? __('Sold: :option, :price. It can no longer be changed.', ['option' => $estimate->proposal->option?->name ?? __('an option'), 'price' => $estimate->proposal->soldFor()])
                     : __('Lost. It can no longer be changed unless a manager corrects the result.') }}
             </flux:callout.heading>
+            @if ($estimate->proposal->result === ProposalResult::Sold && $estimate->proposal->agreement !== null)
+                <x-slot name="actions">
+                    <flux:button size="sm" :href="route('leads.agreement', [$estimate->lead_id, $estimate->proposal->agreement])" wire:navigate data-test="estimate-agreement-link">{{ __('Signed agreement') }}</flux:button>
+                </x-slot>
+            @endif
         </flux:callout>
     @elseif ($estimate->proposal !== null)
         <flux:text class="text-sm" data-test="estimate-presented">{{ __('Presented, and pending. Its price on the lead follows any change made here.') }}</flux:text>

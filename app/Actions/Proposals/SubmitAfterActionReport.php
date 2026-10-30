@@ -9,6 +9,7 @@ use App\Models\Appointment;
 use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class SubmitAfterActionReport
@@ -55,6 +56,13 @@ class SubmitAfterActionReport
         $note = trim((string) ($report['note'] ?? '')) === '' ? null : trim((string) $report['note']);
 
         $this->changeLeadLifecycle->handle($lead, $expectedVersion, function () use ($lead, $appointment, $report, $outcome, $note, $actor): bool {
+            // Marked run when the customer signed at it: only the rest is still due (slice 33, step 33b).
+            $appointment = Appointment::query()->findOrFail($appointment->id);
+
+            if ($appointment->rest_of_report_due && $appointment->state === AppointmentState::Run) {
+                return $this->finishAfterSigning($lead, $appointment, $report, $note, $actor);
+            }
+
             $this->closeOutAppointment->apply($lead, $appointment, $outcome, $note, $actor);
 
             if ($outcome !== AppointmentState::Run->value) {
@@ -73,14 +81,7 @@ class SubmitAfterActionReport
                 return true;
             }
 
-            $new = array_filter(
-                is_array($report['estimates'] ?? null) ? $report['estimates'] : [],
-                fn (mixed $row): bool => is_array($row) && filter_var($row['presented'] ?? false, FILTER_VALIDATE_BOOL),
-            );
-            $again = array_filter(
-                is_array($report['existing'] ?? null) ? $report['existing'] : [],
-                fn (mixed $row): bool => is_array($row) && filter_var($row['presented'] ?? false, FILTER_VALIDATE_BOOL),
-            );
+            [$new, $again] = self::ticked($report);
 
             if ($new === [] && $again === []) {
                 throw ValidationException::withMessages([
@@ -88,26 +89,84 @@ class SubmitAfterActionReport
                 ]);
             }
 
-            foreach ($again as $id => $row) {
-                $proposal = $lead->proposals()->counted()->find((int) $id) ?? throw ValidationException::withMessages([
-                    "existing.{$id}.presented" => __('This estimate is no longer here. Reload the page.'),
-                ]);
-
-                $this->presentProposalAgain->apply($lead, $proposal, $appointment->id, $actor, "existing.{$id}.presented");
-                $this->recordProposalResult->apply($lead, $proposal, is_string($row['result'] ?? null) ? $row['result'] : null, $row, $actor, "existing.{$id}.");
-            }
-
-            foreach ($new as $id => $row) {
-                $estimate = $lead->estimates()->find((int) $id) ?? throw ValidationException::withMessages([
-                    "estimates.{$id}.estimate" => __('This estimate is no longer here. Reload the page.'),
-                ]);
-
-                $proposal = $this->presentEstimate->apply($lead, $estimate, [$appointment->id], $actor, "estimates.{$id}.");
-
-                $this->recordProposalResult->apply($lead, $proposal, is_string($row['result'] ?? null) ? $row['result'] : null, $row, $actor, "estimates.{$id}.");
-            }
+            $this->present($lead, $appointment, $new, $again, $actor);
 
             return true;
         }, retryWhenBusy: true);
+    }
+
+    /**
+     * The rest of the report for an appointment the customer signed at
+     * (docs/slice-33-agreement-plan.md, step 33b; decision 211, question 1).
+     * Signing already marked it run and sold what was signed for; here any
+     * other estimate presented at it is ticked, if there was one, and the
+     * notes are kept on the appointment. Nothing has to be ticked.
+     *
+     * @param  array<string, mixed>  $report
+     *
+     * @throws ValidationException
+     * @throws AuthorizationException
+     */
+    private function finishAfterSigning(Lead $lead, Appointment $appointment, array $report, ?string $note, User $actor): bool
+    {
+        Gate::forUser($actor)->authorize('closeOutAppointment', [$lead, $appointment]);
+
+        [$new, $again] = self::ticked($report);
+
+        $this->present($lead, $appointment, $new, $again, $actor);
+
+        $appointment->forceFill([
+            'rest_of_report_due' => false,
+            'state_note' => $note ?? $appointment->state_note,
+        ])->save();
+
+        return true;
+    }
+
+    /**
+     * The estimates ticked as presented: new ones by estimate ID, and earlier ones by proposal ID.
+     *
+     * @param  array<string, mixed>  $report
+     * @return array{0: array<int|string, array<string, mixed>>, 1: array<int|string, array<string, mixed>>}
+     */
+    private static function ticked(array $report): array
+    {
+        $presented = fn (mixed $rows): array => array_filter(
+            is_array($rows) ? $rows : [],
+            fn (mixed $row): bool => is_array($row) && filter_var($row['presented'] ?? false, FILTER_VALIDATE_BOOL),
+        );
+
+        return [$presented($report['estimates'] ?? null), $presented($report['existing'] ?? null)];
+    }
+
+    /**
+     * Record each estimate ticked as presented at the appointment, with its result.
+     *
+     * @param  array<int|string, array<string, mixed>>  $new
+     * @param  array<int|string, array<string, mixed>>  $again
+     *
+     * @throws ValidationException
+     * @throws AuthorizationException
+     */
+    private function present(Lead $lead, Appointment $appointment, array $new, array $again, User $actor): void
+    {
+        foreach ($again as $id => $row) {
+            $proposal = $lead->proposals()->counted()->find((int) $id) ?? throw ValidationException::withMessages([
+                "existing.{$id}.presented" => __('This estimate is no longer here. Reload the page.'),
+            ]);
+
+            $this->presentProposalAgain->apply($lead, $proposal, $appointment->id, $actor, "existing.{$id}.presented");
+            $this->recordProposalResult->apply($lead, $proposal, is_string($row['result'] ?? null) ? $row['result'] : null, $row, $actor, "existing.{$id}.");
+        }
+
+        foreach ($new as $id => $row) {
+            $estimate = $lead->estimates()->find((int) $id) ?? throw ValidationException::withMessages([
+                "estimates.{$id}.estimate" => __('This estimate is no longer here. Reload the page.'),
+            ]);
+
+            $proposal = $this->presentEstimate->apply($lead, $estimate, [$appointment->id], $actor, "estimates.{$id}.");
+
+            $this->recordProposalResult->apply($lead, $proposal, is_string($row['result'] ?? null) ? $row['result'] : null, $row, $actor, "estimates.{$id}.");
+        }
     }
 }

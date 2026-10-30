@@ -2,7 +2,8 @@
 
 Status: **proposed on 2026-10-29 (decision 210) and approved the same day
 with every recommendation, both steps built straight through (decision
-211).** Written as what the implementation agent recommends, after the
+211). 33a merged on 2026-10-29 and 33b on 2026-10-30; slice 33 is
+complete.** Written as what the implementation agent recommends, after the
 plan check following slice 31. Numbered 33 because slice 32, Reports, is
 already proposed.
 
@@ -130,3 +131,56 @@ deposit by card; Commercial estimates; signing change orders in Backoffice
 **Known limits:** the contract says the accepted Quote states the warranty
 period and the preparation level; Backoffice's estimates have no field for
 either yet, so they appear only where a line item says so.
+
+## Step 33b as built
+
+- **"Accept this option"** in the presentation view, under each option's
+  price, for the appointment's salesperson or a manager, at the Lead's
+  appointment that has started that day (in its own timezone), while the
+  estimate is neither sold nor lost and there is wording to sign.
+- **The agreement page** (`/leads/{lead}/estimates/{estimate}/options/{option}/sign`),
+  on the tablet: the customer and property; the option with its rooms,
+  written line items, savings and price, "Tax included" where it applies;
+  the deposit due on acceptance (the Location's percent of the price, as
+  Projects work it out); the wording with its table of contents; then the
+  customer's full name, a tick ("I have read and agree to the ..., and
+  accept this option at this price") and a signature box drawn with a finger
+  or stylus, with Clear, and "Sign and accept $..". If signing is not
+  possible it says why instead.
+- **Signing**, all or nothing: the appointment is marked run if it was not
+  yet, the estimate is presented at it (or, presented at an earlier visit and
+  still pending, presented again there), and it is sold for that option
+  through the same rules as the Sold button, so the Project is made and the
+  sale counted as any other. The agreement keeps what the customer saw, the
+  wording version, the name typed, the signature, the time, the salesperson,
+  and the tablet's address and browser. Audit Log: "Lead · Agreement signed".
+- **The signed agreement** (`/leads/{lead}/agreements/{agreement}`): the
+  same summary, the wording of the version signed, the signature drawn
+  again, "Signed by .. on ... Presented by ..", and Print. Whoever may see
+  the Lead or its Project may read it. Linked from the Lead's Estimates card
+  ("Signed agreement: name, date"), the estimate page ("Signed agreement")
+  and the Project ("Agreement: Signed by .."). A sale marked Sold without
+  signing shows "Not signed in Backoffice" on the card and the Project
+  (question 2).
+- **The rest of the report:** an appointment marked run by signing shows
+  "Finish the report" on the Lead's appointment card. The report then says
+  what was signed and asks only for any other estimate presented and the
+  notes; nothing has to be ticked (question 1).
+- **A sale corrected by a manager** marks its agreement void, with who, when
+  and the reason; it stays readable, marked Void. Audit Log: "Lead ·
+  Agreement voided". The estimate can then be signed for again (question 5).
+
+**Deviation from the plan:** the signature is kept as the lines drawn
+(numbers only), in the database with the agreement, and drawn again as a
+picture wherever it is shown, not as an image file in private storage. It
+is shown and printed with the agreement without a five-minute link, and a
+signature cannot carry anything but numbers.
+
+**Known limits:**
+
+- A Brand Ambassador package is not chosen when signing; it is recorded on
+  the Project afterwards, as for a sale from the Estimates card.
+- The customer gets no copy yet; email to customers comes later (decision
+  210, point 3). The signed agreement can be printed.
+- Signing needs the appointment to be on the Lead in Backoffice and started;
+  a customer who signs before its start time cannot.

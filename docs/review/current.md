@@ -3,26 +3,39 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-29 · **Branch:** `main`
+**Updated:** 2026-10-30 · **Branch:** `main`
 
-**State:** slice 31 is complete (decision 209). The plan check after it
-found the agreement next; Jacob's three answers are recorded (decision 210)
-and slice 33 is proposed:
-[../slice-33-agreement-plan.md](../slice-33-agreement-plan.md). Nothing is
-being built until he approves it.
+**State:** slice 33, the Agreement, is complete and on staging (decisions
+210 and 211): 33a, the wording in versions, and 33b, the customer signing on
+the tablet. As built:
+[../slice-33-agreement-plan.md](../slice-33-agreement-plan.md), "Step 33a as
+built" and "Step 33b as built". Staging has ABQ's wording imported (version
+1, 62 sections).
 
-## Waiting for Jacob
+## In the browser (Jacob, on staging)
 
-1. **Approve slice 33,** and answer its five questions (each has a
-   recommendation): signing before the after-action report; "Sold" without a
-   signature; one wording for the company; the deposit at signing; a signed
-   agreement that was a mistake.
-2. **PaintScout's eight test contacts** ("Backoffice Test 01" to "08", at
-   ABQ) can only be deleted, which cannot be undone, so they are his to
-   delete. The eight test estimates are archived.
+1. Settings > Pricing Settings > **Agreement wording**: the contract, its
+   sections and its version.
+2. A sample lead whose appointment has started today, with an estimate:
+   open the estimate, **Present**, then **Accept this option** under one.
+3. The agreement page: type a name, tick, sign with a finger, **Sign and
+   accept**. The estimate is sold for that option and the Project is made;
+   the signed agreement opens, and prints.
+4. On the lead: "Signed agreement" on the Estimates card, and **Finish the
+   report**, which asks only for other estimates and notes.
+
+## Next
+
+- The plan check after slice 33, against
+  [../product-architecture.md](../product-architecture.md), and the next
+  step proposed from it.
 
 ## Also waiting for Jacob
 
+- PaintScout's eight test contacts ("Backoffice Test 01" to "08", at ABQ)
+  can only be deleted, which cannot be undone, so they are his to delete. The
+  eight test estimates are archived.
+- Email to customers, for the agreement's copy (decision 210, point 3).
 - Whether the presentation lists each room's work in the customer wording
   the rates already carry ("Bedroom: Paint Walls, Paint Doors").
 - A side menu for Settings, hiding pages not built yet, and where the
@@ -30,5 +43,4 @@ being built until he approves it.
 - QuickBooks's live keys, after Intuit's review.
 - 30c, recovery and first use, when he chooses.
 - Slice 32, Reports, waits for his answers.
-- Email to customers, needed for the agreement's copy (decision 210).
 - The app's top bar is wider than a phone screen on every page.

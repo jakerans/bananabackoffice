@@ -553,7 +553,13 @@ Rules:
     its proposals and their prices. No permission was added. Since step 31e
     (decision 207) these are estimates: the same people mark an estimate
     presented, start one, and change one while it is pending; once sold or
-    lost nobody changes it until a manager corrects the result.
+    lost nobody changes it until a manager corrects the result. Since step
+    33b (decision 211) the customer signs the agreement on the tablet only
+    with the people who may also answer for the appointment: its salesperson
+    the Lead is with, or a manager, at the Lead's appointment that has
+    started that day. A signed agreement is read by whoever may see the Lead
+    or the Project made from the sale. Correcting the sale marks it void; it
+    is never removed. No permission was added.
 20. **Results** (slice 7 step 7c). The same people as rule 19 give a proposal
     its result (sold, lost, still pending), change one that is still pending,
     and mark the Lead lost; the salesperson can still do so on their own Lead
