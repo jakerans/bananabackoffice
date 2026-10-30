@@ -21,7 +21,7 @@ enum AgreementEmailOutcome: string
     /** Email to customers is not switched on yet (decision 214, point 1). */
     case SwitchedOff = 'switched_off';
 
-    /** Outside production, only Banana's own addresses are emailed (decision 214, point 4). */
+    /** This server emails only Banana's own addresses (decision 214, point 4). */
     case TestAddressesOnly = 'test_addresses_only';
 
     /**

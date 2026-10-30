@@ -4264,8 +4264,9 @@ under the standing authorization:
    the Location's name, with replies reaching the salesperson who presented
    the agreement.
 3. **The copy is the email itself,** not an attached PDF and not a link.
-4. **Staging never emails a customer address:** outside production it goes
-   only to Banana's own addresses.
+4. **Staging never emails a customer address:** only the production server,
+   once set to, emails customer addresses; any other goes only to Banana's
+   own addresses.
 
 ## Future decisions already constrained by the brief
 
