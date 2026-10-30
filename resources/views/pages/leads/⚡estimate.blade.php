@@ -218,21 +218,31 @@ new #[Title('Estimate')] class extends Component {
     }
 
     /**
+     * The book's offered discounts, and any retired one this estimate was already given (step 35a).
+     *
      * @return Collection<int, Discount>
      */
     #[Computed]
     public function bookDiscounts(): Collection
     {
-        return Discount::query()->where('price_book_id', $this->estimate->price_book_id)->where('is_active', true)->orderBy('sort_order')->orderBy('id')->get();
+        $given = $this->estimate->discounts->pluck('discount_id')->filter()->all();
+
+        return Discount::query()->where('price_book_id', $this->estimate->price_book_id)
+            ->where(fn ($query) => $query->where('is_active', true)->orWhereKey($given))
+            ->orderBy('sort_order')->orderBy('id')->get();
     }
 
     /**
+     * The book's offered tax rates, and a retired one this estimate is already charged (step 35a).
+     *
      * @return Collection<int, TaxRate>
      */
     #[Computed]
     public function taxRates(): Collection
     {
-        return TaxRate::query()->where('price_book_id', $this->estimate->price_book_id)->where('is_active', true)->orderBy('sort_order')->orderBy('id')->get();
+        return TaxRate::query()->where('price_book_id', $this->estimate->price_book_id)
+            ->where(fn ($query) => $query->where('is_active', true)->when($this->estimate->tax_name !== null, fn ($query) => $query->orWhere('name', $this->estimate->tax_name)))
+            ->orderBy('sort_order')->orderBy('id')->get();
     }
 
     public function showOption(int $optionId): void
@@ -805,7 +815,7 @@ new #[Title('Estimate')] class extends Component {
                 <flux:heading level="3">{{ __('Discounts and tax') }}</flux:heading>
                 <flux:text class="text-xs">{{ __('For every option.') }}</flux:text>
                 @forelse ($this->bookDiscounts as $discount)
-                    <flux:checkbox wire:model="discountIds" :value="(string) $discount->id" :label="$discount->name" :disabled="! $editable" wire:key="discount-{{ $discount->id }}" />
+                    <flux:checkbox wire:model="discountIds" :value="(string) $discount->id" :label="$discount->is_active ? $discount->name : __(':name (retired)', ['name' => $discount->name])" :disabled="! $editable" wire:key="discount-{{ $discount->id }}" />
                 @empty
                     <flux:text class="text-sm">{{ __('No named discounts in this price book.') }}</flux:text>
                 @endforelse
@@ -813,7 +823,7 @@ new #[Title('Estimate')] class extends Component {
                 <flux:select wire:model="taxRateId" :label="__('Tax')" :disabled="! $editable" data-test="tax-rate">
                     <flux:select.option value="">{{ __('No tax') }}</flux:select.option>
                     @foreach ($this->taxRates as $taxRate)
-                        <flux:select.option :value="(string) $taxRate->id" wire:key="tax-{{ $taxRate->id }}">{{ $taxRate->name }} ({{ Decimal::plain($taxRate->percent) }}%)</flux:select.option>
+                        <flux:select.option :value="(string) $taxRate->id" wire:key="tax-{{ $taxRate->id }}">{{ $taxRate->name }} ({{ Decimal::plain($taxRate->percent) }}%){{ $taxRate->is_active ? '' : ' · '.__('retired') }}</flux:select.option>
                     @endforeach
                 </flux:select>
                 <flux:error name="taxRateId" />

@@ -5,11 +5,14 @@ namespace App\Actions\Estimates;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Enums\EstimateType;
+use App\Models\Discount;
 use App\Models\Estimate;
+use App\Models\EstimateDiscount;
 use App\Models\EstimateOption;
 use App\Models\Lead;
 use App\Models\PriceBook;
 use App\Models\ProductionRate;
+use App\Models\TaxRate;
 use App\Models\User;
 use App\Support\Money;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -22,7 +25,9 @@ use Illuminate\Validation\ValidationException;
  * (docs/slice-31-estimating-plan.md, step 31c; decision 204). It is priced
  * from the Lead's Location's price book, the default until that Location is
  * customized, at the book's hourly rate for the type, and starts with one
- * empty option. The salesperson the Lead is with, or a manager.
+ * empty option, the book's discounts marked to start on new estimates and
+ * its default tax rate (step 35a; decision 213). The salesperson the Lead is
+ * with, or a manager.
  */
 class StartEstimate
 {
@@ -49,6 +54,8 @@ class StartEstimate
         }
 
         return DB::transaction(function () use ($lead, $estimateType, $book, $actor): Estimate {
+            $tax = TaxRate::query()->where('price_book_id', $book->id)->where('is_active', true)->where('is_default', true)->orderBy('sort_order')->orderBy('id')->first();
+
             $estimate = new Estimate;
             $estimate->forceFill([
                 'lead_id' => $lead->id,
@@ -56,6 +63,8 @@ class StartEstimate
                 'price_book_id' => $book->id,
                 'estimate_type' => $estimateType,
                 'hourly_rate_cents' => $book->hourlyRateFor($estimateType),
+                'tax_name' => $tax?->name,
+                'tax_percent' => $tax?->percent,
                 'priced_at' => now(),
                 'created_by' => $actor->id,
                 'created_by_name' => $actor->name,
@@ -67,6 +76,24 @@ class StartEstimate
                 'sort_order' => 1,
             ])->save();
 
+            $discounts = Discount::query()->where('price_book_id', $book->id)->where('is_active', true)->where('is_default', true)->orderBy('sort_order')->orderBy('id')->get();
+
+            foreach ($discounts->values() as $position => $discount) {
+                (new EstimateDiscount)->forceFill([
+                    'estimate_id' => $estimate->id,
+                    'discount_id' => $discount->id,
+                    'name' => $discount->name,
+                    'kind' => $discount->kind,
+                    'value' => $discount->value,
+                    'sort_order' => $position,
+                ])->save();
+            }
+
+            $starting = array_filter([
+                'discounts' => $discounts->pluck('name')->all(),
+                'tax' => $tax?->name,
+            ]);
+
             $this->recordAuditEvent->handle(
                 AuditAction::LeadEstimateStarted,
                 $lead,
@@ -75,7 +102,7 @@ class StartEstimate
                     'estimate' => $estimateType->label(),
                     'price_book' => $book->label(),
                     'hourly_rate' => Money::format($estimate->hourly_rate_cents),
-                ],
+                ] + $starting,
                 location: $lead->location,
             );
 

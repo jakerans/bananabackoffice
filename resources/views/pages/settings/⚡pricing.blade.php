@@ -2,9 +2,12 @@
 
 use App\Actions\Pricing\ChangeHourlyRates;
 use App\Actions\Pricing\CustomizePriceBook;
+use App\Actions\Pricing\MovePriceBookItem;
+use App\Actions\Pricing\SaveDiscount;
 use App\Actions\Pricing\SavePaintProduct;
 use App\Actions\Pricing\SaveProductionRate;
 use App\Actions\Pricing\SaveRateCategory;
+use App\Actions\Pricing\SaveTaxRate;
 use App\Enums\DiscountKind;
 use App\Enums\EstimateType;
 use App\Enums\Permission;
@@ -31,7 +34,8 @@ use Livewire\Component;
 /*
  * Settings > Pricing Settings (docs/slice-31-estimating-plan.md, step 31a;
  * decisions 196 and 197): the default price book and each Location's,
- * production rates and everything else estimating charges for. Owner and
+ * production rates and everything else estimating charges for, with the
+ * discounts and tax rates since step 35a (decision 213). Owner and
  * Leadership change them; Location Managers and salespeople see them.
  */
 new #[Title('Pricing Settings')] class extends Component {
@@ -63,6 +67,16 @@ new #[Title('Pricing Settings')] class extends Component {
     public array $typeRates = [];
 
     public string $taxPercent = '';
+
+    public ?int $discountId = null;
+
+    /** @var array<string, mixed> */
+    public array $discountForm = [];
+
+    public ?int $taxRateId = null;
+
+    /** @var array<string, mixed> */
+    public array $taxRateForm = [];
 
     /**
      * Mount the component.
@@ -312,6 +326,96 @@ new #[Title('Pricing Settings')] class extends Component {
         $this->forget();
         Flux::modal('paint-product')->close();
         Flux::toast(variant: 'success', text: $paint === null ? __('Paint added.') : __('Paint saved.'));
+    }
+
+    public function newDiscount(): void
+    {
+        $this->authorizeEditing();
+
+        $this->discountId = null;
+        $this->discountForm = ['name' => '', 'kind' => DiscountKind::Percentage->value, 'value' => '', 'is_default' => false, 'is_active' => true];
+        $this->resetValidation();
+
+        Flux::modal('discount')->show();
+    }
+
+    public function editDiscount(int $discountId): void
+    {
+        $this->authorizeEditing();
+
+        $discount = $this->priceBook->discounts()->findOrFail($discountId);
+
+        $this->discountId = $discount->id;
+        $this->discountForm = [
+            'name' => $discount->name, 'kind' => $discount->kind->value,
+            'value' => $discount->kind === DiscountKind::Percentage ? (string) Decimal::plain($discount->value) : number_format((float) $discount->value, 2, '.', ''),
+            'is_default' => $discount->is_default, 'is_active' => $discount->is_active,
+        ];
+        $this->resetValidation();
+
+        Flux::modal('discount')->show();
+    }
+
+    public function saveDiscount(SaveDiscount $saveDiscount): void
+    {
+        $this->authorizeEditing();
+
+        $discount = $this->discountId === null ? null : $this->priceBook->discounts()->findOrFail($this->discountId);
+
+        $this->asForm('discountForm', fn () => $saveDiscount->handle($this->priceBook, $discount, $this->discountForm, $this->user()));
+
+        $this->forget();
+        Flux::modal('discount')->close();
+        Flux::toast(variant: 'success', text: $discount === null ? __('Discount added.') : __('Discount saved.'));
+    }
+
+    public function newTaxRate(): void
+    {
+        $this->authorizeEditing();
+
+        $this->taxRateId = null;
+        $this->taxRateForm = ['name' => '', 'percent' => '', 'is_default' => false, 'is_active' => true];
+        $this->resetValidation();
+
+        Flux::modal('tax-rate')->show();
+    }
+
+    public function editTaxRate(int $taxRateId): void
+    {
+        $this->authorizeEditing();
+
+        $taxRate = $this->priceBook->taxRates()->findOrFail($taxRateId);
+
+        $this->taxRateId = $taxRate->id;
+        $this->taxRateForm = ['name' => $taxRate->name, 'percent' => (string) Decimal::plain($taxRate->percent), 'is_default' => $taxRate->is_default, 'is_active' => $taxRate->is_active];
+        $this->resetValidation();
+
+        Flux::modal('tax-rate')->show();
+    }
+
+    public function saveTaxRate(SaveTaxRate $saveTaxRate): void
+    {
+        $this->authorizeEditing();
+
+        $taxRate = $this->taxRateId === null ? null : $this->priceBook->taxRates()->findOrFail($this->taxRateId);
+
+        $this->asForm('taxRateForm', fn () => $saveTaxRate->handle($this->priceBook, $taxRate, $this->taxRateForm, $this->user()));
+
+        $this->forget();
+        Flux::modal('tax-rate')->close();
+        Flux::toast(variant: 'success', text: $taxRate === null ? __('Tax rate added.') : __('Tax rate saved.'));
+    }
+
+    /**
+     * Move a discount or tax rate one place up or down its list.
+     */
+    public function move(MovePriceBookItem $movePriceBookItem, string $list, int $itemId, string $direction): void
+    {
+        $this->authorizeEditing();
+
+        $movePriceBookItem->handle($this->priceBook, $list, $itemId, $direction, $this->user());
+
+        $this->forget();
     }
 
     public function saveHourlyRates(ChangeHourlyRates $changeHourlyRates): void
@@ -564,25 +668,56 @@ new #[Title('Pricing Settings')] class extends Component {
             </div>
         @elseif ($tab === 'discounts')
             <div class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-4" data-test="discounts">
-                <flux:text class="text-sm">{{ __('Discounts an estimate can be given. A percentage is rounded up to the whole dollar. They are changed in a later step.') }}</flux:text>
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <flux:text class="max-w-2xl text-sm">{{ __('Discounts an estimate can be given. A percentage is rounded up to the whole dollar. Estimates keep the discount they were given until they are repriced.') }}</flux:text>
+                    @if ($this->editable)
+                        <flux:button size="sm" icon="plus" wire:click="newDiscount" data-test="add-discount">{{ __('Add discount') }}</flux:button>
+                    @endif
+                </div>
+                <div class="-mx-4 overflow-x-auto px-4">
                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column>{{ __('Discount') }}</flux:table.column>
                         <flux:table.column align="end">{{ __('Takes off') }}</flux:table.column>
+                        <flux:table.column>{{ __('Status') }}</flux:table.column>
+                        @if ($this->editable)
+                            <flux:table.column align="end"><span class="sr-only">{{ __('Actions') }}</span></flux:table.column>
+                        @endif
                     </flux:table.columns>
                     <flux:table.rows>
                         @forelse ($this->priceBook->discounts as $discount)
-                            <flux:table.row :key="'discount-'.$discount->id">
+                            <flux:table.row :key="'discount-'.$discount->id" data-test="discount-{{ $discount->id }}">
                                 <flux:table.cell variant="strong">{{ $discount->name }}</flux:table.cell>
                                 <flux:table.cell align="end" class="tabular-nums">{{ $discount->kind === DiscountKind::Percentage ? Decimal::plain($discount->value).'%' : Money::format((int) round((float) $discount->value * 100)) }}</flux:table.cell>
+                                <flux:table.cell>
+                                    <div class="flex flex-wrap gap-1">
+                                        @if ($discount->is_active)
+                                            <flux:badge size="sm" color="green">{{ __('Offered') }}</flux:badge>
+                                        @else
+                                            <flux:badge size="sm" color="zinc">{{ __('Retired') }}</flux:badge>
+                                        @endif
+                                        @if ($discount->is_default)
+                                            <flux:badge size="sm" color="blue">{{ __('Starts on new estimates') }}</flux:badge>
+                                        @endif
+                                    </div>
+                                </flux:table.cell>
+                                @if ($this->editable)
+                                    <flux:table.cell align="end">
+                                        <div class="flex justify-end gap-1">
+                                            @include('partials.pricing.move-buttons', ['list' => 'discounts', 'item' => $discount, 'first' => $loop->first, 'last' => $loop->last])
+                                            <flux:button size="sm" wire:click="editDiscount({{ $discount->id }})" data-test="edit-discount-{{ $discount->id }}">{{ __('Edit') }}</flux:button>
+                                        </div>
+                                    </flux:table.cell>
+                                @endif
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell colspan="2">{{ __('No discounts yet.') }}</flux:table.cell>
+                                <flux:table.cell colspan="4">{{ __('No discounts yet.') }}</flux:table.cell>
                             </flux:table.row>
                         @endforelse
                     </flux:table.rows>
                 </flux:table>
+                </div>
             </div>
         @else
             <form wire:submit="saveHourlyRates" class="flex max-w-2xl flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-5" data-test="hourly-rates">
@@ -596,7 +731,7 @@ new #[Title('Pricing Settings')] class extends Component {
                         @endforeach
                     </div>
                 </div>
-                <flux:input wire:model="taxPercent" :label="__('Tax (%)')" inputmode="decimal" class="max-w-40" :disabled="! $this->editable" data-test="tax-percent" />
+                <flux:input wire:model="taxPercent" :label="__('Tax (%)')" :description="__('PaintScout\'s own tax setting, kept for reference. Estimates are charged one of the named tax rates below.')" inputmode="decimal" class="max-w-md" :disabled="! $this->editable" data-test="tax-percent" />
                 @if ($this->editable)
                     <div class="flex justify-end">
                         <flux:button type="submit" variant="primary" data-test="save-hourly-rates">{{ __('Save') }}</flux:button>
@@ -604,22 +739,49 @@ new #[Title('Pricing Settings')] class extends Component {
                 @endif
             </form>
             <div class="flex max-w-2xl flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-4" data-test="tax-rates">
-                <flux:heading level="3">{{ __('Tax rates') }}</flux:heading>
-                <flux:text class="text-sm">{{ __('Named tax rates an estimate can be charged instead. They are changed in a later step.') }}</flux:text>
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <flux:heading level="3">{{ __('Tax rates') }}</flux:heading>
+                        <flux:text class="text-sm">{{ __('Named tax rates an estimate can be charged. New estimates start with the default. Estimates keep the rate they were charged until they are repriced.') }}</flux:text>
+                    </div>
+                    @if ($this->editable)
+                        <flux:button size="sm" icon="plus" wire:click="newTaxRate" data-test="add-tax-rate">{{ __('Add tax rate') }}</flux:button>
+                    @endif
+                </div>
+                <div class="-mx-4 overflow-x-auto px-4">
                 <flux:table>
                     <flux:table.rows>
                         @forelse ($this->priceBook->taxRates as $taxRate)
-                            <flux:table.row :key="'tax-rate-'.$taxRate->id">
+                            <flux:table.row :key="'tax-rate-'.$taxRate->id" data-test="tax-rate-{{ $taxRate->id }}">
                                 <flux:table.cell variant="strong">{{ $taxRate->name }}</flux:table.cell>
                                 <flux:table.cell align="end" class="tabular-nums">{{ Decimal::plain($taxRate->percent) }}%</flux:table.cell>
+                                <flux:table.cell>
+                                    <div class="flex flex-wrap gap-1">
+                                        @unless ($taxRate->is_active)
+                                            <flux:badge size="sm" color="zinc">{{ __('Retired') }}</flux:badge>
+                                        @endunless
+                                        @if ($taxRate->is_default)
+                                            <flux:badge size="sm" color="blue">{{ __('Default') }}</flux:badge>
+                                        @endif
+                                    </div>
+                                </flux:table.cell>
+                                @if ($this->editable)
+                                    <flux:table.cell align="end">
+                                        <div class="flex justify-end gap-1">
+                                            @include('partials.pricing.move-buttons', ['list' => 'tax_rates', 'item' => $taxRate, 'first' => $loop->first, 'last' => $loop->last])
+                                            <flux:button size="sm" wire:click="editTaxRate({{ $taxRate->id }})" data-test="edit-tax-rate-{{ $taxRate->id }}">{{ __('Edit') }}</flux:button>
+                                        </div>
+                                    </flux:table.cell>
+                                @endif
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell colspan="2">{{ __('No named tax rates.') }}</flux:table.cell>
+                                <flux:table.cell colspan="4">{{ __('No named tax rates.') }}</flux:table.cell>
                             </flux:table.row>
                         @endforelse
                     </flux:table.rows>
                 </flux:table>
+                </div>
             </div>
         @endif
     @endif
@@ -729,6 +891,48 @@ new #[Title('Pricing Settings')] class extends Component {
                     <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
                 </flux:modal.close>
                 <flux:button type="submit" variant="primary" data-test="save-category">{{ __('Save') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="discount" class="w-full max-w-md">
+        <form wire:submit="saveDiscount" class="flex flex-col gap-5" data-test="discount-form">
+            <flux:heading size="lg">{{ $discountId === null ? __('Add discount') : __('Edit discount') }}</flux:heading>
+            <flux:input wire:model="discountForm.name" :label="__('Name')" required />
+            <div class="grid items-start gap-4 sm:grid-cols-2">
+                <flux:select wire:model="discountForm.kind" :label="__('Takes off')">
+                    <flux:select.option :value="DiscountKind::Percentage->value">{{ __('A percentage') }}</flux:select.option>
+                    <flux:select.option :value="DiscountKind::Amount->value">{{ __('An amount in dollars') }}</flux:select.option>
+                </flux:select>
+                <flux:input wire:model="discountForm.value" :label="__('How much')" inputmode="decimal" required />
+            </div>
+            <flux:checkbox wire:model="discountForm.is_default" :label="__('Starts on new estimates')" :description="__('Already ticked on a new estimate; the salesperson can untick it.')" />
+            <flux:error name="discountForm.is_default" />
+            <flux:checkbox wire:model="discountForm.is_active" :label="__('Offered on new estimates')" :description="__('Untick to retire it. Estimates that have it keep it.')" />
+            <flux:text class="text-sm">{{ __('Estimates already given this discount keep it as it was until they are repriced.') }}</flux:text>
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary" data-test="save-discount">{{ __('Save') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="tax-rate" class="w-full max-w-md">
+        <form wire:submit="saveTaxRate" class="flex flex-col gap-5" data-test="tax-rate-form">
+            <flux:heading size="lg">{{ $taxRateId === null ? __('Add tax rate') : __('Edit tax rate') }}</flux:heading>
+            <flux:input wire:model="taxRateForm.name" :label="__('Name')" required />
+            <flux:input wire:model="taxRateForm.percent" :label="__('Tax (%)')" inputmode="decimal" class="max-w-40" required />
+            <flux:checkbox wire:model="taxRateForm.is_default" :label="__('The default')" :description="__('New estimates start with it. Only one tax rate is the default.')" />
+            <flux:error name="taxRateForm.is_default" />
+            <flux:checkbox wire:model="taxRateForm.is_active" :label="__('Offered on new estimates')" :description="__('Untick to retire it. Estimates charged it keep it.')" />
+            <flux:text class="text-sm">{{ __('Estimates already charged this rate keep it as it was until they are repriced.') }}</flux:text>
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary" data-test="save-tax-rate">{{ __('Save') }}</flux:button>
             </div>
         </form>
     </flux:modal>
