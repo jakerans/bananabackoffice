@@ -4202,6 +4202,12 @@ under the standing authorization before the next starts:
 5. **An agreement signed by mistake** is kept and marked void with the
    reason when a manager corrects the sale.
 
+Built and merged under this decision: 33a on 2026-10-29, with ABQ's wording
+imported on staging (version 1, 62 sections), and 33b on 2026-10-30
+([slice-33-agreement-plan.md](slice-33-agreement-plan.md), "as built"). One
+deviation: the signature is kept as the lines drawn, in the database, not as
+an image file.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

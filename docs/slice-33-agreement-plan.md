@@ -2,7 +2,8 @@
 
 Status: **proposed on 2026-10-29 (decision 210) and approved the same day
 with every recommendation, both steps built straight through (decision
-211).** Written as what the implementation agent recommends, after the
+211). 33a merged on 2026-10-29 and 33b on 2026-10-30; slice 33 is
+complete.** Written as what the implementation agent recommends, after the
 plan check following slice 31. Numbered 33 because slice 32, Reports, is
 already proposed.
 

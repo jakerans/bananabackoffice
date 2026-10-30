@@ -287,8 +287,9 @@ Sales, Marketing and Finance Reports, each over any range of dates, by
 Location, month by month, with a spreadsheet download. Its plan is
 [slice-32-reports-plan.md](slice-32-reports-plan.md).
 
-**Slice 33, the Agreement, is proposed (2026-10-29, decision 210) and waits
-for Jacob's approval.** The plan check after slice 31 found the agreement
+**Slice 33, the Agreement, is complete (decisions 210 and 211):** proposed
+and approved on 2026-10-29, both steps built straight through and merged
+(33a, the wording, in versions; 33b, signing on the tablet). The plan check after slice 31 found the agreement
 the last unbuilt piece of the selling flow (5.3): the customer signs on the
 tablet for the option chosen, with Banana's contract wording, and the
 signed agreement is kept unchanged. Its plan is
