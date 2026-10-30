@@ -258,11 +258,14 @@ class Navigation
             primary: 'sales.performance',
             children: [
                 new NavigationItem('sales.performance', 'Performance', $permissions, NavigationState::Live, route: 'sales.performance'),
-                new NavigationItem('sales.workspace', 'Workspace', $permissions, primary: 'shared.leads', children: [
+                // The salesperson's day, then the Leads (slice 34, step 34a; decision 212).
+                new NavigationItem('sales.workspace', 'Workspace', $permissions, primary: 'sales.workspace.today', children: [
+                    new NavigationItem('sales.workspace.today', 'Today', $permissions, NavigationState::Live, route: 'sales.workspace'),
                     $this->leads(),
                 ]),
                 new NavigationItem('sales.calendar', 'Calendar', $permissions, NavigationState::Live, route: 'sales.calendar'),
-                new NavigationItem('sales.commissions', 'Commissions', $permissions),
+                // Commissions are each person's own pay (slice 20; decision 212, question 4).
+                new NavigationItem('sales.commissions', 'Commissions', $permissions, NavigationState::Live, route: 'pay'),
                 new NavigationItem('sales.leaderboard', 'Leaderboard', $permissions, NavigationState::Live, route: 'sales.leaderboard'),
                 $this->customers(),
                 new NavigationItem('sales.reports', 'Reports', $permissions),

@@ -4208,6 +4208,22 @@ imported on staging (version 1, 62 sections), and 33b on 2026-10-30
 deviation: the signature is kept as the lines drawn, in the database, not as
 an image file.
 
+## 212. Slice 34, the Sales Workspace, is approved with every recommendation, built straight through (2026-10-30)
+
+**Decided by Jacob,** on the plan check after slice 33: "recommended on all,
+start 34a and do both in one go". Slice 34
+([slice-34-sales-workspace-plan.md](slice-34-sales-workspace-plan.md)) is
+approved, and its two steps are built one after the other, each tested,
+reviewed and merged to staging under the standing authorization before the
+next starts:
+
+1. **The Workspace shows today first, then the next seven days.**
+2. **Discovery (WNBET) is five short written answers, optional;** nothing
+   blocks presenting or signing.
+3. **The handoff starts filled in** from the option signed for and from
+   discovery, still checked and saved by the salesperson.
+4. **Sales > Commissions opens "My pay".**
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
