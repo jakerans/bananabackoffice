@@ -559,7 +559,12 @@ Rules:
     the Lead is with, or a manager, at the Lead's appointment that has
     started that day. A signed agreement is read by whoever may see the Lead
     or the Project made from the sale. Correcting the sale marks it void; it
-    is never removed. No permission was added.
+    is never removed. No permission was added. Since step 34b (decision 212)
+    the same people write the Lead's discovery (WNBET), until a handoff to
+    Production is complete for one of its Projects; anyone who may see the
+    Lead reads it. Sales > Workspace (step 34a) shows a salesperson their own
+    appointments and a manager anyone's at the Locations they manage, as
+    Sales > Calendar.
 20. **Results** (slice 7 step 7c). The same people as rule 19 give a proposal
     its result (sold, lost, still pending), change one that is still pending,
     and mark the Lead lost; the salesperson can still do so on their own Lead

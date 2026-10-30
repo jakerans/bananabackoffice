@@ -2,7 +2,7 @@
 
 Status: **proposed on 2026-10-30 after the plan check following slice 33,
 and approved the same day with every recommendation, both steps built
-straight through (decision 212).** Written as what the implementation agent
+straight through and merged (decision 212); slice 34 is complete.** Written as what the implementation agent
 recommends.
 
 ## Why this is next (the plan check)
@@ -71,3 +71,32 @@ Calendar, a calendar grid, taking the deposit in the home (22), offline use.
 
 **Known limits:** the shared top bar is still wider than a phone screen, as
 on every page; the Workspace's own content fits.
+
+## Step 34b as built
+
+- **Discovery** (`lead_discoveries`, one row for each Lead that has any):
+  Wants, Needs, Budget, Expectations and Timeline, each optional, up to 2,000
+  characters, with who last wrote it and when. A **Discovery** card on the
+  Lead, under the appointment, and on the estimate page, beside the
+  estimate: "n of 5 written down", the answers, and **Write it down** or
+  **Change**. The Workspace shows "Discovery: n of 5 written down" on each
+  appointment, linked to the card.
+- **Who:** anyone who may see the Lead reads it; the people who manage its
+  estimates write it (rule 19), until a handoff to Production is complete
+  for one of its Projects. The Audit Log ("Lead · Discovery saved") records
+  which answers changed and how many there are, never what they say.
+- **The handoff starts filled in** when nothing is saved yet:
+  1. "What exactly is included?" from the option sold, one room to a line
+     with each surface's customer wording and its coats ("Front of house:
+     Sample Walls Roll (2 coats)"), then "Also:" and the written line items;
+  2. "What matters most to this customer?" from discovery, one answer to a
+     line ("Budget: Around $8,000.").
+
+  A note says what was started for them, to be checked against what was
+  agreed. Nothing is saved until the salesperson completes the handoff; a
+  handoff already completed opens with its own answers. A sale recorded by
+  hand starts no scope.
+
+**Known limits:** the scope lists rooms and surfaces, not measurements or
+paint; a room the estimate holds as one wall or surface reads as that one
+line.

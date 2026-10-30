@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 
@@ -437,6 +438,17 @@ class Lead extends Model
     public function proposals(): HasMany
     {
         return $this->hasMany(Proposal::class)->orderBy('id');
+    }
+
+    /**
+     * What the salesperson learned in discovery (WNBET), once anything is
+     * written down (docs/slice-34-sales-workspace-plan.md, step 34b).
+     *
+     * @return HasOne<LeadDiscovery, $this>
+     */
+    public function discovery(): HasOne
+    {
+        return $this->hasOne(LeadDiscovery::class);
     }
 
     /**

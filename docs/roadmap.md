@@ -295,6 +295,13 @@ tablet for the option chosen, with Banana's contract wording, and the
 signed agreement is kept unchanged. Its plan is
 [slice-33-agreement-plan.md](slice-33-agreement-plan.md).
 
+**Slice 34, the Sales Workspace, is complete (decision 212):** the plan
+check after slice 33 found the salesperson's day and discovery (WNBET) the
+last stakeholder-independent parts of 5.3. Both steps are built straight
+through and merged: 34a, Sales > Workspace > Today, with Commissions opening
+"My pay"; 34b, discovery on the Lead and a handoff that starts filled in.
+Its plan is [slice-34-sales-workspace-plan.md](slice-34-sales-workspace-plan.md).
+
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the
 customer still unbuilt. Its plan is

@@ -1904,6 +1904,9 @@ new #[Title('Lead')] class extends AddressCapturePage {
 
         <livewire:pages::leads.appointment :lead="$lead" :key="'appointment-'.$lead->id" />
 
+        {{-- What the customer said in discovery (slice 34, step 34b; decision 212). --}}
+        <livewire:pages::leads.discovery :lead="$lead" :key="'discovery-'.$lead->id" />
+
         {{-- The Estimates card, which took over the Proposals card (step 31e; decision 207). --}}
         <livewire:pages::leads.proposals :lead="$lead" :key="'proposals-'.$lead->id" />
 

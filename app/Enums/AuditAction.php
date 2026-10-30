@@ -69,6 +69,7 @@ enum AuditAction: string
     case LeadProposalAddedInError = 'lead.proposal_added_in_error';
     case LeadAgreementSigned = 'lead.agreement_signed';
     case LeadAgreementVoided = 'lead.agreement_voided';
+    case LeadDiscoverySaved = 'lead.discovery_saved';
     case LeadEstimateStarted = 'lead.estimate_started';
     case LeadEstimateHourlyRateChanged = 'lead.estimate_hourly_rate_changed';
     case LeadEstimateDiscountsChanged = 'lead.estimate_discounts_changed';
