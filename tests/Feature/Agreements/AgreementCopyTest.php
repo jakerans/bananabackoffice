@@ -102,7 +102,7 @@ test('what the customer typed or was sold is escaped in the email', function () 
     });
 });
 
-test('nothing is sent without an address, before it is switched on, or to a customer address outside production', function (Closure $arrange, AgreementEmailOutcome $outcome, string $shown) {
+test('nothing is sent without an address, before it is switched on, or to a customer address on a server not set to email anyone', function (Closure $arrange, AgreementEmailOutcome $outcome, string $shown) {
     $arrange($this);
 
     $agreement = signTheAgreement($this);
@@ -117,12 +117,15 @@ test('nothing is sent without an address, before it is switched on, or to a cust
 })->with([
     'no address' => [fn ($test) => $test->lead->forceFill(['inquiry_email' => null])->save(), AgreementEmailOutcome::NoAddress, 'Not sent on Oct 8, 2026 at 3:30 PM: the lead has no email address.'],
     'switched off' => [fn () => config(['mail.customers.enabled' => false]), AgreementEmailOutcome::SwitchedOff, 'email to customers is not switched on yet'],
-    'a customer address on staging' => [fn ($test) => $test->lead->forceFill(['inquiry_email' => 'pat@example.com'])->save(), AgreementEmailOutcome::TestAddressesOnly, 'this server emails only Banana\'s own addresses'],
+    'a customer address on staging, even named production' => [function ($test) {
+        app()->detectEnvironment(fn (): string => 'production');
+        $test->lead->forceFill(['inquiry_email' => 'pat@example.com'])->save();
+    }, AgreementEmailOutcome::TestAddressesOnly, 'this server emails only Banana\'s own addresses'],
 ]);
 
-test('in production a customer address at any domain is emailed', function () {
+test('a customer address at any domain is emailed once the server is set to email anyone', function () {
     $this->lead->forceFill(['inquiry_email' => 'pat@example.com'])->save();
-    app()->detectEnvironment(fn (): string => 'production');
+    config(['mail.customers.to_anyone' => true]);
 
     signTheAgreement($this);
 

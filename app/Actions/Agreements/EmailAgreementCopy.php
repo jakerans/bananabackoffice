@@ -23,8 +23,9 @@ use Throwable;
  * when they sign, or again by whoever may sign for the Lead.
  *
  * It goes to the Lead's email address as it is now. Nothing is sent until
- * email to customers is switched on (point 1), and outside production only
- * to Banana's own addresses (point 4). Each time is kept, sent or not, with
+ * email to customers is switched on (point 1), and only to Banana's own
+ * addresses unless the server is set to email anyone, as only production is
+ * (point 4; staging runs as "production" too, so its name is not relied on). Each time is kept, sent or not, with
  * why not, and recorded in the Audit Log. A failure to send never undoes the
  * signing; it is reported and shown.
  */
@@ -67,12 +68,12 @@ class EmailAgreementCopy
     }
 
     /**
-     * Whether an address may be emailed on this server: anywhere in
-     * production, otherwise only at the test domains.
+     * Whether an address may be emailed on this server: anywhere once it is
+     * set to email anyone, otherwise only at the test domains.
      */
     public static function mayEmail(string $address): bool
     {
-        if (app()->isProduction()) {
+        if (config('mail.customers.to_anyone') === true) {
             return true;
         }
 

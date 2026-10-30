@@ -56,11 +56,12 @@ so the reputation of one never harms the other.
    values listed under "Customer email" in `.env.example`: the key
    (`RESEND_CUSTOMERS_API_KEY`), the from address on that domain
    (`MAIL_CUSTOMERS_FROM_ADDRESS`), the mailer (`MAIL_CUSTOMERS_MAILER`
-   set to `resend`) and the switch (`MAIL_CUSTOMERS_ENABLED` set to
-   `true`).
+   set to `resend`), the switch (`MAIL_CUSTOMERS_ENABLED` set to `true`)
+   and, on production only, `MAIL_CUSTOMERS_TO_ANYONE` set to `true`.
 
 Staging stays as it is: switched off, or, if switched on to try it, it
-still sends only to Banana's own addresses.
+still sends only to Banana's own addresses, because it is never set to
+email anyone.
 
 ## Step 36a as built
 
@@ -76,8 +77,10 @@ still sends only to Banana's own addresses.
   it. Everything is escaped.
 - **Not sent, and why,** each kept and shown: the Lead has no email
   address; email to customers is not switched on (`MAIL_CUSTOMERS_ENABLED`,
-  off by default); or, outside production, the address is not at a test
-  domain (`MAIL_CUSTOMERS_TEST_DOMAINS`, `bananapainting.com` by default). A
+  off by default); or the address is not at a test domain
+  (`MAIL_CUSTOMERS_TEST_DOMAINS`, `bananapainting.com` by default) on a
+  server not set to email anyone (`MAIL_CUSTOMERS_TO_ANYONE`, off by
+  default, set on production only). A
   failure of the email service is reported and shown as "could not be
   sent"; the signing stands.
 - **The agreement page,** above the summary: "Customer's copy", with
@@ -99,6 +102,9 @@ Decisions made while building:
   press cannot send two.
 - **The address is the Lead's as it is now,** so a corrected address is used
   when it is sent again.
+- **Who may be emailed is a setting, not the server's name:** staging runs
+  as "production" too, which the staging check found, so customer
+  addresses need `MAIL_CUSTOMERS_TO_ANYONE`, set on production only.
 - **Kept small for Gmail,** which cuts off emails over about 100 KB: ABQ's
   wording makes an email of about 70 KB.
 

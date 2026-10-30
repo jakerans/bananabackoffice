@@ -148,14 +148,15 @@ return [
     | The customer's copy of a signed agreement (decision 214). Sent through
     | the "customers" mailer from an address on its own sending domain, from
     | "Banana Painting" and the Location's name, with replies reaching the
-    | salesperson. Nothing is sent until it is switched on. Outside
-    | production only addresses at the test domains are emailed, so staging
-    | never writes to a customer.
+    | salesperson. Nothing is sent until it is switched on, and only to
+    | addresses at the test domains until the server is set to email anyone.
+    | Only production is; staging never writes to a customer.
     |
     */
 
     'customers' => [
         'enabled' => (bool) env('MAIL_CUSTOMERS_ENABLED', false),
+        'to_anyone' => (bool) env('MAIL_CUSTOMERS_TO_ANYONE', false),
         'mailer' => 'customers',
         'from_address' => env('MAIL_CUSTOMERS_FROM_ADDRESS', 'hello@email.bananapainting.com'),
         'from_name' => env('MAIL_CUSTOMERS_FROM_NAME', 'Banana Painting'),
