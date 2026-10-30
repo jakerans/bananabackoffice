@@ -38,7 +38,7 @@ class AgreementText
                 continue;
             }
 
-            if (preg_match('/^(\d{1,3})\.\s+(\S.*)$/u', $line, $heading) === 1 && mb_strtoupper($heading[2]) === $heading[2]) {
+            if (self::isHeading($line, $heading)) {
                 unset($blocks);
                 $sections[] = ['number' => (int) $heading[1], 'title' => $heading[2], 'blocks' => []];
                 $blocks = &$sections[array_key_last($sections)]['blocks'];
@@ -134,7 +134,23 @@ class AgreementText
             array_shift($lines);
         }
 
-        return ['title' => $title, 'body' => implode("\n", $lines)];
+        // A blank line before each section, so the wording reads easily when it is changed in Settings.
+        $body = implode("\n", array_map(
+            fn (string $line): string => self::isHeading($line) ? "\n".$line : $line,
+            $lines,
+        ));
+
+        return ['title' => $title, 'body' => trim($body)];
+    }
+
+    /**
+     * Whether a line starts a section: its number, then its title in capitals.
+     *
+     * @param  array<int, string>|null  $heading  Filled with the number and the title.
+     */
+    private static function isHeading(string $line, ?array &$heading = null): bool
+    {
+        return preg_match('/^(\d{1,3})\.\s+(\S.*)$/u', $line, $heading) === 1 && mb_strtoupper($heading[2]) === $heading[2];
     }
 
     /**
