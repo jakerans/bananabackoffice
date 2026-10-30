@@ -4224,6 +4224,10 @@ next starts:
    discovery, still checked and saved by the salesperson.
 4. **Sales > Commissions opens "My pay".**
 
+Built and merged under this decision on 2026-10-30: 34a and 34b
+([slice-34-sales-workspace-plan.md](slice-34-sales-workspace-plan.md), "as
+built"), with no deviation from the plan.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

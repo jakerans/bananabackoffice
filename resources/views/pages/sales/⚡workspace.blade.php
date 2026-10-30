@@ -135,7 +135,7 @@ new #[Title('Workspace')] class extends Component {
         $appointments = $this->visible()
             ->whereIn('state', [AppointmentState::Booked, AppointmentState::Run, AppointmentState::NoShow])
             ->whereBetween('starts_at', [now()->subDay(), now()->addDays(self::DAYS_AHEAD + 1)])
-            ->with(['account', 'property', 'location', 'lead.estimates.options', 'lead.estimates.proposal.agreement', 'lead.estimates.proposal.option'])
+            ->with(['account', 'property', 'location', 'lead.discovery', 'lead.estimates.options', 'lead.estimates.proposal.agreement', 'lead.estimates.proposal.option'])
             ->orderBy('starts_at')
             ->orderBy('id')
             ->get();
@@ -351,6 +351,12 @@ new #[Title('Workspace')] class extends Component {
                                 <flux:button size="sm" :href="route('leads.show', $appointment->lead_id)" wire:navigate>{{ __('Start one on the lead') }}</flux:button>
                             </div>
                         @endforelse
+
+                        {{-- Discovery, written during the appointment (step 34b). --}}
+                        <div class="flex flex-wrap items-center justify-between gap-2" data-test="workspace-discovery-{{ $appointment->id }}">
+                            <flux:text class="text-sm">{{ __('Discovery: :count of 5 written down', ['count' => count($lead?->discovery?->answered() ?? [])]) }}</flux:text>
+                            <flux:button size="sm" variant="ghost" :href="route('leads.show', $appointment->lead_id).'#discovery'" wire:navigate>{{ __('Discovery') }}</flux:button>
+                        </div>
                     </div>
                 </article>
             @endforeach

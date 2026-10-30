@@ -617,6 +617,9 @@ new #[Title('Estimate')] class extends Component {
         </div>
     </div>
 
+    {{-- Discovery beside the estimate, written during the appointment (slice 34, step 34b; decision 212). --}}
+    <livewire:pages::leads.discovery :lead="$estimate->lead" :key="'discovery-'.$estimate->lead_id" />
+
     {{-- Once sold or lost it is kept as it was (step 31e; decision 207). --}}
     @if ($estimate->isSettled())
         <flux:callout icon="lock-closed" data-test="estimate-settled">

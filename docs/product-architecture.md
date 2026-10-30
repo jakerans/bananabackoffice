@@ -358,6 +358,16 @@ slice-33-agreement-plan.md):
   is shown, not collected. Not built: the customer's emailed copy, signing by
   a link (13), and taking the deposit at signing.
 
+Added 2026-10-30 (slice 34; decision 212; build plan:
+slice-34-sales-workspace-plan.md):
+- Built: Sales > Workspace > Today, the salesperson's day: today's
+  appointments and the next seven days', each estimate and where it stands,
+  the reports due. Discovery (WNBET) written down during the appointment on
+  the Lead and beside the estimate; after a sale the handoff starts filled
+  in with the scope from the option sold and the priorities from discovery.
+  Not built: confirmation calls and videos (they need texting), Google
+  Calendar.
+
 5.4 Calendar
 Salespeople manage their own confirmation, rescheduling, cancellations, rehashes, and schedule.
 Google Calendar is the external conflict source; personal scheduling stays there.

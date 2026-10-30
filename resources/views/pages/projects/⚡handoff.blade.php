@@ -4,6 +4,7 @@ use App\Actions\Projects\CompleteProjectHandoff;
 use App\Enums\HandoffColors;
 use App\Models\Project;
 use App\Models\ProjectHandoff;
+use App\Support\Projects\HandoffDraft;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -38,6 +39,10 @@ new #[Title('Handoff to Production')] class extends Component {
         'otherNotes' => '',
     ];
 
+    /** @var list<string> The answers started from the estimate and discovery, to be checked. */
+    #[Locked]
+    public array $prefilled = [];
+
     public function mount(Project $project): void
     {
         $this->authorize('completeHandoff', $project);
@@ -45,6 +50,13 @@ new #[Title('Handoff to Production')] class extends Component {
         $this->projectId = $project->id;
 
         $saved = $project->handoff;
+
+        // Started from the option signed for and from discovery; checked and saved by the salesperson (slice 34, step 34b; decision 212).
+        if ($saved === null) {
+            $draft = HandoffDraft::for($project);
+            $this->handoff = [...$this->handoff, ...$draft];
+            $this->prefilled = array_keys(array_filter($draft, fn (string $answer): bool => $answer !== ''));
+        }
 
         if ($saved !== null) {
             foreach (ProjectHandoff::TEXT_ANSWERS as $question => $column) {
@@ -130,6 +142,14 @@ new #[Title('Handoff to Production')] class extends Component {
             {{ __('Brand Ambassador: :package', ['package' => $project->ambassadorPackage() === null ? __('No package recorded') : __($project->ambassadorPackage()->label())]) }}
         </div>
     </div>
+
+    @if ($prefilled !== [])
+        <flux:callout icon="pencil-square" data-test="handoff-prefilled">
+            <flux:callout.text>
+                {{ __('Started for you: :answers. Check them against what you agreed with the customer, change anything that is not right, then answer the rest.', ['answers' => implode(__(' and '), array_map(fn (string $name): string => $name === 'includedScope' ? __('what is included, from the option signed for') : __('what matters to the customer, from discovery'), $prefilled))]) }}
+            </flux:callout.text>
+        </flux:callout>
+    @endif
 
     <form wire:submit="save" class="flex flex-col gap-6">
         <div class="flex flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-5">
