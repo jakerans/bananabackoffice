@@ -4248,6 +4248,25 @@ Built and merged under this decision on 2026-10-30: 35a and 35b
 ([slice-35-pricing-settings-plan.md](slice-35-pricing-settings-plan.md), "as
 built"), with no deviation from the plan.
 
+## 214. Slice 36, the customer's copy of the agreement, is approved with every recommendation (2026-10-30)
+
+**Decided by Jacob,** on the plan check after slice 35: "recommended on all,
+start 36a". Slice 36
+([slice-36-agreement-copy-plan.md](slice-36-agreement-copy-plan.md)) is
+approved, and step 36a is built, tested, reviewed and merged to staging
+under the standing authorization:
+
+1. **A sending address of its own for customer email,** a subdomain apart
+   from the staff email's `mail.bananapainting.com`, as decision 22 says.
+   Jacob sets it up in Resend from a guide; until it is verified and
+   switched on, nothing is sent to customers.
+2. **From the Location, replies to the salesperson:** "Banana Painting" and
+   the Location's name, with replies reaching the salesperson who presented
+   the agreement.
+3. **The copy is the email itself,** not an attached PDF and not a link.
+4. **Staging never emails a customer address:** outside production it goes
+   only to Banana's own addresses.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

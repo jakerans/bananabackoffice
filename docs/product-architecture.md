@@ -376,6 +376,15 @@ slice-35-pricing-settings-plan.md):
   line items, added, changed, reordered and retired, never deleted. An
   estimate keeps what it was given until it is repriced.
 
+Added 2026-10-30 (slice 36; decision 214; build plan:
+slice-36-agreement-copy-plan.md):
+- Built: the customer's copy of the signed agreement, emailed when they
+  sign and again from the agreement page, from "Banana Painting" and the
+  Location's name with replies to the salesperson, on a sending domain of
+  its own. Whether it was sent, and why not, shows on the agreement and the
+  Lead. Sent to customers once that domain is set up and switched on. Not
+  built: a PDF, signing by a link (13), taking the deposit at signing.
+
 5.4 Calendar
 Salespeople manage their own confirmation, rescheduling, cancellations, rehashes, and schedule.
 Google Calendar is the external conflict source; personal scheduling stays there.

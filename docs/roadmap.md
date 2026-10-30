@@ -310,6 +310,14 @@ discounts and tax rates, with those that start on new estimates; 35b, areas
 and line items. Its plan is
 [slice-35-pricing-settings-plan.md](slice-35-pricing-settings-plan.md).
 
+**Slice 36, the customer's copy of the agreement, is complete (decision
+214):** the plan check after slice 35 found it the last gap before
+salespeople stop using PaintScout. Step 36a is built and merged: the
+signed agreement emailed to the customer when they sign, and again from
+the agreement page, from a sending domain of its own. Nothing goes to
+customers until Jacob sets that domain up and it is switched on. Its plan
+is [slice-36-agreement-copy-plan.md](slice-36-agreement-copy-plan.md).
+
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the
 customer still unbuilt. Its plan is

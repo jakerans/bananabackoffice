@@ -39,6 +39,9 @@ use Illuminate\Validation\ValidationException;
  * signature. Nothing is collected (question 4): it shows the deposit due
  * under the Location's policy. The rest of the report, other estimates and
  * notes, is then still due for that appointment.
+ *
+ * Once signed, the customer is emailed their copy (slice 36, step 36a;
+ * decision 214); the signing stands whether or not it could be sent.
  */
 class SignAgreement
 {
@@ -58,6 +61,7 @@ class SignAgreement
         private RecordProposalResult $recordProposalResult,
         private RecordAuditEvent $recordAuditEvent,
         private AgreementDetails $agreementDetails,
+        private EmailAgreementCopy $emailAgreementCopy,
     ) {}
 
     /**
@@ -186,6 +190,8 @@ class SignAgreement
 
             return true;
         }, retryWhenBusy: true);
+
+        $this->emailAgreementCopy->afterSigning($agreement, $actor);
 
         return $agreement;
     }
