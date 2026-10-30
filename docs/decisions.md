@@ -4228,6 +4228,22 @@ Built and merged under this decision on 2026-10-30: 34a and 34b
 ([slice-34-sales-workspace-plan.md](slice-34-sales-workspace-plan.md), "as
 built"), with no deviation from the plan.
 
+## 213. Slice 35, the rest of Pricing Settings, is approved with every recommendation, built straight through (2026-10-30)
+
+**Decided by Jacob,** on the plan check after slice 34: "recommended on all,
+start 35a and do both in one go". Slice 35
+([slice-35-pricing-settings-plan.md](slice-35-pricing-settings-plan.md)) is
+approved, and its two steps are built one after the other, each tested,
+reviewed and merged to staging under the standing authorization before the
+next starts:
+
+1. **Retired, never deleted.** A retired discount, tax rate or template
+   stops being offered to new estimates; the estimates that used it keep it.
+2. **Who changes them:** whoever may change production rates
+   (`settings.pricing.manage`).
+3. **Every change in the Audit Log,** from what to what, as rates are.
+4. **Both steps built straight through.**
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
