@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use LogicException;
 
@@ -47,6 +49,7 @@ use LogicException;
  * @property-read Proposal $proposal
  * @property-read Appointment $appointment
  * @property-read AgreementWording $wording
+ * @property-read AgreementEmail|null $latestEmail
  */
 class Agreement extends Model
 {
@@ -119,6 +122,24 @@ class Agreement extends Model
     public function wording(): BelongsTo
     {
         return $this->belongsTo(AgreementWording::class, 'agreement_wording_id');
+    }
+
+    /**
+     * Each time the customer's copy was to be emailed (slice 36, step 36a).
+     *
+     * @return HasMany<AgreementEmail, $this>
+     */
+    public function emails(): HasMany
+    {
+        return $this->hasMany(AgreementEmail::class);
+    }
+
+    /**
+     * @return HasOne<AgreementEmail, $this>
+     */
+    public function latestEmail(): HasOne
+    {
+        return $this->hasOne(AgreementEmail::class)->latestOfMany();
     }
 
     public function isVoid(): bool

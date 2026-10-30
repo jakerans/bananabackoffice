@@ -1,7 +1,11 @@
 <?php
 
+use App\Actions\Agreements\EmailAgreementCopy;
+use App\Enums\AgreementEmailOutcome;
 use App\Models\Agreement;
 use App\Models\Lead;
+use Flux\Flux;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -17,6 +21,9 @@ use Livewire\Component;
  * prints. Void ones say so, with the reason.
  *
  * Whoever may see the Lead, or the Project made from the sale, may read it.
+ *
+ * Whether the customer was emailed their copy, and "Email again" for whoever
+ * may sign for the Lead (slice 36, step 36a; decision 214).
  */
 new #[Title('Signed agreement')] #[Layout('layouts::presentation')] class extends Component {
     #[Locked]
@@ -38,7 +45,27 @@ new #[Title('Signed agreement')] #[Layout('layouts::presentation')] class extend
     #[Computed]
     public function agreement(): Agreement
     {
-        return Agreement::query()->with(['wording', 'proposal.project'])->where('lead_id', $this->leadId)->findOrFail($this->agreementId);
+        return Agreement::query()->with(['wording', 'proposal.project', 'lead', 'latestEmail'])->where('lead_id', $this->leadId)->findOrFail($this->agreementId);
+    }
+
+    public function confirmEmailAgain(): void
+    {
+        $this->resetValidation();
+        Flux::modal('email-again-confirmation')->show();
+    }
+
+    public function emailAgain(EmailAgreementCopy $emailAgreementCopy): void
+    {
+        $email = $emailAgreementCopy->again($this->agreement, Auth::user());
+
+        unset($this->agreement);
+        Flux::modal('email-again-confirmation')->close();
+
+        if ($email->wasSent()) {
+            Flux::toast(variant: 'success', text: __('Emailed to :address.', ['address' => $email->to_address]));
+        } else {
+            Flux::toast(variant: 'warning', text: __('Not sent: :reason.', ['reason' => $email->outcome->notSentReason()]));
+        }
     }
 }; ?>
 
@@ -70,6 +97,34 @@ new #[Title('Signed agreement')] #[Layout('layouts::presentation')] class extend
             </flux:callout>
         @endif
 
+        @php($email = $agreement->latestEmail)
+        <section class="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-card p-5 sm:flex-row sm:items-center sm:justify-between print:hidden" data-test="agreement-copy">
+            <div class="min-w-0">
+                <flux:heading level="2">{{ __('Customer\'s copy') }}</flux:heading>
+                <flux:text class="mt-1 break-words" data-test="agreement-copy-status">
+                    @if ($email === null)
+                        {{ __('Not emailed yet.') }}
+                    @elseif ($email->wasSent())
+                        {{ __('Emailed to :address on :when.', ['address' => $email->to_address, 'when' => $email->created_at->copy()->timezone(config('app.display_timezone'))->format('M j, Y \a\t g:i A')]) }}
+                    @else
+                        {{ __('Not sent on :when: :reason.', ['when' => $email->created_at->copy()->timezone(config('app.display_timezone'))->format('M j, Y \a\t g:i A'), 'reason' => $email->outcome->notSentReason()]) }}
+                    @endif
+                </flux:text>
+            </div>
+            @if (! $agreement->isVoid())
+                @can('manageProposals', $agreement->lead)
+                    <div class="flex shrink-0 flex-col gap-1 sm:items-end">
+                        <flux:button size="sm" icon="envelope" wire:click="confirmEmailAgain" :disabled="$agreement->lead->inquiry_email === null" data-test="email-again">
+                            {{ $email?->wasSent() ? __('Email again') : __('Email a copy') }}
+                        </flux:button>
+                        @if ($agreement->lead->inquiry_email === null)
+                            <flux:text class="text-sm">{{ __('Add the customer\'s email address on the lead first.') }}</flux:text>
+                        @endif
+                    </div>
+                @endcan
+            @endif
+        </section>
+
         <x-agreement.summary :details="$agreement->details" />
 
         <x-agreement.wording :wording="$agreement->wording" :toc="false" class="rounded-2xl border border-zinc-200 bg-card p-6 sm:p-8" />
@@ -85,4 +140,18 @@ new #[Title('Signed agreement')] #[Layout('layouts::presentation')] class extend
             </flux:text>
         </section>
     </main>
+
+    @if (! $agreement->isVoid() && $agreement->lead->inquiry_email !== null)
+        @can('manageProposals', $agreement->lead)
+            <x-confirmation-modal
+                name="email-again-confirmation"
+                :title="__('Email the customer a copy?')"
+                :description="__('It goes to :address, the email address on the lead.', ['address' => $agreement->lead->inquiry_email])"
+                action="emailAgain"
+                :confirm-label="__('Send the copy')"
+                confirm-variant="primary"
+                error="email"
+            />
+        @endcan
+    @endif
 </div>

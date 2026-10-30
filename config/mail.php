@@ -65,6 +65,14 @@ return [
             'transport' => 'resend',
         ],
 
+        // Email to customers (decision 214), on a sending domain of its own,
+        // with its own Resend key. Local development writes it to the log.
+        'customers' => [
+            'transport' => env('MAIL_CUSTOMERS_MAILER', 'log'),
+            'key' => env('RESEND_CUSTOMERS_API_KEY'),
+            'channel' => env('MAIL_LOG_CHANNEL'),
+        ],
+
         'sendmail' => [
             'transport' => 'sendmail',
             'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),
@@ -130,6 +138,28 @@ return [
     'reply_to' => [
         'address' => env('MAIL_REPLY_TO_ADDRESS'),
         'name' => env('MAIL_REPLY_TO_NAME', env('MAIL_FROM_NAME', env('APP_NAME', 'Banana Backoffice'))),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Email to Customers
+    |--------------------------------------------------------------------------
+    |
+    | The customer's copy of a signed agreement (decision 214). Sent through
+    | the "customers" mailer from an address on its own sending domain, from
+    | "Banana Painting" and the Location's name, with replies reaching the
+    | salesperson. Nothing is sent until it is switched on. Outside
+    | production only addresses at the test domains are emailed, so staging
+    | never writes to a customer.
+    |
+    */
+
+    'customers' => [
+        'enabled' => (bool) env('MAIL_CUSTOMERS_ENABLED', false),
+        'mailer' => 'customers',
+        'from_address' => env('MAIL_CUSTOMERS_FROM_ADDRESS', 'hello@email.bananapainting.com'),
+        'from_name' => env('MAIL_CUSTOMERS_FROM_NAME', 'Banana Painting'),
+        'test_domains' => array_values(array_filter(array_map('trim', explode(',', (string) env('MAIL_CUSTOMERS_TEST_DOMAINS', 'bananapainting.com'))))),
     ],
 
 ];
