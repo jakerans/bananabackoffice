@@ -48,6 +48,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Settings > Pricing Settings: the price books and production rates (slice 31, step 31a; decision 197).
     // Seeing them and changing them are two permissions; the page checks both.
     Route::livewire('settings/pricing', 'pages::settings.pricing')->name('settings.pricing');
+    Route::livewire('settings/pricing/agreement', 'pages::settings.agreement')->name('settings.agreement');
 
     // Settings > Audit Log: every recorded change, for the Owner (slice 29, decision 191).
     Route::livewire('settings/audit-log', 'pages::settings.audit-log')

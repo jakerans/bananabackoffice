@@ -384,12 +384,15 @@ new #[Title('Pricing Settings')] class extends Component {
             <flux:subheading>{{ __('Production rates, paints and hourly rates that estimates are priced with. Each Location starts from the default price book and can be customized from there.') }}</flux:subheading>
         </div>
 
+        <div class="flex flex-wrap items-end gap-3">
+        <flux:button :href="route('settings.agreement')" wire:navigate icon="document-text" data-test="agreement-wording-link">{{ __('Agreement wording') }}</flux:button>
         <flux:select wire:model.live="book" :label="__('Price book')" class="min-w-64" data-test="price-book-select">
             <flux:select.option value="default">{{ __('Default price book') }}</flux:select.option>
             @foreach ($this->locations as $choice)
                 <flux:select.option :value="(string) $choice->id">{{ $choice->name }}</flux:select.option>
             @endforeach
         </flux:select>
+        </div>
     </div>
 
     @error('book')
