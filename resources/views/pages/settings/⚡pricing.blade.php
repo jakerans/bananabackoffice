@@ -3,7 +3,9 @@
 use App\Actions\Pricing\ChangeHourlyRates;
 use App\Actions\Pricing\CustomizePriceBook;
 use App\Actions\Pricing\MovePriceBookItem;
+use App\Actions\Pricing\SaveAreaTemplate;
 use App\Actions\Pricing\SaveDiscount;
+use App\Actions\Pricing\SaveLineItemTemplate;
 use App\Actions\Pricing\SavePaintProduct;
 use App\Actions\Pricing\SaveProductionRate;
 use App\Actions\Pricing\SaveRateCategory;
@@ -35,7 +37,7 @@ use Livewire\Component;
  * Settings > Pricing Settings (docs/slice-31-estimating-plan.md, step 31a;
  * decisions 196 and 197): the default price book and each Location's,
  * production rates and everything else estimating charges for, with the
- * discounts and tax rates since step 35a (decision 213). Owner and
+ * discounts, tax rates, areas and line items since slice 35 (decision 213). Owner and
  * Leadership change them; Location Managers and salespeople see them.
  */
 new #[Title('Pricing Settings')] class extends Component {
@@ -77,6 +79,16 @@ new #[Title('Pricing Settings')] class extends Component {
 
     /** @var array<string, mixed> */
     public array $taxRateForm = [];
+
+    public ?int $areaId = null;
+
+    /** @var array<string, mixed> */
+    public array $areaForm = [];
+
+    public ?int $lineItemId = null;
+
+    /** @var array<string, mixed> */
+    public array $lineItemForm = [];
 
     /**
      * Mount the component.
@@ -406,8 +418,93 @@ new #[Title('Pricing Settings')] class extends Component {
         Flux::toast(variant: 'success', text: $taxRate === null ? __('Tax rate added.') : __('Tax rate saved.'));
     }
 
+    public function newArea(): void
+    {
+        $this->authorizeEditing();
+
+        $this->areaId = null;
+        $this->areaForm = ['name' => '', 'side' => 'interior', 'estimate_types' => [EstimateType::ResidentialInterior->value, EstimateType::CommercialInterior->value], 'is_active' => true];
+        $this->resetValidation();
+
+        Flux::modal('area-template')->show();
+    }
+
+    public function editArea(int $areaId): void
+    {
+        $this->authorizeEditing();
+
+        $area = $this->priceBook->areaTemplates()->findOrFail($areaId);
+
+        $this->areaId = $area->id;
+        $this->areaForm = ['name' => $area->name, 'side' => (string) $area->side, 'estimate_types' => $area->estimate_types, 'is_active' => $area->is_active];
+        $this->resetValidation();
+
+        Flux::modal('area-template')->show();
+    }
+
+    public function saveArea(SaveAreaTemplate $saveAreaTemplate): void
+    {
+        $this->authorizeEditing();
+
+        $area = $this->areaId === null ? null : $this->priceBook->areaTemplates()->findOrFail($this->areaId);
+
+        $this->asForm('areaForm', fn () => $saveAreaTemplate->handle($this->priceBook, $area, $this->areaForm, $this->user()));
+
+        $this->forget();
+        Flux::modal('area-template')->close();
+        Flux::toast(variant: 'success', text: $area === null ? __('Area added.') : __('Area saved.'));
+    }
+
+    public function newLineItem(): void
+    {
+        $this->authorizeEditing();
+
+        $this->lineItemId = null;
+        $this->lineItemForm = [
+            'name' => '', 'description' => '', 'pricing' => SaveLineItemTemplate::PRICED, 'price' => '', 'hours' => '', 'hourly_rate' => '',
+            'estimate_types' => [EstimateType::ResidentialInterior->value, EstimateType::ResidentialExterior->value], 'is_active' => true,
+        ];
+        $this->resetValidation();
+
+        Flux::modal('line-item-template')->show();
+    }
+
+    public function editLineItem(int $lineItemId): void
+    {
+        $this->authorizeEditing();
+
+        $item = $this->priceBook->lineItems()->findOrFail($lineItemId);
+        $byHours = $item->hours !== null && (float) $item->hours > 0;
+
+        $this->lineItemId = $item->id;
+        $this->lineItemForm = [
+            'name' => $item->name, 'description' => $item->plainDescription(),
+            'pricing' => $byHours ? SaveLineItemTemplate::HOURS : SaveLineItemTemplate::PRICED,
+            'price' => $byHours ? '' : number_format(($item->price_cents ?? 0) / 100, 2, '.', ''),
+            'hours' => $byHours ? (string) Decimal::plain($item->hours) : '',
+            'hourly_rate' => $byHours && $item->hourly_rate_cents !== null ? number_format($item->hourly_rate_cents / 100, 2, '.', '') : '',
+            'estimate_types' => $item->estimate_types, 'is_active' => $item->is_active,
+        ];
+        $this->resetValidation();
+
+        Flux::modal('line-item-template')->show();
+    }
+
+    public function saveLineItem(SaveLineItemTemplate $saveLineItemTemplate): void
+    {
+        $this->authorizeEditing();
+
+        $item = $this->lineItemId === null ? null : $this->priceBook->lineItems()->findOrFail($this->lineItemId);
+
+        $this->asForm('lineItemForm', fn () => $saveLineItemTemplate->handle($this->priceBook, $item, $this->lineItemForm, $this->user()));
+
+        $this->forget();
+        Flux::modal('line-item-template')->close();
+        Flux::toast(variant: 'success', text: $item === null ? __('Line item added.') : __('Line item saved.'));
+    }
+
     /**
-     * Move a discount or tax rate one place up or down its list.
+     * Move a discount, tax rate, area or line item one place up or down its list.
      */
     public function move(MovePriceBookItem $movePriceBookItem, string $list, int $itemId, string $direction): void
     {
@@ -626,45 +723,91 @@ new #[Title('Pricing Settings')] class extends Component {
             </div>
         @elseif ($tab === 'areas')
             <div class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-4" data-test="area-templates">
-                <flux:text class="text-sm">{{ __('The areas an estimate starts from. They are changed with the estimate itself, in a later step.') }}</flux:text>
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <flux:text class="max-w-2xl text-sm">{{ __('The rooms and areas an estimate is offered to start from. An area already on an estimate keeps its own name.') }}</flux:text>
+                    @if ($this->editable)
+                        <flux:button size="sm" icon="plus" wire:click="newArea" data-test="add-area">{{ __('Add area') }}</flux:button>
+                    @endif
+                </div>
+                <div class="-mx-4 overflow-x-auto px-4">
                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column>{{ __('Area') }}</flux:table.column>
                         <flux:table.column>{{ __('Inside or out') }}</flux:table.column>
                         <flux:table.column>{{ __('Estimate types') }}</flux:table.column>
+                        <flux:table.column>{{ __('Status') }}</flux:table.column>
+                        @if ($this->editable)
+                            <flux:table.column align="end"><span class="sr-only">{{ __('Actions') }}</span></flux:table.column>
+                        @endif
                     </flux:table.columns>
                     <flux:table.rows>
-                        @foreach ($this->priceBook->areaTemplates as $area)
-                            <flux:table.row :key="'area-'.$area->id">
+                        @forelse ($this->priceBook->areaTemplates as $area)
+                            <flux:table.row :key="'area-'.$area->id" data-test="area-{{ $area->id }}">
                                 <flux:table.cell variant="strong">{{ $area->name }}</flux:table.cell>
-                                <flux:table.cell>{{ match ($area->side) { 'interior' => __('Inside'), 'exterior' => __('Outside'), default => __('Either') } }}</flux:table.cell>
-                                <flux:table.cell class="text-sm">{{ implode(', ', array_map(fn (string $type): string => EstimateType::from($type)->label(), $area->estimate_types)) }}</flux:table.cell>
+                                <flux:table.cell>{{ SaveAreaTemplate::sideLabel($area->side) }}</flux:table.cell>
+                                <flux:table.cell class="min-w-48 whitespace-normal text-sm">{{ implode(', ', array_map(fn (string $type): string => EstimateType::from($type)->label(), $area->estimate_types)) }}</flux:table.cell>
+                                <flux:table.cell>
+                                    @if ($area->is_active)
+                                        <flux:badge size="sm" color="green">{{ __('Offered') }}</flux:badge>
+                                    @else
+                                        <flux:badge size="sm" color="zinc">{{ __('Retired') }}</flux:badge>
+                                    @endif
+                                </flux:table.cell>
+                                @if ($this->editable)
+                                    <flux:table.cell align="end">
+                                        <div class="flex justify-end gap-1">
+                                            @include('partials.pricing.move-buttons', ['list' => 'areas', 'item' => $area, 'first' => $loop->first, 'last' => $loop->last])
+                                            <flux:button size="sm" wire:click="editArea({{ $area->id }})" data-test="edit-area-{{ $area->id }}">{{ __('Edit') }}</flux:button>
+                                        </div>
+                                    </flux:table.cell>
+                                @endif
                             </flux:table.row>
-                        @endforeach
+                        @empty
+                            <flux:table.row>
+                                <flux:table.cell colspan="5">{{ __('No areas yet.') }}</flux:table.cell>
+                            </flux:table.row>
+                        @endforelse
                     </flux:table.rows>
                 </flux:table>
+                </div>
             </div>
         @elseif ($tab === 'line-items')
             <div class="flex flex-col gap-3" data-test="line-items">
-                <flux:text class="text-sm">{{ __('Sections and priced items an estimate can carry. They are changed with the estimate itself, in a later step.') }}</flux:text>
-                @foreach ($this->priceBook->lineItems as $item)
-                    <div class="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-card p-4" wire:key="line-item-{{ $item->id }}">
-                        <div class="flex flex-wrap items-baseline justify-between gap-2">
-                            <flux:heading level="3">{{ $item->name }}</flux:heading>
-                            <span class="text-sm tabular-nums text-zinc-600">
-                                @if ($item->price_cents !== null)
-                                    {{ Money::format($item->price_cents) }}
-                                @endif
-                                @if ($item->hours !== null)
-                                    · {{ __(':hours hours', ['hours' => Decimal::plain($item->hours)]) }}
-                                @endif
-                            </span>
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <flux:text class="max-w-2xl text-sm">{{ __('Sections and priced items an estimate can carry. A line item already on an estimate keeps its own wording and price.') }}</flux:text>
+                    @if ($this->editable)
+                        <flux:button size="sm" icon="plus" wire:click="newLineItem" data-test="add-line-item">{{ __('Add line item') }}</flux:button>
+                    @endif
+                </div>
+                @forelse ($this->priceBook->lineItems as $item)
+                    <div class="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-card p-4" wire:key="line-item-{{ $item->id }}" data-test="line-item-{{ $item->id }}">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <div class="flex min-w-0 flex-col gap-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <flux:heading level="3">{{ $item->name }}</flux:heading>
+                                    @unless ($item->is_active)
+                                        <flux:badge size="sm" color="zinc">{{ __('Retired') }}</flux:badge>
+                                    @endunless
+                                </div>
+                                <flux:text class="text-sm tabular-nums">
+                                    {{ SaveLineItemTemplate::pricedAs($item) }}
+                                    · {{ implode(', ', array_map(fn (string $type): string => EstimateType::from($type)->label(), $item->estimate_types)) }}
+                                </flux:text>
+                            </div>
+                            @if ($this->editable)
+                                <div class="flex gap-1">
+                                    @include('partials.pricing.move-buttons', ['list' => 'line_items', 'item' => $item, 'first' => $loop->first, 'last' => $loop->last])
+                                    <flux:button size="sm" wire:click="editLineItem({{ $item->id }})" data-test="edit-line-item-{{ $item->id }}">{{ __('Edit') }}</flux:button>
+                                </div>
+                            @endif
                         </div>
                         @if ($item->plainDescription() !== '')
                             <flux:text class="whitespace-pre-line text-sm">{{ $item->plainDescription() }}</flux:text>
                         @endif
                     </div>
-                @endforeach
+                @empty
+                    <flux:text class="text-sm">{{ __('No line items yet.') }}</flux:text>
+                @endforelse
             </div>
         @elseif ($tab === 'discounts')
             <div class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-4" data-test="discounts">
@@ -933,6 +1076,68 @@ new #[Title('Pricing Settings')] class extends Component {
                     <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
                 </flux:modal.close>
                 <flux:button type="submit" variant="primary" data-test="save-tax-rate">{{ __('Save') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="area-template" class="w-full max-w-md">
+        <form wire:submit="saveArea" class="flex flex-col gap-5" data-test="area-form">
+            <flux:heading size="lg">{{ $areaId === null ? __('Add area') : __('Edit area') }}</flux:heading>
+            <flux:input wire:model="areaForm.name" :label="__('Name')" required />
+            <flux:select wire:model="areaForm.side" :label="__('Inside or out')" :description="__('Inside starts a room; outside starts a surface.')">
+                <flux:select.option value="interior">{{ __('Inside') }}</flux:select.option>
+                <flux:select.option value="exterior">{{ __('Outside') }}</flux:select.option>
+                <flux:select.option value="">{{ __('Either') }}</flux:select.option>
+            </flux:select>
+            <div class="flex flex-col gap-2">
+                <flux:heading level="3">{{ __('Offered on') }}</flux:heading>
+                @foreach (EstimateType::cases() as $type)
+                    <flux:checkbox wire:model="areaForm.estimate_types" :value="$type->value" :label="$type->label()" />
+                @endforeach
+                @error('areaForm.estimate_types') <flux:text class="text-sm text-red-600">{{ $message }}</flux:text> @enderror
+            </div>
+            <flux:checkbox wire:model="areaForm.is_active" :label="__('Offered on new estimates')" :description="__('Untick to retire it. Areas already on estimates keep their names.')" />
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary" data-test="save-area">{{ __('Save') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="line-item-template" class="w-full max-w-2xl">
+        <form wire:submit="saveLineItem" class="flex flex-col gap-5" data-test="line-item-form">
+            <flux:heading size="lg">{{ $lineItemId === null ? __('Add line item') : __('Edit line item') }}</flux:heading>
+            <flux:input wire:model="lineItemForm.name" :label="__('Name')" required />
+            <flux:textarea wire:model="lineItemForm.description" :label="__('Description')" :description="__('What the customer reads. One point to a line.')" rows="6" />
+            <flux:radio.group wire:model.live="lineItemForm.pricing" :label="__('Priced as')" variant="segmented">
+                <flux:radio :value="SaveLineItemTemplate::PRICED" :label="__('A price')" />
+                <flux:radio :value="SaveLineItemTemplate::HOURS" :label="__('Hours')" />
+            </flux:radio.group>
+            @if (($lineItemForm['pricing'] ?? SaveLineItemTemplate::PRICED) === SaveLineItemTemplate::HOURS)
+                <div class="grid items-start gap-4 sm:grid-cols-2">
+                    <flux:input wire:model="lineItemForm.hours" :label="__('Hours')" inputmode="decimal" required />
+                    <flux:input wire:model="lineItemForm.hourly_rate" :label="__('Own hourly rate ($)')" inputmode="decimal" :placeholder="__('The estimate\'s')" />
+                </div>
+            @else
+                <flux:input wire:model="lineItemForm.price" :label="__('Price ($)')" :description="__('0 for a section that only explains.')" inputmode="decimal" class="max-w-xs" />
+            @endif
+            <div class="flex flex-col gap-2">
+                <flux:heading level="3">{{ __('Offered on') }}</flux:heading>
+                <div class="grid gap-2 sm:grid-cols-2">
+                    @foreach (EstimateType::cases() as $type)
+                        <flux:checkbox wire:model="lineItemForm.estimate_types" :value="$type->value" :label="$type->label()" />
+                    @endforeach
+                </div>
+                @error('lineItemForm.estimate_types') <flux:text class="text-sm text-red-600">{{ $message }}</flux:text> @enderror
+            </div>
+            <flux:checkbox wire:model="lineItemForm.is_active" :label="__('Offered on new estimates')" :description="__('Untick to retire it. Estimates that have it keep it.')" />
+            <div class="flex justify-end gap-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary" data-test="save-line-item">{{ __('Save') }}</flux:button>
             </div>
         </form>
     </flux:modal>

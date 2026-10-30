@@ -44,7 +44,9 @@ class SaveEstimateLineItem
             }
 
             $values = Validator::make($input, [
-                'line_item_template_id' => ['nullable', Rule::exists('line_item_templates', 'id')->where('price_book_id', $estimate->price_book_id)],
+                // A retired line item is offered no more; one already on the estimate keeps it (step 35b).
+                'line_item_template_id' => ['nullable', Rule::exists('line_item_templates', 'id')->where('price_book_id', $estimate->price_book_id)
+                    ->where(fn ($query) => $query->where(fn ($offered) => $offered->where('is_active', true)->orWhere('id', $item?->line_item_template_id)))],
                 'name' => ['required', 'string', 'max:200'],
                 'description' => ['nullable', 'string', 'max:60000'],
                 'pricing' => ['required', Rule::enum(LineItemPricing::class)],

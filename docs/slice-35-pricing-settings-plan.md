@@ -87,3 +87,30 @@ estimates.
 **Known limits:** a tax rate is matched to an estimate by its name when the
 estimate is repriced, as since 31c, so renaming one leaves estimates that
 have it as they were.
+
+## Step 35b as built
+
+- **Settings > Pricing Settings > Areas:** Add area; each area's Edit (its
+  name, inside, outside or either, the estimate types it is offered on,
+  "Offered on new estimates") and arrows to move it. Inside starts a room on
+  the estimate, outside a surface, as since 31c.
+- **Line items:** Add line item; each one's Edit (its name, its
+  description, priced as a price, which may be $0 for a section that only
+  explains, or as hours at the estimate's hourly rate or its own, and the
+  estimate types) and arrows to move it. Each shows how it is priced.
+- **The description is plain text,** one point to a line, as the estimate
+  already copies it. PaintScout's formatted description is kept until its
+  words are changed.
+- **An estimate cannot be given a retired area or line item,** or one from
+  another price book; an area or line item that already has it can still be
+  changed. An area or line item on an estimate keeps its own name, wording
+  and price.
+- **Recorded in the Audit Log** (Pricing): added, or changed with only what
+  changed; a line item's description by its first 120 characters; a move.
+
+**Decisions made while building:** a line item priced by hours drops any
+price PaintScout also kept for it, and one priced by a price drops its
+hours, since an estimate only ever used one of them.
+
+**Known limits:** a retired area or line item an estimate already has is
+not listed in that estimate's choices; the area or line item keeps it.

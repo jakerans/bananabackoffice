@@ -38,7 +38,9 @@ class SaveEstimateArea
             }
 
             $values = Validator::make($input, [
-                'area_template_id' => ['nullable', Rule::exists('area_templates', 'id')->where('price_book_id', $estimate->price_book_id)],
+                // A retired area is offered no more; an area that already has it keeps it (step 35b).
+                'area_template_id' => ['nullable', Rule::exists('area_templates', 'id')->where('price_book_id', $estimate->price_book_id)
+                    ->where(fn ($query) => $query->where(fn ($offered) => $offered->where('is_active', true)->orWhere('id', $area?->area_template_id)))],
                 'name' => ['required', 'string', 'max:150'],
                 'shape' => ['required', Rule::enum(AreaShape::class)],
                 'width' => ['required', ...ChangeEstimate::MEASUREMENT_RULES],
