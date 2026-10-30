@@ -4244,6 +4244,10 @@ next starts:
 3. **Every change in the Audit Log,** from what to what, as rates are.
 4. **Both steps built straight through.**
 
+Built and merged under this decision on 2026-10-30: 35a and 35b
+([slice-35-pricing-settings-plan.md](slice-35-pricing-settings-plan.md), "as
+built"), with no deviation from the plan.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

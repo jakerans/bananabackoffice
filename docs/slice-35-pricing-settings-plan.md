@@ -1,8 +1,8 @@
 # Slice 35 — The Rest of Pricing Settings: Plan
 
 Status: **proposed on 2026-10-30 after the plan check following slice 34,
-and approved the same day with every recommendation, both steps to be built
-straight through (decision 213).** Written as what the implementation agent
+and approved the same day with every recommendation, both steps built
+straight through and merged (decision 213); slice 35 is complete.** Written as what the implementation agent
 recommends.
 
 ## Why this is next (the plan check)

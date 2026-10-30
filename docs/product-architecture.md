@@ -368,6 +368,14 @@ slice-34-sales-workspace-plan.md):
   Not built: confirmation calls and videos (they need texting), Google
   Calendar.
 
+Added 2026-10-30 (slice 35; decision 213; build plan:
+slice-35-pricing-settings-plan.md):
+- Built: everything an estimate is priced and worded from is changed in
+  Settings > Pricing Settings, no longer only by importing PaintScout:
+  discounts and tax rates (with those a new estimate starts with), areas and
+  line items, added, changed, reordered and retired, never deleted. An
+  estimate keeps what it was given until it is repriced.
+
 5.4 Calendar
 Salespeople manage their own confirmation, rescheduling, cancellations, rehashes, and schedule.
 Google Calendar is the external conflict source; personal scheduling stays there.

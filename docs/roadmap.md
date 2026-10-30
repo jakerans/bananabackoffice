@@ -302,6 +302,14 @@ through and merged: 34a, Sales > Workspace > Today, with Commissions opening
 "My pay"; 34b, discovery on the Lead and a handoff that starts filled in.
 Its plan is [slice-34-sales-workspace-plan.md](slice-34-sales-workspace-plan.md).
 
+**Slice 35, the rest of Pricing Settings, is complete (decision 213):** the
+plan check after slice 34 found discounts, tax rates, area templates and line
+item templates the last gap before PaintScout that needs no provider or
+stakeholder. Both steps are built straight through and merged: 35a,
+discounts and tax rates, with those that start on new estimates; 35b, areas
+and line items. Its plan is
+[slice-35-pricing-settings-plan.md](slice-35-pricing-settings-plan.md).
+
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the
 customer still unbuilt. Its plan is
