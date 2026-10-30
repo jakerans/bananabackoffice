@@ -4268,6 +4268,13 @@ under the standing authorization:
    once set to, emails customer addresses; any other goes only to Banana's
    own addresses.
 
+Built and merged under this decision on 2026-10-30: 36a
+([slice-36-agreement-copy-plan.md](slice-36-agreement-copy-plan.md), "as
+built"). One correction while building, within the plan: the staging check
+found staging runs as "production", so who may be emailed is a setting
+(`MAIL_CUSTOMERS_TO_ANYONE`, production only), not the server's name.
+Customer email stays off until Jacob sets up its sending domain.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
