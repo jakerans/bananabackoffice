@@ -4182,6 +4182,26 @@ later. not necessary right now".
    ([slice-33-agreement-plan.md](slice-33-agreement-plan.md)) and waits for
    Jacob's approval and his answers to its five questions.
 
+## 211. Slice 33 is approved, with every recommendation, built straight through (2026-10-29)
+
+**Decided by Jacob:** "recommended on all, start 33a and do all slices in
+one go". Slice 33 ([slice-33-agreement-plan.md](slice-33-agreement-plan.md))
+is approved as proposed, and its two steps are built one after the other
+without stopping between them, each tested, reviewed and merged to staging
+under the standing authorization before the next starts:
+
+1. **Signing at the appointment** marks the estimate presented at that
+   appointment and Sold; the after-action report then shows it already sold.
+   It is offered only at the salesperson's appointment for that Lead that has
+   already started that day.
+2. **"Sold" can still be pressed without a signature;** the Lead and the
+   Project then show "Not signed in Backoffice".
+3. **One wording for the company,** in versions.
+4. **Nothing is collected at signing:** the agreement shows the deposit due
+   from the Location's policy, recorded on the Project as today.
+5. **An agreement signed by mistake** is kept and marked void with the
+   reason when a manager corrects the sale.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

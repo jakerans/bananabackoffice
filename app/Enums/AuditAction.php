@@ -157,6 +157,7 @@ enum AuditAction: string
     case PricingRateChanged = 'pricing.rate_changed';
     case PricingPaintAdded = 'pricing.paint_added';
     case PricingPaintChanged = 'pricing.paint_changed';
+    case PricingAgreementWordingSaved = 'pricing.agreement_wording_saved';
     case ProjectAmbassadorPackageRecorded = 'project.ambassador_package_recorded';
     case ProjectAmbassadorObligationHandled = 'project.ambassador_obligation_handled';
     case WarrantyCaseOpened = 'warranty.case_opened';

@@ -6,6 +6,7 @@ use App\Actions\Staff\StopImpersonation;
 use App\Enums\ImpersonationEndReason;
 use App\Enums\Permission;
 use App\Models\Account;
+use App\Models\AgreementWording;
 use App\Models\AppointmentCancellationReason;
 use App\Models\CompensationEntry;
 use App\Models\Contact;
@@ -148,6 +149,7 @@ class AppServiceProvider extends ServiceProvider
             'scorecard' => Scorecard::class,
             'insurance_deduction_rate' => InsuranceDeductionRate::class,
             'price_book' => PriceBook::class,
+            'agreement_wording' => AgreementWording::class,
         ]);
     }
 

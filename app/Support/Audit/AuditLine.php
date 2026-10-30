@@ -3,6 +3,7 @@
 namespace App\Support\Audit;
 
 use App\Models\Account;
+use App\Models\AgreementWording;
 use App\Models\AuditEvent;
 use App\Models\Contact;
 use App\Models\Lead;
@@ -51,6 +52,10 @@ class AuditLine
             $subject instanceof PriceBook => [
                 'label' => $subject->label(),
                 'url' => route('settings.pricing', ['book' => $subject->location_id ?? 'default']),
+            ],
+            $subject instanceof AgreementWording => [
+                'label' => __('Agreement wording, version :version', ['version' => $subject->version]),
+                'url' => route('settings.agreement', ['version' => $subject->version]),
             ],
             $subject instanceof Scorecard => [
                 'label' => __('Scorecard for the week of :day', ['day' => $subject->week_starts_on->format('j F Y')]),

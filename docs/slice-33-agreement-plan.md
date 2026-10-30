@@ -1,7 +1,8 @@
 # Slice 33 — The Agreement: Plan
 
-Status: **proposed on 2026-10-29 (decision 210), waiting for Jacob's
-approval.** Written as what the implementation agent recommends, after the
+Status: **proposed on 2026-10-29 (decision 210) and approved the same day
+with every recommendation, both steps built straight through (decision
+211).** Written as what the implementation agent recommends, after the
 plan check following slice 31. Numbered 33 because slice 32, Reports, is
 already proposed.
 
@@ -68,7 +69,7 @@ slice 31:
 | 33a | **The wording.** The contract's wording, in versions, imported once from ABQ's saved settings; shown read-only in Settings > Pricing with its table of contents; the Owner and Leadership may load a new version. |
 | 33b | **Signing.** "Accept this option" in the presentation view; the agreement page; the signature box; signing sells the estimate for that option; the signed agreement shown on the estimate, the Lead and the Project, as a page that prints. |
 
-## Questions for Jacob, with recommendations
+## Questions, settled by decision 211 with every recommendation
 
 1. **Signing at the appointment, before the after-action report.** The
    customer signs during the appointment, but the appointment is only marked
@@ -100,3 +101,32 @@ Emailing the customer a copy (later, with email to customers); signing away
 from the tablet, such as by a link (13, the customer portal); taking the
 deposit by card; Commercial estimates; signing change orders in Backoffice
 (slice 18 keeps the signed copy, as now).
+
+## Step 33a as built
+
+- **The wording, in versions** (`agreement_wordings`): a version number, the
+  title, the wording as plain text, where it came from, and who saved it. A
+  version is never changed; the newest is the one customers sign.
+- **The plain text:** one line per thing. "18. PAYMENT TERMS", a number and
+  a title in capitals, starts a section; "- " starts a list item and "1) " a
+  numbered list item; every other line is a paragraph. It is shown escaped,
+  so nothing typed can run in a browser. PaintScout's emphasis (one "No
+  Warranty" in bold) is dropped; the words are kept.
+- **The import:** `php artisan backoffice:agreement-import <file>` reads the
+  terms named "2026 CONTRACT" from the saved PaintScout settings file and
+  saves them as the next version, refusing the same wording twice. Banana's
+  contract reads as 62 sections with 31 lists, nothing left over.
+- **Settings > Pricing Settings > Agreement wording**
+  (`/settings/pricing/agreement`), from an "Agreement wording" button on
+  Pricing Settings: the title, a table of contents, each section, and the
+  versions, any of which can be read. Whoever may see prices reads it; the
+  Owner and Leadership change it, in a form holding the wording as plain
+  text, saved as a new version. A change made meanwhile by someone else is
+  refused rather than overwritten.
+- **The Audit Log** records each version: "Pricing · Agreement wording saved",
+  with its number, title, how many sections and where it came from, linked
+  to that version.
+
+**Known limits:** the contract says the accepted Quote states the warranty
+period and the preparation level; Backoffice's estimates have no field for
+either yet, so they appear only where a line item says so.

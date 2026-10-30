@@ -388,7 +388,7 @@ State at the end of Checkpoint A. `CS` = Coming soon. Each center's address
 | `settings.lists` | Lead & Sales Lists | Live (step B2). Opened by its own permission; see below. |
 | `settings.service_areas` | Service Areas | CS |
 | `settings.services` | Services and Products | CS |
-| `settings.pricing` | Pricing Settings | **Live (slice 31, step 31a):** the default price book and each Location's, production rates, paints and hourly rates, `/settings/pricing`, route name `settings.pricing`; seen with `settings.pricing.view` or `settings.pricing.manage`, changed with `settings.pricing.manage` (Owner and Leadership) |
+| `settings.pricing` | Pricing Settings | **Live (slice 31, step 31a):** the default price book and each Location's, production rates, paints and hourly rates, `/settings/pricing`, route name `settings.pricing`; seen with `settings.pricing.view` or `settings.pricing.manage`, changed with `settings.pricing.manage` (Owner and Leadership). **Agreement wording (slice 33, step 33a):** `/settings/pricing/agreement`, route name `settings.agreement`, reached from Pricing Settings; the wording customers sign, in versions |
 | `settings.templates` | Templates | CS |
 | `settings.integrations` | Integrations | **Live (slice 28, step 28a):** each Location's QuickBooks company, `/settings/integrations`, route name `settings.integrations`, `settings.locations.manage` |
 | `settings.audit_log` | Audit Log | **Live (slice 29, step 29a):** every recorded change, newest first, `/settings/audit-log`, route name `settings.audit_log`, `settings.audit_log.view` (Owner only) |

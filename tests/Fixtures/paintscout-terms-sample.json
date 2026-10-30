@@ -1,0 +1,18 @@
+{
+    "options": {
+        "terms": {
+            "label": "Terms",
+            "values": {
+                "invoice": {
+                    "label": "Invoice Terms",
+                    "content": "<p>Made-up invoice terms.</p>"
+                },
+                "sample-contract": {
+                    "label": "2026 CONTRACT",
+                    "quoteTypes": ["int", "ext"],
+                    "content": "<p>SAMPLE PAINTING CUSTOMER AGREEMENT &amp; TERMS</p><p></p><p>1. AGREEMENT AND DOCUMENTS</p><p>The Company paints what the accepted Quote lists.</p><p>The agreement consists of:</p><ol><li><p>The accepted Quote;</p></li><li><p>These terms; and</p></li><li><p>Any signed Change Orders.</p><p></p></li></ol><p></p><p>2. PAYMENT TERMS</p><p>If the Quote states <strong>No Deposit</strong>, none is due.</p><ul><li><p>A deposit is due on acceptance.</p></li><li><p>The balance is due on completion.</p></li></ul><p>3. ACCEPTANCE</p><p>Signing accepts these terms.</p>"
+                }
+            }
+        }
+    }
+}
