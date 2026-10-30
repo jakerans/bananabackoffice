@@ -164,6 +164,10 @@ enum AuditAction: string
     case PricingDiscountChanged = 'pricing.discount_changed';
     case PricingTaxRateAdded = 'pricing.tax_rate_added';
     case PricingTaxRateChanged = 'pricing.tax_rate_changed';
+    case PricingAreaAdded = 'pricing.area_added';
+    case PricingAreaChanged = 'pricing.area_changed';
+    case PricingLineItemAdded = 'pricing.line_item_added';
+    case PricingLineItemChanged = 'pricing.line_item_changed';
     case PricingListReordered = 'pricing.list_reordered';
     case PricingAgreementWordingSaved = 'pricing.agreement_wording_saved';
     case ProjectAmbassadorPackageRecorded = 'project.ambassador_package_recorded';
