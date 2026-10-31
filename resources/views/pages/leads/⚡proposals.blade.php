@@ -142,7 +142,7 @@ new class extends Component {
     #[Computed]
     public function proposals(): Collection
     {
-        return $this->lead->proposals()->with(['appointments', 'property', 'option', 'agreement.latestEmail', 'estimate.options', 'project.location', 'project.handoff'])->get();
+        return $this->lead->proposals()->with(['appointments', 'property', 'option', 'agreement.location', 'agreement.latestEmail', 'estimate.options', 'project.location', 'project.handoff'])->get();
     }
 
     /**
@@ -780,13 +780,13 @@ new class extends Component {
                         @if ($proposal !== null && $proposal->result === ProposalResult::Sold)
                             @if ($proposal->agreement !== null)
                                 <flux:link :href="route('leads.agreement', [$lead, $proposal->agreement])" wire:navigate class="text-sm" data-test="signed-agreement-link">
-                                    {{ __('Signed agreement: :name, :when', ['name' => $proposal->agreement->signer_name, 'when' => $proposal->agreement->signed_at->copy()->timezone(config('app.display_timezone'))->format('M j, Y')]) }}
+                                    {{ __('Signed agreement: :name, :when', ['name' => $proposal->agreement->signer_name, 'when' => $proposal->agreement->signed_at->copy()->timezone($proposal->agreement->timezone())->format('M j, Y')]) }}
                                 </flux:link>
                                 {{-- The customer's emailed copy (slice 36, step 36a; decision 214). --}}
                                 @php($copy = $proposal->agreement->latestEmail)
                                 <flux:text class="text-sm" data-test="agreement-copy-line">
                                     @if ($copy?->wasSent())
-                                        {{ __('Copy emailed to :address, :when', ['address' => $copy->to_address, 'when' => $copy->created_at->copy()->timezone(config('app.display_timezone'))->format('M j, Y')]) }}
+                                        {{ __('Copy emailed to :address, :when', ['address' => $copy->to_address, 'when' => $copy->created_at->copy()->timezone($proposal->agreement->timezone())->format('M j, Y')]) }}
                                     @elseif ($copy !== null)
                                         {{ __('Copy not sent: :reason', ['reason' => $copy->outcome->notSentReason()]) }}
                                     @else

@@ -197,3 +197,16 @@ test('only someone who may sign for the lead emails it again, and never a void a
 
     expect(AgreementEmail::query()->count())->toBe(1);
 });
+
+test('the time of signing is the Location\'s, in the email and on the page', function () {
+    $this->lakeview->update(['timezone' => 'America/Denver']);
+    $agreement = signTheAgreement($this);
+
+    $mail = new SignedAgreementCopy($agreement->fresh(), $this->sam);
+    $mail->assertSeeInHtml('October 8, 2026 at 1:30 PM MDT');
+
+    $this->actingAs($this->manager);
+    Livewire::test('pages::leads.agreement', ['lead' => $this->lead->fresh(), 'agreement' => $agreement->fresh()])
+        ->assertSeeHtml('at 1:30 PM MDT')
+        ->assertDontSeeHtml('at 3:30 PM EDT');
+});

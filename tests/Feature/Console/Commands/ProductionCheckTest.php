@@ -1,6 +1,14 @@
 <?php
 
+use App\Enums\Role;
+use App\Models\AgreementWording;
+use App\Models\Location;
+use App\Models\PriceBook;
+use App\Models\ProductionRate;
 use App\Models\SchedulerHeartbeat;
+use App\Models\ServiceAreaPostalCode;
+use App\Models\TaxRate;
+use App\Models\User;
 
 /*
  * backoffice:production-check, step 30a (docs/slice-30-production-readiness-plan.md):
@@ -81,4 +89,75 @@ test('staging\'s bucket, a stopped scheduler or another sending domain are not r
         ->expectsOutputToContain('Add the scheduler in Forge')
         ->expectsOutputToContain('Set MAIL_MAILER=resend')
         ->assertFailed();
+});
+
+test('the copy\'s clean-up and customer email are named until they are set, and their keys are never printed', function () {
+    productionSettings();
+
+    $this->artisan('backoffice:production-check')
+        ->expectsOutputToContain('Set FILES_COPY_BUCKET')
+        ->expectsOutputToContain('Set the MAIL_CUSTOMERS_ settings')
+        ->assertFailed();
+
+    config([
+        'filesystems.disks.files_copy' => ['bucket' => 'made-up-copy-bucket', 'key' => 'copy-key-id-1a2b', 'secret' => 'copy-secret-3c4d'],
+        'mail.customers.enabled' => true,
+        'mail.customers.to_anyone' => true,
+        'mail.customers.from_address' => 'hello@email.bananapainting.com',
+        'mail.mailers.customers.transport' => 'resend',
+        'mail.mailers.customers.key' => 're_customers_not_a_real_key_2b4d',
+    ]);
+
+    $this->artisan('backoffice:production-check')
+        ->doesntExpectOutputToContain('Set FILES_COPY_BUCKET')
+        ->doesntExpectOutputToContain('Set the MAIL_CUSTOMERS_ settings')
+        ->doesntExpectOutputToContain('copy-secret-3c4d')
+        ->doesntExpectOutputToContain('re_customers_not_a_real_key_2b4d');
+});
+
+test('customer email from the staff sending domain, or not to anyone, is not ready', function (array $settings) {
+    productionSettings();
+    config([
+        'mail.customers.enabled' => true,
+        'mail.customers.to_anyone' => true,
+        'mail.customers.from_address' => 'hello@email.bananapainting.com',
+        'mail.mailers.customers.transport' => 'resend',
+        'mail.mailers.customers.key' => 're_customers_not_a_real_key_2b4d',
+        ...$settings,
+    ]);
+
+    $this->artisan('backoffice:production-check')->expectsOutputToContain('Set the MAIL_CUSTOMERS_ settings');
+})->with([
+    'the staff domain' => [['mail.customers.from_address' => 'hello@mail.bananapainting.com']],
+    'only test addresses' => [['mail.customers.to_anyone' => false]],
+]);
+
+test('a new server is told what it has nothing of yet, and not what it has', function () {
+    productionSettings();
+
+    $this->artisan('backoffice:production-check')
+        ->expectsOutputToContain('backoffice:create-owner')
+        ->expectsOutputToContain('Add one in Settings > Locations')
+        ->expectsOutputToContain('Add its postal codes')
+        ->expectsOutputToContain('backoffice:pricing-import')
+        ->expectsOutputToContain('Add one in Settings > Pricing Settings')
+        ->expectsOutputToContain('backoffice:agreement-import')
+        ->expectsOutputToContain('pay plan in Finance > Payroll')
+        ->assertFailed();
+
+    User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $location = Location::factory()->create();
+    ServiceAreaPostalCode::factory()->create(['location_id' => $location->id]);
+    $book = PriceBook::factory()->create(['location_id' => null]);
+    ProductionRate::factory()->create(['price_book_id' => $book->id]);
+    TaxRate::factory()->create(['price_book_id' => $book->id]);
+    AgreementWording::factory()->create();
+
+    $this->artisan('backoffice:production-check')
+        ->doesntExpectOutputToContain('backoffice:create-owner')
+        ->doesntExpectOutputToContain('Add one in Settings > Locations')
+        ->doesntExpectOutputToContain('Add its postal codes')
+        ->doesntExpectOutputToContain('backoffice:pricing-import')
+        ->doesntExpectOutputToContain('Add one in Settings > Pricing Settings')
+        ->doesntExpectOutputToContain('backoffice:agreement-import');
 });

@@ -20,6 +20,11 @@ use Throwable;
  * earlier version stays as the backup until the bucket's own rule deletes it
  * 30 days later; the application's key cannot delete earlier versions, so a
  * stolen key cannot destroy the backup (security-notes.md).
+ *
+ * The file is then deleted from the copy in another region, where there is
+ * one (step 30c), which keeps its own earlier version in the same way. A
+ * failure there is tried again the next night, without touching the record
+ * of the purge.
  */
 class PurgeRemovedAttachments
 {
@@ -69,6 +74,39 @@ class PurgeRemovedAttachments
                 }
             });
 
+        $done['failed'] += $this->cleanTheCopy();
+
         return $done;
+    }
+
+    /**
+     * @return int How many could not be deleted from the copy.
+     */
+    private function cleanTheCopy(): int
+    {
+        if (blank(config('filesystems.disks.files_copy.bucket'))) {
+            return 0;
+        }
+
+        $failed = 0;
+
+        Attachment::query()
+            ->whereNotNull('purged_at')
+            ->whereNull('copy_purged_at')
+            ->orderBy('id')
+            ->eachById(function (Attachment $attachment) use (&$failed): void {
+                try {
+                    Storage::disk('files_copy')->delete($attachment->path);
+
+                    $attachment->forceFill(['copy_purged_at' => now()])->save();
+                } catch (Throwable $failure) {
+                    // Like the purge above: the rest carry on, and it is tried again tomorrow.
+                    Log::warning('An attachment could not be deleted from the copy.', ['attachment' => $attachment->id, 'error' => $failure->getMessage()]);
+
+                    $failed++;
+                }
+            });
+
+        return $failed;
     }
 }

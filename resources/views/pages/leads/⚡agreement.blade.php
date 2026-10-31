@@ -45,7 +45,7 @@ new #[Title('Signed agreement')] #[Layout('layouts::presentation')] class extend
     #[Computed]
     public function agreement(): Agreement
     {
-        return Agreement::query()->with(['wording', 'proposal.project', 'lead', 'latestEmail'])->where('lead_id', $this->leadId)->findOrFail($this->agreementId);
+        return Agreement::query()->with(['wording', 'location', 'proposal.project', 'lead', 'latestEmail'])->where('lead_id', $this->leadId)->findOrFail($this->agreementId);
     }
 
     public function confirmEmailAgain(): void
@@ -84,7 +84,7 @@ new #[Title('Signed agreement')] #[Layout('layouts::presentation')] class extend
             </div>
             <flux:heading size="xl" level="1">{{ $agreement->wording->title }}</flux:heading>
             <flux:text class="text-base" data-test="agreement-signed-line">
-                {{ __('Signed by :name on :when. Presented by :salesperson.', ['name' => $agreement->signer_name, 'when' => $agreement->signed_at->copy()->timezone(config('app.display_timezone'))->format('M j, Y \a\t g:i A T'), 'salesperson' => $agreement->signed_by_name]) }}
+                {{ __('Signed by :name on :when. Presented by :salesperson.', ['name' => $agreement->signer_name, 'when' => $agreement->signed_at->copy()->timezone($agreement->timezone())->format('M j, Y \a\t g:i A T'), 'salesperson' => $agreement->signed_by_name]) }}
             </flux:text>
         </header>
 
@@ -92,7 +92,7 @@ new #[Title('Signed agreement')] #[Layout('layouts::presentation')] class extend
             <flux:callout icon="x-circle" color="red" data-test="agreement-void">
                 <flux:callout.heading>{{ __('Void') }}</flux:callout.heading>
                 <flux:callout.text>
-                    {{ __(':name corrected the sale on :when: ":reason". This agreement no longer applies; it is kept as it was signed.', ['name' => $agreement->voided_by_name, 'when' => $agreement->voided_at->copy()->timezone(config('app.display_timezone'))->format('M j, Y'), 'reason' => $agreement->void_reason]) }}
+                    {{ __(':name corrected the sale on :when: ":reason". This agreement no longer applies; it is kept as it was signed.', ['name' => $agreement->voided_by_name, 'when' => $agreement->voided_at->copy()->timezone($agreement->timezone())->format('M j, Y'), 'reason' => $agreement->void_reason]) }}
                 </flux:callout.text>
             </flux:callout>
         @endif
@@ -105,9 +105,9 @@ new #[Title('Signed agreement')] #[Layout('layouts::presentation')] class extend
                     @if ($email === null)
                         {{ __('Not emailed yet.') }}
                     @elseif ($email->wasSent())
-                        {{ __('Emailed to :address on :when.', ['address' => $email->to_address, 'when' => $email->created_at->copy()->timezone(config('app.display_timezone'))->format('M j, Y \a\t g:i A')]) }}
+                        {{ __('Emailed to :address on :when.', ['address' => $email->to_address, 'when' => $email->created_at->copy()->timezone($agreement->timezone())->format('M j, Y \a\t g:i A')]) }}
                     @else
-                        {{ __('Not sent on :when: :reason.', ['when' => $email->created_at->copy()->timezone(config('app.display_timezone'))->format('M j, Y \a\t g:i A'), 'reason' => $email->outcome->notSentReason()]) }}
+                        {{ __('Not sent on :when: :reason.', ['when' => $email->created_at->copy()->timezone($agreement->timezone())->format('M j, Y \a\t g:i A'), 'reason' => $email->outcome->notSentReason()]) }}
                     @endif
                 </flux:text>
             </div>
@@ -136,7 +136,7 @@ new #[Title('Signed agreement')] #[Layout('layouts::presentation')] class extend
             </svg>
             <flux:text class="text-base text-ink">{{ $agreement->signer_name }}</flux:text>
             <flux:text class="text-sm">
-                {{ __('Signed on :when, version :version of the wording.', ['when' => $agreement->signed_at->copy()->timezone(config('app.display_timezone'))->format('M j, Y \a\t g:i A T'), 'version' => $agreement->wording->version]) }}
+                {{ __('Signed on :when, version :version of the wording.', ['when' => $agreement->signed_at->copy()->timezone($agreement->timezone())->format('M j, Y \a\t g:i A T'), 'version' => $agreement->wording->version]) }}
             </flux:text>
         </section>
     </main>

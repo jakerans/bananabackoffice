@@ -2,7 +2,15 @@
 
 namespace App\Console\Commands;
 
+use App\Models\AgreementWording;
+use App\Models\Location;
+use App\Models\PayPlan;
+use App\Models\PriceBook;
+use App\Models\ProductionRate;
 use App\Models\SchedulerHeartbeat;
+use App\Models\ServiceAreaPostalCode;
+use App\Models\TaxRate;
+use App\Models\User;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -14,7 +22,9 @@ use Throwable;
  * (docs/slice-30-production-readiness-plan.md, step 30a): each setting
  * Backoffice can see for itself, and then what only a person can check, such
  * as the backups kept by Forge. It reads settings and never changes one, and
- * it never prints a key, a password or an address with a secret in it.
+ * it never prints a key, a password or an address with a secret in it. From
+ * step 30c it also says whether what an estimate is sold from is in place,
+ * since a new server starts with none of it.
  */
 #[Signature('backoffice:production-check')]
 #[Description('Say whether this server is safe for real data')]
@@ -87,8 +97,41 @@ class ProductionCheck extends Command
             ['The scheduler is running', $this->schedulerIsRunning(), 'Add the scheduler in Forge (php artisan schedule:run every minute), then wait a minute.'],
             ['Email is sent through Resend from '.self::SENDING_DOMAIN, $this->emailIsReady(), 'Set MAIL_MAILER=resend, the Resend key, and MAIL_FROM_ADDRESS at '.self::SENDING_DOMAIN.'.'],
             ['Uploaded files go to production\'s private bucket', $this->fileStorageIsReady(), 'Set FILES_DRIVER=s3, the production bucket and its own key, never staging\'s.'],
+            ['Removed files are also deleted from the copy', $this->copyCleanUpIsReady(), 'Set FILES_COPY_BUCKET and its own delete-only key.'],
+            ['Email reaches customers, from a sending domain of its own', $this->customerEmailIsReady(), 'Set the MAIL_CUSTOMERS_ settings and its key (docs/slice-36-agreement-copy-plan.md).'],
             ['QuickBooks uses live keys', $this->quickBooksIsLive(), 'Set QUICKBOOKS_ENVIRONMENT=production and the live keys from Intuit.'],
+            ...$this->readyToSell(),
         ];
+    }
+
+    /**
+     * What a new server starts without: it is added once, then stays.
+     *
+     * @return list<array{0: string, 1: bool, 2: string}>
+     */
+    private function readyToSell(): array
+    {
+        return [
+            ['An Owner can sign in', $this->exists(fn (): bool => User::query()->usableOwners()->exists()), 'Run php artisan backoffice:create-owner in a terminal on the server.'],
+            ['A Location is active', $this->exists(fn (): bool => Location::query()->where('is_active', true)->exists()), 'Add one in Settings > Locations, with its time zone.'],
+            ['Its service area is set', $this->exists(fn (): bool => ServiceAreaPostalCode::query()->exists()), 'Add its postal codes in Settings > Locations.'],
+            ['The default price book has prices', $this->exists(fn (): bool => ProductionRate::query()->whereIn('price_book_id', PriceBook::query()->whereNull('location_id')->select('id'))->exists()), 'Run php artisan backoffice:pricing-import with the saved PaintScout file.'],
+            ['It has a tax rate', $this->exists(fn (): bool => TaxRate::query()->exists()), 'Add one in Settings > Pricing Settings.'],
+            ['The agreement has its wording', $this->exists(fn (): bool => AgreementWording::current() !== null), 'Run php artisan backoffice:agreement-import with the saved PaintScout file.'],
+            ['A pay plan is set', $this->exists(fn (): bool => PayPlan::query()->exists()), 'Set each person\'s pay plan in Finance > Payroll.'],
+        ];
+    }
+
+    /**
+     * @param  callable(): bool  $check
+     */
+    private function exists(callable $check): bool
+    {
+        try {
+            return $check();
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     /**
@@ -99,11 +142,10 @@ class ProductionCheck extends Command
     private static function byHand(): array
     {
         return [
-            'Database backups run every hour and are kept 30 days, to a private bucket, with failure emails (decision 193).',
-            'Uploaded files are copied every night to a separate private bucket, kept 30 days, and the bucket\'s versioning and lifecycle rule are on.',
-            'The restore drill has passed: the database, and a file with backoffice:files-check.',
-            'No other key in the Wasabi account can reach production\'s bucket.',
-            'Whether the repository goes back to private before real data (decision 140).',
+            'Database backups run every hour and are kept 30 days, to a private bucket, with failure emails (decision 193). Forge counts backups, not days: 720.',
+            'Wasabi replicates uploaded files to the copy bucket in another region, and versioning and the lifecycle rule are on both buckets.',
+            'The restore drill has passed: the database, to a chosen minute, and a file with backoffice:files-check.',
+            'No other key in the Wasabi account can reach production\'s buckets.',
         ];
     }
 
@@ -145,6 +187,22 @@ class ProductionCheck extends Command
             && ! str_contains(strtolower($bucket), 'staging')
             && filled(config('filesystems.disks.files.key'))
             && filled(config('filesystems.disks.files.secret'));
+    }
+
+    private function copyCleanUpIsReady(): bool
+    {
+        return filled(config('filesystems.disks.files_copy.bucket'))
+            && filled(config('filesystems.disks.files_copy.key'))
+            && filled(config('filesystems.disks.files_copy.secret'));
+    }
+
+    private function customerEmailIsReady(): bool
+    {
+        return config('mail.customers.enabled') === true
+            && config('mail.customers.to_anyone') === true
+            && config('mail.mailers.customers.transport') === 'resend'
+            && filled(config('mail.mailers.customers.key'))
+            && ! str_ends_with(strtolower((string) config('mail.customers.from_address')), '@'.self::SENDING_DOMAIN);
     }
 
     private function quickBooksIsLive(): bool

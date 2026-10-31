@@ -4275,6 +4275,33 @@ found staging runs as "production", so who may be emailed is a setting
 (`MAIL_CUSTOMERS_TO_ANYONE`, production only), not the server's name.
 Customer email stays off until Jacob sets up its sending domain.
 
+## 215. Step 30c goes ahead; the repository stays public; no real Locations yet (2026-10-31)
+
+**Decided by Jacob,** in reply to the 30c plan: "Let's fix all of those
+except for number 3. We're not going to take it back to private. Everything
+else is a go", and "Not trying to take this fully live yet."
+
+1. **The repository stays public.** This settles decision 140's open
+   question: the checks keep running without a monthly limit, and the rules
+   for what may never be committed stay as they are. Pay, commission and
+   margin rules and the security notes stay readable by anyone.
+2. **Fixed now:** staging's backups; the clean-up of the file copy; the
+   Location's time on a signed agreement; the production check; the
+   dependency warnings (`vite-plus` to 1.4.0, approved as a dependency
+   change).
+3. **The agent may read production in Forge,** changing nothing: its backups,
+   deployments and the production check. Server `backoffice-production`
+   only. Changes there stay Jacob's.
+4. **Recovery is also proved on production,** while it holds nothing.
+5. **No real Locations, staff or customers go in yet.** First use (30c-5)
+   waits until the app has been walked through, noted and polished: "there
+   are going to be a lot of notes we have and polishes we want to make".
+6. **The walk-through uses an example Location.** Where is settled by what
+   is there: staging's Test Location, which already has sample leads and a
+   QuickBooks sandbox company. Production gets a test Location only if
+   something can be proved nowhere else, because its records can never be
+   deleted and one QuickBooks company cannot serve two Locations.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
