@@ -4,8 +4,8 @@ Status: **proposed on 2026-10-26 as slice 29; renumbered 30 when Jacob
 asked for it to wait until he is back (decision 191); approved on
 2026-10-27 with the recommendation on every question (decision 193). Step
 30a is built and merged (decision 194); 30b is done except QuickBooks's
-live keys, which wait for Intuit's review; 30c is planned below, proposed on
-2026-10-31, and waits for Jacob's answers.** Written as
+live keys, which wait for Intuit's review; 30c is planned below and goes
+ahead, except first use, which waits (decision 215).** Written as
 what the implementation agent recommended from the plan check below.
 
 ## Why this is next (the plan check)
@@ -163,15 +163,26 @@ production" promise in the documents. The table near the top of this plan
 was written before estimating existed, so first use now needs more than it
 says.
 
+Answered on 2026-10-31 (decision 215): everything goes ahead but the
+repository, which stays public, and first use, which waits. Real Locations,
+staff and customers go in only after the app has been walked through on
+staging's Test Location and polished.
+
 ### What the check found
 
 1. **Staging's database backups are failing.** Every daily backup since
    2026-10-28 has failed with an empty file; the last good one is from
    2026-10-27. Forge says only "failed". The server has plenty of disk
-   space, so that is not the cause. The first failure came the day after
-   production's backups were set up, which may be a clue, not a finding.
-   Nobody noticed for four days. Production's own backups have not been
-   looked at since they were set up.
+   space, so that is not the cause. Staging and production use one storage
+   provider in Forge, not one each as the guide says, and the failures
+   began the morning after production's were set up: the likely cause is
+   that the provider's key now reaches only production's bucket. Forge will
+   not show it, so this is the best reading, not proof. Nobody noticed for
+   four days.
+
+   **Production's backups run:** every hourly backup has succeeded. But
+   Forge's "retention" counts backups, not days, so 30 reaches back about
+   31 hours, not the 30 days of decision 193. It should be 720.
 2. **The clean-up of the file copy is owed** (decision 195): the copy keeps
    files Backoffice has removed, for good, against the 60 days decision 157
    promises.
@@ -207,13 +218,15 @@ Each stops for Jacob's review, like any other.
 | 30c-2 | **What is owed in the code,** built, tested and merged: the removed-file clean-up in the copy, with a delete-only key, so a stolen key still cannot destroy it; the Location's time on the agreement; the production check brought up to date (Wasabi's copy, customer email, and a "ready to sell" list of the empty things above); a way to leave the file drill's test file in place long enough to see it reach the copy; the dependency change, if approved. | The agent |
 | 30c-3 | **Recovery proved on staging.** A written recovery procedure (who does what, in what order, how to confirm, what to do if it fails partway). A fresh backup, a known change, Forge's Restore, then proof the change is gone, the site works and the tables match. Procedure corrected from what happened. | The agent, with Jacob's go-ahead for the Restore |
 | 30c-4 | **Recovery proved on production, while it is empty.** Deploy the latest code. Restore a production backup; put the database back to a chosen minute with the change log; the file drill, including seeing the test file in the copy. Key check in Wasabi. | Jacob presses each button, from a guide with text to copy |
-| 30c-5 | **First use.** The repository's decision carried out. The Owner created, two-factor set up, recovery codes saved. The Locations added with their right time zones. Prices and agreement wording imported. Tax rates, pay plans, service areas and targets checked. Customer email's sending domain and settings. The production check clean, and its by-hand list signed off. Then staff invited. | Jacob, from the same guide |
+| 30c-5 | **First use; waits (decision 215).** The Owner created, two-factor set up, recovery codes saved. The Locations added with their right time zones. Prices and agreement wording imported. Tax rates, pay plans, service areas and targets checked. Customer email's sending domain and settings. The production check clean, and its by-hand list signed off. Then staff invited. | Jacob, from the same guide |
 | Later | **QuickBooks** for each Location, when Intuit approves. It does not hold up first use. | Jacob |
 
 The guide is a private page like 30b's, with no key or password in it.
 
 ### Known limits
 
+- **Production and staging run PHP 8.5; the checks run 8.4.** Staging has
+  run on it without trouble, but the tests themselves do not.
 - **"Any minute" holds only while the server lives.** The change log is on
   the server's own disk. It undoes a mistake to the minute; if the whole
   server is lost, the last hourly backup is the limit, so up to an hour.

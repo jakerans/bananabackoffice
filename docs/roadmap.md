@@ -273,7 +273,8 @@ before real use, and real work, including Banana's real QuickBooks, possible
 only on production, whose safeguards below are written but not met. Its plan
 is [slice-30-production-readiness-plan.md](slice-30-production-readiness-plan.md).
 Step 30b goes ahead at Jacob's pace, from a step-by-step guide (decision 195).
-Step 30c is planned in five parts and waits for his answers (2026-10-31).
+Step 30c is planned in five parts and goes ahead, except first use, which
+waits until the app has been walked through and polished (decision 215).
 
 **Slice 31, Estimating, is complete (decision 209):** PaintScout's pricing
 rebuilt exactly, with only the presentation of options changed, and

@@ -18,7 +18,8 @@ use LogicException;
  * removed and purged only by the actions in App\Actions\Attachments. The row
  * is never deleted; only its file, 30 days after it is removed. The bucket
  * keeps the file's earlier version as the backup, and deletes it by its own
- * rule 30 days after that (security-notes.md, "Restoring a file").
+ * rule 30 days after that (security-notes.md, "Restoring a file"). The copy
+ * in another region is cleaned the same way (step 30c).
  *
  * @property int $id
  * @property string $attachable_type
@@ -36,6 +37,7 @@ use LogicException;
  * @property string|null $removed_by_name
  * @property string|null $removed_reason
  * @property Carbon|null $purged_at When its file was deleted from storage.
+ * @property Carbon|null $copy_purged_at When it was also deleted from the copy of the files.
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Model $attachable
@@ -86,6 +88,7 @@ class Attachment extends Model
             'size_bytes' => 'integer',
             'removed_at' => 'datetime',
             'purged_at' => 'datetime',
+            'copy_purged_at' => 'datetime',
         ];
     }
 

@@ -240,6 +240,50 @@ test('a removed file is deleted from storage 30 days later, and its record is ke
     expect(AuditEvent::query()->where('action', AuditAction::AttachmentPurged)->count())->toBe(1);
 });
 
+test('a purged file is deleted from the copy too, and a failure there is tried again the next night', function () {
+    config(['filesystems.disks.files_copy.bucket' => 'made-up-copy-bucket']);
+    Storage::fake('files_copy');
+
+    $removed = attachedToSandia($this);
+    $kept = attachedToSandia($this, UploadedFile::fake()->create('Agreement.pdf', 80, 'application/pdf'));
+    Storage::disk('files_copy')->put($removed->path, 'the copy');
+    Storage::disk('files_copy')->put($kept->path, 'the copy');
+    app(RemoveAttachment::class)->handle($removed, 'A newer certificate came.', 'update', $this->pat);
+    $this->travelTo('2026-11-14 15:00:00');
+
+    $disk = Mockery::mock(Storage::disk('files'))->makePartial();
+    $disk->shouldReceive('delete')->andThrow(new RuntimeException('The copy did not answer.'));
+    Storage::set('files_copy', $disk);
+
+    expect(app(PurgeRemovedAttachments::class)->handle())->toBe(['purged' => 1, 'failed' => 1]);
+    expect($removed->fresh()->purged_at)->not->toBeNull()
+        ->and($removed->fresh()->copy_purged_at)->toBeNull();
+
+    Storage::fake('files_copy');
+    Storage::disk('files_copy')->put($removed->path, 'the copy');
+    Storage::disk('files_copy')->put($kept->path, 'the copy');
+    $this->travelTo('2026-11-15 03:15:00');
+
+    expect(app(PurgeRemovedAttachments::class)->handle())->toBe(['purged' => 0, 'failed' => 0]);
+    Storage::disk('files_copy')->assertMissing($removed->path);
+    Storage::disk('files_copy')->assertExists($kept->path);
+    expect($removed->fresh()->copy_purged_at?->toDateTimeString())->toBe('2026-11-15 03:15:00')
+        ->and($kept->fresh()->copy_purged_at)->toBeNull()
+        ->and(AuditEvent::query()->where('action', AuditAction::AttachmentPurged)->count())->toBe(1);
+});
+
+test('without a copy, the purge leaves it alone', function () {
+    Storage::fake('files_copy');
+    $removed = attachedToSandia($this);
+    Storage::disk('files_copy')->put($removed->path, 'the copy');
+    app(RemoveAttachment::class)->handle($removed, 'A newer certificate came.', 'update', $this->pat);
+    $this->travelTo('2026-11-14 15:00:00');
+
+    expect(app(PurgeRemovedAttachments::class)->handle())->toBe(['purged' => 1, 'failed' => 0]);
+    Storage::disk('files_copy')->assertExists($removed->path);
+    expect($removed->fresh()->copy_purged_at)->toBeNull();
+});
+
 test('the purge runs each night, and says what it did', function () {
     $events = collect(app(Schedule::class)->events())->filter(fn ($event): bool => str_contains((string) $event->command, 'backoffice:files-purge'));
 
@@ -268,6 +312,36 @@ test('the storage check stores, reads, links and deletes a test file, then names
         ->assertSuccessful();
 
     expect(Storage::disk('files')->allFiles())->toBe([]);
+});
+
+test('the storage check can leave its test file, to find it in the copy, and delete it after', function () {
+    $this->artisan('backoffice:files-check', ['--keep' => true])
+        ->expectsOutputToContain('Look for it in the copy')
+        ->expectsOutputToContain('php artisan backoffice:files-check --kept=')
+        ->doesntExpectOutputToContain('Deleted it')
+        ->assertSuccessful();
+
+    $path = Storage::disk('files')->allFiles()[0];
+
+    $this->artisan('backoffice:files-check', ['--kept' => basename($path)])
+        ->expectsOutputToContain('The test file was still whole')
+        ->assertSuccessful();
+
+    Storage::disk('files')->assertMissing($path);
+});
+
+test('the storage check tries the copy\'s key only where there is a copy', function () {
+    Storage::fake('files_copy');
+
+    $this->artisan('backoffice:files-check')
+        ->doesntExpectOutputToContain('The copy\'s key can delete')
+        ->assertSuccessful();
+
+    config(['filesystems.disks.files_copy.bucket' => 'made-up-copy-bucket']);
+
+    $this->artisan('backoffice:files-check')
+        ->expectsOutputToContain('The copy\'s key can delete')
+        ->assertSuccessful();
 });
 
 test('the restore drill passes only when the file came back whole', function () {

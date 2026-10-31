@@ -57,7 +57,7 @@ class SignedAgreementCopy extends Mailable
                 'wording' => $this->agreement->wording,
                 'read' => $this->agreement->wording->sections(),
                 'company' => $this->companyName(),
-                'signedOn' => $this->agreement->signed_at->copy()->timezone(config('app.display_timezone'))->format('F j, Y \a\t g:i A T'),
+                'signedOn' => $this->agreement->signed_at->copy()->timezone($this->agreement->timezone())->format('F j, Y \a\t g:i A T'),
                 'salespersonName' => $this->salesperson->name ?? $this->agreement->signed_by_name,
                 'total' => Money::format($details['total_cents']),
                 'deposit' => Money::format($details['deposit_cents']),

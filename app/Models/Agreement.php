@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Queue\CallingHours;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -112,6 +113,22 @@ class Agreement extends Model
     public function appointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class);
+    }
+
+    /**
+     * @return BelongsTo<Location, $this>
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
+    }
+
+    /**
+     * The time zone it is shown in: the Location's, where the customer signed.
+     */
+    public function timezone(): string
+    {
+        return CallingHours::timezoneFor($this->location);
     }
 
     /**

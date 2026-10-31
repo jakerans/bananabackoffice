@@ -93,6 +93,26 @@ return [
                 'report' => true,
             ],
 
+        /*
+         * The copy of those files in another region, made by Wasabi's own
+         * replication, which never copies a deletion (decision 195). Backoffice
+         * only deletes from it, with a key that can do nothing else, so that a
+         * removed file does not outlive its 60 days (step 30c). Without a
+         * bucket, as on staging, there is no copy to clean.
+         */
+        'files_copy' => [
+            'driver' => 's3',
+            'key' => env('FILES_COPY_ACCESS_KEY_ID'),
+            'secret' => env('FILES_COPY_SECRET_ACCESS_KEY'),
+            'region' => env('FILES_COPY_REGION', 'us-west-1'),
+            'bucket' => env('FILES_COPY_BUCKET'),
+            'endpoint' => env('FILES_COPY_ENDPOINT', 'https://s3.us-west-1.wasabisys.com'),
+            'use_path_style_endpoint' => false,
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => true,
+        ],
+
     ],
 
     /*

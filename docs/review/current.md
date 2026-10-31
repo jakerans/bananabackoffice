@@ -5,63 +5,48 @@ No secrets or customer information belong here.
 
 **Updated:** 2026-10-31 · **Branch:** `main`
 
-**State:** the rest of slice 30 is planned, at Jacob's request, and nothing
-is being built until he answers the questions below. The plan, with what the
-check found, its steps and known limits:
+**State:** step 30c goes ahead, except first use, which waits (decision
+215): the repository stays public, and no real Locations, staff or customers
+go in until the app has been walked through and polished. The plan:
 [../slice-30-production-readiness-plan.md](../slice-30-production-readiness-plan.md),
-"Step 30c: the plan". Slice 36 is complete; the plan check after it is
-recorded in git (d9a9258).
+"Step 30c: the plan".
 
-## Needs attention first
+## Waiting for Jacob: two fixes in the storage settings
 
-**Staging's database backups have failed every day since 2026-10-28.** The
-last good one is from 2026-10-27. Production's have not been checked. Forge
-emails failures to Jacob, so the reason may be in his inbox.
+**Staging's backups have failed since 2026-10-28,** most likely because
+staging and production share one storage provider in Forge and its key now
+reaches only production's bucket. Keys are his to handle:
 
-## The plan in short
+1. In DigitalOcean, Spaces Object Storage, Access Keys: create a Limited
+   Access key for the staging backup bucket only, Read/Write/Delete, and save
+   it in the password manager.
+2. In Forge, organization settings, Storage providers: add a DigitalOcean
+   Spaces provider with that key, named for staging.
+3. On the staging server's database backups, switch the configuration to the
+   new provider. Press "Back up now" and say when it is done.
 
-| Step | Delivers | Who |
-| --- | --- | --- |
-| 30c-1 | Backups working again, staging's and production's | Jacob and the agent |
-| 30c-2 | What is owed in the code: the file copy's clean-up, the Location's time on the agreement, the production check updated, the dependency change | The agent |
-| 30c-3 | The written recovery procedure, proved on staging | The agent, with Jacob's go-ahead |
-| 30c-4 | Recovery proved on production while it is empty | Jacob, from a guide |
-| 30c-5 | First use: Owner, Locations, prices, wording, customer email, staff | Jacob, from the guide |
+**Production's backups work, but keep about 31 hours, not 30 days.** On the
+production server's backup configuration, change the retention from 30 to
+720. If Forge refuses a number that high, say what it allows.
 
-QuickBooks follows when Intuit approves and does not hold up first use.
+## In progress
 
-## Questions for Jacob, with recommendations
+30c-2, the fixes in the code, on `checkpoint-30c`. Then 30c-3, the recovery
+procedure and drill on staging, once its backups work; then 30c-4 on
+production, from a guide.
 
-1. **Production's backups and read-only access.** May the agent read
-   production in Forge: its backups, deployments and the production check,
-   changing nothing? *Recommended:* yes. Until now it may touch only
-   staging, so otherwise each check is Jacob's.
-2. **Drill on production too?** The plan said staging only, but that proves
-   nothing about production's own backups or change log, and this is the
-   one time a restore there costs nothing. *Recommended:* yes (30c-4).
-3. **The repository back to private?** It holds the pay, commission and
-   margin rules and the open security notes. At October's pace of about 366
-   runs of 18 billed minutes, GitHub's checks would cost about $30 a month,
-   less when building slows. *Recommended:* private, before real data.
-4. **Raise `vite-plus` to a current 1.x?** A large jump from 0.3.0 and a
-   dependency change, so it needs approval. *Recommended:* yes, on its own,
-   with a full build and test check; if it breaks the build, stop and report.
-5. **The Locations.** Their names and time zones, and whether all use ABQ's
-   prices or some have their own. Only Jacob can answer. Staff times follow
-   one company time zone, set to Eastern: should it stay? *Recommended:*
-   the time zone of the Location that goes first.
-6. **How first use starts.** *Recommended:* one Location first; new leads
-   from a chosen date, typed in as they arrive; jobs already sold finish
-   where they are; PaintScout kept until that Location has signed a few
-   real agreements; customer email on before the first real signature.
+## Next, once 30c-4 is done
+
+The example Location: fill staging's Test Location so the whole job can be
+walked through, then Jacob's walk-through and list of notes.
 
 ## Also waiting for Jacob
 
 - PaintScout's eight test contacts ("Backoffice Test 01" to "08", at ABQ)
   can only be deleted, which cannot be undone, so they are his to delete.
-- The sending domain for customer email (guide in
+- The sending domain for customer email, when he chooses (guide in
   [../slice-36-agreement-copy-plan.md](../slice-36-agreement-copy-plan.md),
-  "What Jacob sets up"); now part of 30c-5.
+  "What Jacob sets up").
 - Whether the presentation lists each room's work in the customer wording
   the rates already carry ("Bedroom: Paint Walls, Paint Doors").
 - A side menu for Settings, hiding pages not built yet, and where the
