@@ -237,3 +237,27 @@ The guide is a private page like 30b's, with no key or password in it.
   prove the backups and the procedure, not building a new server.
 - **The copy's restore is proved on one test file,** not by switching
   Backoffice over to the copy bucket.
+
+### Step 30c-2 as built (merged 2026-10-31)
+
+- **The copy's clean-up:** the nightly purge deletes a purged file from the
+  copy too, recording `attachments.copy_purged_at`; a failure there is tried
+  again the next night and does not undo the purge. It needs
+  `FILES_COPY_BUCKET` and a key that can only delete. Until then, and on
+  staging, nothing changes.
+- **The Location's time:** on the agreement page, its email and the Lead's
+  Estimates card. The rest of Backoffice still shows the company's time
+  (`APP_DISPLAY_TIMEZONE`). A Location's time zone must be right when it is
+  added: new ones start as Eastern.
+- **The production check** adds the copy's clean-up, customer email, and
+  what a new server has nothing of: an Owner, a Location, its service area,
+  prices, a tax rate, the agreement's wording, a pay plan. "Not ready" is the
+  expected answer on production until first use.
+- **`backoffice:files-check`** tries the copy's key where there is one;
+  `--keep` leaves the test file to find it in the copy, `--kept=<name>`
+  deletes it.
+- **`vite-plus` 1.4.0,** which needs `vite` aliased to its own build of it
+  (in `package.json`). `npm audit` reports nothing. Staging built with it.
+
+**Not done yet:** the copy's clean-up does nothing on production until Jacob
+makes the delete-only key, in 30c-4's guide.

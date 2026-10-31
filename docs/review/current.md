@@ -29,11 +29,11 @@ reaches only production's bucket. Keys are his to handle:
 production server's backup configuration, change the retention from 30 to
 720. If Forge refuses a number that high, say what it allows.
 
-## In progress
+## Done, and what follows
 
-30c-2, the fixes in the code, on `checkpoint-30c`. Then 30c-3, the recovery
-procedure and drill on staging, once its backups work; then 30c-4 on
-production, from a guide.
+30c-2, the fixes in the code, is merged and on staging. Next, 30c-3: the
+recovery procedure and drill on staging, once its backups work; then 30c-4 on
+production, from a guide, starting with Jacob pressing Deploy.
 
 ## Next, once 30c-4 is done
 
