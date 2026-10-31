@@ -4,7 +4,8 @@ Status: **proposed on 2026-10-26 as slice 29; renumbered 30 when Jacob
 asked for it to wait until he is back (decision 191); approved on
 2026-10-27 with the recommendation on every question (decision 193). Step
 30a is built and merged (decision 194); 30b is done except QuickBooks's
-live keys, which wait for Intuit's review.** Written as
+live keys, which wait for Intuit's review; 30c is planned below, proposed on
+2026-10-31, and waits for Jacob's answers.** Written as
 what the implementation agent recommended from the plan check below.
 
 ## Why this is next (the plan check)
@@ -154,3 +155,72 @@ license agreement and a privacy policy; Backoffice's own public pages,
 **Still to check by hand, in 30c:** the hourly backups and their first
 copy, the nightly copy of files, the restore drill, other Wasabi keys, and
 whether the repository goes back to private (decision 140).
+
+## Step 30c: the plan (proposed 2026-10-31)
+
+Checked against what is really on the servers, and against every "before
+production" promise in the documents. The table near the top of this plan
+was written before estimating existed, so first use now needs more than it
+says.
+
+### What the check found
+
+1. **Staging's database backups are failing.** Every daily backup since
+   2026-10-28 has failed with an empty file; the last good one is from
+   2026-10-27. Forge says only "failed". The server has plenty of disk
+   space, so that is not the cause. The first failure came the day after
+   production's backups were set up, which may be a clue, not a finding.
+   Nobody noticed for four days. Production's own backups have not been
+   looked at since they were set up.
+2. **The clean-up of the file copy is owed** (decision 195): the copy keeps
+   files Backoffice has removed, for good, against the 60 days decision 157
+   promises.
+3. **A signed agreement shows the company's time, not the Location's.** An
+   Albuquerque customer signing at 4 pm would read 6 pm Eastern, on the page
+   and in their email.
+4. **An empty production cannot sell.** It starts with the lists (lead
+   sources, reasons, services) but no Locations, prices, rates, areas, line
+   items, discounts, tax rates, agreement wording, pay plans, service areas
+   or subcontractors.
+5. **The first Owner cannot be created from Forge's Commands tab:**
+   `backoffice:create-owner` asks questions, and that tab cannot answer
+   them. It runs in a terminal connected to the server, which is also how
+   the saved PaintScout file gets there for the imports.
+6. **A dependency warning was due before production** (security-notes.md):
+   three critical warnings and a new high one remain in the build tools.
+   The fix has moved on from the one recorded: `vite-plus` needs a current
+   1.x, and production builds with them on the server at each deploy.
+7. **Production is behind.** It holds what Jacob last deployed, from before
+   slices 31 to 36, so its check, the imports and customer email are not
+   there yet.
+
+Still sound: CI, staging's disk, and production answering at its address.
+Leads reach Backoffice by being typed in; nothing arrives from the website.
+
+### The steps
+
+Each stops for Jacob's review, like any other.
+
+| Step | Delivers | Who |
+| --- | --- | --- |
+| 30c-1 | **Backups working again.** Find why staging's fail, and read production's. Nothing else is proved until these run. | Jacob reads Forge's failure emails and the storage provider; the agent narrows the cause |
+| 30c-2 | **What is owed in the code,** built, tested and merged: the removed-file clean-up in the copy, with a delete-only key, so a stolen key still cannot destroy it; the Location's time on the agreement; the production check brought up to date (Wasabi's copy, customer email, and a "ready to sell" list of the empty things above); a way to leave the file drill's test file in place long enough to see it reach the copy; the dependency change, if approved. | The agent |
+| 30c-3 | **Recovery proved on staging.** A written recovery procedure (who does what, in what order, how to confirm, what to do if it fails partway). A fresh backup, a known change, Forge's Restore, then proof the change is gone, the site works and the tables match. Procedure corrected from what happened. | The agent, with Jacob's go-ahead for the Restore |
+| 30c-4 | **Recovery proved on production, while it is empty.** Deploy the latest code. Restore a production backup; put the database back to a chosen minute with the change log; the file drill, including seeing the test file in the copy. Key check in Wasabi. | Jacob presses each button, from a guide with text to copy |
+| 30c-5 | **First use.** The repository's decision carried out. The Owner created, two-factor set up, recovery codes saved. The Locations added with their right time zones. Prices and agreement wording imported. Tax rates, pay plans, service areas and targets checked. Customer email's sending domain and settings. The production check clean, and its by-hand list signed off. Then staff invited. | Jacob, from the same guide |
+| Later | **QuickBooks** for each Location, when Intuit approves. It does not hold up first use. | Jacob |
+
+The guide is a private page like 30b's, with no key or password in it.
+
+### Known limits
+
+- **"Any minute" holds only while the server lives.** The change log is on
+  the server's own disk. It undoes a mistake to the minute; if the whole
+  server is lost, the last hourly backup is the limit, so up to an hour.
+- **Nobody is told when Backoffice has an error.** It goes to the server's
+  log, and Forge's backup failures go to one email address. This plan does
+  not change that; a small step could follow first use.
+- **Restoring a whole server is written down, not rehearsed:** the drills
+  prove the backups and the procedure, not building a new server.
+- **The copy's restore is proved on one test file,** not by switching
+  Backoffice over to the copy bucket.

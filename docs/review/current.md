@@ -3,75 +3,65 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-30 · **Branch:** `main`
+**Updated:** 2026-10-31 · **Branch:** `main`
 
-**State:** slice 36, the customer's copy of the agreement, is complete and
-on staging (decision 214). This is the plan check after it, against
-[../product-architecture.md](../product-architecture.md). Nothing is being
-built until Jacob chooses the next step.
+**State:** the rest of slice 30 is planned, at Jacob's request, and nothing
+is being built until he answers the questions below. The plan, with what the
+check found, its steps and known limits:
+[../slice-30-production-readiness-plan.md](../slice-30-production-readiness-plan.md),
+"Step 30c: the plan". Slice 36 is complete; the plan check after it is
+recorded in git (d9a9258).
 
-## Plan check after slice 36
+## Needs attention first
 
-**The plan is up to date:** 5.3 records slice 36; no note is out of date.
-What 36a added beyond the plan (the 5-minute limit on emailing again, the
-production-only setting for customer addresses) is in decision 214.
+**Staging's database backups have failed every day since 2026-10-28.** The
+last good one is from 2026-10-27. Production's have not been checked. Forge
+emails failures to Jacob, so the reason may be in his inbox.
 
-**The selling flow no longer needs PaintScout.** Pricing, the presentation,
-the agreement and the customer's copy are all in Backoffice. What 5.3 still
-leaves unbuilt needs a provider or the customer portal: confirmation texts
-and videos, Google Calendar, signing by a link (13), and taking the deposit
-at signing (22).
+## The plan in short
 
-**What stops real use is production, not features.** Slice 30's plan says
-real work is possible only on production. 30a and 30b are done; 30c,
-recovery and first use, is approved (decision 193) and waits for Jacob.
-
-**Still "Coming soon" across Backoffice (unchanged since slice 34):**
-- Reports in every Center (slice 32, waiting for Jacob's answers).
-- Marketing: Inbox and Campaigns, which need texting and email providers.
-- Finance: Payments and Payouts, which need a payment provider.
-- Color Studio: Sample Requests, Estimate Requests, Color Catalog (14; the
-  Color Plan it describes needs an AI provider).
-- Settings: Company, Service Areas, Services and Products, Templates
-  (waiting for the Settings side menu decision, 202 point 3).
-- Not started: the customer portal (13), Painter for a Day (8), Referrals
-  (15), the subcontractor marketplace and portal (7.4, 7.5).
-
-## Proposed next: step 30c, recovery and first use
-
-Already planned and approved (slice 30, decision 193); nothing new is
-built.
-
-| Part | What happens | Who |
+| Step | Delivers | Who |
 | --- | --- | --- |
-| 1 | **A written recovery procedure,** then the restore drill on staging: staging is put back from its own backup, and the uploaded files from theirs, and checked. Staging's fictitious data comes back from the backup taken just before. | I write it and run it, with Jacob's go-ahead for each Forge action |
-| 2 | **The checks left from 30b:** the hourly backups and their first copy, the nightly copy of files, the other storage keys. | I check, read-only |
-| 3 | **First use:** the first Owner created on production from the command line, the three Locations added. | Jacob |
-| 4 | **When Jacob is ready:** each Location's QuickBooks company (after Intuit's review), and the customer email domain from slice 36's guide, so signed agreements reach customers. | Jacob |
+| 30c-1 | Backups working again, staging's and production's | Jacob and the agent |
+| 30c-2 | What is owed in the code: the file copy's clean-up, the Location's time on the agreement, the production check updated, the dependency change | The agent |
+| 30c-3 | The written recovery procedure, proved on staging | The agent, with Jacob's go-ahead |
+| 30c-4 | Recovery proved on production while it is empty | Jacob, from a guide |
+| 30c-5 | First use: Owner, Locations, prices, wording, customer email, staff | Jacob, from the guide |
 
-**Questions for Jacob, with recommendations:**
+QuickBooks follows when Intuit approves and does not hold up first use.
 
-1. **Start 30c now?** *Recommended:* yes, parts 1 and 2 first; they need
-   only his go-ahead. Parts 3 and 4 follow at his pace.
-2. **The repository back to private (decision 140)?** *Recommended:* decide
-   before first use, since real Locations' settings go on production then
-   (none go in the repository either way).
+## Questions for Jacob, with recommendations
 
-**Alternatives:**
-- Slice 32, Reports, once its questions are answered.
-- A small step for the Settings side menu (decision 202 point 3) and the
-  phone top bar.
-- The first step of the customer portal (13): customers sign in with a
-  one-time code by email and see their signed agreement and what happens
-  next. It would use the customer email from slice 36.
+1. **Production's backups and read-only access.** May the agent read
+   production in Forge: its backups, deployments and the production check,
+   changing nothing? *Recommended:* yes. Until now it may touch only
+   staging, so otherwise each check is Jacob's.
+2. **Drill on production too?** The plan said staging only, but that proves
+   nothing about production's own backups or change log, and this is the
+   one time a restore there costs nothing. *Recommended:* yes (30c-4).
+3. **The repository back to private?** It holds the pay, commission and
+   margin rules and the open security notes. At October's pace of about 366
+   runs of 18 billed minutes, GitHub's checks would cost about $30 a month,
+   less when building slows. *Recommended:* private, before real data.
+4. **Raise `vite-plus` to a current 1.x?** A large jump from 0.3.0 and a
+   dependency change, so it needs approval. *Recommended:* yes, on its own,
+   with a full build and test check; if it breaks the build, stop and report.
+5. **The Locations.** Their names and time zones, and whether all use ABQ's
+   prices or some have their own. Only Jacob can answer. Staff times follow
+   one company time zone, set to Eastern: should it stay? *Recommended:*
+   the time zone of the Location that goes first.
+6. **How first use starts.** *Recommended:* one Location first; new leads
+   from a chosen date, typed in as they arrive; jobs already sold finish
+   where they are; PaintScout kept until that Location has signed a few
+   real agreements; customer email on before the first real signature.
 
 ## Also waiting for Jacob
 
 - PaintScout's eight test contacts ("Backoffice Test 01" to "08", at ABQ)
   can only be deleted, which cannot be undone, so they are his to delete.
-- The sending domain for customer email, when he chooses (guide in
+- The sending domain for customer email (guide in
   [../slice-36-agreement-copy-plan.md](../slice-36-agreement-copy-plan.md),
-  "What Jacob sets up").
+  "What Jacob sets up"); now part of 30c-5.
 - Whether the presentation lists each room's work in the customer wording
   the rates already carry ("Bedroom: Paint Walls, Paint Doors").
 - A side menu for Settings, hiding pages not built yet, and where the
