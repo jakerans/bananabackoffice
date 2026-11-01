@@ -633,6 +633,9 @@ verified** (2026-10-05 UTC). A restore has deliberately not been run yet; see
 "Restoring" below. **Since 2026-10-28 they have been failing; step 30c fixes this
 first** ([slice-30-production-readiness-plan.md](slice-30-production-readiness-plan.md)).
 
+**Paused on 2026-11-01 (decision 216):** staging is no longer backed up. The
+table records how it was set up.
+
 Staging configuration:
 
 | | |

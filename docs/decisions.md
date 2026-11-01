@@ -4291,7 +4291,9 @@ else is a go", and "Not trying to take this fully live yet."
    change).
 3. **The agent may read production in Forge,** changing nothing: its backups,
    deployments and the production check. Server `backoffice-production`
-   only. Changes there stay Jacob's.
+   only. Changes there stay Jacob's. One exception, at his request on
+   2026-10-31: the agent set production's backup retention to 720 through
+   the Forge API.
 4. **Recovery is also proved on production,** while it holds nothing.
 5. **No real Locations, staff or customers go in yet.** First use (30c-5)
    waits until the app has been walked through, noted and polished: "there
@@ -4301,6 +4303,24 @@ else is a go", and "Not trying to take this fully live yet."
    QuickBooks sandbox company. Production gets a test Location only if
    something can be proved nowhere else, because its records can never be
    deleted and one QuickBooks company cannot serve two Locations.
+
+## 216. Staging's backups are dropped; recovery is proved on production alone (2026-11-01)
+
+**Decided by Jacob:** "drop staging backups", once it was clear they were
+needed only to rehearse a restore.
+
+1. **Staging holds only sample data,** which can be rebuilt, so it does not
+   need backups. This replaces staging's part of decision 23's backup plan.
+2. **The backup is paused, not deleted:** Forge will not accept a date that
+   never comes, so it runs only on 29 February, next in 2028. Deleting it
+   could remove the last good backups, so it stays.
+3. **The staging drill is dropped.** Recovery is proved once, on production,
+   while it is empty (decision 215, point 4). This must happen before any
+   real data goes in: after that, a mistake there would matter.
+4. **Why they stopped, as far as it is known:** the old storage provider's
+   key was refused ("Access Denied", in Forge's log for 2026-10-30). Staging
+   was moved to a provider of its own, whose key was also refused, for a
+   reason not found. It is left in place, unused.
 
 ## Future decisions already constrained by the brief
 

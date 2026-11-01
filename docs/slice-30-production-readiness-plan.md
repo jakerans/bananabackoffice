@@ -182,7 +182,7 @@ staging's Test Location and polished.
 
    **Production's backups run:** every hourly backup has succeeded. But
    Forge's "retention" counts backups, not days, so 30 reaches back about
-   31 hours, not the 30 days of decision 193. It should be 720.
+   31 hours, not the 30 days of decision 193. Set to 720 on 2026-10-31.
 2. **The clean-up of the file copy is owed** (decision 195): the copy keeps
    files Backoffice has removed, for good, against the 60 days decision 157
    promises.
@@ -214,10 +214,10 @@ Each stops for Jacob's review, like any other.
 
 | Step | Delivers | Who |
 | --- | --- | --- |
-| 30c-1 | **Backups working again.** Find why staging's fail, and read production's. Nothing else is proved until these run. | Jacob reads Forge's failure emails and the storage provider; the agent narrows the cause |
+| 30c-1 | **Done differently (decision 216).** Production's backups run and keep 720. Staging's were dropped, not repaired. | Done |
 | 30c-2 | **What is owed in the code,** built, tested and merged: the removed-file clean-up in the copy, with a delete-only key, so a stolen key still cannot destroy it; the Location's time on the agreement; the production check brought up to date (Wasabi's copy, customer email, and a "ready to sell" list of the empty things above); a way to leave the file drill's test file in place long enough to see it reach the copy; the dependency change, if approved. | The agent |
-| 30c-3 | **Recovery proved on staging.** A written recovery procedure (who does what, in what order, how to confirm, what to do if it fails partway). A fresh backup, a known change, Forge's Restore, then proof the change is gone, the site works and the tables match. Procedure corrected from what happened. | The agent, with Jacob's go-ahead for the Restore |
-| 30c-4 | **Recovery proved on production, while it is empty.** Deploy the latest code. Restore a production backup; put the database back to a chosen minute with the change log; the file drill, including seeing the test file in the copy. Key check in Wasabi. | Jacob presses each button, from a guide with text to copy |
+| 30c-3 | **The recovery procedure, written (decision 216).** Who does what, in what order, how to confirm, what to do if it fails partway. The drill on staging is dropped, so it is first run in 30c-4 and corrected from what happens there. | The agent |
+| 30c-4 | **Recovery proved on production, while it is empty; before any real data.** Deploy the latest code. A fresh backup, a known change, Forge's Restore, then proof the change is gone, the site works and the tables match. Put the database back to a chosen minute with the change log; the file drill, including seeing the test file in the copy. Key check in Wasabi. | Jacob presses each button, from a guide with text to copy |
 | 30c-5 | **First use; waits (decision 215).** The Owner created, two-factor set up, recovery codes saved. The Locations added with their right time zones. Prices and agreement wording imported. Tax rates, pay plans, service areas and targets checked. Customer email's sending domain and settings. The production check clean, and its by-hand list signed off. Then staff invited. | Jacob, from the same guide |
 | Later | **QuickBooks** for each Location, when Intuit approves. It does not hold up first use. | Jacob |
 
@@ -233,6 +233,10 @@ The guide is a private page like 30b's, with no key or password in it.
 - **Nobody is told when Backoffice has an error.** It goes to the server's
   log, and Forge's backup failures go to one email address. This plan does
   not change that; a small step could follow first use.
+- **The restore is not rehearsed before production (decision 216):** its
+  first run is the real drill, while production is empty.
+- **Staging is not backed up.** The walk-through's sample data would have to
+  be rebuilt if it were lost; notes on it live elsewhere.
 - **Restoring a whole server is written down, not rehearsed:** the drills
   prove the backups and the procedure, not building a new server.
 - **The copy's restore is proved on one test file,** not by switching

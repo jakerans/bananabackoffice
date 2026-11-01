@@ -3,7 +3,7 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-10-31 · **Branch:** `main`
+**Updated:** 2026-11-01 · **Branch:** `main`
 
 **State:** step 30c goes ahead, except first use, which waits (decision
 215): the repository stays public, and no real Locations, staff or customers
@@ -11,29 +11,18 @@ go in until the app has been walked through and polished. The plan:
 [../slice-30-production-readiness-plan.md](../slice-30-production-readiness-plan.md),
 "Step 30c: the plan".
 
-## Waiting for Jacob: two fixes in the storage settings
+## Backups
 
-**Staging's backups have failed since 2026-10-28,** most likely because
-staging and production share one storage provider in Forge and its key now
-reaches only production's bucket. Keys are his to handle:
-
-1. In DigitalOcean, Spaces Object Storage, Access Keys: create a Limited
-   Access key for the staging backup bucket only, Read/Write/Delete, and save
-   it in the password manager.
-2. In Forge, organization settings, Storage providers: add a DigitalOcean
-   Spaces provider with that key, named for staging.
-3. On the staging server's database backups, switch the configuration to the
-   new provider. Press "Back up now" and say when it is done.
-
-**Production's backups work, but keep about 31 hours, not 30 days.** On the
-production server's backup configuration, change the retention from 30 to
-720. If Forge refuses a number that high, say what it allows.
+**Staging's are dropped (decision 216):** paused, not deleted, with the drill
+moved to production. **Production's run hourly and keep 720.** Forge's form
+labels that number "days", though 30 kept about 31 hourly backups: the count
+is being watched, to confirm 720 gives 30 days.
 
 ## Done, and what follows
 
 30c-2, the fixes in the code, is merged and on staging. Next, 30c-3: the
-recovery procedure and drill on staging, once its backups work; then 30c-4 on
-production, from a guide, starting with Jacob pressing Deploy.
+written recovery procedure; then 30c-4 on production, from a guide, starting
+with Jacob pressing Deploy.
 
 ## Next, once 30c-4 is done
 
