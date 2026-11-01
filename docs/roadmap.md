@@ -690,11 +690,9 @@ drill.** It should be done deliberately, not in passing:
   correct: who does what, in what order, how to confirm the result, and what to do
   if the restore fails partway.
 
-Known gaps to close for production:
-
-- A restore goes back to the last backup and no further, because MySQL's change
-  log is switched off. Point-in-time recovery would need it switched on.
-- No written recovery procedure exists yet.
+Both gaps once listed here are closed for production: its change log is on,
+and the procedure is [recovery-procedure.md](recovery-procedure.md), to be
+proved by the drill in step 30c-4.
 
 ### Uploaded files are NOT covered
 

@@ -265,3 +265,17 @@ The guide is a private page like 30b's, with no key or password in it.
 
 **Not done yet:** the copy's clean-up does nothing on production until Jacob
 makes the delete-only key, in 30c-4's guide.
+
+### Step 30c-3 as written (2026-11-01)
+
+[recovery-procedure.md](recovery-procedure.md) is the procedure, and 30c-4's
+guide is a private page like 30b's. Neither has been run.
+
+- **Tried:** the drill's marker and read commands, on a local copy and, for
+  the read, on staging's MySQL 8.4.
+- **Not tried:** replaying the change log. No MySQL with it switched on was
+  available beforehand, and staging's is off. Its first run is the drill; the
+  guide's step 10 checks the parts it depends on first, and stops for a reply.
+- **Added to the guide, a gap found while writing:** the server's Environment
+  was kept nowhere else. Losing the server would have lost `APP_KEY`, and
+  with it two-factor sign-in and the QuickBooks connection.

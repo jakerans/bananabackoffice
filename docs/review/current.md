@@ -20,9 +20,12 @@ is being watched, to confirm 720 gives 30 days.
 
 ## Done, and what follows
 
-30c-2, the fixes in the code, is merged and on staging. Next, 30c-3: the
-written recovery procedure; then 30c-4 on production, from a guide, starting
-with Jacob pressing Deploy.
+30c-2, the fixes in the code, is merged and on staging. 30c-3, the written
+procedure, is done: [../recovery-procedure.md](../recovery-procedure.md).
+
+**Waiting for Jacob: 30c-4,** the drill on production, from the private guide
+page, starting with Deploy. It stops at its step 10 for the agent's reply,
+before anything changes the database.
 
 ## Next, once 30c-4 is done
 
