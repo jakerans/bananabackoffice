@@ -1,8 +1,8 @@
 # Recovery Procedure
 
-Status: **written on 2026-11-01 (step 30c-3); not yet run.** Its first run is
-the drill on production, while it is empty (step 30c-4, decision 216), and it
-is corrected from what happens there. Until then, treat each step as untested.
+Status: **written on 2026-11-01 (step 30c-3); not yet run.** The drill that
+would prove it waits until after first use (decision 217), and is corrected
+from what happens there. Until then, treat each step as untested.
 
 This covers production only. Staging is not backed up (decision 216).
 

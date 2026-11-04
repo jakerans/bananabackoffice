@@ -4322,6 +4322,26 @@ needed only to rehearse a restore.
    was moved to a provider of its own, whose key was also refused, for a
    reason not found. It is left in place, unused.
 
+## 217. First use goes ahead before the restore drill (2026-11-04)
+
+**Decided by Jacob:** "Can we skip recovery and do that a little bit later?
+I'd rather go ahead and get at least the production up and going."
+
+1. **The drill (30c-4) waits; first use (30c-5) goes ahead now:** production
+   set up, tried out, then people loaded in. This replaces decision 216,
+   point 3 (the drill before any real data), and decision 215, point 5
+   (first use after the walk-through and polish).
+2. **What stays true meanwhile:** production's hourly backups run and
+   succeed (81 kept on 2026-11-02, all successful), and the change log is
+   on. What is not yet proved is putting a backup back.
+3. **Once real data is in, the drill cannot run as written,** because
+   Forge's Restore writes over the live database. It will need a plan of
+   its own, such as restoring a backup onto a temporary server.
+4. **Production was deployed on 2026-11-03** (`830d476`) at his request.
+   The production check said "not ready" for the ten expected things only:
+   the copy's clean-up, customer email, QuickBooks's live keys, and the
+   seven first-use items.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

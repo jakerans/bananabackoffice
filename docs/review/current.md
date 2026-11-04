@@ -3,34 +3,28 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-11-01 · **Branch:** `main`
+**Updated:** 2026-11-04 · **Branch:** `main`
 
-**State:** step 30c goes ahead, except first use, which waits (decision
-215): the repository stays public, and no real Locations, staff or customers
-go in until the app has been walked through and polished. The plan:
+**State:** production is deployed (2026-11-03) and first use goes ahead now;
+the restore drill waits until later (decision 217). The plan:
 [../slice-30-production-readiness-plan.md](../slice-30-production-readiness-plan.md),
-"Step 30c: the plan".
+"Step 30c: the plan", 30c-5.
 
 ## Backups
 
-**Staging's are dropped (decision 216):** paused, not deleted, with the drill
-moved to production. **Production's run hourly and keep 720.** Forge's form
-labels that number "days", though 30 kept about 31 hourly backups: the count
-is being watched, to confirm 720 gives 30 days.
+**Staging's are dropped (decision 216):** paused, not deleted. **Production's
+run hourly and keep 720;** 81 were kept on 2026-11-02, all successful, so the
+setting holds more than the old 31. Putting one back is written down
+([../recovery-procedure.md](../recovery-procedure.md)) but not yet proved.
 
-## Done, and what follows
+## Next
 
-30c-2, the fixes in the code, is merged and on staging. 30c-3, the written
-procedure, is done: [../recovery-procedure.md](../recovery-procedure.md).
+**First use (30c-5):** the Owner, the Locations, prices and agreement wording
+imported, tax rates, pay plans and service areas, then staff invited. The
+production check lists each one still missing.
 
-**Waiting for Jacob: 30c-4,** the drill on production, from the private guide
-page, starting with Deploy. It stops at its step 10 for the agent's reply,
-before anything changes the database.
-
-## Next, once 30c-4 is done
-
-The example Location: fill staging's Test Location so the whole job can be
-walked through, then Jacob's walk-through and list of notes.
+**Asked 2026-11-04, not yet planned:** a view of the day's appointments
+for a manager: how many were set today, how many ran, and how they went.
 
 ## Also waiting for Jacob
 
