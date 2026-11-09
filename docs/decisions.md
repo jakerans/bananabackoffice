@@ -4354,6 +4354,31 @@ tab. not be a new page."
 2. **Slice 32's questions 1 to 4, and the new 5 to 8, wait for his
    answers** before anything is built.
 
+## 219. Reports: the recommendations, and appointments show the customer (2026-11-09)
+
+**Decided by Jacob:** "go with your recommendations - appointments can hold
+some cx details - its not a privacy thing - more of a thing where we would
+like to know some details for the appointment - is it interior? exterior?
+etc."
+
+1. **Slice 32's questions 1 to 8 as recommended:** the day's appointments
+   first, as step 32a; then the rest of Sales Reports, Marketing and Finance.
+   Reports seen by Owner and Leadership everywhere and a Location Manager for
+   their own Location, through one new permission, `reports.view`. Ranges
+   Today (the default), Yesterday, This month, Last month, This quarter, Year
+   to date, Last 12 months or any two days, each Location's own days. The
+   report lives in Sales > Reports. "Set" is booked in the range, for any
+   day; a re-booking counts each time and is marked.
+2. **Question 4 changes:** the list of appointments behind each count shows
+   the customer, the address, the work (the Lead's services, such as
+   Interior Painting) and its size, each linking to the Lead.
+3. **Downloads stay counts and staff names,** so question 4's reasoning still
+   holds for them: no extra permission and no Audit Log entry. The list with
+   the customer is seen on the page, not downloaded.
+4. **Decided while building:** This month and This quarter cover the whole
+   month or quarter, as Sales > Performance does, so appointments still to
+   come in it are counted; Year to date and Last 12 months end today.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

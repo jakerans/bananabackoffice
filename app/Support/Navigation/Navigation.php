@@ -268,7 +268,8 @@ class Navigation
                 new NavigationItem('sales.commissions', 'Commissions', $permissions, NavigationState::Live, route: 'pay'),
                 new NavigationItem('sales.leaderboard', 'Leaderboard', $permissions, NavigationState::Live, route: 'sales.leaderboard'),
                 $this->customers(),
-                new NavigationItem('sales.reports', 'Reports', $permissions),
+                // Reports, starting with the day's appointments (slice 32, step 32a; decision 219).
+                new NavigationItem('sales.reports', 'Reports', [Permission::ViewReports], NavigationState::Live, route: 'sales.reports'),
             ],
         );
     }

@@ -3,7 +3,8 @@
 Status: **proposed on 2026-10-27 as slice 31, at Jacob's request ("both at
 once, start with reports"; decision 195); renumbered 32 when he put
 estimating first (decision 196). Waits for his answers. The day's
-appointments added as its first report (decision 218).** Written as what the
+appointments added as its first report (decision 218). Questions answered as
+recommended (decision 219); step 32a is built.** Written as what the
 implementation agent recommends.
 
 ## Why this, now
@@ -108,6 +109,30 @@ Sales figures then follow as 32b, Marketing 32c and Finance 32d.
 8. **Ranges.** *Recommended:* question 3's list with **Today** (the default
    for this report) and **Yesterday** added; Today is each Location's own
    day.
+
+## Step 32a as built (decision 219)
+
+**Sales > Reports > Appointments,** at `/sales/reports`, for `reports.view`
+(Owner, Leadership, Location Manager). Sales Consultants and the Contact
+Center do not see it in the menu and are refused it.
+
+- The counting is in `App\Support\Reports\AppointmentsReport`; the ranges
+  in `App\Enums\ReportRange`. An appointment booked in error counts
+  nowhere. A re-booking is an appointment for a Lead that had one before.
+- How the ones that ran went is read as they stand now, from the estimates
+  presented at them: sold if any was, pending if any is still open, lost if
+  all were, no demo if none was. A month's Ran, No-show and On the calendar
+  equal Sales > Performance's for the same month (tested).
+- Each count, and each number in the table by salesperson, lists its
+  appointments: when, the customer and address, the work and its size, the
+  salesperson, who set it and when, the Lead Source, and the result.
+- The three tables download as CSV, counts and staff names only.
+- Tests: `tests/Feature/Sales/ReportsTest.php`. Browser review on local data:
+  `.claude/tools/playwright/reviews/slice-32a.mjs`.
+
+**Known limits:** a custom range is at most 400 days. The list is not split
+into pages, so a long range lists every appointment in it. The page is
+wider than a phone only because of the top bar, as on every page.
 
 ## Known limits of this plan
 

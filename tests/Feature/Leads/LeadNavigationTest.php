@@ -59,7 +59,9 @@ test('a sales consultant, who cannot open marketing, sees leads inside the sales
         ->get(route('leads'))
         ->assertOk()
         ->assertSee('Sales Center')
-        ->assertSeeInOrder(['Performance', 'Workspace', 'Calendar', 'Commissions', 'Leaderboard', 'Customers', 'Reports', 'Leads'])
+        ->assertSeeInOrder(['Performance', 'Workspace', 'Calendar', 'Commissions', 'Leaderboard', 'Customers', 'Leads'])
+        // Reports are for managers (decision 219).
+        ->assertDontSee(route('sales.reports'), false)
         ->assertDontSee('Campaigns')
         ->assertDontSee('Contact Center');
 });
