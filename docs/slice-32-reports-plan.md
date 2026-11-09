@@ -2,7 +2,8 @@
 
 Status: **proposed on 2026-10-27 as slice 31, at Jacob's request ("both at
 once, start with reports"; decision 195); renumbered 32 when he put
-estimating first (decision 196). Waits for his answers.** Written as what the
+estimating first (decision 196). Waits for his answers. The day's
+appointments added as its first report (decision 218).** Written as what the
 implementation agent recommends.
 
 ## Why this, now
@@ -71,6 +72,42 @@ sale to the day it was sold.
    opens in Excel or Google Sheets. Reports hold totals and staff names,
    never a customer's name, address or phone, so a download needs no extra
    permission and is not recorded in the Audit Log.
+
+## Added 2026-11-09: the day's appointments (decision 218)
+
+Jacob asked to see how many appointments were set today, how many ran, and
+how they went, and for it to live in Reports, not on a new page. Proposed as
+the **first report in Sales > Reports, built first, as step 32a;** the other
+Sales figures then follow as 32b, Marketing 32c and Finance 32d.
+
+**Appointments,** for a day or any range, at one Location or all of yours:
+
+- **Set:** appointments booked in the range, for any date, by who booked them
+  and by Lead Source. One marked "booked in error" is not counted.
+- **On the calendar:** appointments whose time falls in the range, split
+  into Ran, No-show, Cancelled, and still to come.
+- **How the ones that ran went:** Sold (how many, and for how much), Signed,
+  Presented and pending, Lost, No demo (nothing presented), and Report still
+  due.
+- **By salesperson,** with totals; the same counting as Sales > Performance
+  and the Today page, so they always agree.
+- Each count opens the list of those appointments, each linking to its Lead.
+
+### More decisions it needs
+
+5. **Which Reports tab.** *Recommended:* Sales > Reports. Setting
+   appointments is the Contact Center's work (Marketing), but the report is
+   about appointments end to end, and Marketing > Reports later shows
+   bookings by source and setter for longer ranges.
+6. **What "set today" means.** *Recommended:* booked today, whatever day
+   the appointment is for. What is on today's calendar is shown beside it.
+7. **A Lead booked twice in one range** (cancelled, then booked again).
+   *Recommended:* each booking counts in Set, and the second is marked a
+   re-booking, so the setter's work is seen. Leads Issued on Sales >
+   Performance still counts that Lead once.
+8. **Ranges.** *Recommended:* question 3's list with **Today** (the default
+   for this report) and **Yesterday** added; Today is each Location's own
+   day.
 
 ## Known limits of this plan
 

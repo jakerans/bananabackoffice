@@ -4342,6 +4342,18 @@ I'd rather go ahead and get at least the production up and going."
    the copy's clean-up, customer email, QuickBooks's live keys, and the
    seven first-use items.
 
+## 218. The day's appointments live in Reports (2026-11-09)
+
+**Decided by Jacob,** of a view showing how many appointments were set
+today, how many ran and how they went: "This should live in the 'reports'
+tab. not be a new page."
+
+1. **It is a report in Reports,** not a page of its own, so it joins slice 32
+   ([slice-32-reports-plan.md](slice-32-reports-plan.md), "Added
+   2026-11-09"). Proposed there as the first report, in Sales > Reports.
+2. **Slice 32's questions 1 to 4, and the new 5 to 8, wait for his
+   answers** before anything is built.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

@@ -284,7 +284,8 @@ the presentation, and estimates taking over from proposals (decisions 199,
 203, 205, 208 and 209). Its plan is [slice-31-estimating-plan.md](slice-31-estimating-plan.md).
 
 **Slice 32, Reports, the first set, is proposed (2026-10-27) and waits for
-Jacob's answers (decisions 195 and 196).** Built while Jacob sets up production:
+Jacob's answers (decisions 195 and 196); the day's appointments are added as
+its first report (decision 218).** Built while Jacob sets up production:
 Sales, Marketing and Finance Reports, each over any range of dates, by
 Location, month by month, with a spreadsheet download. Its plan is
 [slice-32-reports-plan.md](slice-32-reports-plan.md).

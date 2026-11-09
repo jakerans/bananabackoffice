@@ -3,7 +3,7 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-11-04 · **Branch:** `main`
+**Updated:** 2026-11-09 · **Branch:** `main`
 
 **State:** production is deployed (2026-11-03) and first use goes ahead now;
 the restore drill waits until later (decision 217). The plan:
@@ -23,8 +23,11 @@ setting holds more than the old 31. Putting one back is written down
 imported, tax rates, pay plans and service areas, then staff invited. The
 production check lists each one still missing.
 
-**Asked 2026-11-04, not yet planned:** a view of the day's appointments
-for a manager: how many were set today, how many ran, and how they went.
+**The day's appointments, in Reports (decision 218):** proposed as the first
+report in Sales > Reports, step 32a. Waits for Jacob's answers to slice 32's
+questions 1 to 8:
+[../slice-32-reports-plan.md](../slice-32-reports-plan.md), "Decisions
+needed" and "Added 2026-11-09".
 
 ## Also waiting for Jacob
 
