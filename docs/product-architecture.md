@@ -506,6 +506,11 @@ Added 2026-10-30 (plan check after slice 34):
 Sales leadership drilldown:
 NSLI, Demo Rate, Cancellation Rate, Close Rate, AJS, Close-on-the-Spot, Pending/Rehash, objections, Lost Reasons, appointment drilldown, revenue by rep, leaderboard history.
 
+Added 2026-11-09 (slice 32, step 32a; decisions 218 and 219; build plan:
+slice-32-reports-plan.md):
+- Built: Sales > Reports > Appointments, the first report. For today (the default) or any range, at one Location or all of yours, each in its own day: appointments set (booked in the range, for any day; re-bookings marked), on the calendar (ran, no-show, cancelled, report due, still to come), and how the ones that ran went as they stand now (sold and for how much, signed, pending, lost, no demo); by salesperson, by who set them and by Lead Source. Each count opens its appointments with the customer, the address, the work and its size. The three tables download as spreadsheets of counts and staff names.
+- Seen with `reports.view`: Owner and Leadership everywhere, a Location Manager for their own Location. Not built: the other Sales figures over a range (32b), Marketing and Finance Reports.
+
 Commercial sales = PENDING Sales Leadership; do not force into residential workflow.6. PRODUCTION CENTER
 
 LOCKED navigation:

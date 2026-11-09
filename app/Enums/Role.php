@@ -89,6 +89,8 @@ enum Role: string
                 // Owner and Leadership change prices; others only see them (decision 197, question 3).
                 Permission::ViewPricing,
                 Permission::ManagePricing,
+                // Reports, for every Location they hold it at (slice 32; decision 219).
+                Permission::ViewReports,
             ],
             self::Finance => [
                 Permission::FinanceAccess,
@@ -132,6 +134,8 @@ enum Role: string
                 Permission::MarketingSpendManage,
                 // A manager sees their Location's prices and cannot change them (decision 197, question 3).
                 Permission::ViewPricing,
+                // A manager sees their own Location's Reports (slice 32; decision 219).
+                Permission::ViewReports,
             ],
             self::CallCenterAgent => [
                 Permission::MarketingAccess,

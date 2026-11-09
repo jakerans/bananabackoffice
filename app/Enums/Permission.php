@@ -44,6 +44,7 @@ enum Permission: string
     case ViewAuditLog = 'settings.audit_log.view';
     case ViewPricing = 'settings.pricing.view';
     case ManagePricing = 'settings.pricing.manage';
+    case ViewReports = 'reports.view';
 
     /**
      * Company-level permissions only count when held through an all-locations grant.

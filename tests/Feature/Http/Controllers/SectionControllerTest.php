@@ -139,14 +139,19 @@ test('unbuilt sections are shown without a link', function () {
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
 
     $this->actingAs($owner)
-        ->get(route('sales.performance'))
+        ->get(route('production.performance'))
         ->assertOk()
         ->assertSee('Reports')
         ->assertSee('aria-disabled="true"', escape: false)
-        ->assertDontSee('/sales/reports')
-        // Built in slice 34 (step 34a): the Workspace's Today, and Commissions at "My pay".
+        ->assertDontSee('/production/reports');
+
+    // Built in slice 34 (step 34a): the Workspace's Today, and Commissions at "My pay"; Sales Reports in step 32a.
+    $this->actingAs($owner)
+        ->get(route('sales.performance'))
+        ->assertOk()
         ->assertSee('/sales/workspace')
-        ->assertSee(route('pay'), escape: false);
+        ->assertSee(route('pay'), escape: false)
+        ->assertSee(route('sales.reports'), escape: false);
 });
 
 test('the center switcher does not offer centers the staff member cannot open', function () {

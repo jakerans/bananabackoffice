@@ -23,11 +23,20 @@ setting holds more than the old 31. Putting one back is written down
 imported, tax rates, pay plans and service areas, then staff invited. The
 production check lists each one still missing.
 
-**The day's appointments, in Reports (decision 218):** proposed as the first
-report in Sales > Reports, step 32a. Waits for Jacob's answers to slice 32's
-questions 1 to 8:
-[../slice-32-reports-plan.md](../slice-32-reports-plan.md), "Decisions
-needed" and "Added 2026-11-09".
+**Step 32a is built (decision 219):** Sales > Reports > Appointments. To look
+at it on staging, signed in as Owner, Leadership or a Location Manager:
+
+1. Sales > Reports. Today is shown first; choose **Last month** under Days
+   to see the sample appointments.
+2. Click **Sold** (or any count): the appointments behind it are listed
+   below, with the customer, the work and the result.
+3. Click a number in the table by salesperson for that person's list.
+4. **Download** beside a table gives a spreadsheet of its counts.
+
+**Next, waiting for Jacob's go-ahead:** 32b, the other Sales figures over a
+range (Demo, Close and Cancellation Rate, Close-on-the-Spot, Pending and
+Rehash, Lost Reasons, revenue by rep). Plan:
+[../slice-32-reports-plan.md](../slice-32-reports-plan.md).
 
 ## Also waiting for Jacob
 
