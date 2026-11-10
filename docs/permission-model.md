@@ -239,8 +239,9 @@ cannot differ only by capital letters.
 - **Lost phone and recovery codes:** `php artisan backoffice:two-factor-reset
   <email>` on the server switches it off, with a reason kept in the Audit Log;
   the person sets it up again at their next sign-in.
-- Switched on unless `AUTH_REQUIRE_TWO_FACTOR=false`, which only a developer's
-  own computer and the tests use.
+- Switched on unless `AUTH_REQUIRE_TWO_FACTOR=false`, which a developer's own
+  computer and the tests use. Production has it switched off since
+  2026-11-10, by Jacob's choice (decision 221).
 
 ## Owner impersonation
 

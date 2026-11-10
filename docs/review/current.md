@@ -3,7 +3,7 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-11-09 · **Branch:** `main`
+**Updated:** 2026-11-10 · **Branch:** `main`
 
 **State:** production is deployed (2026-11-03) and first use goes ahead now;
 the restore drill waits until later (decision 217). The plan:
@@ -33,15 +33,10 @@ at it on staging, signed in as Owner, Leadership or a Location Manager:
 3. Click a number in the table by salesperson for that person's list.
 4. **Download** beside a table gives a spreadsheet of its counts.
 
-**Step 37a is built (decision 220):** the first Owner and the PaintScout
-imports without a terminal. To use it on production, once it is deployed:
-
-1. Forge > backoffice-production > the site > Commands: run
-   `php artisan backoffice:create-owner --name="Your Name" --email=your address`.
-2. Open the email "You have been invited to Banana Backoffice" and choose
-   your password; then set up two-factor sign-in.
-3. Settings > Pricing Settings > **Import from PaintScout**: upload the
-   saved ABQ settings file with both boxes ticked.
+**Step 37a is deployed (decision 220).** Jacob's Owner exists and can sign
+in; two-factor is not required on production (decision 221). Still to do:
+Settings > Pricing Settings > **Import from PaintScout**: upload the saved
+ABQ settings file with both boxes ticked.
 
 **Next, on Jacob's go-ahead:** 37b, the Location checklist.
 

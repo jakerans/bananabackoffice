@@ -105,8 +105,9 @@ Not in slice 30:
   someone who has lost their phone and their recovery codes, with a reason
   recorded in the Audit Log ("Staff member · Two factor reset"). They set it
   up again at their next sign-in.
-- It is on unless `AUTH_REQUIRE_TWO_FACTOR=false`; only a developer's own
-  computer and the tests switch it off.
+- It is on unless `AUTH_REQUIRE_TWO_FACTOR=false`; a developer's own computer
+  and the tests switch it off. Production has switched it off since
+  2026-11-10, by Jacob's choice (decision 221).
 
 **`php artisan backoffice:production-check`** says whether a server is safe
 for real data. It reads settings and never changes one or prints a key. It

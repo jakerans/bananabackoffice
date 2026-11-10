@@ -4397,6 +4397,24 @@ etc."
    emails so far were delivered, and nothing waits or failed. Mail is sent
    at once, so no queue worker is needed.
 
+## 221. Two-factor sign-in is not required on production (2026-11-10)
+
+**Decided by Jacob:** "I don't want to set up two-factor. I think it's super
+annoying." Offered a passkey or remembering the device instead, he switched
+it off.
+
+1. **Production has `AUTH_REQUIRE_TWO_FACTOR=false`,** set by Jacob in
+   Forge and confirmed read-only the same day. Owner, Leadership and Finance
+   now sign in with a password alone; anyone may still set up two-factor on
+   Settings > Security. This reverses decision 193, question 3, for
+   production; the code and its tests are unchanged, and staging keeps its
+   own setting.
+2. **What it risks, as told to Jacob:** an Owner account sees and changes
+   everything, so its password alone guards customers, money, pay and the
+   QuickBooks connection.
+3. **The production check keeps listing it as not done,** as a reminder;
+   setting the variable to true, or removing it, turns it back on.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
