@@ -132,6 +132,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('company/needs-attention', 'pages::company.needs-attention')->can(Permission::CompanyOverviewAccess)->name('company.needs_attention');
     // Marketing > Performance (slice 25, step 25b).
     Route::livewire('marketing/performance-board', 'pages::marketing.performance')->can(Permission::MarketingAccess)->name('marketing.performance');
+    // Marketing > Reports (slice 32, step 32c; decision 222).
+    Route::livewire('marketing/reports', 'pages::marketing.reports')->can(Permission::ViewReports)->name('marketing.reports');
     // Production > Performance (slice 23, step 23a).
     Route::livewire('production/performance-board', 'pages::production.performance')->can(Permission::ProductionAccess)->name('production.performance');
     // Finance > Performance (slice 23, step 23b).
