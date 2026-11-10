@@ -24,7 +24,7 @@ before starting work, and update them in the same change that alters what they d
 | [slice-34-sales-workspace-plan.md](slice-34-sales-workspace-plan.md) | The plan for the Sales Workspace: the salesperson's day, discovery (WNBET) during the appointment, and a handoff that starts filled in. Proposed and approved on 2026-10-30 (decision 212); both steps, 34a and 34b, are merged and slice 34 is complete. |
 | [slice-35-pricing-settings-plan.md](slice-35-pricing-settings-plan.md) | The plan for the rest of Pricing Settings: discounts, tax rates, area templates and line item templates changed in Backoffice. Proposed and approved on 2026-10-30 (decision 213); both steps, 35a and 35b, are merged and slice 35 is complete. |
 | [slice-36-agreement-copy-plan.md](slice-36-agreement-copy-plan.md) | The plan for the customer's emailed copy of the signed agreement, on a sending domain of its own. Proposed and approved on 2026-10-30 (decision 214); step 36a is merged and slice 36 is complete; customer email is switched on once Jacob sets up its domain. |
-| [slice-37-location-setup-plan.md](slice-37-location-setup-plan.md) | The plan for setting up a Location: a checklist of its steps, and the first Owner and the imports without a terminal. Proposed on 2026-11-10; waits for Jacob's answers. |
+| [slice-37-location-setup-plan.md](slice-37-location-setup-plan.md) | The plan for setting up a Location: a checklist of its steps, and the first Owner and the imports without a terminal. Approved on 2026-11-10 (decision 220); step 37a is built. |
 | [recovery-procedure.md](recovery-procedure.md) | What to do when something goes wrong on production: who does what, restoring the database to a chosen minute, a lost file, server or bucket. Written on 2026-11-01; proved by the drill in step 30c-4. |
 | [slice-30-production-readiness-plan.md](slice-30-production-readiness-plan.md) | The proposed plan for production readiness: what Backoffice needs before real data, the production server, and a restore drill before first use. Proposed on 2026-10-26 as slice 29, renumbered 30 (decision 191), and approved on 2026-10-27 (decision 193); step 30a is built and merged (decision 194); 30b is done; 30c goes ahead, except first use (decision 215). It says from the product architecture and the roadmap why it is next. |
 | [slice-28-quickbooks-plan.md](slice-28-quickbooks-plan.md) | The plan for connecting QuickBooks: the connection, profit and loss read from it each night, and Net Profit % on the scorecard and the Executive Board. Approved on 2026-10-26 (decision 189), built straight through, and merged on 2026-10-26 (decision 190). It says from the product architecture why it is next. |
@@ -85,7 +85,7 @@ Staging is deployed and operational; see [roadmap.md](roadmap.md), "Staging".
 | --- | --- |
 | Install and build everything | `composer setup` |
 | Apply database changes | `php artisan migrate` |
-| Create the first Owner account | `php artisan backoffice:create-owner` |
+| Create the first Owner account | `php artisan backoffice:create-owner`, or from Forge's Commands tab `php artisan backoffice:create-owner --name="…" --email=…`, which emails them a link to choose a password (step 37a) |
 | Fill a local database with fictitious staff and locations | `php artisan db:seed` |
 | Rebuild styles and fonts after a design change | `npm run build` |
 | Run every check (style, static analysis, tests) | `composer test` |

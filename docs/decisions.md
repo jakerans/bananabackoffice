@@ -4379,6 +4379,24 @@ etc."
    month or quarter, as Sales > Performance does, so appointments still to
    come in it are counted; Year to date and Last 12 months end today.
 
+## 220. Setting up a Location: approved as recommended (2026-11-10)
+
+**Decided by Jacob,** of the slice 37 plan: "Looks good."
+
+1. **All five recommendations:** a checklist in order, not a locked wizard;
+   a new Location stays switched off until its required steps are done; the
+   PaintScout imports by upload in Settings, for Owner and Leadership,
+   recorded in the Audit Log; the first Owner by an emailed link; and 37a
+   first, on its own ([slice-37-location-setup-plan.md](slice-37-location-setup-plan.md)).
+2. **Decided while building 37a:** prices are imported once from the upload;
+   replacing them stays a command (`--replace`), since it removes everything
+   in the default price book. Run again for an Owner whose link was never
+   used, the command sends a fresh link instead of refusing.
+3. **Email checked the same day,** read-only on production: Resend shows
+   `mail.bananapainting.com` verified, production's key works, its two
+   emails so far were delivered, and nothing waits or failed. Mail is sent
+   at once, so no queue worker is needed.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

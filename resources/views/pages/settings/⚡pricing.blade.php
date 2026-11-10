@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -106,6 +107,16 @@ new #[Title('Pricing Settings')] class extends Component {
 
     public function updatedBook(): void
     {
+        $this->fillHourlyForm();
+    }
+
+    /**
+     * The default price book was just filled from PaintScout (step 37a).
+     */
+    #[On('paintscout-imported')]
+    public function afterImport(): void
+    {
+        unset($this->priceBook);
         $this->fillHourlyForm();
     }
 
@@ -600,10 +611,14 @@ new #[Title('Pricing Settings')] class extends Component {
         <div role="alert" class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-ink" data-test="price-book-refused">{{ $message }}</div>
     @enderror
 
+    @if ($this->canManage && $this->location === null)
+        <livewire:pages::settings.paintscout-import />
+    @endif
+
     @if ($this->priceBook === null)
         <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 bg-card px-6 py-12 text-center" data-test="no-price-book">
             <flux:heading size="lg">{{ __('No price book yet') }}</flux:heading>
-            <flux:text class="max-w-md">{{ __('The default price book is filled once, from Banana\'s PaintScout settings, on the server.') }}</flux:text>
+            <flux:text class="max-w-md">{{ $this->canManage ? __('The default price book is filled once, from Banana\'s PaintScout settings: import them above.') : __('The default price book is filled once, from Banana\'s PaintScout settings, by the Owner or Leadership.') }}</flux:text>
         </div>
     @else
         @if ($this->usesDefault)
