@@ -19,43 +19,37 @@ setting holds more than the old 31. Putting one back is written down
 
 ## Next
 
-**First use (30c-5):** the Owner, the Locations, prices and agreement wording
-imported, tax rates, pay plans and service areas, then staff invited. The
-production check lists each one still missing.
+**The buildout run is done (decision 222),** each step tested, checked on
+GitHub and merged to staging:
 
-**Step 32a is built (decision 219):** Sales > Reports > Appointments. To look
-at it on staging, signed in as Owner, Leadership or a Location Manager:
+- **37b, setting up a Location:** Settings > Locations > **Set up**. A new
+  Location starts switched off and is switched on from its checklist.
+- **32b, Sales > Reports > Sales figures;** **32c, Marketing > Reports;**
+  **32d, Finance > Reports.** Slice 32 is complete.
+- **Settings' side menu,** only the pages built.
 
-1. Sales > Reports. Today is shown first; choose **Last month** under Days
-   to see the sample appointments.
-2. Click **Sold** (or any count): the appointments behind it are listed
-   below, with the customer, the work and the result.
-3. Click a number in the table by salesperson for that person's list.
-4. **Download** beside a table gives a spreadsheet of its counts.
+To look at them on staging, signed in as the Owner:
 
-**Step 37a is deployed (decision 220).** Jacob's Owner exists and can sign
-in; two-factor is not required on production (decision 221). Still to do:
-Settings > Pricing Settings > **Import from PaintScout**: upload the saved
-ABQ settings file with both boxes ticked.
+1. Settings: the menu is on the left; Company, Service Areas, Services and
+   Products and Templates are gone.
+2. Company > Locations > **Add location**, give a name: it opens on its
+   checklist, marked Being set up. Add a ZIP code in step 2; **Switch on**
+   stays off until a manager and a salesperson have access there.
+3. Sales > Reports > **Sales figures**, Days: Last 12 months: the totals,
+   by salesperson, month by month, sold revenue by month, lost reasons.
+4. Marketing > Reports: by Lead Source, then **Marketing Source**; speed to
+   lead at the bottom.
+5. Finance > Reports: profit and loss by Location (empty until QuickBooks is
+   connected), AR aging, cash collected, job costing, pay owed.
 
-**Jacob wants the buildout finished before first use (2026-11-10).**
-Proposed, waiting for his yes: build these straight through, each tested,
-checked on GitHub and merged to staging, then stop:
+**Then first use (30c-5),** on production: ABQ's PaintScout file (saved from
+Jacob's PaintScout with his OK for the download, then uploaded in Settings >
+Pricing Settings), Albuquerque through its checklist, people invited.
 
-1. 37b, the Location checklist (approved, decision 220).
-2. 32b, the other Sales figures over a range (Demo, Close and Cancellation
-   Rate, Close-on-the-Spot, Pending and Rehash, Lost Reasons, revenue by rep).
-3. 32c, Marketing > Reports; 32d, Finance > Reports
-   ([../slice-32-reports-plan.md](../slice-32-reports-plan.md)).
-4. Settings' side menu, hiding pages not built yet (decision 202, point 3).
-
-Each later area needs its own plan and something from Jacob first: the
+**Each later area needs its own plan and something from Jacob first:** the
 Inbox (Messenger and text accounts, and what the AI may answer), Campaigns
 and the ad platform connections (built last, decision 183), Color Studio,
 and what Production and Company Reports hold.
-
-The PaintScout file can wait until then: ABQ's own settings, saved from
-Jacob's PaintScout with his OK for the download.
 
 ## Also waiting for Jacob
 
@@ -66,10 +60,8 @@ Jacob's PaintScout with his OK for the download.
   "What Jacob sets up").
 - Whether the presentation lists each room's work in the customer wording
   the rates already carry ("Bedroom: Paint Walls, Paint Doors").
-- A side menu for Settings, hiding pages not built yet, and where the
-  insurance deduction moves (decision 202, point 3).
+- Where the insurance deduction moves (decision 202, point 3).
 - QuickBooks's live keys, after Intuit's review.
-- Slice 32, Reports, waits for his answers.
 - The app's top bar is wider than a phone screen on every page.
 - On staging: the three browser steps for slice 36 (sign an agreement on a
   sample lead, **Email a copy**, the Audit Log entry).

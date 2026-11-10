@@ -2,6 +2,9 @@
 
 @php
     $currentDestination = $shell->currentDestination();
+    $currentSection = $currentDestination ? $shell->currentSection($currentDestination) : null;
+    // Settings has its pages in a menu beside the page instead of a row (decision 202, point 3; decision 222).
+    $sideSection = $currentSection?->id === 'settings' ? $currentSection : null;
 @endphp
 
 <!DOCTYPE html>
@@ -43,7 +46,7 @@
             <div class="print:hidden">
                 <x-shell.center-nav :center="$currentDestination" :shell="$shell" />
 
-                @if ($currentSection = $shell->currentSection($currentDestination))
+                @if ($currentSection && ! $sideSection)
                     <x-shell.section-nav :section="$currentSection" :shell="$shell" />
                 @endif
             </div>
@@ -53,7 +56,17 @@
         <livewire:pages::sales.handoff-prompt />
 
         <main class="px-4 py-6 lg:px-8 lg:py-8 print:p-0">
-            {{ $slot }}
+            @if ($sideSection)
+                <div class="flex items-start gap-6 max-lg:flex-col lg:gap-8">
+                    <x-shell.side-nav :section="$sideSection" :shell="$shell" />
+
+                    <div class="w-full min-w-0 flex-1">
+                        {{ $slot }}
+                    </div>
+                </div>
+            @else
+                {{ $slot }}
+            @endif
         </main>
 
         @persist('toast')
