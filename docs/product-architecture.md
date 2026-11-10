@@ -1890,6 +1890,8 @@ Settings:
 - tracking-number provisioning/configuration
 - compliance defaults
 
+Added 2026-11-10 (decisions 202 and 222): Settings' pages are a menu beside the page, listing only those built that the person may open.
+
 19. AI / EXCEPTION ENGINE
 
 Model:

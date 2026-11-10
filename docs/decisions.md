@@ -4457,6 +4457,12 @@ into."
    no Finance one. Its days are the company's; profit and loss is
    QuickBooks' for whole months; AR aging and pay owed are as they stand
    today ([slice-32-reports-plan.md](slice-32-reports-plan.md), "Step 32d as built").
+8. **Settings' side menu, as built:** Settings' pages are a menu beside
+   the page instead of a row above it, listing only the pages built that
+   the person may open; Company, Service Areas, Services and Products and
+   Templates are no longer shown until they are built. On a phone the menu
+   is a row that scrolls. Every other Center keeps its row. Where the
+   insurance deduction moves is still Jacob's to decide.
 
 ## Future decisions already constrained by the brief
 
