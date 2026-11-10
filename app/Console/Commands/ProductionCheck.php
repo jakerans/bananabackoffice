@@ -112,12 +112,12 @@ class ProductionCheck extends Command
     private function readyToSell(): array
     {
         return [
-            ['An Owner can sign in', $this->exists(fn (): bool => User::query()->usableOwners()->exists()), 'Run php artisan backoffice:create-owner in a terminal on the server.'],
+            ['An Owner can sign in', $this->exists(fn (): bool => User::query()->usableOwners()->exists()), 'In Forge\'s Commands tab, run php artisan backoffice:create-owner --name="Your Name" --email=you@example.com; the Owner is emailed a link to choose a password.'],
             ['A Location is active', $this->exists(fn (): bool => Location::query()->where('is_active', true)->exists()), 'Add one in Settings > Locations, with its time zone.'],
             ['Its service area is set', $this->exists(fn (): bool => ServiceAreaPostalCode::query()->exists()), 'Add its postal codes in Settings > Locations.'],
-            ['The default price book has prices', $this->exists(fn (): bool => ProductionRate::query()->whereIn('price_book_id', PriceBook::query()->whereNull('location_id')->select('id'))->exists()), 'Run php artisan backoffice:pricing-import with the saved PaintScout file.'],
+            ['The default price book has prices', $this->exists(fn (): bool => ProductionRate::query()->whereIn('price_book_id', PriceBook::query()->whereNull('location_id')->select('id'))->exists()), 'Import the saved PaintScout file in Settings > Pricing Settings, or run php artisan backoffice:pricing-import with it.'],
             ['It has a tax rate', $this->exists(fn (): bool => TaxRate::query()->exists()), 'Add one in Settings > Pricing Settings.'],
-            ['The agreement has its wording', $this->exists(fn (): bool => AgreementWording::current() !== null), 'Run php artisan backoffice:agreement-import with the saved PaintScout file.'],
+            ['The agreement has its wording', $this->exists(fn (): bool => AgreementWording::current() !== null), 'Import the saved PaintScout file in Settings > Pricing Settings, or run php artisan backoffice:agreement-import with it.'],
             ['A pay plan is set', $this->exists(fn (): bool => PayPlan::query()->exists()), 'Set each person\'s pay plan in Finance > Payroll.'],
         ];
     }

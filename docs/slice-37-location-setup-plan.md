@@ -1,7 +1,9 @@
 # Slice 37 — Setting Up a Location: Plan
 
-Status: **proposed on 2026-11-10 at Jacob's request. Waits for his
-answers.** Written as what the implementation agent recommends.
+Status: **proposed on 2026-11-10 at Jacob's request; approved with every
+recommendation the same day (decision 220). Step 37a is built; 37b
+follows on his go-ahead.** Written as what the implementation agent
+recommended.
 
 ## Why this, now
 
@@ -65,6 +67,28 @@ an invitation; anything that changes how the steps themselves work.
    the Owner, on the page the link opens; nobody else ever sees it.
 5. **Order.** *Recommended:* 37a first and on its own, since it unblocks
    first use now; 37b after.
+
+## Step 37a as built (decision 220)
+
+- **The first Owner from Forge's Commands tab:**
+  `php artisan backoffice:create-owner --name="Their Name" --email=their@address`
+  asks nothing. It creates the Owner, records it in the Audit Log, and
+  emails them the usual staff invitation, whose link lets them choose their
+  own password for 72 hours. Until it is used, they cannot sign in and the
+  production check still says no Owner can. If the email cannot be sent,
+  nothing is created. Run again for an Owner who never used their link, it
+  sends a fresh one. With no options it asks in a terminal, as before.
+- **Import from PaintScout,** a card at the top of Settings > Pricing
+  Settings on the default price book, for those who may change prices. The
+  saved settings file is uploaded; ticked, it fills the default price book
+  (once; replacing stays `backoffice:pricing-import --replace`) and adds the
+  agreement's wording (a new version; the same wording again is refused).
+  Through the same actions as the commands, so the Audit Log names the
+  person. The uploaded file is deleted once read.
+- The production check's advice names these two ways.
+- Tests: `tests/Feature/Console/Commands/CreateOwnerTest.php`,
+  `tests/Feature/Pricing/PaintScoutUploadTest.php`. Browser review on local
+  data: `.claude/tools/playwright/reviews/slice-37a.mjs`.
 
 ## Known limits of this plan
 

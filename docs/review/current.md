@@ -33,10 +33,17 @@ at it on staging, signed in as Owner, Leadership or a Location Manager:
 3. Click a number in the table by salesperson for that person's list.
 4. **Download** beside a table gives a spreadsheet of its counts.
 
-**Proposed 2026-11-10, waits for Jacob's answers:** slice 37, setting up a
-Location, with no terminal needed for the first Owner or the imports:
-[../slice-37-location-setup-plan.md](../slice-37-location-setup-plan.md),
-"Decisions needed" 1 to 5.
+**Step 37a is built (decision 220):** the first Owner and the PaintScout
+imports without a terminal. To use it on production, once it is deployed:
+
+1. Forge > backoffice-production > the site > Commands: run
+   `php artisan backoffice:create-owner --name="Your Name" --email=your address`.
+2. Open the email "You have been invited to Banana Backoffice" and choose
+   your password; then set up two-factor sign-in.
+3. Settings > Pricing Settings > **Import from PaintScout**: upload the
+   saved ABQ settings file with both boxes ticked.
+
+**Next, on Jacob's go-ahead:** 37b, the Location checklist.
 
 **Also waiting for Jacob's go-ahead:** 32b, the other Sales figures over a
 range (Demo, Close and Cancellation Rate, Close-on-the-Spot, Pending and
