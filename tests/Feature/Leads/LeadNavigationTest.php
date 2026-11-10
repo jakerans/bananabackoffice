@@ -44,7 +44,9 @@ test('a call center agent sees leads inside the marketing menu under contact cen
         ->get(route('leads'))
         ->assertOk()
         ->assertSee('Marketing Center')
-        ->assertSeeInOrder(['Contact Center', 'Inbox', 'Campaigns', 'Customers', 'Reports', 'Leads'])
+        ->assertSeeInOrder(['Contact Center', 'Inbox', 'Campaigns', 'Customers', 'Leads'])
+        // Reports are for managers, not the Contact Center (decision 219, question 2; step 32c).
+        ->assertDontSee(route('marketing.reports'))
         ->assertSee('Campaigns')
         ->assertDontSee('Calendar')
         ->assertDontSee('Commissions');

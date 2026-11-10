@@ -250,6 +250,10 @@ Deep analysis:
 - aged lead performance
 - setter performance
 
+Added 2026-11-10 (slice 32, step 32c; decision 222; build plan: slice-32-reports-plan.md):
+- Built: Marketing > Reports, for any range: by Lead Source or Marketing Source, spend, leads, cost per lead, connection rate, appointments and booking rate, cost per appointment, sales, Close Rate, cost per sale, sold revenue and return on spend; month by month; speed-to-lead distribution. Counted as Marketing > Performance counts them. Spend for part of a month counts that share of its days.
+- Not built: campaigns, referrals, product-line mix, geographic demand, missed-call recovery, aged lead performance and setter performance over a range (setters are on Sales > Reports > Appointments).
+
 5. SALES CENTER
 
 LOCKED navigation:

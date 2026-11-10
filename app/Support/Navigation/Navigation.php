@@ -238,7 +238,7 @@ class Navigation
                 new NavigationItem('shared.inbox', 'Inbox', $permissions),
                 new NavigationItem('marketing.campaigns', 'Campaigns', $permissions),
                 $this->customers(),
-                new NavigationItem('marketing.reporting', 'Reports', $permissions),
+                new NavigationItem('marketing.reporting', 'Reports', [Permission::ViewReports], NavigationState::Live, route: 'marketing.reports'),
             ],
         );
     }

@@ -286,8 +286,8 @@ the presentation, and estimates taking over from proposals (decisions 199,
 **Slice 32, Reports, the first set, is proposed (2026-10-27) and waits for
 Jacob's answers (decisions 195 and 196); the day's appointments are added as
 its first report (decision 218). Approved as recommended (decision 219); step
-32a, Sales > Reports > Appointments, is built; 32b, Sales figures, under
-decision 222.** Built while Jacob sets up production:
+32a, Sales > Reports > Appointments, is built; 32b, Sales figures, and 32c,
+Marketing > Reports, under decision 222.** Built while Jacob sets up production:
 Sales, Marketing and Finance Reports, each over any range of dates, by
 Location, month by month, with a spreadsheet download. Its plan is
 [slice-32-reports-plan.md](slice-32-reports-plan.md).

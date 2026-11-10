@@ -159,6 +159,31 @@ Appointments, for `reports.view`. This month by default, or any range.
 - Tests: `tests/Feature/Sales/SalesFiguresReportTest.php`. Browser review on
   local data: `.claude/tools/playwright/reviews/slice-32b.mjs`.
 
+## Step 32c as built (decision 222)
+
+**Marketing > Reports,** at `/marketing/reports`, now live in the Marketing
+menu, for `reports.view`. This month by default, or any range.
+
+- **By Lead Source, or by Marketing Source** (what the customer says
+  brought them, 21): spend, leads, cost per lead, connection rate,
+  appointments and booking rate, cost per appointment, sales, Close Rate,
+  cost per sale, sold revenue and return on spend, with the total. Spend is
+  entered by Lead Source, so it is not split by Marketing Source.
+- **Month by month,** when the range spans more than one.
+- **Speed to lead:** from when each lead was received to its first call
+  out, in bands (within 5 minutes, 5 to 30, 30 minutes to 2 hours, 2 to 24
+  hours, over 24 hours, never called), with the middle time; and the
+  connection rate, the leads reached over the leads received (4.2).
+- Appointments, sales and sold revenue are counted by `SalesFigures` for the
+  leads from each source, as Marketing > Performance counts them; a month
+  here equals that month there (tested). The counting is in
+  `App\Support\Reports\MarketingReport`.
+- **Decided while building:** spend is entered for a month, so a range
+  holding part of a month counts that share of its spend, by its days.
+- Every table downloads as CSV: figures only.
+- Tests: `tests/Feature/Marketing/MarketingReportsTest.php`. Browser review
+  on local data: `.claude/tools/playwright/reviews/slice-32c.mjs`.
+
 ## Known limits of this plan
 
 - Marketing figures depend on spend being entered each month (slice 25).

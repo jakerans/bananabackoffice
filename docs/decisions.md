@@ -4445,6 +4445,11 @@ into."
    objections from the estimates whose objection was recorded in it. Every
    report shares one frame of days, Location and downloads
    ([slice-32-reports-plan.md](slice-32-reports-plan.md), "Step 32b as built").
+6. **Decided while building 32c:** Marketing > Reports is grouped by Lead
+   Source or Marketing Source; spend is entered by month, so a range holding
+   part of a month counts that share of its spend, by its days; speed to
+   lead runs from the lead received to its first call out
+   ([slice-32-reports-plan.md](slice-32-reports-plan.md), "Step 32c as built").
 
 ## Future decisions already constrained by the brief
 
