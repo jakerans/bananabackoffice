@@ -38,12 +38,24 @@ in; two-factor is not required on production (decision 221). Still to do:
 Settings > Pricing Settings > **Import from PaintScout**: upload the saved
 ABQ settings file with both boxes ticked.
 
-**Next, on Jacob's go-ahead:** 37b, the Location checklist.
+**Jacob wants the buildout finished before first use (2026-11-10).**
+Proposed, waiting for his yes: build these straight through, each tested,
+checked on GitHub and merged to staging, then stop:
 
-**Also waiting for Jacob's go-ahead:** 32b, the other Sales figures over a
-range (Demo, Close and Cancellation Rate, Close-on-the-Spot, Pending and
-Rehash, Lost Reasons, revenue by rep). Plan:
-[../slice-32-reports-plan.md](../slice-32-reports-plan.md).
+1. 37b, the Location checklist (approved, decision 220).
+2. 32b, the other Sales figures over a range (Demo, Close and Cancellation
+   Rate, Close-on-the-Spot, Pending and Rehash, Lost Reasons, revenue by rep).
+3. 32c, Marketing > Reports; 32d, Finance > Reports
+   ([../slice-32-reports-plan.md](../slice-32-reports-plan.md)).
+4. Settings' side menu, hiding pages not built yet (decision 202, point 3).
+
+Each later area needs its own plan and something from Jacob first: the
+Inbox (Messenger and text accounts, and what the AI may answer), Campaigns
+and the ad platform connections (built last, decision 183), Color Studio,
+and what Production and Company Reports hold.
+
+The PaintScout file can wait until then: ABQ's own settings, saved from
+Jacob's PaintScout with his OK for the download.
 
 ## Also waiting for Jacob
 
