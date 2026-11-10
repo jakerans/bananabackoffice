@@ -329,7 +329,7 @@ class Navigation
                     route: 'settings.users',
                 ),
                 $this->customers(),
-                new NavigationItem('finance.reports', 'Reports', $permissions),
+                new NavigationItem('finance.reports', 'Reports', [Permission::ViewReports], NavigationState::Live, route: 'finance.reports'),
             ],
         );
     }

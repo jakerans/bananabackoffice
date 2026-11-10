@@ -1242,6 +1242,10 @@ Additional:
 - Location comparison
 - Monthly Close
 
+Added 2026-11-10 (slice 32, step 32d; decision 222; build plan: slice-32-reports-plan.md):
+- Built: Finance > Reports, for any range in the company's days: P&L from each Location's QuickBooks side by side (the Location comparison), AR Aging today, cash collected by month, gross profit and job-cost variance on jobs Finance approved in the range, and pay and commission owed now. Seen by the Owner and the Finance role; each Center's reports need that Center's access.
+- Not built: Payables, Monthly Close.
+
 9.8 QuickBooks
 LOCKED V1 boundary (decision 133):
 Backoffice = operational workflows/management visibility.

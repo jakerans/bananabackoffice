@@ -101,6 +101,8 @@ enum Role: string
                 // Finance sees and manages everyone's pay, through an all-locations grant (decision 172, question 4).
                 Permission::ManageCompensation,
                 Permission::MarketingSpendManage,
+                // Finance's own Reports, and no other Center's (decision 219, question 2; step 32d).
+                Permission::ViewReports,
             ],
             self::LocationManager => [
                 Permission::MarketingAccess,

@@ -86,6 +86,7 @@ test('a role contains exactly its approved permissions', function (Role $role, a
         Permission::ViewAccounts,
         Permission::ManageCompensation,
         Permission::MarketingSpendManage,
+        Permission::ViewReports,
     ]],
     'location manager' => [Role::LocationManager, [
         Permission::ViewProjects,

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Permission;
 use App\Livewire\ReportPage;
 use App\Enums\ReportRange;
 use App\Models\Appointment;
@@ -24,6 +25,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * the count shown are each checked again here.
  */
 new #[Title('Reports')] class extends ReportPage {
+    protected function centerPermission(): Permission
+    {
+        return Permission::SalesAccess;
+    }
+
     /** Which count's appointments are listed. */
     #[Url(except: AppointmentsReport::CALENDAR)]
     public string $show = AppointmentsReport::CALENDAR;

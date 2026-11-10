@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Permission;
 use App\Livewire\ReportPage;
 use App\Support\Money;
 use App\Support\Reports\SalesReport;
@@ -17,6 +18,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * Every table downloads as a spreadsheet of figures and staff names.
  */
 new #[Title('Sales figures')] class extends ReportPage {
+    protected function centerPermission(): Permission
+    {
+        return Permission::SalesAccess;
+    }
+
     #[Computed]
     public function report(): SalesReport
     {
