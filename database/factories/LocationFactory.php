@@ -21,8 +21,20 @@ class LocationFactory extends Factory
         return [
             'name' => fake()->unique()->city(),
             'is_active' => true,
+            'opened_at' => now(),
             'timezone' => LocationTimezones::DEFAULT,
         ];
+    }
+
+    /**
+     * Indicate that the location is new and being set up: never switched on.
+     */
+    public function beingSetUp(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
+            'opened_at' => null,
+        ]);
     }
 
     /**

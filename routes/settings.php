@@ -19,6 +19,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->can(Permission::ManageLocations)
         ->name('settings.locations');
 
+    // Setting up a Location: its checklist, and switching a new one on (slice 37, step 37b; decision 220).
+    Route::livewire('settings/locations/{location}/setup', 'pages::settings.location-setup')
+        ->can(Permission::ManageLocations)
+        ->name('settings.locations.setup');
+
     Route::livewire('settings/users', 'pages::settings.users')
         ->can(Permission::ManageUsers)
         ->name('settings.users');

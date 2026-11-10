@@ -57,7 +57,8 @@ test('an owner can add a location', function () {
     $location = Location::query()->sole();
 
     expect($location->name)->toBe('Lakeview');
-    expect($location->is_active)->toBeTrue();
+    // Switched off until its required steps are done (step 37b; decision 220).
+    expect($location->is_active)->toBeFalse();
 });
 
 test('a location name is required', function () {

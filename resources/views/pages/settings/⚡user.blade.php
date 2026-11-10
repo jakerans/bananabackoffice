@@ -64,7 +64,8 @@ new #[Title('Manage access')] class extends Component {
     #[Computed]
     public function locations(): Collection
     {
-        return Location::query()->active()->orderBy('name')->get();
+        // Active Locations, and those being set up, which may be given their people before they open (step 37b).
+        return Location::query()->where(fn ($query) => $query->where('is_active', true)->orWhereNull('opened_at'))->orderBy('name')->get();
     }
 
     /**
@@ -100,7 +101,7 @@ new #[Title('Manage access')] class extends Component {
                 Rule::requiredIf($this->scope === GrantScope::Location->value),
                 'nullable',
                 'integer',
-                Rule::exists(Location::class, 'id')->where('is_active', true),
+                Rule::exists(Location::class, 'id')->where(fn ($query) => $query->where('is_active', true)->orWhereNull('opened_at')),
             ],
         ], attributes: ['locationId' => 'location']);
 
@@ -380,7 +381,7 @@ new #[Title('Manage access')] class extends Component {
             @if ($scope === GrantScope::Location->value)
                 <flux:select wire:model="locationId" :label="__('Location')" :placeholder="__('Choose a location')">
                     @foreach ($this->locations as $location)
-                        <flux:select.option :value="$location->id">{{ $location->name }}</flux:select.option>
+                        <flux:select.option :value="$location->id">{{ $location->isBeingSetUp() ? __(':name (being set up)', ['name' => $location->name]) : $location->name }}</flux:select.option>
                     @endforeach
                 </flux:select>
             @endif
