@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Permission;
 use App\Livewire\ReportPage;
 use App\Support\Money;
 use App\Support\Reports\MarketingReport;
@@ -19,6 +20,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * downloads as a spreadsheet of figures.
  */
 new #[Title('Marketing reports')] class extends ReportPage {
+    protected function centerPermission(): Permission
+    {
+        return Permission::MarketingAccess;
+    }
+
     /** By Lead Source (where a lead came from) or Marketing Source (what the customer says brought them; 21). */
     #[Url(except: MarketingReport::BY_LEAD_SOURCE)]
     public string $by = MarketingReport::BY_LEAD_SOURCE;

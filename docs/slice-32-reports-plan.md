@@ -4,7 +4,8 @@ Status: **proposed on 2026-10-27 as slice 31, at Jacob's request ("both at
 once, start with reports"; decision 195); renumbered 32 when he put
 estimating first (decision 196). Waits for his answers. The day's
 appointments added as its first report (decision 218). Questions answered as
-recommended (decision 219); step 32a is built.** Written as what the
+recommended (decision 219); 32a is built, and 32b, 32c and 32d under
+decision 222. Slice 32 is complete.** Written as what the
 implementation agent recommends.
 
 ## Why this, now
@@ -183,6 +184,37 @@ menu, for `reports.view`. This month by default, or any range.
 - Every table downloads as CSV: figures only.
 - Tests: `tests/Feature/Marketing/MarketingReportsTest.php`. Browser review
   on local data: `.claude/tools/playwright/reviews/slice-32c.mjs`.
+
+## Step 32d as built (decision 222)
+
+**Finance > Reports,** at `/finance/reports`, now live in the Finance menu,
+for those with Finance's own access and `reports.view`: the Owner, and the
+Finance role, which now holds `reports.view` (question 2). This month by
+default, or any range, in the company's days as on Finance > Performance.
+
+- **Profit and loss,** the default (9.7): each Location side by side, from
+  its QuickBooks as read each night, for the whole months the days touch,
+  with the total and net profit %; Locations whose months are not read yet
+  are named.
+- **AR aging:** what customers owe on final invoices today, by Location:
+  not due yet, 8 to 30 days, with Collections.
+- **Cash collected** each month: payments received, approved and not
+  reversed.
+- **Job costing on closed jobs:** the jobs whose final gross margin Finance
+  approved in the range, by Location: revenue, budget (the target cost),
+  cost, gross profit and GP %, under or over budget, and how many were over.
+- **Pay owed, not yet paid,** by person, company-wide, today, for those who
+  manage pay only.
+- Counted as Finance > Performance and Job Costing count them, in
+  `App\Support\Reports\FinanceReport`. Every table downloads as CSV: totals
+  and staff names, never a customer.
+- **Decided while building:** each Center's reports also need that Center's
+  access, as question 2 says, so Finance sees Finance's reports and no
+  other, and Leadership and Location Managers, who have no Finance access,
+  do not see Finance's. Nothing changes for who sees Sales or Marketing
+  reports.
+- Tests: `tests/Feature/Finance/FinanceReportsTest.php`. Browser review on
+  local data: `.claude/tools/playwright/reviews/slice-32d.mjs`.
 
 ## Known limits of this plan
 

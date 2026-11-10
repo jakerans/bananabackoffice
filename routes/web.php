@@ -138,6 +138,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('production/performance-board', 'pages::production.performance')->can(Permission::ProductionAccess)->name('production.performance');
     // Finance > Performance (slice 23, step 23b).
     Route::livewire('finance/performance-board', 'pages::finance.performance')->can(Permission::FinanceAccess)->name('finance.performance');
+    // Finance > Reports (slice 32, step 32d; decision 222).
+    Route::livewire('finance/reports', 'pages::finance.reports')->can(Permission::ViewReports)->name('finance.reports');
     Route::get('color-studio/color-projects', SectionController::class)->defaults('section', 'color_studio.projects')->name('color_studio.projects');
 });
 

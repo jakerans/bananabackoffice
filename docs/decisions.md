@@ -4450,6 +4450,13 @@ into."
    part of a month counts that share of its spend, by its days; speed to
    lead runs from the lead received to its first call out
    ([slice-32-reports-plan.md](slice-32-reports-plan.md), "Step 32c as built").
+7. **Decided while building 32d:** Finance > Reports is for the Owner and
+   the Finance role, which now holds `reports.view`; each Center's reports
+   need that Center's own access too (decision 219, question 2), so Finance
+   sees no Sales or Marketing report and Leadership and Location Managers
+   no Finance one. Its days are the company's; profit and loss is
+   QuickBooks' for whole months; AR aging and pay owed are as they stand
+   today ([slice-32-reports-plan.md](slice-32-reports-plan.md), "Step 32d as built").
 
 ## Future decisions already constrained by the brief
 

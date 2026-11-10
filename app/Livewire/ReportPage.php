@@ -57,6 +57,13 @@ abstract class ReportPage extends Component
         return Permission::ViewReports;
     }
 
+    /**
+     * The Center the report is in, whose access it also needs at a Location:
+     * "View reports" works inside each Center's own access (decision 219,
+     * question 2), so Finance sees Finance's reports and no other.
+     */
+    abstract protected function centerPermission(): Permission;
+
     /** The range shown until another is chosen. */
     protected function defaultRange(): ReportRange
     {
@@ -66,6 +73,7 @@ abstract class ReportPage extends Component
     public function mount(): void
     {
         $this->authorize($this->reportPermission());
+        $this->authorize($this->centerPermission());
 
         if ($this->range === $this->defaultRange()->value) {
             $this->range = '';
@@ -95,7 +103,10 @@ abstract class ReportPage extends Component
     #[Computed]
     public function locations(): Collection
     {
-        return $this->user->locationsWhere($this->reportPermission())->sortBy('name')->values();
+        return $this->user->locationsWhere($this->reportPermission())
+            ->filter(fn (Location $location): bool => $this->user->hasPermissionAt($this->centerPermission(), $location))
+            ->sortBy('name')
+            ->values();
     }
 
     /**
