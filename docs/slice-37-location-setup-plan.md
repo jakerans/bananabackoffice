@@ -1,8 +1,8 @@
 # Slice 37 — Setting Up a Location: Plan
 
 Status: **proposed on 2026-11-10 at Jacob's request; approved with every
-recommendation the same day (decision 220). Step 37a is built; 37b
-follows on his go-ahead.** Written as what the implementation agent
+recommendation the same day (decision 220). Both steps are built; 37b
+under decision 222. Slice 37 is complete.** Written as what the implementation agent
 recommended.
 
 ## Why this, now
@@ -90,9 +90,43 @@ an invitation; anything that changes how the steps themselves work.
   `tests/Feature/Pricing/PaintScoutUploadTest.php`. Browser review on local
   data: `.claude/tools/playwright/reviews/slice-37a.mjs`.
 
+## Step 37b as built (decision 222)
+
+- **Settings > Locations > a Location > Set up,** at
+  `/settings/locations/{location}/setup`, for those who manage Locations.
+  The eleven steps in the plan's order, each marked done or not with what is
+  there now, and a button to the page where it is done. Its time zone, its
+  service area, and its deposit and target margin are changed right there,
+  through the same actions as Settings > Locations, so the Audit Log is the
+  same. **Next step** goes to the first step not done, the ✱ ones first.
+  Above them, until each is done, the company's steps. The counting is in
+  `App\Support\Locations\LocationSetup`.
+- **A new Location is added switched off and opens on its checklist.** It
+  shows as **Being set up** on Settings > Locations, with **Set up** beside
+  every Location. **Switch on** is offered once every ✱ step is done and is
+  refused, with what is missing, before; it is recorded in the Audit Log
+  ("Location · Switched on"). A Location keeps the day it was first switched
+  on (`locations.opened_at`); every Location already there counts as
+  switched on when it was added.
+- **Decided while building:** people may be given access at a Location being
+  set up, so its manager and salesperson can be invited before it opens; the
+  access covers nothing until it is switched on. A Location deactivated after
+  it operated still refuses new access, and is reactivated as before.
+- **"Its people"** is at least one Location Manager and one Sales Consultant
+  with access there, invited or signed in; who has not used their invitation
+  is shown. **Pay plans** are done when every salesperson there has a sales
+  plan today; **its scorecard** when its owner and all three targets are set.
+- **The production check** adds one line for each Location not deactivated:
+  whether it has every ✱ step, and if not, which are still to do.
+- Tests: `tests/Feature/Settings/LocationSetupTest.php`; the add-location
+  test in `LocationsTest.php` now expects a new Location switched off. Browser
+  review on local data: `.claude/tools/playwright/reviews/slice-37b.mjs`.
+
 ## Known limits of this plan
 
 - A Location already switched on stays on; the checklist only shows what it
   lacks.
 - Whether a manager or salesperson accepted their invitation is shown, but
   does not block.
+- Subcontractors can be added to a Location only once it is switched on,
+  so that step is done afterwards; it never blocks.

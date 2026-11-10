@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $name
  * @property bool $is_active
+ * @property Carbon|null $opened_at When it was first switched on; none while it is set up (step 37b).
  * @property string $timezone
  * @property int $target_margin_percent The gross margin a job there aims for (slice 19): 55 by default.
  * @property int $deposit_percent The share of the sold price asked for as a deposit (slice 17, step 17b): 50 by default.
@@ -63,6 +64,7 @@ class Location extends Model
     {
         return [
             'is_active' => 'boolean',
+            'opened_at' => 'datetime',
             'deposit_percent' => 'integer',
             'target_margin_percent' => 'integer',
             'nsli_target_cents' => 'integer',
@@ -105,6 +107,16 @@ class Location extends Model
     public function leads(): HasMany
     {
         return $this->hasMany(Lead::class);
+    }
+
+    /**
+     * Whether it is new and being set up: never switched on yet (step 37b;
+     * decision 220, question 2). Unlike one deactivated after it operated,
+     * people may be given access here before it opens.
+     */
+    public function isBeingSetUp(): bool
+    {
+        return ! $this->is_active && $this->opened_at === null;
     }
 
     /**

@@ -1862,6 +1862,10 @@ Locations:
 - communication defaults
 - local tax/payment settings where appropriate
 
+Added 2026-11-10 (slice 37, step 37b; decisions 220 and 222; build plan:
+slice-37-location-setup-plan.md):
+- Built: each Location's Set up checklist, its steps in order with what is done and where the rest is done. A new Location is switched off until its required steps are done (name and time zone, service area, prices, a tax rate, the agreement's wording, a manager and a salesperson); it may be given its people before it opens.
+
 Reports:
 cross-company/location analysis.
 

@@ -34,7 +34,8 @@ class GrantAccess
         $grantLocation = null;
 
         if ($scope === GrantScope::Location) {
-            if ($location === null || ! $location->is_active) {
+            // A Location being set up may be given its people before it opens (step 37b); a deactivated one may not.
+            if ($location === null || (! $location->is_active && ! $location->isBeingSetUp())) {
                 throw ValidationException::withMessages([
                     'locationId' => __('Choose an active location.'),
                 ]);

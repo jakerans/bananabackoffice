@@ -4415,6 +4415,31 @@ it off.
 3. **The production check keeps listing it as not done,** as a reminder;
    setting the variable to true, or removing it, turns it back on.
 
+## 222. The buildout is finished before first use, straight through (2026-11-10)
+
+**Decided by Jacob:** "Yes, build all of them straight through. Make sure
+we're sticking to our plan document that we put a bunch of time and effort
+into."
+
+1. **Built straight through, in order, each tested, checked on GitHub and
+   merged to staging, with one report at the end:** 37b, the Location
+   checklist (decision 220); 32b, the rest of Sales > Reports; 32c,
+   Marketing > Reports; 32d, Finance > Reports (slice 32, decision 219);
+   then Settings' side menu, hiding pages not built yet (decision 202,
+   point 3). Where the insurance deduction moves stays his to decide.
+2. **Each is held to [product-architecture.md](product-architecture.md)**
+   (5.9, 4.6, 9.7, 21) and to its slice plan; a figure is counted as its
+   Performance board counts it.
+3. **Not in this run,** each needing its own plan and something from Jacob:
+   the Inbox, Campaigns and the ad platform connections, Color Studio, and
+   Production and Company Reports. First use, including ABQ's PaintScout
+   file, waits until the run is done.
+4. **Decided while building 37b:** a new Location is added switched off and
+   opens on its checklist; people may be given access there before it
+   opens, covering nothing until it is switched on; switching on is
+   recorded in the Audit Log. A Location deactivated after it operated
+   still refuses new access ([slice-37-location-setup-plan.md](slice-37-location-setup-plan.md), "Step 37b as built").
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

@@ -158,8 +158,9 @@ new #[Title('Locations')] class extends Component {
 
         $this->validate(['name' => $this->nameRules()]);
 
-        DB::transaction(function () use ($recordAuditEvent): void {
-            $location = Location::query()->create(['name' => $this->name]);
+        // A new Location stays switched off until its required steps are done, and opens on its checklist (step 37b; decision 220).
+        $location = DB::transaction(function () use ($recordAuditEvent): Location {
+            $location = Location::query()->create(['name' => $this->name, 'is_active' => false]);
 
             $recordAuditEvent->handle(
                 AuditAction::LocationCreated,
@@ -167,12 +168,16 @@ new #[Title('Locations')] class extends Component {
                 after: ['name' => $location->name],
                 location: $location,
             );
+
+            return $location;
         });
 
         $this->reset('name');
 
         Flux::modal('add-location')->close();
-        Flux::toast(variant: 'success', text: __('Location added.'));
+        Flux::toast(variant: 'success', text: __('Location added. Set it up, then switch it on.'));
+
+        $this->redirectRoute('settings.locations.setup', ['location' => $location], navigate: true);
     }
 
     /**
@@ -626,6 +631,13 @@ new #[Title('Locations')] class extends Component {
 
         $this->resetValidation('deactivation');
 
+        // A new Location is switched on from its checklist, once its required steps are done (step 37b).
+        if ($location->isBeingSetUp()) {
+            $this->redirectRoute('settings.locations.setup', ['location' => $location], navigate: true);
+
+            return;
+        }
+
         DB::transaction(function () use ($location, $recordAuditEvent): void {
             $location->update(['is_active' => true]);
 
@@ -691,12 +703,15 @@ new #[Title('Locations')] class extends Component {
                             <flux:heading size="lg" level="2">{{ $location->name }}</flux:heading>
                             @if ($location->is_active)
                                 <flux:badge size="sm" color="green" icon="check-circle">{{ __('Active') }}</flux:badge>
+                            @elseif ($location->isBeingSetUp())
+                                <flux:badge size="sm" color="amber" icon="wrench-screwdriver" data-test="location-being-set-up-{{ $location->id }}">{{ __('Being set up') }}</flux:badge>
                             @else
                                 <flux:badge size="sm" color="zinc" icon="pause-circle">{{ __('Inactive') }}</flux:badge>
                             @endif
                         </div>
 
                         <div class="flex flex-wrap gap-2">
+                            <flux:button size="sm" :variant="$location->isBeingSetUp() ? 'primary' : 'outline'" :href="route('settings.locations.setup', $location)" wire:navigate data-test="location-setup-{{ $location->id }}">{{ __('Set up') }}</flux:button>
                             <flux:button size="sm" wire:click="edit({{ $location->id }})">{{ __('Rename') }}</flux:button>
                             @can(Permission::ViewAuditLog)
                                 <flux:button size="sm" :href="route('settings.audit_log', ['location' => $location->id])" wire:navigate data-test="location-changes-{{ $location->id }}">{{ __('Changes') }}</flux:button>
@@ -704,6 +719,7 @@ new #[Title('Locations')] class extends Component {
 
                             @if ($location->is_active)
                                 <flux:button size="sm" wire:click="openDeactivate({{ $location->id }})">{{ __('Deactivate') }}</flux:button>
+                            @elseif ($location->isBeingSetUp())
                             @else
                                 <flux:button size="sm" wire:click="reactivate({{ $location->id }})">{{ __('Reactivate') }}</flux:button>
                             @endif

@@ -11,6 +11,8 @@ use App\Models\SchedulerHeartbeat;
 use App\Models\ServiceAreaPostalCode;
 use App\Models\TaxRate;
 use App\Models\User;
+use App\Support\Locations\LocationSetup;
+use App\Support\Locations\SetupStep;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -98,8 +100,8 @@ class ProductionCheck extends Command
             ['Email is sent through Resend from '.self::SENDING_DOMAIN, $this->emailIsReady(), 'Set MAIL_MAILER=resend, the Resend key, and MAIL_FROM_ADDRESS at '.self::SENDING_DOMAIN.'.'],
             ['Uploaded files go to production\'s private bucket', $this->fileStorageIsReady(), 'Set FILES_DRIVER=s3, the production bucket and its own key, never staging\'s.'],
             ['Removed files are also deleted from the copy', $this->copyCleanUpIsReady(), 'Set FILES_COPY_BUCKET and its own delete-only key.'],
-            ['Email reaches customers, from a sending domain of its own', $this->customerEmailIsReady(), 'Set the MAIL_CUSTOMERS_ settings and its key (docs/slice-36-agreement-copy-plan.md).'],
-            ['QuickBooks uses live keys', $this->quickBooksIsLive(), 'Set QUICKBOOKS_ENVIRONMENT=production and the live keys from Intuit.'],
+            ['Email reaches customers, from a sending domain of its own', self::customerEmailIsReady(), 'Set the MAIL_CUSTOMERS_ settings and its key (docs/slice-36-agreement-copy-plan.md).'],
+            ['QuickBooks uses live keys', self::quickBooksIsLive(), 'Set QUICKBOOKS_ENVIRONMENT=production and the live keys from Intuit.'],
             ...$this->readyToSell(),
         ];
     }
@@ -119,7 +121,38 @@ class ProductionCheck extends Command
             ['It has a tax rate', $this->exists(fn (): bool => TaxRate::query()->exists()), 'Add one in Settings > Pricing Settings.'],
             ['The agreement has its wording', $this->exists(fn (): bool => AgreementWording::current() !== null), 'Import the saved PaintScout file in Settings > Pricing Settings, or run php artisan backoffice:agreement-import with it.'],
             ['A pay plan is set', $this->exists(fn (): bool => PayPlan::query()->exists()), 'Set each person\'s pay plan in Finance > Payroll.'],
+            ...$this->eachLocation(),
         ];
+    }
+
+    /**
+     * For each Location not deactivated, the required steps it still lacks
+     * (step 37b; decision 220).
+     *
+     * @return list<array{0: string, 1: bool, 2: string}>
+     */
+    private function eachLocation(): array
+    {
+        try {
+            $locations = Location::query()->where(fn ($query) => $query->where('is_active', true)->orWhereNull('opened_at'))->orderBy('name')->get();
+        } catch (Throwable) {
+            return [];
+        }
+
+        $setup = app(LocationSetup::class);
+        $checks = [];
+
+        foreach ($locations as $location) {
+            $missing = array_map(fn (SetupStep $step): string => mb_strtolower($step->label), $setup->missing($location));
+
+            $checks[] = [
+                $location->name.' has every required step',
+                $missing === [],
+                'Still to do on Settings > Locations > '.$location->name.' > Set up: '.implode(', ', $missing).'.',
+            ];
+        }
+
+        return $checks;
     }
 
     /**
@@ -196,7 +229,10 @@ class ProductionCheck extends Command
             && filled(config('filesystems.disks.files_copy.secret'));
     }
 
-    private function customerEmailIsReady(): bool
+    /**
+     * Whether customer email is sent from a sending domain of its own (slice 36).
+     */
+    public static function customerEmailIsReady(): bool
     {
         return config('mail.customers.enabled') === true
             && config('mail.customers.to_anyone') === true
@@ -205,7 +241,10 @@ class ProductionCheck extends Command
             && ! str_ends_with(strtolower((string) config('mail.customers.from_address')), '@'.self::SENDING_DOMAIN);
     }
 
-    private function quickBooksIsLive(): bool
+    /**
+     * Whether QuickBooks uses Intuit's live keys.
+     */
+    public static function quickBooksIsLive(): bool
     {
         return config('services.quickbooks.environment') === 'production'
             && filled(config('services.quickbooks.client_id'))

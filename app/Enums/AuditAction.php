@@ -27,6 +27,7 @@ enum AuditAction: string
     case LocationRenamed = 'location.renamed';
     case LocationDeactivated = 'location.deactivated';
     case LocationReactivated = 'location.reactivated';
+    case LocationSwitchedOn = 'location.switched_on';
     case LocationServiceAreaChanged = 'location.service_area_changed';
     case LocationTimezoneChanged = 'location.timezone_changed';
     case ListOptionAdded = 'list_option.added';
