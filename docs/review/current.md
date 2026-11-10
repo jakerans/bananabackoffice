@@ -33,7 +33,12 @@ at it on staging, signed in as Owner, Leadership or a Location Manager:
 3. Click a number in the table by salesperson for that person's list.
 4. **Download** beside a table gives a spreadsheet of its counts.
 
-**Next, waiting for Jacob's go-ahead:** 32b, the other Sales figures over a
+**Proposed 2026-11-10, waits for Jacob's answers:** slice 37, setting up a
+Location, with no terminal needed for the first Owner or the imports:
+[../slice-37-location-setup-plan.md](../slice-37-location-setup-plan.md),
+"Decisions needed" 1 to 5.
+
+**Also waiting for Jacob's go-ahead:** 32b, the other Sales figures over a
 range (Demo, Close and Cancellation Rate, Close-on-the-Spot, Pending and
 Rehash, Lost Reasons, revenue by rep). Plan:
 [../slice-32-reports-plan.md](../slice-32-reports-plan.md).

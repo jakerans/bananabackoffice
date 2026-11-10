@@ -322,6 +322,11 @@ the agreement page, from a sending domain of its own. Nothing goes to
 customers until Jacob sets that domain up and it is switched on. Its plan
 is [slice-36-agreement-copy-plan.md](slice-36-agreement-copy-plan.md).
 
+**Slice 37, setting up a Location, is proposed (2026-11-10) and waits for
+Jacob's answers:** a checklist of a Location's steps, and the first Owner and
+the PaintScout imports without a terminal. Its plan is
+[slice-37-location-setup-plan.md](slice-37-location-setup-plan.md).
+
 The plan check after slice 16 found the last customer-facing step of
 closeout, "final balance collected", and everything about money from the
 customer still unbuilt. Its plan is
