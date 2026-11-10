@@ -1,21 +1,14 @@
 <?php
 
-use App\Enums\Permission;
+use App\Livewire\ReportPage;
 use App\Enums\ReportRange;
 use App\Models\Appointment;
-use App\Models\Location;
 use App\Models\Service;
-use App\Models\User;
 use App\Support\Money;
-use App\Support\Queue\CallingHours;
 use App\Support\Reports\AppointmentsReport;
-use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
-use Livewire\Component;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -30,24 +23,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * What the browser asks for is never trusted: the Location, the range and
  * the count shown are each checked again here.
  */
-new #[Title('Reports')] class extends Component {
-    /** The longest custom range, in days, so a report stays quick to read. */
-    public const int LONGEST_RANGE_DAYS = 400;
-
-    #[Url(except: 'today')]
-    public string $range = 'today';
-
-    /** The first and last day of a custom range, as "2026-11-09". */
-    #[Url(except: '')]
-    public string $from = '';
-
-    #[Url(except: '')]
-    public string $to = '';
-
-    /** One Location's id, or empty for all of this person's. */
-    #[Url(as: 'location', except: '')]
-    public string $locationId = '';
-
+new #[Title('Reports')] class extends ReportPage {
     /** Which count's appointments are listed. */
     #[Url(except: AppointmentsReport::CALENDAR)]
     public string $show = AppointmentsReport::CALENDAR;
@@ -56,80 +32,10 @@ new #[Title('Reports')] class extends Component {
     #[Url(except: '')]
     public string $person = '';
 
-    public function mount(): void
+    /** The day's appointments are what this report is opened for (decision 218, question 8). */
+    protected function defaultRange(): ReportRange
     {
-        $this->authorize(Permission::ViewReports);
-
-        if ($this->from === '' || $this->to === '') {
-            $today = CarbonImmutable::now(CallingHours::timezoneFor($this->locations->first()))->toDateString();
-            $this->from = $this->from === '' ? $today : $this->from;
-            $this->to = $this->to === '' ? $today : $this->to;
-        }
-    }
-
-    #[Computed]
-    public function user(): User
-    {
-        /** @var User $user */
-        $user = Auth::user();
-
-        return $user;
-    }
-
-    /**
-     * The Locations whose reports this person may see.
-     *
-     * @return Collection<int, Location>
-     */
-    #[Computed]
-    public function locations(): Collection
-    {
-        return $this->user->locationsWhere(Permission::ViewReports)->sortBy('name')->values();
-    }
-
-    /**
-     * The Locations shown: the one asked for if this person may see it,
-     * otherwise all of theirs.
-     *
-     * @return Collection<int, Location>
-     */
-    #[Computed]
-    public function shown(): Collection
-    {
-        $one = ctype_digit($this->locationId) ? $this->locations->firstWhere('id', (int) $this->locationId) : null;
-
-        return $one === null ? $this->locations : new Collection([$one]);
-    }
-
-    #[Computed]
-    public function chosenRange(): ReportRange
-    {
-        return ReportRange::tryFrom($this->range) ?? ReportRange::Today;
-    }
-
-    /**
-     * A custom range's first and last day, in order, at most the longest
-     * range long. A day that cannot be read is today.
-     *
-     * @return array{CarbonImmutable, CarbonImmutable}
-     */
-    #[Computed]
-    public function customDays(): array
-    {
-        $today = CarbonImmutable::now(CallingHours::timezoneFor($this->shown->first()))->startOfDay();
-        $read = function (string $day) use ($today): CarbonImmutable {
-            $parsed = preg_match('/^\d{4}-\d{2}-\d{2}$/', $day) === 1 ? CarbonImmutable::createFromFormat('!Y-m-d', $day) : false;
-
-            return $parsed instanceof CarbonImmutable && $parsed->format('Y-m-d') === $day ? $parsed : $today;
-        };
-
-        [$first, $last] = [$read($this->from), $read($this->to)];
-
-        if ($first->gt($last)) {
-            [$first, $last] = [$last, $first];
-        }
-
-        return [$first, $first->addDays(self::LONGEST_RANGE_DAYS - 1)->min($last)];
+        return ReportRange::Today;
     }
 
     #[Computed]
@@ -138,22 +44,6 @@ new #[Title('Reports')] class extends Component {
         [$first, $last] = $this->customDays;
 
         return AppointmentsReport::for($this->shown, $this->chosenRange, $first, $last);
-    }
-
-    /**
-     * The range in words: "Today", or its days.
-     */
-    public function rangeWords(): string
-    {
-        $location = $this->shown->first();
-        [$first, $last] = $this->chosenRange->days(CarbonImmutable::now(CallingHours::timezoneFor($location))) ?? $this->customDays;
-
-        $days = $first->equalTo($last) ? $first->format('l, F j, Y') : $first->format('M j, Y').' to '.$last->format('M j, Y');
-
-        return match ($this->chosenRange) {
-            ReportRange::Custom => $days,
-            default => __(':range: :days', ['range' => __($this->chosenRange->label()), 'days' => $days]),
-        };
     }
 
     /**
@@ -238,8 +128,6 @@ new #[Title('Reports')] class extends Component {
      */
     public function download(string $table): StreamedResponse
     {
-        $this->authorize(Permission::ViewReports);
-
         $report = $this->report;
         $columns = [AppointmentsReport::SET, AppointmentsReport::CALENDAR, AppointmentsReport::RAN, AppointmentsReport::NO_SHOW, AppointmentsReport::CANCELLED, AppointmentsReport::REPORT_DUE, AppointmentsReport::TO_COME, AppointmentsReport::SOLD, AppointmentsReport::SIGNED, AppointmentsReport::PENDING, AppointmentsReport::LOST, AppointmentsReport::NO_DEMO];
         $labels = $this->labels();
@@ -260,17 +148,7 @@ new #[Title('Reports')] class extends Component {
             ],
         };
 
-        $name = 'appointments-'.(in_array($table, ['setters', 'sources'], true) ? $table : 'salespeople').'-'.$this->chosenRange->value.'.csv';
-
-        return response()->streamDownload(function () use ($rows): void {
-            $out = fopen('php://output', 'w');
-
-            foreach ($rows as $row) {
-                fputcsv($out, $row, escape: '');
-            }
-
-            fclose($out);
-        }, $name, ['Content-Type' => 'text/csv']);
+        return $this->csv('appointments-'.(in_array($table, ['setters', 'sources'], true) ? $table : 'salespeople'), $rows);
     }
 }; ?>
 
@@ -287,36 +165,14 @@ new #[Title('Reports')] class extends Component {
         <flux:subheading>{{ __('Appointments: how many were set, how many were on the calendar, and how the ones that ran went.') }}</flux:subheading>
     </div>
 
+    @include('partials.reports.tabs', ['tabs' => ['sales.reports' => __('Appointments'), 'sales.reports.figures' => __('Sales figures')], 'current' => 'sales.reports'])
+
     @if ($this->locations->isEmpty())
         <div class="rounded-xl border border-zinc-200 bg-card p-5" data-test="reports-none">
             <flux:text>{{ __('There are no reports for you to see. They are shown to managers, for their own locations.') }}</flux:text>
         </div>
     @else
-        <div class="flex flex-wrap items-end gap-4" data-test="reports-filters">
-            <flux:select wire:model.live="range" :label="__('Days')" class="max-w-xs" data-test="reports-range">
-                @foreach (ReportRange::cases() as $option)
-                    <flux:select.option :value="$option->value" wire:key="range-{{ $option->value }}">{{ __($option->label()) }}</flux:select.option>
-                @endforeach
-            </flux:select>
-
-            @if ($this->chosenRange === ReportRange::Custom)
-                <flux:input type="date" wire:model.live.blur="from" :label="__('From')" class="max-w-44" data-test="reports-from" />
-                <flux:input type="date" wire:model.live.blur="to" :label="__('To')" class="max-w-44" data-test="reports-to" />
-            @endif
-
-            @if ($this->locations->count() > 1)
-                <flux:select wire:model.live="locationId" :label="__('Location')" class="max-w-xs" data-test="reports-location">
-                    <flux:select.option value="">{{ __('All my locations') }}</flux:select.option>
-                    @foreach ($this->locations as $option)
-                        <flux:select.option :value="(string) $option->id" wire:key="location-{{ $option->id }}">{{ $option->name }}</flux:select.option>
-                    @endforeach
-                </flux:select>
-            @endif
-        </div>
-
-        <flux:text class="text-sm" data-test="reports-scope">
-            {{ $several ? __(':days, at :count locations, each in its own time.', ['days' => $this->rangeWords(), 'count' => $this->shown->count()]) : __(':days, at :location.', ['days' => $this->rangeWords(), 'location' => $this->shown->first()->name]) }}
-        </flux:text>
+        @include('partials.reports.filters')
 
         {{-- The three questions asked (decision 218): how many were set, how many ran, how they went. --}}
         <div class="grid gap-4 lg:grid-cols-3">

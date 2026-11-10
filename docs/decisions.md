@@ -4439,6 +4439,12 @@ into."
    opens, covering nothing until it is switched on; switching on is
    recorded in the Audit Log. A Location deactivated after it operated
    still refuses new access ([slice-37-location-setup-plan.md](slice-37-location-setup-plan.md), "Step 37b as built").
+5. **Decided while building 32b:** the Sales figures are a second tab of
+   Sales > Reports, beside Appointments, This month by default. Lost
+   reasons are read from the Leads Sales marked lost in the range, one each;
+   objections from the estimates whose objection was recorded in it. Every
+   report shares one frame of days, Location and downloads
+   ([slice-32-reports-plan.md](slice-32-reports-plan.md), "Step 32b as built").
 
 ## Future decisions already constrained by the brief
 

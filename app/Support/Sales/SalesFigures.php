@@ -89,6 +89,20 @@ final readonly class SalesFigures
     {
         [$from, $to] = self::monthAt($location, $month);
 
+        return self::between($location, $from, $to, $salespersonId, $leadSourceId);
+    }
+
+    /**
+     * Count the figures from one moment until another, the same way as for a
+     * month, so a report over any range of days agrees with Sales >
+     * Performance (docs/slice-32-reports-plan.md, step 32b).
+     *
+     * @param  CarbonImmutable  $from  The first moment counted, in UTC.
+     * @param  CarbonImmutable  $to  The first moment not counted, in UTC.
+     */
+    public static function between(Location $location, CarbonImmutable $from, CarbonImmutable $to, ?int $salespersonId = null, ?int $leadSourceId = null): self
+    {
+
         // Each count below narrowed to the Leads from one source, when asked.
         $sourceLeads = fn () => Lead::query()->where('lead_source_id', $leadSourceId)->select('id');
 
@@ -225,6 +239,23 @@ final readonly class SalesFigures
             leadsReleasedToRehash: $releases->count(),
             rehashSold: $rehashSold->count(),
         );
+    }
+
+    /**
+     * Nothing counted: the start of a sum.
+     */
+    public static function none(): self
+    {
+        return new self(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    }
+
+    /**
+     * These figures and another's added together, such as two Locations' or
+     * two months'. Every rate is then worked out from the sums.
+     */
+    public function plus(self $other): self
+    {
+        return new self(...array_map(fn (int $mine, int $theirs): int => $mine + $theirs, get_object_vars($this), get_object_vars($other)));
     }
 
     /**

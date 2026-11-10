@@ -100,6 +100,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Sales > Leaderboard: company-wide, for everyone with Sales access (slice 23, step 23c).
     Route::livewire('sales/reports', 'pages::sales.reports')->can(Permission::ViewReports)->name('sales.reports');
+    Route::livewire('sales/reports/figures', 'pages::sales.reports-figures')->can(Permission::ViewReports)->name('sales.reports.figures');
     Route::livewire('sales/leaderboard', 'pages::sales.leaderboard')->can(Permission::SalesAccess)->name('sales.leaderboard');
     // The leaderboard in TV Mode (slice 27, step 27c).
     Route::livewire('sales/leaderboard/tv', 'pages::sales.leaderboard-tv')->can(Permission::SalesAccess)->name('sales.leaderboard.tv');
