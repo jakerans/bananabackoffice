@@ -134,6 +134,31 @@ Center do not see it in the menu and are refused it.
 into pages, so a long range lists every appointment in it. The page is
 wider than a phone only because of the top bar, as on every page.
 
+## Step 32b as built (decision 222)
+
+**Sales > Reports > Sales figures,** at `/sales/reports/figures`, a tab beside
+Appointments, for `reports.view`. This month by default, or any range.
+
+- **Totals:** NSLI first, then sold revenue, Close Rate, Demo Rate, Leads
+  issued, appointments run, average job size and Close-on-the-Spot; beside
+  them Cancellation Rate, Pending Rate, pending with a return visit, Rehash
+  conversion and sales.
+- **By salesperson,** with the total: revenue by rep. **Month by month,**
+  when the range spans more than one. **Sold revenue by month,** each
+  salesperson ranked, the month's most marked: the Leaderboard's history.
+- **Why leads were lost** (Leads Sales marked lost in the range, by reason)
+  and **objections heard** (estimates whose objection was recorded in it).
+- Every figure is counted by `SalesFigures`, the class behind Sales >
+  Performance, now over any span of time (`between`), each Location in its
+  own days and then added together; a month here equals that month there
+  (tested). The counting is in `App\Support\Reports\SalesReport`.
+- **The frame every report shares** is `App\Livewire\ReportPage`: the
+  range, the Location, the month-by-month parts and the downloads.
+  Appointments now uses it too, unchanged to read.
+- Every table downloads as CSV: figures and staff names only.
+- Tests: `tests/Feature/Sales/SalesFiguresReportTest.php`. Browser review on
+  local data: `.claude/tools/playwright/reviews/slice-32b.mjs`.
+
 ## Known limits of this plan
 
 - Marketing figures depend on spend being entered each month (slice 25).
