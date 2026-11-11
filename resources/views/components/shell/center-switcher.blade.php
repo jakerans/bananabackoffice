@@ -5,9 +5,14 @@
 ])
 
 @if (count($centers) + count($externalSurfaces) > 0)
-    <flux:dropdown position="bottom" align="start">
-        <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" data-test="center-switcher">
-            {{ $current?->label ?? __('Centers') }}
+    <flux:dropdown position="bottom" align="start" class="flex min-w-0">
+        {{-- On a phone the word "Center" is left off and a long name is shortened, so the top bar fits the screen. --}}
+        <flux:button variant="ghost" size="sm" icon:trailing="chevron-down" class="max-w-full [&>span]:min-w-0 [&>span]:truncate" data-test="center-switcher">
+            @if ($current !== null && str_ends_with($current->label, ' Center'))
+                {{ substr($current->label, 0, -strlen(' Center')) }}<span class="max-sm:hidden">&nbsp;{{ __('Center') }}</span>
+            @else
+                {{ $current?->label ?? __('Centers') }}
+            @endif
         </flux:button>
 
         <flux:navmenu>

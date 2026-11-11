@@ -3,7 +3,7 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-11-11 · **Branch:** `main`
+**Updated:** 2026-11-11 · **Branch:** `checkpoint-settings-insurance`
 
 **State:** production is deployed (2026-11-03) and first use goes ahead now;
 the restore drill waits until later (decision 217). The plan:
@@ -42,6 +42,12 @@ To look at them on staging, signed in as the Owner:
 5. Finance > Reports: profit and loss by Location (empty until QuickBooks is
    connected), AR aging, cash collected, job costing, pay owed.
 
+**Decision 224, on its own branch:** Settings > **Subcontractor
+Insurance** holds the insurance deduction, off Company > Locations; a new
+Location's time zone is chosen when it is added; Integrations lists a
+Location being set up; "Company > Locations" wording; the top bar fits a
+phone.
+
 **Then first use (30c-5),** on production: ABQ's PaintScout file (saved from
 Jacob's PaintScout with his OK for the download, then uploaded in Settings >
 Pricing Settings), Albuquerque through its checklist, people invited.
@@ -57,9 +63,9 @@ and what Production and Company Reports hold.
   can only be deleted, which cannot be undone, so they are his to delete.
 - Whether the presentation lists each room's work in the customer wording
   the rates already carry ("Bedroom: Paint Walls, Paint Doors").
-- Where the insurance deduction moves (decision 202, point 3).
 - Connecting each Location's QuickBooks company in Settings > Integrations,
   once the Location exists (live keys are set up, decision 223).
-- The app's top bar is wider than a phone screen on every page.
+- Whether Four Corners prices with the default price book (ABQ's) or its
+  own: Settings > Pricing Settings > **Customize for this Location**.
 - On staging: the three browser steps for slice 36 (sign an agreement on a
   sample lead, **Email a copy**, the Audit Log entry).

@@ -85,3 +85,8 @@ textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-wall-teal ring-offset-2 ring-offset-card;
 }
+
+/* A table's scroll area holds its own hidden labels, so they never widen the page on a phone. */
+ui-table-scroll-area {
+    position: relative;
+}

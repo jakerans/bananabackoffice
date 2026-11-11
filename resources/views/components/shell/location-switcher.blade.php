@@ -9,8 +9,9 @@
 @if ($context !== null)
     @if ($shell->canSwitchLocation())
         <flux:dropdown position="bottom" align="end">
-            <flux:button variant="ghost" size="sm" icon="map-pin" icon:trailing="chevron-down" data-test="location-switcher">
-                {{ $context->label() }}
+            {{-- On a phone only the pin shows, so the top bar fits the screen; the name stays for screen readers. --}}
+            <flux:button variant="ghost" size="sm" icon="map-pin" icon:trailing="chevron-down" class="max-sm:gap-0 max-sm:[&>svg:last-child]:hidden" data-test="location-switcher">
+                <span class="max-sm:sr-only">{{ $context->label() }}</span>
             </flux:button>
 
             {{-- Only locations the staff member is authorized for are listed, and the server re-checks the choice. --}}
@@ -55,7 +56,7 @@
     @else
         <span class="flex items-center gap-1.5 px-2 font-nav text-sm font-medium text-white/80" data-test="location-label">
             <flux:icon.map-pin variant="micro" />
-            {{ $context->label() }}
+            <span class="max-sm:sr-only">{{ $context->label() }}</span>
         </span>
     @endif
 @endif

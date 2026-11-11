@@ -8,12 +8,10 @@ use App\Actions\Locations\ChangeScorecardSetup;
 use App\Actions\Locations\ChangeTargetMargin;
 use App\Actions\Locations\DeactivateLocation;
 use App\Actions\Locations\UpdateServiceAreaPostalCodes;
-use App\Actions\Projects\ChangeInsuranceDeduction;
 use App\Actions\Subcontractors\ChangeComplianceRequirements;
 use App\Enums\AuditAction;
 use App\Enums\Permission;
 use App\Models\ComplianceRequirement;
-use App\Models\InsuranceDeductionRate;
 use App\Models\Location;
 use App\Models\LocationSalesTarget;
 use App\Models\ServiceAreaPostalCode;
@@ -33,6 +31,9 @@ use Livewire\Component;
 
 new #[Title('Locations')] class extends Component {
     public string $name = '';
+
+    /** A new Location's time zone, chosen when it is added so it is never left on the default by mistake (decision 224). */
+    public string $newTimezone = '';
 
     #[Locked]
     public ?int $editingId = null;
@@ -96,11 +97,6 @@ new #[Title('Locations')] class extends Component {
 
     public bool $requirementExpires = false;
 
-    /** A new insurance deduction rate, as a percent, and the day it takes effect (slice 13, step 13c). */
-    public string $deductionPercent = '';
-
-    public string $deductionEffectiveOn = '';
-
     /** The requirement whose "Take away" is waiting to be confirmed. */
     #[Locked]
     public ?int $confirmingRequirementId = null;
@@ -111,31 +107,6 @@ new #[Title('Locations')] class extends Component {
     public function mount(): void
     {
         $this->authorize('viewAny', Location::class);
-    }
-
-    /**
-     * Every insurance deduction rate, the latest first: the one in force and
-     * any to come.
-     *
-     * @return Collection<int, InsuranceDeductionRate>
-     */
-    #[Computed]
-    public function deductionRates(): Collection
-    {
-        return InsuranceDeductionRate::query()->orderByDesc('effective_on')->orderByDesc('id')->get();
-    }
-
-    public function saveDeduction(ChangeInsuranceDeduction $changeInsuranceDeduction): void
-    {
-        $this->authorize('viewAny', Location::class);
-        $this->resetValidation();
-
-        $changeInsuranceDeduction->handle($this->deductionPercent, $this->deductionEffectiveOn, Auth::user());
-
-        $this->reset('deductionPercent', 'deductionEffectiveOn');
-        unset($this->deductionRates);
-
-        Flux::toast(variant: 'success', text: __('Deduction rate saved.'));
     }
 
     /**
@@ -156,23 +127,26 @@ new #[Title('Locations')] class extends Component {
 
         $this->name = trim($this->name);
 
-        $this->validate(['name' => $this->nameRules()]);
+        $this->validate([
+            'name' => $this->nameRules(),
+            'newTimezone' => ['required', Rule::in(LocationTimezones::identifiers())],
+        ], ['newTimezone.required' => __('Choose its time zone.')]);
 
         // A new Location stays switched off until its required steps are done, and opens on its checklist (step 37b; decision 220).
         $location = DB::transaction(function () use ($recordAuditEvent): Location {
-            $location = Location::query()->create(['name' => $this->name, 'is_active' => false]);
+            $location = Location::query()->create(['name' => $this->name, 'timezone' => $this->newTimezone, 'is_active' => false]);
 
             $recordAuditEvent->handle(
                 AuditAction::LocationCreated,
                 $location,
-                after: ['name' => $location->name],
+                after: ['name' => $location->name, 'timezone' => $location->timezone],
                 location: $location,
             );
 
             return $location;
         });
 
-        $this->reset('name');
+        $this->reset('name', 'newTimezone');
 
         Flux::modal('add-location')->close();
         Flux::toast(variant: 'success', text: __('Location added. Set it up, then switch it on.'));
@@ -779,41 +753,20 @@ new #[Title('Locations')] class extends Component {
         </ul>
     @endif
 
-    {{-- The insurance deduction for a subcontractor using Banana's coverage (slice 13, step 13c; decision 151, question 7). --}}
-    @php
-        $inForce = InsuranceDeductionRate::inForceOn(now());
-    @endphp
-    <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="insurance-deduction">
-        <div>
-            <flux:heading size="lg" level="2">{{ __('Insurance deduction') }}</flux:heading>
-            <flux:subheading>{{ __('Taken from a subcontractor\'s payout when they use Banana\'s coverage instead of their own insurance. A work order uses the rate in force on its first day.') }}</flux:subheading>
-        </div>
-
-        <flux:text data-test="insurance-deduction-now">{{ $inForce === null ? __('No rate is set.') : __('Now :rate of payout.', ['rate' => $inForce->percent()]) }}</flux:text>
-
-        @if ($this->deductionRates->count() > 1 || $this->deductionRates->contains(fn (InsuranceDeductionRate $rate): bool => $rate->effective_on->isFuture()))
-            <ul class="flex flex-col gap-1 text-sm text-zinc-600" data-test="insurance-deduction-history">
-                @foreach ($this->deductionRates as $rate)
-                    <li wire:key="deduction-rate-{{ $rate->id }}">{{ __(':rate from :day', ['rate' => $rate->percent(), 'day' => $rate->effective_on->format('M j, Y')]) }}@if ($rate->set_by_name !== null) &middot; {{ $rate->set_by_name }}@endif</li>
-                @endforeach
-            </ul>
-        @endif
-
-        <form wire:submit="saveDeduction" class="flex flex-wrap items-end gap-3">
-            <flux:input wire:model="deductionPercent" inputmode="decimal" :label="__('New rate (%)')" placeholder="10" class="max-w-32" data-test="deduction-percent" />
-            <flux:input wire:model="deductionEffectiveOn" type="date" :label="__('From')" class="max-w-48" data-test="deduction-effective-on" />
-            <flux:button type="submit" variant="primary" data-test="save-deduction">{{ __('Save') }}</flux:button>
-        </form>
-    </div>
-
     <flux:modal name="add-location" class="w-full max-w-md">
         <form wire:submit="create" class="flex flex-col gap-6">
             <div>
                 <flux:heading size="lg">{{ __('Add location') }}</flux:heading>
-                <flux:subheading>{{ __('Use the name staff know this location by.') }}</flux:subheading>
+                <flux:subheading>{{ __('Use the name staff know this location by, and its own time zone: its calling hours and its agreements use it.') }}</flux:subheading>
             </div>
 
             <flux:input wire:model="name" :label="__('Location name')" type="text" required autocomplete="off" />
+
+            <flux:select wire:model="newTimezone" :label="__('Time zone')" :placeholder="__('Choose its time zone')" data-test="new-location-timezone">
+                @foreach (LocationTimezones::options() as $identifier => $label)
+                    <flux:select.option :value="$identifier">{{ __($label) }}</flux:select.option>
+                @endforeach
+            </flux:select>
 
             <div class="flex justify-end gap-2">
                 <flux:modal.close>

@@ -13,6 +13,7 @@ test('adding a location records who added it', function () {
     Livewire::actingAs($owner)
         ->test('pages::settings.locations')
         ->set('name', 'Lakeview')
+        ->set('newTimezone', 'America/Denver')
         ->call('create')
         ->assertHasNoErrors();
 
@@ -23,7 +24,7 @@ test('adding a location records who added it', function () {
     expect($event->actor->is($owner))->toBeTrue();
     expect($event->subject->is($lakeview))->toBeTrue();
     expect($event->location->is($lakeview))->toBeTrue();
-    expect($event->after())->toBe(['name' => 'Lakeview']);
+    expect($event->after())->toEqual(['name' => 'Lakeview', 'timezone' => 'America/Denver']);
 });
 
 test('a location that is refused records nothing', function () {

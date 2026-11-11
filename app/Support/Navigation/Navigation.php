@@ -405,6 +405,13 @@ class Navigation
                 ),
                 new NavigationItem('settings.templates', 'Templates', $permissions),
                 new NavigationItem(
+                    id: 'settings.subcontractor_insurance',
+                    label: 'Subcontractor Insurance',
+                    permissions: [Permission::ManageLocations],
+                    state: NavigationState::Live,
+                    route: 'settings.subcontractor_insurance',
+                ),
+                new NavigationItem(
                     id: 'settings.integrations',
                     label: 'Integrations',
                     permissions: [Permission::ManageLocations],
