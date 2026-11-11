@@ -219,7 +219,7 @@ test('a location change is not kept when its audit event cannot be recorded', fu
     expect($unchanged($location->fresh()))->toBeTrue();
 })->with([
     'adding' => [
-        fn ($page) => $page->set('name', 'Northside')->call('create'),
+        fn ($page) => $page->set('name', 'Northside')->set('newTimezone', 'America/Denver')->call('create'),
         fn () => Location::query()->where('name', 'Northside')->doesntExist(),
     ],
     'renaming' => [

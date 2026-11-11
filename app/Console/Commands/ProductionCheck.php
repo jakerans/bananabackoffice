@@ -115,8 +115,8 @@ class ProductionCheck extends Command
     {
         return [
             ['An Owner can sign in', $this->exists(fn (): bool => User::query()->usableOwners()->exists()), 'In Forge\'s Commands tab, run php artisan backoffice:create-owner --name="Your Name" --email=you@example.com; the Owner is emailed a link to choose a password.'],
-            ['A Location is active', $this->exists(fn (): bool => Location::query()->where('is_active', true)->exists()), 'Add one in Settings > Locations, with its time zone.'],
-            ['Its service area is set', $this->exists(fn (): bool => ServiceAreaPostalCode::query()->exists()), 'Add its postal codes in Settings > Locations.'],
+            ['A Location is active', $this->exists(fn (): bool => Location::query()->where('is_active', true)->exists()), 'Add one in Company > Locations, with its time zone.'],
+            ['Its service area is set', $this->exists(fn (): bool => ServiceAreaPostalCode::query()->exists()), 'Add its ZIP codes on its checklist, in Company > Locations > Set up.'],
             ['The default price book has prices', $this->exists(fn (): bool => ProductionRate::query()->whereIn('price_book_id', PriceBook::query()->whereNull('location_id')->select('id'))->exists()), 'Import the saved PaintScout file in Settings > Pricing Settings, or run php artisan backoffice:pricing-import with it.'],
             ['It has a tax rate', $this->exists(fn (): bool => TaxRate::query()->exists()), 'Add one in Settings > Pricing Settings.'],
             ['The agreement has its wording', $this->exists(fn (): bool => AgreementWording::current() !== null), 'Import the saved PaintScout file in Settings > Pricing Settings, or run php artisan backoffice:agreement-import with it.'],
@@ -148,7 +148,7 @@ class ProductionCheck extends Command
             $checks[] = [
                 $location->name.' has every required step',
                 $missing === [],
-                'Still to do on Settings > Locations > '.$location->name.' > Set up: '.implode(', ', $missing).'.',
+                'Still to do on Company > Locations > '.$location->name.' > Set up: '.implode(', ', $missing).'.',
             ];
         }
 

@@ -137,8 +137,8 @@ test('a new server is told what it has nothing of yet, and not what it has', fun
 
     $this->artisan('backoffice:production-check')
         ->expectsOutputToContain('backoffice:create-owner')
-        ->expectsOutputToContain('Add one in Settings > Locations')
-        ->expectsOutputToContain('Add its postal codes')
+        ->expectsOutputToContain('Add one in Company > Locations')
+        ->expectsOutputToContain('Add its ZIP codes')
         ->expectsOutputToContain('backoffice:pricing-import')
         ->expectsOutputToContain('Add one in Settings > Pricing Settings')
         ->expectsOutputToContain('backoffice:agreement-import')
@@ -155,8 +155,8 @@ test('a new server is told what it has nothing of yet, and not what it has', fun
 
     $this->artisan('backoffice:production-check')
         ->doesntExpectOutputToContain('backoffice:create-owner')
-        ->doesntExpectOutputToContain('Add one in Settings > Locations')
-        ->doesntExpectOutputToContain('Add its postal codes')
+        ->doesntExpectOutputToContain('Add one in Company > Locations')
+        ->doesntExpectOutputToContain('Add its ZIP codes')
         ->doesntExpectOutputToContain('backoffice:pricing-import')
         ->doesntExpectOutputToContain('Add one in Settings > Pricing Settings')
         ->doesntExpectOutputToContain('backoffice:agreement-import');

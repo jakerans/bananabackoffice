@@ -20,9 +20,9 @@
         <header class="dark bg-ink text-white print:hidden">
             <div class="flex h-14 items-stretch">
                 {{-- The logo has dark lettering, so it sits on a Cream block at the start of the Ink header. --}}
-                <x-app-logo :href="route('dashboard')" wire:navigate class="bg-cream px-4 lg:px-6" height="h-8 sm:h-9" />
+                <x-app-logo :href="route('dashboard')" wire:navigate class="bg-cream px-3 sm:px-4 lg:px-6" height="h-6 sm:h-9" />
 
-                <div class="flex min-w-0 flex-1 items-center gap-2 px-3 sm:gap-4 lg:px-6">
+                <div class="flex min-w-0 flex-1 items-center gap-1 px-2 sm:gap-4 sm:px-3 lg:px-6">
                     <x-shell.center-switcher
                         :centers="$shell->centers()"
                         :external-surfaces="$shell->externalSurfaces()"

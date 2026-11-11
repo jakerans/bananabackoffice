@@ -55,6 +55,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('settings/pricing', 'pages::settings.pricing')->name('settings.pricing');
     Route::livewire('settings/pricing/agreement', 'pages::settings.agreement')->name('settings.agreement');
 
+    // Settings > Subcontractor Insurance: the company's insurance deduction, moved from Company > Locations (decision 224).
+    Route::livewire('settings/subcontractor-insurance', 'pages::settings.subcontractor-insurance')
+        ->can(Permission::ManageLocations)
+        ->name('settings.subcontractor_insurance');
+
     // Settings > Audit Log: every recorded change, for the Owner (slice 29, decision 191).
     Route::livewire('settings/audit-log', 'pages::settings.audit-log')
         ->can(Permission::ViewAuditLog)

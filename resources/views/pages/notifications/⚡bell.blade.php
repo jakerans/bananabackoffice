@@ -66,7 +66,8 @@ new class extends Component {
     <flux:dropdown position="bottom" align="end">
         <flux:button variant="ghost" size="sm" icon="bell" wire:click="open" :aria-label="$this->unseen > 0 ? trans_choice('{1} Notices, 1 new|[2,*] Notices, :count new', $this->unseen, ['count' => $this->unseen]) : __('Notices')" data-test="notification-bell-button">
             @if ($this->unseen > 0)
-                <span class="rounded-full bg-banana px-1.5 text-xs font-semibold tabular-nums text-ink" data-test="notification-count">{{ $this->unseen > 99 ? '99+' : $this->unseen }}</span>
+                {{-- On a phone the count sits on the bell, so the top bar fits the screen. --}}
+                <span class="rounded-full bg-banana px-1.5 text-xs font-semibold tabular-nums text-ink max-sm:absolute max-sm:-top-1 max-sm:-right-1 max-sm:px-1 max-sm:text-[10px] max-sm:leading-4" data-test="notification-count">{{ $this->unseen > 99 ? '99+' : $this->unseen }}</span>
             @endif
         </flux:button>
 

@@ -241,7 +241,7 @@ test('who may record a work order as sent', function (Closure $person, bool $may
 |--------------------------------------------------------------------------
 */
 
-test('the deduction rate starts at 10% and is changed from a day on by whoever manages Locations', function () {
+test('the deduction rate starts at 10% and is changed from a day on, on Settings > Subcontractor Insurance, by whoever manages Locations', function () {
     expect(InsuranceDeductionRate::inForceOn(now())->percent())->toBe('10%');
 
     $rate = app(ChangeInsuranceDeduction::class)->handle('12', '2026-11-01', $this->owner);
@@ -254,7 +254,11 @@ test('the deduction rate starts at 10% and is changed from a day on by whoever m
     expect(fn () => app(ChangeInsuranceDeduction::class)->handle('8', '2026-11-01', $this->manager))->toThrow(AuthorizationException::class);
     expect(fn () => $rate->forceFill(['basis_points' => 1])->save())->toThrow(LogicException::class);
 
-    Livewire::actingAs($this->owner)->test('pages::settings.locations')
+    $this->actingAs($this->owner)->get(route('settings.subcontractor_insurance'))->assertOk()->assertSee('Now 10% of payout.');
+    $this->actingAs($this->owner)->get(route('settings.locations'))->assertOk()->assertDontSeeHtml('data-test="insurance-deduction"');
+    $this->actingAs($this->manager)->get(route('settings.subcontractor_insurance'))->assertForbidden();
+
+    Livewire::actingAs($this->owner)->test('pages::settings.subcontractor-insurance')
         ->assertSee('Now 10% of payout.')
         ->assertSee('12% from Nov 1, 2026')
         ->set('deductionPercent', '9')

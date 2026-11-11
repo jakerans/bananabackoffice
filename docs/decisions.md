@@ -4481,6 +4481,40 @@ into."
    QuickBooks's live keys are ready. Each Location's QuickBooks company is
    connected in Settings > Integrations once the Location exists.
 
+## 224. Subcontractor Insurance gets its own Settings page; loose ends before first use (2026-11-11)
+
+**Decided by Jacob:** "Yeah, give it its own settings menu. Subcontractor
+insurance belongs in settings, absolutely. Are there any other random loose
+ends that I'm going to find as I build this thing that we can just
+proactively take care of?"
+
+1. **Settings > Subcontractor Insurance** holds the company's insurance
+   deduction (step 13c), moved off Company > Locations, where it sat beside
+   Add location. It is one rate for every Location; whoever manages
+   Locations changes it, as before; it sits between Pricing Settings and
+   Integrations. This settles decision 202, point 3.
+2. **Loose ends taken care of on the same branch,** found by walking the
+   first-use path (Add location, its checklist, people, Integrations,
+   Payroll) as the Owner:
+   - **A new Location's time zone is chosen when it is added.** It used to
+     start as Eastern and the checklist counted it done; Four Corners or
+     Albuquerque left on Eastern would call and date agreements in the wrong
+     time. The audit entry records it.
+   - **Integrations lists a Location being set up,** marked so, so its
+     QuickBooks company can be connected before it is switched on, as its
+     checklist suggests. A deactivated one stays off the list.
+   - **"Settings > Locations" now reads "Company > Locations"** on the
+     checklist and in the production check, where the page actually is.
+   - **The top bar fits a phone** (decision 202's open item): on a phone
+     the Center's name drops "Center" and is shortened if it must be, the
+     Location menu is its pin, the notice count sits on the bell. Hidden
+     screen-reader labels in the menu rows and tables no longer stretch the
+     page sideways. A computer's screen is unchanged.
+3. **Raised, not changed:** a new Location prices with the default price
+   book (ABQ's PaintScout prices) until "Customize for this Location" in
+   Pricing Settings; the production check keeps listing two-factor (decision
+   221) and the copy's clean-up key (30c-2) as not done.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

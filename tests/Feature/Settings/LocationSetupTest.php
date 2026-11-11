@@ -56,9 +56,15 @@ function setUpRequiredSteps(Location $location, array $except = []): void
     }
 }
 
-test('a new Location starts switched off and opens on its checklist', function () {
+test('a new Location starts switched off, in the time zone chosen for it, and opens on its checklist', function () {
     Livewire::actingAs($this->owner)->test('pages::settings.locations')
         ->set('name', 'Farmington')
+        ->call('create')
+        ->assertHasErrors(['newTimezone' => 'Choose its time zone.'])
+        ->set('newTimezone', 'Europe/London')
+        ->call('create')
+        ->assertHasErrors('newTimezone')
+        ->set('newTimezone', 'America/Denver')
         ->call('create')
         ->assertHasNoErrors()
         ->assertRedirect(route('settings.locations.setup', Location::query()->sole()));
@@ -66,7 +72,9 @@ test('a new Location starts switched off and opens on its checklist', function (
     $location = Location::query()->sole();
 
     expect($location->is_active)->toBeFalse()
-        ->and($location->isBeingSetUp())->toBeTrue();
+        ->and($location->isBeingSetUp())->toBeTrue()
+        ->and($location->timezone)->toBe('America/Denver')
+        ->and(AuditEvent::query()->where('action', AuditAction::LocationCreated)->sole()->values_after)->toEqual(['name' => 'Farmington', 'timezone' => 'America/Denver']);
 
     $this->actingAs($this->owner)->get(route('settings.locations.setup', $location))->assertOk()
         ->assertSee('Set up Farmington')
@@ -187,5 +195,15 @@ test('the production check names, for each Location, the required steps it still
     setUpRequiredSteps($location, except: ['people', 'tax_rate']);
 
     $this->artisan('backoffice:production-check')
-        ->expectsOutputToContain('Still to do on Settings > Locations > Farmington > Set up: a tax rate, its people.');
+        ->expectsOutputToContain('Still to do on Company > Locations > Farmington > Set up: a tax rate, its people.');
+});
+
+test('a Location being set up is listed on Integrations, so its QuickBooks company can be connected before it is switched on', function () {
+    $farmington = Location::factory()->beingSetUp()->create(['name' => 'Farmington']);
+    $closed = Location::factory()->create(['name' => 'Closed Town', 'is_active' => false]);
+
+    $this->actingAs($this->owner)->get(route('settings.integrations'))->assertOk()
+        ->assertSeeHtml('data-test="quickbooks-location-'.$farmington->id.'"')
+        ->assertSee('(being set up)')
+        ->assertDontSee('Closed Town');
 });

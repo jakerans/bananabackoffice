@@ -50,9 +50,11 @@ test('an owner can add a location', function () {
     Livewire::actingAs($owner)
         ->test('pages::settings.locations')
         ->set('name', '  Lakeview  ')
+        ->set('newTimezone', 'America/Denver')
         ->call('create')
         ->assertHasNoErrors()
-        ->assertSet('name', '');
+        ->assertSet('name', '')
+        ->assertSet('newTimezone', '');
 
     $location = Location::query()->sole();
 
@@ -196,12 +198,12 @@ test('location actions are refused once the permission has been removed', functi
     'reactivate' => ['reactivate', ['location']],
 ]);
 
-test('a location is created in the eastern timezone', function () {
+test('a location is created in the time zone chosen for it, not the eastern default (decision 224)', function () {
     $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
 
-    Livewire::actingAs($owner)->test('pages::settings.locations')->set('name', 'Lakeview')->call('create');
+    Livewire::actingAs($owner)->test('pages::settings.locations')->set('name', 'Lakeview')->set('newTimezone', 'America/Denver')->call('create');
 
-    expect(Location::query()->sole()->timezone)->toBe('America/New_York');
+    expect(Location::query()->sole()->timezone)->toBe('America/Denver');
 });
 
 test('an owner can change a location timezone to any listed zone', function (string $timezone) {

@@ -23,12 +23,15 @@ new #[Title('Integrations')] class extends Component {
     public ?int $disconnectingId = null;
 
     /**
+     * Active Locations and those being set up, so a new Location's QuickBooks
+     * company can be connected before it is switched on (decision 224).
+     *
      * @return Collection<int, Location>
      */
     #[Computed]
     public function locations(): Collection
     {
-        return Location::query()->where('is_active', true)->orderBy('name')->get();
+        return Location::query()->where(fn ($query) => $query->where('is_active', true)->orWhereNull('opened_at'))->orderBy('name')->get();
     }
 
     /**
@@ -110,7 +113,7 @@ new #[Title('Integrations')] class extends Component {
                 @endphp
                 <li wire:key="quickbooks-{{ $location->id }}" class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between" data-test="quickbooks-location-{{ $location->id }}">
                     <div class="flex flex-col gap-1">
-                        <span class="font-semibold text-ink">{{ $location->name }}</span>
+                        <span class="font-semibold text-ink">{{ $location->name }}@if ($location->isBeingSetUp()) <span class="font-normal text-zinc-500">{{ __("(being set up)") }}</span>@endif</span>
                         @if ($connection === null)
                             <span class="text-sm text-zinc-500">{{ __('Not connected') }}</span>
                         @else

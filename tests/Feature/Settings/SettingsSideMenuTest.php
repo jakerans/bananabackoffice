@@ -18,7 +18,7 @@ test('the Owner sees every built Settings page beside the page, and none still t
 
     $this->actingAs($owner)->get(route('settings.lists'))->assertOk()
         ->assertSeeHtml('data-test="side-nav"')
-        ->assertSeeInOrder(['Users and Access', 'Lead &amp; Sales Lists', 'Contact Center', 'Pricing Settings', 'Integrations', 'Audit Log'], escape: false)
+        ->assertSeeInOrder(['Users and Access', 'Lead &amp; Sales Lists', 'Contact Center', 'Pricing Settings', 'Subcontractor Insurance', 'Integrations', 'Audit Log'], escape: false)
         ->assertDontSee('Service Areas')
         ->assertDontSee('Services and Products')
         ->assertDontSee('Templates');
@@ -32,6 +32,7 @@ test('Leadership sees only the Settings pages it may open', function () {
         ->assertSee('Lead &amp; Sales Lists', escape: false)
         ->assertSee('Pricing Settings')
         ->assertDontSee('Users and Access')
+        ->assertDontSee('Subcontractor Insurance')
         ->assertDontSee('Audit Log');
 });
 

@@ -768,7 +768,7 @@ test('changes made before and after impersonating name nobody but the person who
     $this->get(route('dashboard'));
     $this->post(route('impersonation.stop'));
 
-    Livewire::actingAs($owner)->test('pages::settings.locations')->set('name', 'Northside')->call('create')->assertHasNoErrors();
+    Livewire::actingAs($owner)->test('pages::settings.locations')->set('name', 'Northside')->set('newTimezone', 'America/Denver')->call('create')->assertHasNoErrors();
 
     $event = AuditEvent::query()->where('action', AuditAction::LocationCreated)->sole();
 

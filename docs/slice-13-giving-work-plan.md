@@ -234,7 +234,8 @@ What a reader of the code should know:
   `payouts.view`; Finance reads it; only those who may set payouts record it
   as sent. "Print" prints the work order alone: the menus, the impersonation
   banner and the buttons are left off a printed page everywhere.
-- **The rate** is in Settings > Locations, "Insurance deduction", for
+- **The rate** is in Settings > Subcontractor Insurance (moved from
+  Settings > Locations by decision 224), "Insurance deduction", for
   whoever manages Locations: the rate now, earlier and coming rates, and a
   new rate from a day that has not passed.
 - **In the customer's Activity:** "Work order sent", with the package and

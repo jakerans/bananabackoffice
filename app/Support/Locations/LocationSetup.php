@@ -105,7 +105,7 @@ class LocationSetup
                 $location->scorecard_owner_id !== null && $location->nsli_target_cents !== null && $location->cost_per_close_target_cents !== null && $location->net_profit_target_percent !== null,
                 $location->scorecard_owner_id === null ? __('The Owner, until one is chosen.') : __('Owned by :name.', ['name' => $location->scorecardOwner?->name]),
                 route('settings.locations'),
-                __('Settings > Locations > Scorecard owner'),
+                __('Company > Locations > Scorecard owner'),
             ),
             new SetupStep(
                 'quickbooks',
