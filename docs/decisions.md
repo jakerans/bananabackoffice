@@ -4515,6 +4515,16 @@ proactively take care of?"
    Pricing Settings; the production check keeps listing two-factor (decision
    221) and the copy's clean-up key (30c-2) as not done.
 
+## 225. Decision 224 is on production; Four Corners prices as Albuquerque does (2026-11-11)
+
+**Decided by Jacob:** "Yes, Four Corners is going to use Albuquerque prices,
+but I want to create the location. Go ahead and deploy to production. I will
+create the location."
+
+1. **Production deployed** at 386bbbb the same day, with decision 224.
+2. **Four Corners uses the default price book,** ABQ's PaintScout prices; it
+   is not customized. Jacob adds Four Corners himself.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

@@ -42,7 +42,7 @@ To look at them on staging, signed in as the Owner:
 5. Finance > Reports: profit and loss by Location (empty until QuickBooks is
    connected), AR aging, cash collected, job costing, pay owed.
 
-**Decision 224, merged to staging:** Settings > **Subcontractor
+**Decision 224, on staging and production (decision 225):** Settings > **Subcontractor
 Insurance** holds the insurance deduction, off Company > Locations; a new
 Location's time zone is chosen when it is added; Integrations lists a
 Location being set up; "Company > Locations" wording; the top bar fits a
@@ -65,7 +65,5 @@ and what Production and Company Reports hold.
   the rates already carry ("Bedroom: Paint Walls, Paint Doors").
 - Connecting each Location's QuickBooks company in Settings > Integrations,
   once the Location exists (live keys are set up, decision 223).
-- Whether Four Corners prices with the default price book (ABQ's) or its
-  own: Settings > Pricing Settings > **Customize for this Location**.
 - On staging: the three browser steps for slice 36 (sign an agreement on a
   sample lead, **Email a copy**, the Audit Log entry).
