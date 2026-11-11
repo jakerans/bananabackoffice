@@ -4464,6 +4464,23 @@ into."
    is a row that scrolls. Every other Center keeps its row. Where the
    insurance deduction moves is still Jacob's to decide.
 
+## 223. Customer email and QuickBooks's live keys are set up on production (2026-11-11)
+
+**Asked by Jacob:** "Can you pull up Chrome and do most of this for me?"
+
+1. **Customer email:** the implementation agent added `email.bananapainting.com`
+   in Resend and its three DNS records at Namecheap (DKIM and two sending
+   records, new entries only); Resend verified it. Jacob created its own
+   sending-only API key and put it, with the customer-email settings, into
+   production's environment in Forge.
+2. **QuickBooks:** Intuit shows the app in production, with live keys. The
+   implementation agent added the production Redirect URI
+   (`https://app.bananapainting.com/settings/integrations/quickbooks/callback`);
+   Jacob put the live keys into production's environment.
+3. **Confirmed** by the production check the same day: customer email and
+   QuickBooks's live keys are ready. Each Location's QuickBooks company is
+   connected in Settings > Integrations once the Location exists.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

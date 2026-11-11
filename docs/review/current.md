@@ -3,7 +3,7 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-11-10 · **Branch:** `main`
+**Updated:** 2026-11-11 · **Branch:** `main`
 
 **State:** production is deployed (2026-11-03) and first use goes ahead now;
 the restore drill waits until later (decision 217). The plan:
@@ -55,13 +55,11 @@ and what Production and Company Reports hold.
 
 - PaintScout's eight test contacts ("Backoffice Test 01" to "08", at ABQ)
   can only be deleted, which cannot be undone, so they are his to delete.
-- The sending domain for customer email, when he chooses (guide in
-  [../slice-36-agreement-copy-plan.md](../slice-36-agreement-copy-plan.md),
-  "What Jacob sets up").
 - Whether the presentation lists each room's work in the customer wording
   the rates already carry ("Bedroom: Paint Walls, Paint Doors").
 - Where the insurance deduction moves (decision 202, point 3).
-- QuickBooks's live keys, after Intuit's review.
+- Connecting each Location's QuickBooks company in Settings > Integrations,
+  once the Location exists (live keys are set up, decision 223).
 - The app's top bar is wider than a phone screen on every page.
 - On staging: the three browser steps for slice 36 (sign an agreement on a
   sample lead, **Email a copy**, the Audit Log entry).
