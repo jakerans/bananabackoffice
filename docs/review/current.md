@@ -3,7 +3,7 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-11-11 · **Branch:** `checkpoint-settings-insurance`
+**Updated:** 2026-11-11 · **Branch:** `main`
 
 **State:** production is deployed (2026-11-03) and first use goes ahead now;
 the restore drill waits until later (decision 217). The plan:
@@ -42,7 +42,7 @@ To look at them on staging, signed in as the Owner:
 5. Finance > Reports: profit and loss by Location (empty until QuickBooks is
    connected), AR aging, cash collected, job costing, pay owed.
 
-**Decision 224, on its own branch:** Settings > **Subcontractor
+**Decision 224, merged to staging:** Settings > **Subcontractor
 Insurance** holds the insurance deduction, off Company > Locations; a new
 Location's time zone is chosen when it is added; Integrations lists a
 Location being set up; "Company > Locations" wording; the top bar fits a
