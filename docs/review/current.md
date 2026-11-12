@@ -48,10 +48,15 @@ Location's time zone is chosen when it is added; Integrations lists a
 Location being set up; "Company > Locations" wording; the top bar fits a
 phone.
 
-**Decision 226, on staging:** a Location's checklist now invites its people
-(or gives someone already in Backoffice a role there), sets its salespeople's
-first pay plans, its scorecard owner and targets, and connects its QuickBooks
-company, without leaving the page. Not yet on production.
+**Decision 226, on staging and production (decision 227):** a Location's
+checklist invites its people (or gives someone already in Backoffice a role
+there), sets its salespeople's first pay plans, its scorecard owner and
+targets, and connects its QuickBooks company, without leaving the page.
+
+**Slice 38, tax from QuickBooks, is planned and waits for Jacob's answers**
+([../slice-38-quickbooks-tax-plan.md](../slice-38-quickbooks-tax-plan.md),
+"Questions for Jacob"). Until it is built, Four Corners' towns go in the
+estimate's tax list, from the state's July 2026 rate schedule.
 
 **Then first use (30c-5),** on production: ABQ's PaintScout file (saved from
 Jacob's PaintScout with his OK for the download, then uploaded in Settings >

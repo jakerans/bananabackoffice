@@ -4543,6 +4543,23 @@ and do all the things directly within that setup screen."
 Details: [slice-37-location-setup-plan.md](slice-37-location-setup-plan.md),
 "More done on the checklist".
 
+## 227. Decision 226 is on production; tax comes from QuickBooks, planned as slice 38 (2026-11-12)
+
+**Decided by Jacob:** "A different tax rate doesn't mean we have different
+pricing. The tax rate should come from QuickBooks." Then, "we don't know the
+gross receipts tax per town. QuickBooks knows that," and "Yes, do both, and
+deploy 226 to production."
+
+1. **Production deployed** at c5e63a7 the same day, with decision 226.
+2. **A different tax rate is not a different price book.** Four Corners
+   keeps the default prices (decision 225).
+3. **Tax should come from QuickBooks.** Slice 38 is planned to do that
+   ([slice-38-quickbooks-tax-plan.md](slice-38-quickbooks-tax-plan.md));
+   not approved or built.
+4. **Until then,** Four Corners' towns are added to the estimate's tax list
+   by Jacob, from the New Mexico Taxation and Revenue Department's rate
+   schedule for July 1, 2026 to June 30, 2027.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
