@@ -4613,6 +4613,22 @@ all in. Feel free to get started on that."
 3. **38a, the test, starts now.** Anything QuickBooks does not allow from
    outside comes back to Jacob before 38b is built.
 
+## 231. Slice 38: the tax is proved in Albuquerque's QuickBooks; deposits both ways (2026-11-12)
+
+**Decided by Jacob,** on the 38a results: "1. A. Yes, I'm okay with that.
+2. B. Why do I have to do that? Can't we just use our existing one? 3. A.
+Cool, sounds good. I don't know how it works. You tell me. 4. B. Yeah, we'd
+have to manually say that this much was paid from this method."
+
+1. **The tax is proved with one test estimate in Albuquerque's real
+   QuickBooks** at a real New Mexico address, read back and deleted straight
+   after. No new Intuit test company is needed. It waits for Albuquerque's
+   QuickBooks company to be connected on production.
+2. **Deposits are taken both ways:** paid at signing and recorded in
+   Backoffice, with how and how much, and sent to QuickBooks as the
+   customer's credit; or requested online on the QuickBooks estimate by
+   someone in QuickBooks, and read back.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

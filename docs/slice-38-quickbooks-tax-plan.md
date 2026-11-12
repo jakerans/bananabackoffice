@@ -99,7 +99,12 @@ through QuickBooks' connection for other software, as Backoffice would.
   deposit on the estimate looks to be possible only on QuickBooks' own
   screens.
 
-**Waiting for Jacob (decision 231 when answered):**
+**Answered by Jacob (decision 231):** the tax is proved with one test
+estimate in Albuquerque's real QuickBooks, deleted straight after; deposits
+are taken both ways. Waiting for Albuquerque's QuickBooks company to be
+connected on production (none is yet), then the test is run.
+
+The two questions, as they were asked:
 
 1. **Seeing the tax worked out:** one test estimate in a real Banana
    QuickBooks company, at a real New Mexico address, read back and deleted
