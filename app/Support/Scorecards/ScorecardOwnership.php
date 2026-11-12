@@ -4,6 +4,7 @@ namespace App\Support\Scorecards;
 
 use App\Enums\Permission;
 use App\Enums\Role;
+use App\Models\AccessGrant;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -65,18 +66,27 @@ final class ScorecardOwnership
     }
 
     /**
-     * Who may be chosen as a Location's owner: its active managers.
+     * Who may be chosen as a Location's owner: its active managers. A
+     * Location still being set up counts the managers given access there, so
+     * its owner can be chosen on its checklist (decision 226); a deactivated
+     * one has none.
      *
      * @return Collection<int, User>
      */
     public static function candidates(Location $location): Collection
     {
+        if (! $location->is_active && ! $location->isBeingSetUp()) {
+            return collect();
+        }
+
         return User::query()
             ->where('is_active', true)
             ->with('accessGrants')
             ->orderBy('name')
             ->get()
-            ->filter(fn (User $user): bool => $user->holdsRoleAt(Role::LocationManager, $location))
+            ->filter(fn (User $user): bool => $user->accessGrants->contains(
+                fn (AccessGrant $grant): bool => $grant->role === Role::LocationManager && $grant->covers($location),
+            ))
             ->values();
     }
 }

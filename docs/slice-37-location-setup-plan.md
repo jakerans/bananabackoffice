@@ -122,6 +122,30 @@ an invitation; anything that changes how the steps themselves work.
   test in `LocationsTest.php` now expects a new Location switched off. Browser
   review on local data: `.claude/tools/playwright/reviews/slice-37b.mjs`.
 
+## More done on the checklist (decision 226)
+
+- **Its people:** who has a role there, with whose invitation is unused.
+  **Invite someone new** (name, email, role here) sends the invitation and
+  gives the role in one go; if the email cannot be sent, neither the account
+  nor the access is kept. **Or give someone already in Backoffice a role
+  here.** The roles offered are Location Manager, Sales Consultant,
+  Production Manager and Call Center Agent. Only for whoever manages staff,
+  as themselves: refused while viewing Backoffice as someone else.
+- **Pay plans:** each salesperson there without a sales plan gets one chosen,
+  with the day it starts, for whoever manages pay; nobody sets their own.
+  Changing a plan someone already has, which needs a reason, stays on their
+  pay page.
+- **Its scorecard:** owner and the three targets, saved through the same
+  action as Company > Locations. A Location being set up counts the managers
+  given access there, so its owner can be chosen before it is switched on.
+- **Its QuickBooks company:** **Connect QuickBooks** on the step; the
+  return from QuickBooks comes back to the checklist.
+- **Stay on their own pages:** prices and tax rates (Settings > Pricing
+  Settings) and subcontractors (Production > Subcontractors, once it is
+  switched on).
+- Tests: `LocationSetupTest.php`, and the impersonation refusal in
+  `ImpersonationTest.php`. Browser review: `.claude/tools/playwright/reviews/setup-inline.mjs`.
+
 ## Known limits of this plan
 
 - A Location already switched on stays on; the checklist only shows what it

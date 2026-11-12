@@ -4525,6 +4525,24 @@ create the location."
 2. **Four Corners uses the default price book,** ABQ's PaintScout prices; it
    is not customized. Jacob adds Four Corners himself.
 
+## 226. A Location's people, pay plans, scorecard and QuickBooks are done on its checklist (2026-11-12)
+
+**Decided by Jacob:** "In the setup screen, allow me to add all the people
+and do all the things directly within that setup screen."
+
+1. **Its people** are invited, or given a role there if already in
+   Backoffice, on the checklist; inviting gives the role in the same step.
+2. **Its salespeople's first pay plans,** **its scorecard owner and
+   targets,** and **connecting its QuickBooks company** are done there too,
+   through the same actions, permissions and Audit Log entries as their own
+   pages.
+3. **Prices, tax rates and subcontractors keep their own pages:** pricing is
+   a whole page of its own, and subcontractors can only be added once the
+   Location is switched on.
+
+Details: [slice-37-location-setup-plan.md](slice-37-location-setup-plan.md),
+"More done on the checklist".
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

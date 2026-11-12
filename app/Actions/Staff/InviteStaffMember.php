@@ -6,6 +6,7 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Enums\AuditAction;
 use App\Exceptions\InvitationNotSent;
 use App\Models\User;
+use Closure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -22,12 +23,17 @@ class InviteStaffMember
      * The account starts with a long random password that nobody is shown, so it
      * cannot be signed in to until the invitation is accepted. Inviting is all
      * or nothing: if the email cannot be sent, no account is left behind.
+     * Whatever belongs with the invitation, such as their access at a
+     * Location being set up (decision 226), is done before the email goes,
+     * and is undone with the account if it fails or the email cannot be sent.
+     *
+     * @param  (Closure(User): void)|null  $beforeSending
      *
      * @throws InvitationNotSent
      */
-    public function handle(string $name, string $email): User
+    public function handle(string $name, string $email, ?Closure $beforeSending = null): User
     {
-        return DB::transaction(function () use ($name, $email): User {
+        return DB::transaction(function () use ($name, $email, $beforeSending): User {
             $user = User::query()->create([
                 'name' => $name,
                 'email' => $email,
@@ -41,6 +47,10 @@ class InviteStaffMember
                 $user,
                 after: ['name' => $user->name, 'email' => $user->email],
             );
+
+            if ($beforeSending !== null) {
+                $beforeSending($user);
+            }
 
             $this->sendInvitation->handle($user);
 
