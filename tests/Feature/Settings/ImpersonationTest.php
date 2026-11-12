@@ -619,6 +619,7 @@ test('staff accounts and access cannot be managed while impersonating, even as a
     $usersPage = livewireSnapshot($this->get(route('settings.users'))->assertOk());
     $otherOwnerPage = livewireSnapshot($this->get(route('settings.users.show', $otherOwner))->assertOk());
     $consultantPage = livewireSnapshot($this->get(route('settings.users.show', $consultant))->assertOk());
+    $setupPage = livewireSnapshot($this->get(route('settings.locations.setup', $lakeview))->assertOk());
 
     impersonate($owner, $otherOwner);
 
@@ -632,6 +633,9 @@ test('staff accounts and access cannot be managed while impersonating, even as a
     sendLivewireAction($consultantPage, 'revoke', [$consultant->accessGrants()->sole()->id])->assertForbidden();
     sendLivewireAction($consultantPage, 'deactivate')->assertForbidden();
     sendLivewireAction($usersPage, 'invite', updates: ['name' => 'New Person', 'email' => 'new.person@example.com'])->assertForbidden();
+    // Nor from a Location's checklist (decision 226).
+    sendLivewireAction($setupPage, 'invitePerson', updates: ['inviteName' => 'New Person', 'inviteEmail' => 'new.person@example.com'])->assertForbidden();
+    sendLivewireAction($setupPage, 'grantPerson', updates: ['grantUserId' => (string) $consultant->id, 'grantRole' => Role::LocationManager->value])->assertForbidden();
 
     expect($otherOwner->accessGrants()->count())->toBe(1);
     expect($consultant->accessGrants()->count())->toBe(1);

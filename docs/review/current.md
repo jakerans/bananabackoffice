@@ -3,7 +3,7 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-11-11 · **Branch:** `main`
+**Updated:** 2026-11-12 · **Branch:** `main`
 
 **State:** production is deployed (2026-11-03) and first use goes ahead now;
 the restore drill waits until later (decision 217). The plan:
@@ -47,6 +47,11 @@ Insurance** holds the insurance deduction, off Company > Locations; a new
 Location's time zone is chosen when it is added; Integrations lists a
 Location being set up; "Company > Locations" wording; the top bar fits a
 phone.
+
+**Decision 226, on staging:** a Location's checklist now invites its people
+(or gives someone already in Backoffice a role there), sets its salespeople's
+first pay plans, its scorecard owner and targets, and connects its QuickBooks
+company, without leaving the page. Not yet on production.
 
 **Then first use (30c-5),** on production: ABQ's PaintScout file (saved from
 Jacob's PaintScout with his OK for the download, then uploaded in Settings >

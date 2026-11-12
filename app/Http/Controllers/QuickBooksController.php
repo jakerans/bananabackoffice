@@ -31,12 +31,15 @@ class QuickBooksController extends Controller
     {
         Gate::authorize('update', $location);
 
+        // Started from the Location's checklist, every answer goes back there (decision 226).
+        $setup = $request->boolean('setup') ? $location : null;
+
         if (! QuickBooksClient::isConfigured()) {
-            return $this->back('danger', __('QuickBooks is not set up on this server yet.'));
+            return $this->back('danger', __('QuickBooks is not set up on this server yet.'), $setup);
         }
 
         $state = Str::random(40);
-        $request->session()->put(self::PENDING, ['state' => $state, 'location' => $location->id]);
+        $request->session()->put(self::PENDING, ['state' => $state, 'location' => $location->id, 'setup' => $setup !== null]);
 
         return redirect()->away($client->authorizeUrl($state));
     }
@@ -51,26 +54,32 @@ class QuickBooksController extends Controller
         }
 
         $location = Location::query()->findOrFail((int) $pending['location']);
+        $setup = ($pending['setup'] ?? false) === true ? $location : null;
         $code = $request->query('code');
         $realmId = $request->query('realmId');
 
         if (! is_string($code) || $code === '' || ! is_string($realmId)) {
-            return $this->back('warning', __('QuickBooks was not connected for :location.', ['location' => $location->name]));
+            return $this->back('warning', __('QuickBooks was not connected for :location.', ['location' => $location->name]), $setup);
         }
 
         try {
             $connection = $connectQuickBooks->handle($location, $code, $realmId, $request->user());
         } catch (ValidationException $invalid) {
-            return $this->back('danger', (string) collect($invalid->errors())->flatten()->first());
+            return $this->back('danger', (string) collect($invalid->errors())->flatten()->first(), $setup);
         } catch (QuickBooksUnavailable $unavailable) {
-            return $this->back('danger', $unavailable->getMessage());
+            return $this->back('danger', $unavailable->getMessage(), $setup);
         }
 
-        return $this->back('success', __(':location is connected to :company.', ['location' => $location->name, 'company' => $connection->company_name ?? __('its QuickBooks company')]));
+        return $this->back('success', __(':location is connected to :company.', ['location' => $location->name, 'company' => $connection->company_name ?? __('its QuickBooks company')]), $setup);
     }
 
-    private function back(string $variant, string $text): RedirectResponse
+    /**
+     * Back to Integrations, or to the Location's checklist when connecting began there.
+     */
+    private function back(string $variant, string $text, ?Location $setup = null): RedirectResponse
     {
-        return redirect()->route('settings.integrations')->with('quickbooks_status', ['variant' => $variant, 'text' => $text]);
+        $to = $setup === null ? redirect()->route('settings.integrations') : redirect()->route('settings.locations.setup', $setup);
+
+        return $to->with('quickbooks_status', ['variant' => $variant, 'text' => $text]);
     }
 }
