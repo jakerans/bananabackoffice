@@ -4560,6 +4560,17 @@ deploy 226 to production."
    by Jacob, from the New Mexico Taxation and Revenue Department's rate
    schedule for July 1, 2026 to June 30, 2027.
 
+## 228. Banana's QuickBooks companies use automated sales tax (2026-11-12)
+
+**Told by Jacob:** "Yes, we use QuickBooks automated gross receipts tax
+lookups." He expected Backoffice to make invoices in QuickBooks already.
+
+1. **Slice 38, question 1, is answered:** yes.
+2. **Making invoices in QuickBooks from Backoffice is the agreed design**
+   (decision 133) **but not yet built:** slice 17 records each invoice's
+   number and total as typed in, and slice 28 only reads. Slice 38, step
+   38b, is that piece.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

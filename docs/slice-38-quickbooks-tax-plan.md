@@ -44,8 +44,8 @@ going to QuickBooks (later, 9.8).
 ## Questions for Jacob
 
 1. **Do Banana's QuickBooks companies use QuickBooks' automatic sales tax?**
-   In QuickBooks: Taxes > Sales tax. *Recommended:* yes; it is what knows
-   each town's rate. If not, it is switched on in each company first.
+   **Answered (decision 228): yes,** QuickBooks' automated gross receipts tax
+   lookup.
 2. **Should Backoffice make the deposit and final invoices in QuickBooks
    (38b)?** *Recommended:* yes, by a **Send to QuickBooks** button for
    whoever records invoices today, not automatically, so each is looked at
