@@ -1,74 +1,105 @@
-# Slice 38: Tax from QuickBooks (plan, not approved)
+# Slice 38: Estimates, tax and payment through QuickBooks (plan, not approved)
 
-**Status:** proposed 2026-11-12 (decision 227). Nothing here is built.
+**Status:** proposed 2026-11-12 (decisions 227 to 229). Nothing here is
+built. Waiting for Jacob's answers below.
 
 ## Why
 
 Jacob, 2026-11-12: "we don't know the gross receipts tax per town.
-QuickBooks knows that." New Mexico's gross receipts tax depends on where the
-job is, and the agreed design already says QuickBooks works out the tax from
-the service address (product-architecture.md, 9.8 and decision 133's Finance
-rules: "QuickBooks calculates tax from the service address, placed in both
-bill-to and ship-to; estimates/invoices label it 'Approximate State & Local
-Tax (subject to change)'").
+QuickBooks knows that." Banana's QuickBooks companies use QuickBooks'
+automated gross receipts tax lookup (decision 228).
 
-## What happens today
+**How it is done today, outside Backoffice:** the salesperson prices the bid
+in PaintScout, makes a quick invoice in QuickBooks for the total to get the
+gross receipts tax, types that tax back into PaintScout, the customer
+accepts, and the invoice is sent from QuickBooks.
 
-- **Estimates:** the salesperson picks a town's rate from a list kept in
-  Settings > Pricing Settings > Hourly rates and tax, imported from
-  PaintScout. Someone has to keep that list right, and add each new
-  Location's towns.
-- **Invoices:** made by hand in the Location's QuickBooks company, which
-  works out the tax. Backoffice is told the invoice's number and total, tax
-  included, typed in on the Project.
-- **The QuickBooks connection** only reads profit and loss (slice 28). It has
-  never written anything to QuickBooks.
+**What Jacob wants (decision 229):** "Once we create the pricing, it shoots
+it over to QuickBooks, and it creates an estimate. It grabs the gross
+receipts tax, brings it back, and fills that in on our system." The
+customer chooses an option; the others' QuickBooks estimates are removed;
+the chosen one is finalized and sent, and the customer pays through
+QuickBooks. QuickBooks collects the deposit on the estimate itself, so the
+deposit carries no tax and the gross receipts tax is all on the final
+balance.
 
-## The goal
+## What Backoffice does today
 
-Nobody keeps a tax-rate list by hand. The tax on what a customer pays is
-always QuickBooks', and an estimate's approximate tax comes from the same
-place.
+- **Estimates** have options, each priced from the rates; the tax is picked
+  once for the estimate from a town list in Settings > Pricing Settings
+  (decision 204).
+- **The customer signs the agreement** for one option on the tablet, in
+  Backoffice (decision 210); it keeps the tax, the total and the deposit due.
+- **Invoices and payments** are made in QuickBooks by hand, and their
+  numbers and amounts typed into the Project (slice 17).
+- **The QuickBooks connection** only reads profit and loss (slice 28).
+
+## The flow, once built
+
+1. The salesperson prices the options in Backoffice.
+2. For each option, Backoffice makes or updates an estimate in that
+   Location's QuickBooks company, for the customer, with the job's address;
+   QuickBooks works out the gross receipts tax; Backoffice shows it on the
+   option. The town list is no longer used.
+3. The customer looks at the options and signs the agreement for one, in
+   Backoffice, as today.
+4. The other options' QuickBooks estimates are deleted. The chosen one is
+   marked accepted and sent from QuickBooks with its deposit request, the
+   Location's deposit percent of the price before tax.
+5. The customer pays the deposit through QuickBooks. Backoffice reads the
+   payment back; nobody types it.
+6. When the job is done, the estimate becomes the final invoice in
+   QuickBooks, the deposit already applied and the tax on the balance; it is
+   sent from QuickBooks, and its payment is read back the same way.
 
 ## Steps
 
 | Step | Delivers |
 | --- | --- |
-| 38a | **A test against Intuit's test company, no change to Backoffice.** Confirm that QuickBooks' automatic sales tax works out the tax when Backoffice creates an invoice, or an estimate, with a New Mexico service address, and gives the tax back; whether an estimate can be asked for without leaving clutter in the books; and what it needs from Banana's companies (automatic sales tax switched on, the right items marked taxable). A short written result, then Jacob decides 38b and 38c. |
-| 38b | **Invoices made in QuickBooks from Backoffice.** On a Project, **Send to QuickBooks** makes its deposit or final invoice in that Location's QuickBooks company, with the service address as bill-to and ship-to; QuickBooks works out the tax; Backoffice records the invoice's number, tax and total itself instead of having them typed. Sending twice never makes two invoices. Recorded in the Audit Log. |
-| 38c | **An estimate's tax from QuickBooks.** While pricing, the estimate shows the tax QuickBooks would charge at the job's address, still labelled approximate. The town list is retired once every Location's estimates use it. Only if 38a shows it can be done cleanly. |
+| 38a | **A test against Intuit's test company, no change to Backoffice.** Prove each QuickBooks piece the flow needs works through QuickBooks' connection for other software, not only in its own screens: the tax worked out on an estimate made from outside, and again when it changes; deleting an estimate; the deposit request on an estimate, and paying it; turning the estimate into the invoice with the deposit applied; sending each by email; reading payments back. A short written result; anything QuickBooks does not allow from outside is brought back to Jacob before 38b. |
+| 38b | **The tax from QuickBooks.** Steps 1 and 2 of the flow: the customer matched or added in QuickBooks, an estimate per option kept in step with it, its tax shown. |
+| 38c | **The chosen option, finalized and sent.** Steps 3 and 4: the others removed, the chosen one accepted and sent with its deposit request. |
+| 38d | **Payments and the final invoice.** Steps 5 and 6: payments read back from QuickBooks into the Project's payments; the final invoice made from the estimate and sent. Typing invoices and card payments in by hand stays only for what QuickBooks did not take (cash and check keep their receipt photo and Finance's approval, decision 133). |
 
-Not in this slice: payments, bills, subcontractor payouts and pay entries
-going to QuickBooks (later, 9.8).
+Not in this slice: bills, subcontractor payouts and pay entries going to
+QuickBooks (later, 9.8).
 
 ## Questions for Jacob
 
-1. **Do Banana's QuickBooks companies use QuickBooks' automatic sales tax?**
-   **Answered (decision 228): yes,** QuickBooks' automated gross receipts tax
-   lookup.
-2. **Should Backoffice make the deposit and final invoices in QuickBooks
-   (38b)?** *Recommended:* yes, by a **Send to QuickBooks** button for
-   whoever records invoices today, not automatically, so each is looked at
-   before it goes to the books.
-3. **Customers in QuickBooks.** An invoice needs the customer to exist there.
-   *Recommended:* match an existing QuickBooks customer by email, and create
-   one only when none matches; never change one that exists.
-4. **The estimate's tax (38c):** from QuickBooks while pricing, or keep the
-   town list for estimates? *Recommended:* decide after 38a.
+1. **QuickBooks automated sales tax:** **answered, yes** (decision 228).
+2. **The customer in QuickBooks.** Every lead that is priced becomes a
+   QuickBooks customer, bought or not. *Recommended:* match an existing
+   customer by email, add one only when none matches, and never change one
+   that exists.
+3. **When the tax is fetched.** *Recommended:* automatically when an option
+   is saved, and again before the customer signs; the agreement cannot be
+   signed until the tax is back, with a "Try again" if QuickBooks does not
+   answer.
+4. **A lead lost after it was priced.** *Recommended:* its QuickBooks
+   estimates are marked rejected, not deleted, so they stay in QuickBooks'
+   history; only the options not chosen by a customer who bought are
+   deleted.
+5. **The signature stays in Backoffice.** *Recommended:* yes: the customer
+   signs the agreement in Backoffice as today, and QuickBooks is where they
+   pay.
+6. **A Location without QuickBooks connected** cannot price with tax.
+   *Recommended:* connecting its QuickBooks company becomes a ✱ step on its
+   checklist, needed before it is switched on.
 
 ## Risks
 
 - **This writes to the real books for the first time.** Built and checked on
-  Intuit's test companies on staging first; on production only with Jacob's
+  Intuit's test companies on staging; on production only with Jacob's
   approval, one Location first.
-- **A Location not connected to QuickBooks** cannot send invoices; it says
-  so, and the invoice is made by hand as today.
+- **What QuickBooks allows from outside** may be less than its own screens
+  allow, the deposit request on an estimate above all; 38a finds out before
+  anything is built.
 - **Jobs on tribal land** (for example the Navajo Nation, near Four Corners)
   may be taxed differently; QuickBooks' answer is taken as it is, and Finance
   confirms those with the accountant.
 
 ## Until it is built
 
-Each Location's towns stay in the list in Settings > Pricing Settings >
-Hourly rates and tax, from the New Mexico Taxation and Revenue Department's
-rate schedule, which changes each July 1.
+Each Location's towns stay in the estimate's tax list in Settings > Pricing
+Settings > Hourly rates and tax, from the New Mexico Taxation and Revenue
+Department's rate schedule, which changes each July 1.

@@ -4571,6 +4571,27 @@ lookups." He expected Backoffice to make invoices in QuickBooks already.
    number and total as typed in, and slice 28 only reads. Slice 38, step
    38b, is that piece.
 
+## 229. Estimates, tax and payment go through QuickBooks (2026-11-12)
+
+**Decided by Jacob:** "We will create the pricing using the app and it will
+work with QuickBooks to give us the gross receipts tax. Then the person
+approves, and then they pay the invoice on QuickBooks. [...] Once we create
+the pricing, it shoots it over to QuickBooks, and it creates an estimate. It
+grabs the gross receipts tax, brings it back, and fills that in on our
+system. [...] Once that one is chosen, the other estimates are deleted,
+archived, or voided. We finalize and send that estimate and collect the
+balance towards that estimate through QuickBooks."
+
+1. **Each priced option becomes a QuickBooks estimate,** and its gross
+   receipts tax comes back from QuickBooks into Backoffice.
+2. **The deposit is collected on the QuickBooks estimate,** so it carries
+   no tax; the gross receipts tax is all on the final balance.
+3. **The options not chosen are removed in QuickBooks;** the chosen one is
+   finalized and sent, and the customer pays through QuickBooks.
+4. **Slice 38 is rewritten around this flow**
+   ([slice-38-quickbooks-tax-plan.md](slice-38-quickbooks-tax-plan.md));
+   still to be approved, after Jacob's answers to its questions.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

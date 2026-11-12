@@ -53,7 +53,8 @@ checklist invites its people (or gives someone already in Backoffice a role
 there), sets its salespeople's first pay plans, its scorecard owner and
 targets, and connects its QuickBooks company, without leaving the page.
 
-**Slice 38, tax from QuickBooks, is planned and waits for Jacob's answers**
+**Slice 38, estimates, tax and payment through QuickBooks (decision 229),
+is planned and waits for Jacob's answers**
 ([../slice-38-quickbooks-tax-plan.md](../slice-38-quickbooks-tax-plan.md),
 "Questions for Jacob"). Until it is built, Four Corners' towns go in the
 estimate's tax list, from the state's July 2026 rate schedule.
