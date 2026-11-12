@@ -53,10 +53,11 @@ checklist invites its people (or gives someone already in Backoffice a role
 there), sets its salespeople's first pay plans, its scorecard owner and
 targets, and connects its QuickBooks company, without leaving the page.
 
-**Slice 38, estimates, tax and payment through QuickBooks (decision 229),
-is planned and waits for Jacob's answers**
+**Slice 38, estimates, tax and payment through QuickBooks, is approved
+(decision 230).** 38a, the test, is done and needs two answers before 38b
 ([../slice-38-quickbooks-tax-plan.md](../slice-38-quickbooks-tax-plan.md),
-"Questions for Jacob"). Until it is built, Four Corners' towns go in the
+"38a results"): how to see the tax worked out on a company with automated
+sales tax, and how the deposit is taken. Until it is built, Four Corners' towns go in the
 estimate's tax list, from the state's July 2026 rate schedule.
 
 **Then first use (30c-5),** on production: ABQ's PaintScout file (saved from

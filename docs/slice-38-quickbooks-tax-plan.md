@@ -1,7 +1,7 @@
 # Slice 38: Estimates, tax and payment through QuickBooks (plan, not approved)
 
-**Status:** proposed 2026-11-12 (decisions 227 to 229). Nothing here is
-built. Waiting for Jacob's answers below.
+**Status:** approved 2026-11-12 with every recommendation (decision 230).
+38a, the test, is under way; nothing in Backoffice is built yet.
 
 ## Why
 
@@ -47,7 +47,11 @@ balance.
    marked accepted and sent from QuickBooks with its deposit request, the
    Location's deposit percent of the price before tax.
 5. The customer pays the deposit through QuickBooks. Backoffice reads the
-   payment back; nobody types it.
+   payment back; nobody types it. **A payment taken another way** (Square,
+   financing, check, cash) is recorded in Backoffice, as today: how it was
+   paid, how much, the day and its reference. Backoffice sends it to
+   QuickBooks as a payment received against the estimate's deposit or the
+   invoice, so QuickBooks shows it paid too (decision 230).
 6. When the job is done, the estimate becomes the final invoice in
    QuickBooks, the deposit already applied and the tax on the balance; it is
    sent from QuickBooks, and its payment is read back the same way.
@@ -59,12 +63,59 @@ balance.
 | 38a | **A test against Intuit's test company, no change to Backoffice.** Prove each QuickBooks piece the flow needs works through QuickBooks' connection for other software, not only in its own screens: the tax worked out on an estimate made from outside, and again when it changes; deleting an estimate; the deposit request on an estimate, and paying it; turning the estimate into the invoice with the deposit applied; sending each by email; reading payments back. A short written result; anything QuickBooks does not allow from outside is brought back to Jacob before 38b. |
 | 38b | **The tax from QuickBooks.** Steps 1 and 2 of the flow: the customer matched or added in QuickBooks, an estimate per option kept in step with it, its tax shown. |
 | 38c | **The chosen option, finalized and sent.** Steps 3 and 4: the others removed, the chosen one accepted and sent with its deposit request. |
-| 38d | **Payments and the final invoice.** Steps 5 and 6: payments read back from QuickBooks into the Project's payments; the final invoice made from the estimate and sent. Typing invoices and card payments in by hand stays only for what QuickBooks did not take (cash and check keep their receipt photo and Finance's approval, decision 133). |
+| 38d | **Payments and the final invoice.** Steps 5 and 6: payments made through QuickBooks read back into the Project's payments; payments taken another way recorded in Backoffice and sent to QuickBooks; the final invoice made from the estimate and sent. Cash and check keep their receipt photo and Finance's approval (decision 133), and go to QuickBooks once approved. A Square card payment is recorded as Card with Square's reference. |
 
 Not in this slice: bills, subcontractor payouts and pay entries going to
 QuickBooks (later, 9.8).
 
+## 38a results (2026-11-12)
+
+Tried on staging against Intuit's test company ("Sandbox Company US"),
+through QuickBooks' connection for other software, as Backoffice would.
+
+**Works from outside:**
+
+- Making an estimate for a customer with the job's address, changing its
+  price, deleting one, marking one accepted, and marking one rejected.
+- Turning the accepted estimate into the invoice: QuickBooks links the two
+  and marks the estimate **Converted**.
+- A payment taken another way (a card through Square, with its reference)
+  recorded against the invoice; QuickBooks' balance follows.
+- **A deposit recorded as the customer's payment before the invoice
+  exists:** QuickBooks keeps it as the customer's credit, and applies it to
+  the invoice by itself when the invoice is made. The deposit carries no
+  tax; the tax is all on the invoice.
+
+**Not shown, and why:**
+
+- **The gross receipts tax from the address.** The test company does not
+  use automated sales tax (it has old hand-entered rates), so it worked out
+  no tax at all. Intuit's documentation says a company with automated sales
+  tax works it out from the ship-to address when the tax is left to it, but
+  that has to be seen on a company that uses it.
+- **The deposit request on the estimate,** the one the customer pays online.
+  QuickBooks' estimate, as outside software sees it, has no deposit field,
+  and a payment made against the estimate is not tied to it. Requesting the
+  deposit on the estimate looks to be possible only on QuickBooks' own
+  screens.
+
+**Waiting for Jacob (decision 231 when answered):**
+
+1. **Seeing the tax worked out:** one test estimate in a real Banana
+   QuickBooks company, at a real New Mexico address, read back and deleted
+   straight after, as the quick invoice is today; or a new Intuit test
+   company with automated sales tax switched on, set up by Jacob in Intuit's
+   developer site.
+2. **How the deposit is taken:** paid at signing (Square, financing, check,
+   cash) and recorded in Backoffice, which sends it to QuickBooks as the
+   customer's credit, applied to the final invoice by itself (works now); or,
+   for a deposit paid online, someone opens the estimate in QuickBooks, adds
+   the deposit request and sends it, and Backoffice reads the payment back;
+   or both.
+
 ## Questions for Jacob
+
+**All answered (decision 230): every recommendation below is taken.**
 
 1. **QuickBooks automated sales tax:** **answered, yes** (decision 228).
 2. **The customer in QuickBooks.** Every lead that is priced becomes a

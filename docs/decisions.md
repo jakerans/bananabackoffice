@@ -4592,6 +4592,27 @@ balance towards that estimate through QuickBooks."
    ([slice-38-quickbooks-tax-plan.md](slice-38-quickbooks-tax-plan.md));
    still to be approved, after Jacob's answers to its questions.
 
+## 230. Slice 38 is approved with every recommendation; payments taken elsewhere go to QuickBooks too (2026-11-12)
+
+**Decided by Jacob:** "Yeah, all of your questions, all of your stuff, look
+good and sound good. [...] We don't always take payment through QuickBooks
+payments. Sometimes we'll use Square. Sometimes we use financing [...] I
+just want to make sure we also have the ability to do that in Backoffice,
+where we can mark it as paid and we can even put in how it got paid, how
+much it was paid, and all that kind of stuff. QuickBooks still takes that
+all in. Feel free to get started on that."
+
+1. **Slice 38 is approved,** every question answered with its
+   recommendation: customers matched by email in QuickBooks or added; tax
+   fetched when an option is saved and again before signing; a lost lead's
+   QuickBooks estimates marked rejected; the signature stays in Backoffice;
+   connecting QuickBooks becomes a ✱ step on a Location's checklist.
+2. **Payments taken another way** (Square, financing, check, cash) are
+   recorded in Backoffice, with how, how much, the day and the reference,
+   and sent to QuickBooks as payments received (step 38d).
+3. **38a, the test, starts now.** Anything QuickBooks does not allow from
+   outside comes back to Jacob before 38b is built.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
