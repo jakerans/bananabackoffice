@@ -44,17 +44,20 @@ balance.
 3. The customer looks at the options and signs the agreement for one, in
    Backoffice, as today.
 4. The other options' QuickBooks estimates are deleted. The chosen one is
-   marked accepted and sent from QuickBooks with its deposit request, the
-   Location's deposit percent of the price before tax.
-5. The customer pays the deposit through QuickBooks. Backoffice reads the
-   payment back; nobody types it. **A payment taken another way** (Square,
+   marked accepted, and Backoffice makes the deposit invoice, the Location's
+   deposit percent of the price before tax with no tax on it, which
+   QuickBooks emails to the customer (decision 232).
+5. The customer pays the deposit online through QuickBooks. Backoffice reads
+   the payment back; nobody types it. **A payment taken another way** (Square,
    financing, check, cash) is recorded in Backoffice, as today: how it was
    paid, how much, the day and its reference. Backoffice sends it to
    QuickBooks as a payment received against the estimate's deposit or the
    invoice, so QuickBooks shows it paid too (decision 230).
 6. When the job is done, the estimate becomes the final invoice in
-   QuickBooks, the deposit already applied and the tax on the balance; it is
-   sent from QuickBooks, and its payment is read back the same way.
+   QuickBooks: the work taxed in full, the deposit taken off. QuickBooks
+   emails it when Backoffice asks, and its payment is read back the same way.
+
+Sales reps never sign in to QuickBooks; Backoffice drives it (decision 232).
 
 ## Steps
 
@@ -98,6 +101,33 @@ through QuickBooks' connection for other software, as Backoffice would.
   and a payment made against the estimate is not tied to it. Requesting the
   deposit on the estimate looks to be possible only on QuickBooks' own
   screens.
+
+**The deposit, from the app alone (decision 232), tried on the test
+company 2026-11-13:** Jacob: "I don't want our sales rep to have to log into
+QuickBooks at all. I want our app to power this, and QuickBooks is basically
+the backend." So the deposit is not requested on the QuickBooks estimate.
+Instead:
+
+- Each QuickBooks company has a **Customer Deposits** liability account and
+  a non-taxable **Customer deposit** item posting to it, made by Backoffice
+  when the company is connected.
+- At signing, Backoffice makes a **deposit invoice** for the deposit percent
+  of the price before tax, on that item, so it carries no tax; payable online
+  by card or bank transfer through QuickBooks Payments, and **emailed by
+  QuickBooks when Backoffice asks**. Tried: no tax, online payment switched
+  on, sent.
+- A deposit paid another way (Square, financing, check, cash) is recorded in
+  Backoffice against the deposit invoice instead.
+- The **final invoice** has the work, taxed in full by QuickBooks, and the
+  deposit taken off as a negative line of the same item. Tried: $2,000 of
+  work, $1,000 deposit: tax on the full $2,000, $1,000 plus tax left to pay,
+  and the deposits account back to zero.
+- The estimate itself can also be emailed by QuickBooks from Backoffice
+  (tried).
+
+Nobody uses QuickBooks' own screens for any of it. To confirm with
+Banana's accountant before production: deposits held in a liability account
+until the final invoice, and the gross receipts tax all on the final invoice.
 
 **Answered by Jacob (decision 231):** the tax is proved with one test
 estimate in Albuquerque's real QuickBooks, deleted straight after; deposits

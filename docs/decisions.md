@@ -4627,7 +4627,25 @@ have to manually say that this much was paid from this method."
 2. **Deposits are taken both ways:** paid at signing and recorded in
    Backoffice, with how and how much, and sent to QuickBooks as the
    customer's credit; or requested online on the QuickBooks estimate by
-   someone in QuickBooks, and read back.
+   someone in QuickBooks, and read back. *The second is replaced by decision
+   232.*
+
+## 232. Backoffice drives QuickBooks; nobody signs in to QuickBooks for a sale (2026-11-13)
+
+**Decided by Jacob:** "Can our app not send the thing itself by connecting
+to QuickBooks? In our app, we can put in a 50% deposit, and it just tells
+QuickBooks to go ahead and do all those things. I don't want our sales rep
+to have to log into QuickBooks at all. I want our app to power this, and
+QuickBooks is basically the backend."
+
+1. **The deposit is a deposit invoice made by Backoffice,** on a non-taxable
+   "Customer deposit" item posting to a "Customer Deposits" liability
+   account, payable online and emailed by QuickBooks at Backoffice's request.
+   Requesting the deposit on QuickBooks' own estimate screen, which outside
+   software cannot do, is not used.
+2. **The final invoice** taxes the work in full and takes the deposit off.
+3. **Tried on Intuit's test company** (slice 38, "38a results"); to be
+   confirmed with Banana's accountant before production.
 
 ## Future decisions already constrained by the brief
 
