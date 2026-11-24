@@ -31,7 +31,8 @@ new #[Title('Manage access')] class extends Component {
 
     public string $scope = GrantScope::Location->value;
 
-    public ?int $locationId = null;
+    /** Kept as text so the box starts on "Choose a location", never on a Location nobody chose. */
+    public string $locationId = '';
 
     #[Locked]
     public ?int $pendingGrantId = null;
@@ -112,7 +113,7 @@ new #[Title('Manage access')] class extends Component {
             staff: $this->staff,
             role: Role::from($validated['role']),
             scope: $scope,
-            location: $scope === GrantScope::Location ? Location::query()->find($validated['locationId']) : null,
+            location: $scope === GrantScope::Location ? Location::query()->find((int) $validated['locationId']) : null,
         );
 
         $this->reset('role', 'scope', 'locationId');

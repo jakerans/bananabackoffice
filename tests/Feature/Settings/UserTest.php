@@ -93,7 +93,7 @@ test('a location-scoped grant requires an active location that exists', function
         ->test('pages::settings.user', ['user' => $staff])
         ->set('role', Role::SalesConsultant->value)
         ->set('scope', GrantScope::Location->value)
-        ->set('locationId', $locationId ? $locationId() : null)
+        ->set('locationId', $locationId ? $locationId() : '')
         ->call('grant')
         ->assertHasErrors(['locationId' => $message]);
 
@@ -398,3 +398,19 @@ test('access actions are refused once the permission has been removed', function
 
     Notification::assertNothingSent();
 })->with(['grant', 'revoke', 'deactivate', 'resendInvitation']);
+
+test('the location box starts with nothing chosen, and is empty again after a grant', function () {
+    $owner = User::factory()->withRoleEverywhere(Role::Owner)->create();
+    $staff = User::factory()->create();
+    $lakeview = Location::factory()->create();
+
+    // Empty text, not null: with null the browser showed the first Location as if it were chosen.
+    Livewire::actingAs($owner)
+        ->test('pages::settings.user', ['user' => $staff])
+        ->assertSet('locationId', '')
+        ->set('role', Role::SalesConsultant->value)
+        ->set('locationId', (string) $lakeview->id)
+        ->call('grant')
+        ->assertHasNoErrors()
+        ->assertSet('locationId', '');
+});
