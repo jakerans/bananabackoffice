@@ -6,6 +6,7 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Leads\ChangeLeadLifecycle;
 use App\Actions\Leads\RecordLeadStatusChange;
 use App\Actions\Queue\ResumeLeadCadence;
+use App\Actions\QuickBooks\SyncEstimateToQuickBooks;
 use App\Enums\AuditAction;
 use App\Enums\CallQueue;
 use App\Enums\LeadStatus;
@@ -26,6 +27,7 @@ class UndoLeadLost
         private RecordLeadStatusChange $recordLeadStatusChange,
         private RecordAuditEvent $recordAuditEvent,
         private ResumeLeadCadence $resumeLeadCadence,
+        private SyncEstimateToQuickBooks $syncEstimateToQuickBooks,
     ) {}
 
     /**
@@ -124,5 +126,8 @@ class UndoLeadLost
 
             return true;
         }, retryWhenBusy: true);
+
+        // Its QuickBooks estimates follow what became of them (slice 38, step 38d).
+        $this->syncEstimateToQuickBooks->followResults($lead);
     }
 }

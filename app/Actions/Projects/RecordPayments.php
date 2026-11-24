@@ -5,6 +5,7 @@ namespace App\Actions\Projects;
 use App\Actions\Attachments\AttachFile;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Compensation\RecordCommission;
+use App\Actions\QuickBooks\SendPaymentToQuickBooks;
 use App\Enums\AuditAction;
 use App\Enums\Role;
 use App\Models\Project;
@@ -17,6 +18,7 @@ use App\Notifications\ProjectNotice;
 use App\Support\Money;
 use App\Support\Projects\Payments;
 use App\Support\Projects\RoughTimeframe;
+use App\Support\QuickBooks\QuickBooksUnavailable;
 use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -39,7 +41,12 @@ use Illuminate\Validation\ValidationException;
  */
 class RecordPayments
 {
-    public function __construct(private RecordAuditEvent $recordAuditEvent, private AttachFile $attachFile, private RecordCommission $recordCommission) {}
+    public function __construct(
+        private RecordAuditEvent $recordAuditEvent,
+        private AttachFile $attachFile,
+        private RecordCommission $recordCommission,
+        private SendPaymentToQuickBooks $sendPaymentToQuickBooks,
+    ) {}
 
     /**
      * Record the deposit or the final invoice: its QuickBooks number, its
@@ -99,6 +106,8 @@ class RecordPayments
      */
     public function voidInvoice(Project $project, int $invoiceId, ?string $reason, User $actor): ProjectInvoice
     {
+        $this->voidInQuickBooks($project, $invoiceId, $reason, $actor);
+
         return $this->held($project, $actor, 'recordPayments', function (Project $project) use ($invoiceId, $reason, $actor): ProjectInvoice {
             $invoice = ProjectInvoice::query()->where('project_id', $project->id)->whereNull('voided_at')->find($invoiceId)
                 ?? throw ValidationException::withMessages(['invoice' => __('This invoice was changed since. Reload the page.')]);
@@ -124,6 +133,31 @@ class RecordPayments
 
             return $invoice;
         });
+    }
+
+    /**
+     * An invoice Backoffice made in QuickBooks is voided there first (slice
+     * 38, step 38d), outside the save so QuickBooks is never waited on while
+     * the Project is held. Only once everything the void itself checks holds.
+     *
+     * @throws ValidationException
+     * @throws AuthorizationException
+     */
+    private function voidInQuickBooks(Project $project, int $invoiceId, ?string $reason, User $actor): void
+    {
+        Gate::forUser($actor)->authorize('recordPayments', $project);
+
+        $invoice = ProjectInvoice::query()->with('project.location')->where('project_id', $project->id)->whereNull('voided_at')->find($invoiceId);
+
+        if ($invoice === null || $invoice->quickbooks_invoice_id === null || trim((string) $reason) === '' || $invoice->payments()->whereNull('reversed_at')->exists()) {
+            return;
+        }
+
+        try {
+            $this->sendPaymentToQuickBooks->voidInvoice($invoice);
+        } catch (QuickBooksUnavailable $unavailable) {
+            throw ValidationException::withMessages(['invoiceReason' => __('It could not be voided in QuickBooks, so it is not voided here: :why', ['why' => $unavailable->getMessage()])]);
+        }
     }
 
     /**
@@ -235,7 +269,7 @@ class RecordPayments
             AttachFile::ensureAccepted($receipt);
         }
 
-        return $this->held($project, $actor, 'recordPayments', function (Project $project) use ($invoiceId, $amount, $method, $receivedOn, $reference, $receipt, $actor): ProjectPayment {
+        $payment = $this->held($project, $actor, 'recordPayments', function (Project $project) use ($invoiceId, $amount, $method, $receivedOn, $reference, $receipt, $actor): ProjectPayment {
             $payments = Payments::for($project);
             $invoice = $payments->invoices->firstWhere('id', $invoiceId)
                 ?? throw ValidationException::withMessages(['paymentInvoice' => __('Choose the invoice it pays.')]);
@@ -303,6 +337,11 @@ class RecordPayments
 
             return $payment;
         });
+
+        // Taken another way than through QuickBooks: QuickBooks is told, once it counts (slice 38, step 38d).
+        $this->sendPaymentToQuickBooks->afterCounting($payment);
+
+        return $payment;
     }
 
     /**
@@ -315,7 +354,7 @@ class RecordPayments
      */
     public function approvePayment(Project $project, int $paymentId, User $actor): ProjectPayment
     {
-        return $this->held($project, $actor, 'approvePayments', function (Project $project) use ($paymentId, $actor): ProjectPayment {
+        $payment = $this->held($project, $actor, 'approvePayments', function (Project $project) use ($paymentId, $actor): ProjectPayment {
             $payment = $this->paymentOf($project, $paymentId);
 
             if (! $payment->isAwaitingApproval()) {
@@ -340,6 +379,10 @@ class RecordPayments
 
             return $payment;
         });
+
+        $this->sendPaymentToQuickBooks->afterCounting($payment);
+
+        return $payment;
     }
 
     /**
@@ -351,8 +394,12 @@ class RecordPayments
      */
     public function reversePayment(Project $project, int $paymentId, ?string $reason, User $actor): ProjectPayment
     {
-        return $this->held($project, $actor, 'approvePayments', function (Project $project) use ($paymentId, $reason, $actor): ProjectPayment {
+        $payment = $this->held($project, $actor, 'approvePayments', function (Project $project) use ($paymentId, $reason, $actor): ProjectPayment {
             $payment = $this->paymentOf($project, $paymentId);
+
+            if ($payment->from_quickbooks) {
+                throw ValidationException::withMessages(['paymentReason' => __('This payment was made in QuickBooks. Remove it there, then press "Check QuickBooks": it is reversed here by itself.')]);
+            }
             $reason = $this->reason($reason, 'paymentReason', __('Say why it is reversed.'), ProjectPayment::REASON_LENGTH);
 
             $payment->forceFill(['reversed_at' => now(), 'reversed_by' => $actor->id, 'reversed_by_name' => $actor->name, 'reversed_reason' => $reason])->save();
@@ -370,6 +417,21 @@ class RecordPayments
 
             return $payment;
         });
+
+        $this->sendPaymentToQuickBooks->afterReversal($payment);
+
+        return $payment;
+    }
+
+    /**
+     * Settle the deposit after payments changed outside this class: read
+     * from QuickBooks (slice 38, step 38d).
+     */
+    public function settle(Project $project, ?User $actor): void
+    {
+        DB::transaction(function () use ($project, $actor): void {
+            $this->settleDeposit(Project::query()->with('location')->lockForUpdate()->findOrFail($project->id), $actor);
+        });
     }
 
     /**
@@ -377,7 +439,7 @@ class RecordPayments
      * the Production Manager is told and has 24 hours to call the customer
      * (decision 162, question 8). A reversal that leaves it unpaid clears it.
      */
-    private function settleDeposit(Project $project, User $actor): void
+    private function settleDeposit(Project $project, ?User $actor): void
     {
         $paid = Payments::for($project)->depositIsPaid();
 

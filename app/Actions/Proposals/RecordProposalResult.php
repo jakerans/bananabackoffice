@@ -7,12 +7,15 @@ use App\Actions\Leads\ChangeLeadLifecycle;
 use App\Actions\Leads\RecordLeadStatusChange;
 use App\Actions\Projects\CreateProjectForSoldProposal;
 use App\Actions\Projects\RecordAmbassadorPackage;
+use App\Actions\QuickBooks\FinalizeSaleInQuickBooks;
+use App\Actions\QuickBooks\SyncEstimateToQuickBooks;
 use App\Enums\AuditAction;
 use App\Enums\LeadStatus;
 use App\Enums\LeadStatusEvent;
 use App\Enums\ProposalResult;
 use App\Models\EstimateOption;
 use App\Models\Lead;
+use App\Models\Project;
 use App\Models\Proposal;
 use App\Models\User;
 use App\Notifications\AppointmentChanged;
@@ -35,6 +38,8 @@ class RecordProposalResult
         private RecordSaleEntry $recordSaleEntry,
         private RecordAmbassadorPackage $recordAmbassadorPackage,
         private EstimatePricing $estimatePricing,
+        private FinalizeSaleInQuickBooks $finalizeSaleInQuickBooks,
+        private SyncEstimateToQuickBooks $syncEstimateToQuickBooks,
     ) {}
 
     /**
@@ -71,6 +76,18 @@ class RecordProposalResult
             fn (): bool => $this->apply($lead, $proposal, $result, $details, $actor),
             retryWhenBusy: true,
         );
+
+        // QuickBooks follows (slice 38, steps 38c and 38d): a sale is settled there, its deposit
+        // invoiced; a lost estimate is marked rejected. Never undone by QuickBooks not answering.
+        if ($result === ProposalResult::Sold->value) {
+            $project = Project::query()->with(['location', 'proposal', 'lead', 'contact'])->where('proposal_id', $proposal->id)->first();
+
+            if ($project !== null) {
+                $this->finalizeSaleInQuickBooks->afterSale($project, $actor);
+            }
+        } elseif ($result === ProposalResult::Lost->value) {
+            $this->syncEstimateToQuickBooks->followResults($lead);
+        }
     }
 
     /**

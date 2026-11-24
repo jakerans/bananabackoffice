@@ -25,7 +25,7 @@ use LogicException;
  * @property int $project_id
  * @property int $project_invoice_id
  * @property int $amount_cents
- * @property string $method One of the METHODS keys.
+ * @property string $method One of the METHODS keys, or QUICKBOOKS.
  * @property Carbon $received_on
  * @property string|null $reference The processor's or QuickBooks' reference.
  * @property bool $needs_approval Cash and check.
@@ -36,6 +36,8 @@ use LogicException;
  * @property int|null $reversed_by
  * @property string|null $reversed_by_name
  * @property string|null $reversed_reason
+ * @property string|null $quickbooks_payment_id The payment in QuickBooks: read from it, or sent to it (slice 38, step 38d).
+ * @property bool $from_quickbooks Paid in QuickBooks and read back, not recorded here.
  * @property int|null $recorded_by
  * @property string|null $recorded_by_name
  * @property Carbon|null $created_at
@@ -55,6 +57,9 @@ class ProjectPayment extends Model implements Attachable
         'financing' => 'Financing',
     ];
 
+    /** Paid in QuickBooks by a method Backoffice has no name for; never chosen by a person. */
+    public const string QUICKBOOKS = 'quickbooks';
+
     /** The methods that need a receipt and Finance's approval (decision 133). */
     public const array NEEDS_APPROVAL = ['check', 'cash'];
 
@@ -70,9 +75,11 @@ class ProjectPayment extends Model implements Attachable
     protected static function booted(): void
     {
         static::updating(function (self $payment): void {
-            $allowed = ['approved_at', 'approved_by', 'approved_by_name', 'reversed_at', 'reversed_by', 'reversed_by_name', 'reversed_reason', 'updated_at'];
+            $allowed = ['approved_at', 'approved_by', 'approved_by_name', 'reversed_at', 'reversed_by', 'reversed_by_name', 'reversed_reason', 'quickbooks_payment_id', 'updated_at'];
+            $changed = array_keys($payment->getDirty());
 
-            if (array_diff(array_keys($payment->getDirty()), $allowed) !== [] || $payment->getOriginal('reversed_at') !== null) {
+            // Once reversed, only which QuickBooks payment it is can still change: taken out there too.
+            if (array_diff($changed, $allowed) !== [] || ($payment->getOriginal('reversed_at') !== null && array_diff($changed, ['quickbooks_payment_id', 'updated_at']) !== [])) {
                 throw new LogicException('A payment is kept as it was. Reverse it instead.');
             }
         });
@@ -93,6 +100,7 @@ class ProjectPayment extends Model implements Attachable
             'amount_cents' => 'integer',
             'received_on' => 'date',
             'needs_approval' => 'boolean',
+            'from_quickbooks' => 'boolean',
             'approved_at' => 'datetime',
             'reversed_at' => 'datetime',
         ];
@@ -145,7 +153,7 @@ class ProjectPayment extends Model implements Attachable
 
     public function methodLabel(): string
     {
-        return self::METHODS[$this->method] ?? $this->method;
+        return self::METHODS[$this->method] ?? ($this->method === self::QUICKBOOKS ? 'Paid in QuickBooks' : $this->method);
     }
 
     public function amount(): string

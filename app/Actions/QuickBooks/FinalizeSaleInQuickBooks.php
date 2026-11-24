@@ -83,9 +83,7 @@ class FinalizeSaleInQuickBooks
      */
     private function settle(Project $project, User $actor): ?ProjectInvoice
     {
-        $connection = QuickBooksConnection::query()->with('location')->where('location_id', $project->location_id)->first()
-            ?? throw new QuickBooksUnavailable(__(':location is not connected to QuickBooks.', ['location' => $project->location->name]));
-
+        $connection = $this->connectionFor($project);
         $proposal = $project->proposal;
 
         if ($proposal->estimate_id !== null) {
@@ -97,6 +95,17 @@ class FinalizeSaleInQuickBooks
         }
 
         return $this->depositInvoice($connection, $project, $actor);
+    }
+
+    /**
+     * The Project's Location's QuickBooks company.
+     *
+     * @throws QuickBooksUnavailable
+     */
+    public function connectionFor(Project $project): QuickBooksConnection
+    {
+        return QuickBooksConnection::query()->with('location')->where('location_id', $project->location_id)->first()
+            ?? throw new QuickBooksUnavailable(__(':location is not connected to QuickBooks.', ['location' => $project->location->name]));
     }
 
     /**
@@ -141,15 +150,13 @@ class FinalizeSaleInQuickBooks
                 return null;
             }
 
-            if ($lead->quickbooks_customer_id === null) {
-                throw new QuickBooksUnavailable(__('This customer is not in QuickBooks yet. Send the estimate to QuickBooks first, from the estimate.'));
-            }
-
             $address = $this->syncEstimateToQuickBooks->address($lead);
+            // A sale that never went through an estimate has no customer in QuickBooks yet: matched or added now.
+            $customerId = $this->syncEstimateToQuickBooks->customer($connection, $lead, $address);
             $email = $project->contact->email ?? $lead->inquiry_email;
 
             $kept = $this->client->post($connection, 'invoice', array_filter([
-                'CustomerRef' => ['value' => $lead->quickbooks_customer_id],
+                'CustomerRef' => ['value' => $customerId],
                 'BillAddr' => $address,
                 'ShipAddr' => $address,
                 'BillEmail' => filled($email) ? ['Address' => (string) $email] : null,
@@ -212,7 +219,7 @@ class FinalizeSaleInQuickBooks
      *
      * @throws QuickBooksUnavailable
      */
-    private function depositItem(QuickBooksConnection $connection): string
+    public function depositItem(QuickBooksConnection $connection): string
     {
         if ($connection->deposit_item_id !== null) {
             return $connection->deposit_item_id;

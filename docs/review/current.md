@@ -82,7 +82,15 @@ price before tax; the commission advance only for a deposit of 25% or more;
 and at signing the deposit invoice made and emailed by QuickBooks. **For
 Jacob to know:** sales with tax were being recorded with the tax in the
 sold price; that is corrected from now on, and earlier sales are unchanged.
-38d is next.
+
+**Slice 38d is on staging too** (not production), so slice 38 is complete
+(decision 236): payments made in QuickBooks are read onto the job every
+fifteen minutes; a payment taken another way and recorded in Backoffice goes
+to QuickBooks once it counts; **Make the final invoice** on a Project's
+Payments has QuickBooks make it, work out all the tax and email it; a lost
+lead's QuickBooks estimates are marked rejected. **Not yet run end to end
+against a real QuickBooks company:** the first Four Corners estimate after a
+production deploy is that test, and needs Jacob's word.
 
 **The first walkthrough on production (decision 233)** is sorted in
 [../walkthrough-2026-11-23.md](../walkthrough-2026-11-23.md): one bug fixed,

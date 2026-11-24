@@ -8,23 +8,35 @@ use App\Actions\Estimates\SaveEstimateArea;
 use App\Actions\Estimates\SaveEstimateOption;
 use App\Actions\Estimates\SaveEstimateSurface;
 use App\Actions\Estimates\StartEstimate;
+use App\Actions\Projects\RecordPayments;
+use App\Actions\Proposals\MarkLeadLost;
+use App\Actions\Proposals\RecordProposalResult;
+use App\Actions\Proposals\UndoLeadLost;
 use App\Actions\QuickBooks\FinalizeSaleInQuickBooks;
+use App\Actions\QuickBooks\MakeFinalInvoiceInQuickBooks;
+use App\Actions\QuickBooks\ReadPaymentsFromQuickBooks;
 use App\Actions\QuickBooks\SyncEstimateToQuickBooks;
 use App\Enums\AuditAction;
 use App\Enums\EstimateType;
+use App\Enums\LeadStatus;
 use App\Enums\Role;
 use App\Models\Agreement;
 use App\Models\AgreementWording;
 use App\Models\AuditEvent;
 use App\Models\Estimate;
+use App\Models\EstimateOption;
 use App\Models\Location;
+use App\Models\Objection;
 use App\Models\PaintProduct;
 use App\Models\PriceBook;
 use App\Models\ProductionRate;
 use App\Models\Project;
+use App\Models\ProjectChangeOrder;
 use App\Models\ProjectInvoice;
+use App\Models\ProjectPayment;
 use App\Models\QuickBooksConnection;
 use App\Models\RateCategory;
+use App\Models\SalesLossReason;
 use App\Models\TaxRate;
 use App\Models\User;
 use App\Support\Agreements\AgreementDetails;
@@ -33,7 +45,9 @@ use App\Support\Queue\CallingHours;
 use App\Support\QuickBooks\QuickBooksUnavailable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Client\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
@@ -53,6 +67,7 @@ beforeEach(function () {
     $this->farmington = Location::factory()->create(['name' => 'Farmington']);
     $this->manager = User::factory()->withRoleAt(Role::LocationManager, $this->farmington)->create(['name' => 'Morgan Manager']);
     $this->sam = User::factory()->withRoleAt(Role::SalesConsultant, $this->farmington)->create(['name' => 'Sam Sales']);
+    $this->fran = User::factory()->withRoleAt(Role::Finance, $this->farmington)->create(['name' => 'Fran Finance']);
     $this->riley = User::factory()->withRoleAt(Role::SalesConsultant, $this->farmington)->create(['name' => 'Riley Rep']);
 
     $this->book = PriceBook::factory()->create(['hourly_rate_cents' => 5000]);
@@ -88,7 +103,7 @@ beforeEach(function () {
  */
 function fakeQuickBooksCompany(): ArrayObject
 {
-    $company = new ArrayObject(['estimates' => [], 'customers' => [], 'deleted' => [], 'down' => false, 'next' => 100, 'requests' => 0, 'existingEmail' => null, 'invoices' => [], 'emailed' => [], 'added' => [], 'hasDepositItem' => true]);
+    $company = new ArrayObject(['estimates' => [], 'customers' => [], 'deleted' => [], 'down' => false, 'next' => 100, 'requests' => 0, 'existingEmail' => null, 'invoices' => [], 'emailed' => [], 'added' => [], 'hasDepositItem' => true, 'payments' => [], 'voided' => [], 'removedPayments' => []]);
 
     Http::preventStrayRequests();
     Http::fake(['sandbox-quickbooks.api.intuit.com/*' => function (Request $request) use ($company) {
@@ -109,6 +124,9 @@ function fakeQuickBooksCompany(): ArrayObject
                     ['Id' => '4', 'Name' => 'Change orders', 'Type' => 'Service', 'Taxable' => true],
                     ['Id' => '3', 'Name' => 'Painting services', 'Type' => 'Service', 'Taxable' => true],
                 ]]]),
+                str_contains($query['query'], 'from PaymentMethod') => Http::response(['QueryResponse' => ['PaymentMethod' => [
+                    ['Id' => '1', 'Name' => 'Cash'], ['Id' => '2', 'Name' => 'Check'], ['Id' => '3', 'Name' => 'Visa'], ['Id' => '8', 'Name' => 'Financing'],
+                ]]]),
                 $company['existingEmail'] !== null && str_contains($query['query'], 'from Customer') && str_contains($query['query'], $company['existingEmail']) => Http::response(['QueryResponse' => ['Customer' => [['Id' => '7', 'DisplayName' => 'Already Here']]]]),
                 default => Http::response(['QueryResponse' => []]),
             };
@@ -127,11 +145,53 @@ function fakeQuickBooksCompany(): ArrayObject
             return Http::response([ucfirst($found[1]) => ['Id' => $found[2], 'EmailStatus' => 'EmailSent']]);
         }
 
+        if (preg_match('#/invoice/(\d+)$#', $path, $found) === 1) {
+            if (! isset($company['invoices'][$found[1]])) {
+                return Http::response(['Fault' => ['Error' => [['Message' => 'Object Not Found']]]], 400);
+            }
+
+            // The payments against it, as QuickBooks lists them on the invoice.
+            $links = collect($company['payments'])
+                ->filter(fn (array $payment): bool => collect($payment['Line'])->pluck('LinkedTxn')->flatten(1)->contains('TxnId', $found[1]))
+                ->map(fn (array $payment): array => ['TxnId' => $payment['Id'], 'TxnType' => 'Payment'])
+                ->values()->all();
+
+            return Http::response(['Invoice' => [...$company['invoices'][$found[1]], 'LinkedTxn' => $links]]);
+        }
+
+        if (str_ends_with($path, '/invoice') && ($query['operation'] ?? null) === 'void') {
+            $company['voided'][] = $request['Id'];
+
+            return Http::response(['Invoice' => ['Id' => $request['Id'], 'TotalAmt' => 0]]);
+        }
+
         if (str_ends_with($path, '/invoice')) {
             $id = (string) $company['next']++;
-            $company['invoices'][$id] = [...$request->data(), 'Id' => $id, 'DocNumber' => '10'.$id, 'TotalAmt' => collect($request['Line'])->sum('Amount')];
+            $taxable = collect($request['Line'])->where('SalesItemLineDetail.TaxCodeRef.value', 'TAX')->sum('Amount');
+            $tax = array_sum(array_map(fn (float $percent): float => round($taxable * $percent / 100, 2), [4.875, 1.25, 2.0625]));
+            $company['invoices'][$id] = [...$request->data(), 'Id' => $id, 'SyncToken' => '0', 'DocNumber' => '10'.$id, 'TotalAmt' => round(collect($request['Line'])->sum('Amount') + $tax, 2), 'TxnTaxDetail' => ['TotalTax' => $tax]];
 
             return Http::response(['Invoice' => $company['invoices'][$id]]);
+        }
+
+        if (preg_match('#/payment/(\d+)$#', $path, $found) === 1) {
+            return isset($company['payments'][$found[1]])
+                ? Http::response(['Payment' => $company['payments'][$found[1]]])
+                : Http::response(['Fault' => ['Error' => [['Message' => 'Object Not Found']]]], 400);
+        }
+
+        if (str_ends_with($path, '/payment') && ($query['operation'] ?? null) === 'delete') {
+            $company['removedPayments'][] = $request['Id'];
+            unset($company['payments'][$request['Id']]);
+
+            return Http::response(['Payment' => ['Id' => $request['Id'], 'status' => 'Deleted']]);
+        }
+
+        if (str_ends_with($path, '/payment')) {
+            $id = (string) $company['next']++;
+            $company['payments'][$id] = [...$request->data(), 'Id' => $id, 'SyncToken' => '0'];
+
+            return Http::response(['Payment' => $company['payments'][$id]]);
         }
 
         if (str_ends_with($path, '/account') || str_ends_with($path, '/item')) {
@@ -540,4 +600,287 @@ test('no deposit invoice is made when the deposit is waived', function () {
     expect($this->quickBooks['invoices'])->toBeEmpty()
         ->and(Payments::for($project)->requiredDepositCents())->toBe(0)
         ->and(Payments::for($project)->depositEarnsAdvance())->toBeFalse();
+});
+
+/*
+ * Step 38d: payments both ways, the final invoice, and what became of an
+ * estimate followed in QuickBooks.
+ */
+
+/**
+ * A job sold at $352 before tax with the Location's 50% deposit, $176,
+ * invoiced in QuickBooks.
+ *
+ * @return array{0: Project, 1: ProjectInvoice}
+ */
+function soldWithDepositInvoice(): array
+{
+    $estimate = pricedEstimate();
+    app(SyncEstimateToQuickBooks::class)->handle($estimate, test()->sam);
+    signAtTheAppointment($estimate->refresh());
+
+    $project = Project::query()->where('lead_id', test()->lead->id)->sole();
+
+    return [$project, $project->invoices()->sole()];
+}
+
+/**
+ * The customer pays in QuickBooks, online: QuickBooks keeps a payment against the invoice.
+ */
+function paidInQuickBooks(ProjectInvoice $invoice, float $amount, string $methodId = '3', string $id = '900'): void
+{
+    test()->quickBooks['payments'][$id] = [
+        'Id' => $id, 'SyncToken' => '0', 'TotalAmt' => $amount, 'TxnDate' => now()->toDateString(), 'PaymentMethodRef' => ['value' => $methodId],
+        'Line' => [['Amount' => $amount, 'LinkedTxn' => [['TxnId' => $invoice->quickbooks_invoice_id, 'TxnType' => 'Invoice']]]],
+    ];
+}
+
+test('a payment the customer made in QuickBooks is read onto the job, counts at once, and is reversed when QuickBooks removes it', function () {
+    [$project, $deposit] = soldWithDepositInvoice();
+    paidInQuickBooks($deposit, 176.00);
+
+    $this->artisan('backoffice:quickbooks-payments')->assertSuccessful();
+    $this->artisan('backoffice:quickbooks-payments')->assertSuccessful();
+
+    $payment = $project->payments()->sole();
+
+    expect($payment)->amount_cents->toBe(17600)->method->toBe('card')->from_quickbooks->toBeTrue()->quickbooks_payment_id->toBe('900')->recorded_by_name->toBe('QuickBooks')
+        ->and($payment->counts())->toBeTrue()
+        ->and(Payments::for($project)->state())->toBe(Payments::DEPOSIT_PAID)
+        ->and($project->refresh()->deposit_paid_at)->not->toBeNull()
+        // Nothing was sent back to QuickBooks for a payment that came from it.
+        ->and($this->quickBooks['payments'])->toHaveCount(1);
+
+    $recorded = AuditEvent::query()->where('action', AuditAction::ProjectPaymentRecorded)->sole();
+
+    expect($recorded->values_after)->toMatchArray(['amount_cents' => 17600, 'read_from' => 'QuickBooks']);
+
+    // Finance does not reverse it here: it is removed in QuickBooks, and Backoffice follows.
+    expect(fn () => app(RecordPayments::class)->reversePayment($project, $payment->id, 'Wrong customer', $this->fran))->toThrow(ValidationException::class);
+
+    unset($this->quickBooks['payments']['900']);
+
+    $found = app(ReadPaymentsFromQuickBooks::class)->handle($project, $this->manager);
+
+    expect($found)->toBe(['read' => 0, 'removed' => 1, 'sent' => 0])
+        ->and($payment->refresh())->reversed_by_name->toBe('QuickBooks')->reversed_reason->toBe('Removed in QuickBooks.')
+        ->and(Payments::for($project)->state())->toBe(Payments::DEPOSIT_DUE)
+        ->and($project->refresh()->deposit_paid_at)->toBeNull();
+
+    // Only someone who records this job's payments may ask.
+    expect(fn () => app(ReadPaymentsFromQuickBooks::class)->handle($project, $this->riley))->toThrow(AuthorizationException::class);
+});
+
+test('a payment QuickBooks has no method name for is kept as paid in QuickBooks, at what was put toward this invoice', function () {
+    [$project, $deposit] = soldWithDepositInvoice();
+    paidInQuickBooks($deposit, 100.00, methodId: '77');
+    // One payment split across two invoices: only this invoice's part is this job's.
+    $this->quickBooks['payments']['900']['TotalAmt'] = 250.00;
+    $this->quickBooks['payments']['900']['Line'][] = ['Amount' => 150.00, 'LinkedTxn' => [['TxnId' => '4444', 'TxnType' => 'Invoice']]];
+
+    app(ReadPaymentsFromQuickBooks::class)->handle($project, $this->manager);
+
+    expect($project->payments()->sole())->amount_cents->toBe(10000)->method->toBe(ProjectPayment::QUICKBOOKS)
+        ->and($project->payments()->sole()->methodLabel())->toBe('Paid in QuickBooks');
+});
+
+test('a payment taken another way goes to QuickBooks once it counts, and a reversal takes it back out', function () {
+    Storage::fake('files');
+    [$project, $deposit] = soldWithDepositInvoice();
+    $record = app(RecordPayments::class);
+    $today = now()->toDateString();
+
+    // A card run through Square counts at once.
+    $card = $record->recordPayment($project, $deposit->id, '100', 'card', $today, 'SQ-7781', null, $this->manager);
+    $sent = $this->quickBooks['payments'][$card->refresh()->quickbooks_payment_id];
+
+    expect($sent)->toMatchArray(['CustomerRef' => ['value' => '100'], 'TotalAmt' => 100, 'TxnDate' => $today, 'PaymentRefNum' => 'SQ-7781', 'PaymentMethodRef' => ['value' => '3']])
+        ->and($sent['Line'][0]['LinkedTxn'][0])->toBe(['TxnId' => $deposit->quickbooks_invoice_id, 'TxnType' => 'Invoice'])
+        ->and($sent['PrivateNote'])->toContain('Backoffice payment #'.$card->id);
+
+    // A check waits for Finance, and goes to QuickBooks only once approved.
+    $check = $record->recordPayment($project, $deposit->id, '76', 'check', $today, '2231', UploadedFile::fake()->image('Check.jpg'), $this->manager);
+
+    expect($check->refresh()->quickbooks_payment_id)->toBeNull()
+        ->and($this->quickBooks['payments'])->toHaveCount(1);
+
+    $record->approvePayment($project, $check->id, $this->fran);
+
+    expect($this->quickBooks['payments'][$check->refresh()->quickbooks_payment_id])->toMatchArray(['TotalAmt' => 76, 'PaymentMethodRef' => ['value' => '2']]);
+
+    // Reading QuickBooks afterwards finds its own two payments again, and adds nothing.
+    expect(app(ReadPaymentsFromQuickBooks::class)->handle($project, $this->manager))->toBe(['read' => 0, 'removed' => 0, 'sent' => 0])
+        ->and($project->payments()->count())->toBe(2);
+
+    $cardId = $card->quickbooks_payment_id;
+    $record->reversePayment($project, $card->id, 'The card was declined.', $this->fran);
+
+    expect($this->quickBooks['removedPayments'])->toBe([$cardId])
+        ->and($card->refresh()->quickbooks_payment_id)->toBeNull();
+});
+
+test('a payment recorded while QuickBooks does not answer stands, and is sent when QuickBooks is checked', function () {
+    [$project, $deposit] = soldWithDepositInvoice();
+    $this->quickBooks['down'] = true;
+
+    $payment = app(RecordPayments::class)->recordPayment($project, $deposit->id, '176', 'financing', now()->toDateString(), 'LN-20931', null, $this->manager);
+
+    expect($payment->refresh()->quickbooks_payment_id)->toBeNull()
+        ->and(Payments::for($project)->state())->toBe(Payments::DEPOSIT_PAID);
+
+    $page = Livewire::actingAs($this->manager)->test('pages::projects.payments', ['project' => $project])
+        ->assertSee('not in QuickBooks yet')
+        ->call('checkQuickBooks')
+        ->assertHasErrors('quickBooksCheck');
+
+    $this->quickBooks['down'] = false;
+
+    $page->call('checkQuickBooks')->assertHasNoErrors()->assertDontSee('not in QuickBooks yet');
+
+    expect($this->quickBooks['payments'][$payment->refresh()->quickbooks_payment_id])->toMatchArray(['TotalAmt' => 176, 'PaymentMethodRef' => ['value' => '8']]);
+});
+
+test('the final invoice is made in QuickBooks: the work and each signed change order taxed in full, the deposit taken off, and emailed', function () {
+    [$project, $deposit] = soldWithDepositInvoice();
+    (new ProjectChangeOrder)->forceFill(['project_id' => $project->id, 'number' => 1, 'description' => 'Paint the closet too', 'price_change_cents' => 4800, 'status' => ProjectChangeOrder::STATUS_SIGNED])->save();
+    (new ProjectChangeOrder)->forceFill(['project_id' => $project->id, 'number' => 2, 'description' => 'Never agreed', 'price_change_cents' => 9900, 'status' => ProjectChangeOrder::STATUS_DRAFT])->save();
+    $chosen = $project->proposal->estimate_option_id;
+    $estimateId = EstimateOption::query()->findOrFail($chosen)->quickbooks_estimate_id;
+
+    Livewire::actingAs($this->manager)->test('pages::projects.payments', ['project' => $project])
+        ->assertSeeHtml('data-test="make-final-invoice"')
+        ->assertDontSeeHtml('data-test="record-final-invoice"')
+        ->call('openFinal')
+        ->call('makeFinalInvoice')
+        ->assertHasNoErrors()
+        ->assertDontSeeHtml('data-test="make-final-invoice"');
+
+    $final = $project->invoices()->where('kind', ProjectInvoice::KIND_FINAL)->sole();
+    $kept = $this->quickBooks['invoices'][$final->quickbooks_invoice_id];
+
+    // $352 and $48 of work: $400 taxed at 8.1875% is $32.75. Less the $176 deposit: $256.75.
+    expect($kept['Line'])->toHaveCount(3)
+        ->and($kept['Line'][0])->toMatchArray(['Amount' => 352, 'SalesItemLineDetail' => ['ItemRef' => ['value' => '3'], 'Qty' => 1, 'UnitPrice' => 352, 'TaxCodeRef' => ['value' => 'TAX']]])
+        ->and($kept['Line'][1]['Amount'])->toEqual(48)
+        ->and($kept['Line'][1]['Description'])->toBe('Change order 1: Paint the closet too')
+        ->and($kept['Line'][2])->toMatchArray(['Amount' => -176, 'SalesItemLineDetail' => ['ItemRef' => ['value' => '5'], 'Qty' => 1, 'UnitPrice' => -176, 'TaxCodeRef' => ['value' => 'NON']]])
+        ->and($kept['LinkedTxn'])->toBe([['TxnId' => $estimateId, 'TxnType' => 'Estimate']])
+        ->and($kept['ShipAddr']['City'])->toBe('Farmington')
+        ->and($kept)->toMatchArray(['AllowOnlineCreditCardPayment' => true, 'AllowOnlineACHPayment' => true, 'DueDate' => now()->timezone(CallingHours::timezoneFor($this->farmington))->addDays(7)->toDateString()])
+        ->and($kept)->not->toHaveKey('TxnTaxDetail.TxnTaxCodeRef')
+        ->and($final)->amount_cents->toBe(25675)->number->toBe($kept['DocNumber'])
+        ->and($final->quickbooks_emailed_at)->not->toBeNull()
+        ->and($this->quickBooks['emailed'])->toContain(['invoice', $kept['Id'], 'pat@example.test'])
+        // Everything invoiced is the work and its tax: $432.75.
+        ->and(Payments::for($project)->invoicedCents())->toBe(43275)
+        ->and(Payments::for($project)->state())->toBe(Payments::BALANCE_DUE);
+
+    expect(AuditEvent::query()->where('action', AuditAction::ProjectInvoiceRecorded)->latest('id')->firstOrFail()->values_after)
+        ->toMatchArray(['amount_cents' => 25675, 'tax_cents' => 3275, 'made_in' => 'QuickBooks']);
+
+    // Not twice, and not by someone who does not record this job's payments.
+    expect(fn () => app(MakeFinalInvoiceInQuickBooks::class)->handle($project, $this->manager))->toThrow(QuickBooksUnavailable::class)
+        ->and(fn () => app(MakeFinalInvoiceInQuickBooks::class)->handle($project, $this->riley))->toThrow(AuthorizationException::class)
+        ->and($this->quickBooks['invoices'])->toHaveCount(2);
+});
+
+test('a final invoice stands when QuickBooks cannot email it, and is emailed later from the job', function () {
+    [$project] = soldWithDepositInvoice();
+    $this->lead->contact?->forceFill(['email' => null])->save();
+    $this->lead->forceFill(['inquiry_email' => null])->save();
+
+    $final = app(MakeFinalInvoiceInQuickBooks::class)->handle($project, $this->manager);
+
+    expect($final->quickbooks_emailed_at)->toBeNull();
+
+    $this->lead->forceFill(['inquiry_email' => 'pat@example.test'])->save();
+
+    Livewire::actingAs($this->manager)->test('pages::projects.payments', ['project' => $project])
+        ->assertSeeHtml('data-test="email-invoice"')
+        ->call('emailInvoice', $final->id)
+        ->assertHasNoErrors()
+        ->assertDontSeeHtml('data-test="email-invoice"');
+
+    expect($final->refresh()->quickbooks_emailed_at)->not->toBeNull();
+});
+
+test('a job whose deposit invoice was recorded by hand keeps its final invoice by hand', function () {
+    $estimate = pricedEstimate();
+    app(SyncEstimateToQuickBooks::class)->handle($estimate, $this->sam);
+    $this->quickBooks['down'] = true;
+    signAtTheAppointment($estimate->refresh());
+    $this->quickBooks['down'] = false;
+
+    $project = Project::query()->where('lead_id', $this->lead->id)->sole();
+    app(RecordPayments::class)->recordInvoice($project, 'deposit', '1001', '176', now()->toDateString(), $this->manager);
+
+    Livewire::actingAs($this->manager)->test('pages::projects.payments', ['project' => $project])
+        ->assertDontSeeHtml('data-test="make-final-invoice"')
+        ->assertSeeHtml('data-test="record-final-invoice"');
+
+    expect(fn () => app(MakeFinalInvoiceInQuickBooks::class)->handle($project, $this->manager))->toThrow(QuickBooksUnavailable::class)
+        ->and($this->quickBooks['invoices'])->toBeEmpty();
+});
+
+test('voiding an invoice made in QuickBooks voids it there, and it is not voided here when QuickBooks cannot', function () {
+    [$project, $deposit] = soldWithDepositInvoice();
+    $this->quickBooks['down'] = true;
+
+    expect(fn () => app(RecordPayments::class)->voidInvoice($project, $deposit->id, 'Wrong amount', $this->manager))->toThrow(ValidationException::class)
+        ->and($deposit->refresh()->isVoided())->toBeFalse();
+
+    $this->quickBooks['down'] = false;
+
+    // Without a reason nothing is voided anywhere.
+    expect(fn () => app(RecordPayments::class)->voidInvoice($project, $deposit->id, '', $this->manager))->toThrow(ValidationException::class)
+        ->and($this->quickBooks['voided'])->toBeEmpty();
+
+    app(RecordPayments::class)->voidInvoice($project, $deposit->id, 'Wrong amount', $this->manager);
+
+    expect($this->quickBooks['voided'])->toBe([$deposit->quickbooks_invoice_id])
+        ->and($deposit->refresh()->isVoided())->toBeTrue();
+});
+
+test('a lost lead\'s QuickBooks estimates are marked rejected, not deleted, and pending again when the lead is taken back', function () {
+    $estimate = pricedEstimate();
+    $this->travelTo(now()->timezone(CallingHours::timezoneFor($this->farmington))->addDay()->setTime(15, 30));
+    $this->connection->forceFill(['access_token_expires_at' => now()->addHour()])->save();
+    runAppointment($this->lead->fresh(), $this->sam);
+    presentEstimate($estimate->refresh(), $this->sam);
+    app(SyncEstimateToQuickBooks::class)->handle($estimate->refresh(), $this->sam);
+    $quickBooksId = $estimate->options()->sole()->quickbooks_estimate_id;
+
+    $lost = ['lossReasonId' => SalesLossReason::query()->where('name', 'Price')->sole()->id, 'objectionId' => Objection::query()->where('name', 'Wants to think it over')->sole()->id];
+    app(MarkLeadLost::class)->handle($this->lead->fresh(), $lost, $this->sam);
+
+    expect($this->quickBooks['estimates'][$quickBooksId]['TxnStatus'])->toBe('Rejected')
+        ->and($this->quickBooks['deleted'])->toBeEmpty();
+
+    app(UndoLeadLost::class)->handle($this->lead->fresh(), 'They called back.', $this->manager);
+
+    expect($this->quickBooks['estimates'][$quickBooksId]['TxnStatus'])->toBe('Pending');
+
+    // QuickBooks not answering never stops a lead being marked lost.
+    $this->quickBooks['down'] = true;
+    app(MarkLeadLost::class)->handle($this->lead->fresh(), $lost, $this->sam);
+
+    expect($this->lead->fresh()->status)->toBe(LeadStatus::Lost);
+});
+
+test('a sale marked on the lead\'s card is settled in QuickBooks too', function () {
+    $estimate = pricedEstimate();
+    $this->travelTo(now()->timezone(CallingHours::timezoneFor($this->farmington))->addDay()->setTime(15, 30));
+    $this->connection->forceFill(['access_token_expires_at' => now()->addHour()])->save();
+    runAppointment($this->lead->fresh(), $this->sam);
+    $proposal = presentEstimate($estimate->refresh(), $this->sam);
+    app(SyncEstimateToQuickBooks::class)->handle($estimate->refresh(), $this->sam);
+    $option = $estimate->options()->sole();
+
+    app(RecordProposalResult::class)->handle($this->lead->fresh(), $proposal, 'sold', ['optionId' => $option->id], $this->sam);
+
+    $project = Project::query()->where('lead_id', $this->lead->id)->sole();
+
+    expect($this->quickBooks['estimates'][$option->quickbooks_estimate_id]['TxnStatus'])->toBe('Accepted')
+        ->and($project->invoices()->sole())->kind->toBe(ProjectInvoice::KIND_DEPOSIT)->amount_cents->toBe(17600)
+        ->and($this->quickBooks['emailed'])->toHaveCount(1);
 });
