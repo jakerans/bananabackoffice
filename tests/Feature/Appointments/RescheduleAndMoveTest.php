@@ -132,6 +132,11 @@ test('when someone else reschedules, the salesperson is told in the app and by e
         $text = implode(' ', [$mail->subject, $mail->greeting, ...$mail->introLines, ...$mail->outroLines, $mail->actionUrl]);
         $customer = $this->lead->account;
 
+        // Inside the app, where the salesperson is signed in, the notice says with whom (decision 234).
+        expect((new AppointmentChanged($this->lead->id, AppointmentChanged::RESCHEDULED, AppointmentChanged::IN_APP, $notice->appointment))->toArray($this->sam)['message'])
+            ->toStartWith('Your appointment with '.$customer->display_name)
+            ->toEndWith('was moved to Fri, Oct 9, 2026 at 11:00 AM EDT.');
+
         expect($notice->kind)->toBe(AppointmentChanged::RESCHEDULED);
         expect($text)->toContain('Fri, Oct 9, 2026 at 11:00 AM EDT');
         expect($text)->toContain(route('leads.show', $this->lead->id));
