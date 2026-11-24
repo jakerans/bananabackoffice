@@ -547,6 +547,7 @@ function handoffAnswers(array $with = []): array
         'conditionPrep' => 'Peeling on the south side.',
         'customerPriorities' => 'A tidy site each evening matters most to them.',
         'otherNotes' => '',
+        'companyCamUrl' => 'https://app.companycam.com/projects/4411',
         ...$with,
     ];
 }

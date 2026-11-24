@@ -595,6 +595,12 @@ new #[Title('Project')] class extends Component {
                             </div>
                         @endif
                     @endforeach
+                    @if ($handoff->company_cam_url !== null)
+                        <div>
+                            <dt class="text-sm text-zinc-500">{{ __('Company Cam') }}</dt>
+                            <dd><flux:link :href="$handoff->company_cam_url" target="_blank" rel="noopener noreferrer" data-test="project-handoff-company-cam">{{ __('Open this job in Company Cam') }}</flux:link></dd>
+                        </div>
+                    @endif
                 </dl>
 
                 <flux:text class="text-sm">

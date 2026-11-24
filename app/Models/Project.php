@@ -55,6 +55,8 @@ use LogicException;
  * @property int|null $cancelled_by
  * @property string|null $cancelled_by_name
  * @property string|null $cancellation_note
+ * @property array<string, string>|null $handoff_draft The handoff answers as typed so far, before the handoff is complete (slice 41).
+ * @property Carbon|null $handoff_draft_saved_at
  * @property Carbon|null $handoff_reminded_at When the salesperson was reminded to complete the handoff.
  * @property int|null $production_manager_id
  * @property string|null $production_manager_name
@@ -128,6 +130,8 @@ class Project extends Model implements HasPhotos
             'sold_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'handoff_reminded_at' => 'datetime',
+            'handoff_draft' => 'array',
+            'handoff_draft_saved_at' => 'datetime',
             'production_manager_assigned_at' => 'datetime',
             'welcome_call_on' => 'date',
             'welcome_call_recorded_at' => 'datetime',
