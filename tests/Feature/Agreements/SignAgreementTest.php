@@ -147,6 +147,10 @@ test('the salesperson takes the option chosen from the presentation to the agree
     $page = Livewire::actingAs($this->sam)->test('pages::leads.estimate-sign', ['lead' => $this->lead, 'estimate' => $this->estimate, 'option' => $this->frontOnly])
         ->assertSeeInOrder(['Customer agreement', $this->lead->displayName(), 'Front only', '$3,200', 'Deposit due on acceptance: $1,600', '1. SCOPE OF WORK', 'Sign to accept'])
         ->assertSeeHtml('data-test="signature-pad"')
+        // Agreeing is at the top of the terms too, and goes straight down to the signature (slice 40).
+        ->assertSeeInOrder(['I have read and agree to the terms below', '1. SCOPE OF WORK', 'Sign to accept'])
+        ->assertSeeHtml('data-test="agree-and-sign"')
+        ->assertSeeHtml('id="sign-to-accept"')
         ->call('sign', drawnSignature())
         ->assertSee('The customer types their full name.')
         ->set('signerName', 'Pat Customer')

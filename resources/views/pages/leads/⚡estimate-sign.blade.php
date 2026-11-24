@@ -197,13 +197,28 @@ new #[Title('Customer agreement')] #[Layout('layouts::presentation')] class exte
 
         <x-agreement.summary :details="$this->details" />
 
+        {{-- Agreeing is at the top too, and goes straight to the signature (slice 40; the first walkthrough). --}}
+        @if ($this->wording !== null && $this->unavailable === null)
+            <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-card p-4 sm:px-8" data-test="agree-at-top">
+                <flux:text class="min-w-56 flex-1">{{ __('The terms are below, to read in full. When you are ready:') }}</flux:text>
+                <flux:button
+                    type="button"
+                    variant="primary"
+                    icon:trailing="arrow-down"
+                    x-on:click="$wire.agreed = true; document.getElementById('sign-to-accept').scrollIntoView({ behavior: 'smooth' })"
+                    data-test="agree-and-sign"
+                >{{ __('I have read and agree to the terms below') }}</flux:button>
+            </div>
+        @endif
+
         @if ($this->wording !== null)
             <x-agreement.wording :wording="$this->wording" class="rounded-2xl border border-zinc-200 bg-card p-6 sm:p-8" />
         @endif
 
         @if ($this->unavailable === null)
             <section
-                class="flex flex-col gap-5 rounded-2xl border border-zinc-200 bg-card p-6 sm:p-8"
+                id="sign-to-accept"
+                class="flex scroll-mt-6 flex-col gap-5 rounded-2xl border border-zinc-200 bg-card p-6 sm:p-8"
                 data-test="signing"
                 x-data="{
                     lines: [],

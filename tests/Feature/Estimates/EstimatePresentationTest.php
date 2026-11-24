@@ -21,6 +21,7 @@ use App\Models\RateCategory;
 use App\Models\TaxRate;
 use App\Models\User;
 use App\Support\Money;
+use App\Support\Pricing\EstimatePricing;
 
 /*
  * The presentation, step 31d (docs/slice-31-estimating-plan.md; decision
@@ -85,7 +86,32 @@ test('the homeowner sees each option, largest first, with what it covers and its
 test('without discounts or tax, the price stands alone', function () {
     $this->actingAs($this->sam)->get(route('leads.estimate.present', [$this->lead, $this->estimate]))->assertOk()
         ->assertDontSee(' off')
-        ->assertDontSee('Tax included');
+        ->assertDontSee('Tax included')
+        // Nothing comes between the rooms and the price, so there is nothing to add up.
+        ->assertDontSee('Rooms and details');
+});
+
+test('each room and each detail shows its own price, and how they come to the option\'s price', function () {
+    app(ChangeEstimateDiscounts::class)->handle($this->estimate, [$this->checkDiscount->id], $this->cityTax->id, $this->sam);
+    $large = $this->large->fresh();
+    $priced = app(EstimatePricing::class)->price($this->estimate->fresh(), $large);
+    $bedroom = Money::format($priced->areas[0]->totalCents());
+    $hallway = Money::format($priced->areas[1]->totalCents());
+
+    expect($priced->areas[0]->totalCents())->toBeGreaterThan($priced->areas[1]->totalCents())
+        ->and($priced->areas[0]->totalCents() + $priced->areas[1]->totalCents() + $priced->lineItems[0]->priceCents)->toBe($priced->subtotalCents);
+
+    $this->actingAs($this->sam)->get(route('leads.estimate.present', [$this->lead, $this->estimate]))->assertOk()
+        ->assertSeeInOrder([
+            'Bedroom and hallway',
+            'Main bedroom', $bedroom,
+            'Upstairs hallway', $hallway,
+            'Preparation', Money::format($priced->lineItems[0]->priceCents),
+            'Rooms and details', Money::format($priced->subtotalCents),
+            'Sample check savings', Money::format($priced->discountCents),
+            'Tax', Money::format($priced->taxCents),
+            'Price', Money::format($priced->totalCents),
+        ]);
 });
 
 test('opening the presentation counts nothing and records nothing', function () {

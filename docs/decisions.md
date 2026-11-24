@@ -4745,6 +4745,24 @@ while building.
 
 The detail: [slice-39-production-from-estimate-plan.md](slice-39-production-from-estimate-plan.md).
 
+## 238. Slice 40 as built: the estimate and its presentation (2026-11-23)
+
+**Decided by Jacob:** the batch of decision 234; "yes prices per area"
+(decision 235). The choices below were made while building.
+
+1. **The presentation shows each room's price and each line item's,** and
+   how they come to the option's price when a discount or tax is between
+   them. It still shows no rates, paint, hours or hourly rate.
+2. **Work is added to several rooms at once, and removed from every room at
+   once,** on the estimate.
+3. **"I have read and agree to the terms below" is at the top of the
+   terms,** ticks the agreement and goes down to the signature. The tick by
+   the signature stays, and is still needed.
+4. **Closets are not a thing of their own:** to settle with Jacob how they
+   are priced.
+
+The detail: [slice-40-estimate-and-presentation-plan.md](slice-40-estimate-and-presentation-plan.md).
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

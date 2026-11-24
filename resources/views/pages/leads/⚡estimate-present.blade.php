@@ -171,12 +171,16 @@ new #[Title('Your estimate')] #[Layout('layouts::presentation')] class extends C
                     </div>
                 </div>
 
+                {{-- Each room with its price (slice 40; decision 235). Never the rates, the paint or the hours. --}}
                 @if ($option->areas->isNotEmpty())
-                    <div class="flex flex-col gap-2">
+                    <div class="flex flex-col gap-2" data-test="areas-{{ $option->id }}">
                         <flux:heading level="3">{{ __('Rooms and areas') }}</flux:heading>
-                        <ul class="flex flex-wrap gap-2">
-                            @foreach ($option->areas as $area)
-                                <li wire:key="area-{{ $area->id }}" class="rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-800">{{ $area->name }}</li>
+                        <ul class="flex flex-col divide-y divide-zinc-200">
+                            @foreach ($option->areas as $index => $area)
+                                <li wire:key="area-{{ $area->id }}" class="flex items-start justify-between gap-4 py-2 first:pt-0 last:pb-0" data-test="area-{{ $area->id }}">
+                                    <span class="min-w-0 font-medium text-ink">{{ $area->name }}</span>
+                                    <span class="shrink-0 font-medium tabular-nums text-ink" data-test="area-price-{{ $area->id }}">{{ Money::format($priced->areas[$index]->totalCents()) }}</span>
+                                </li>
                             @endforeach
                         </ul>
                     </div>
@@ -186,16 +190,38 @@ new #[Title('Your estimate')] #[Layout('layouts::presentation')] class extends C
                     <div class="flex flex-col gap-3">
                         <flux:heading level="3">{{ __('Details') }}</flux:heading>
                         <ul class="flex flex-col gap-3">
-                            @foreach ($option->lineItems as $item)
-                                <li wire:key="line-item-{{ $item->id }}">
-                                    <span class="font-medium text-ink">{{ $item->name }}</span>
-                                    @if ($item->description)
-                                        <flux:text class="mt-0.5 whitespace-pre-line">{{ $item->description }}</flux:text>
-                                    @endif
+                            @foreach ($option->lineItems as $index => $item)
+                                <li wire:key="line-item-{{ $item->id }}" class="flex items-start justify-between gap-4">
+                                    <div class="min-w-0">
+                                        <span class="font-medium text-ink">{{ $item->name }}</span>
+                                        @if ($item->description)
+                                            <flux:text class="mt-0.5 whitespace-pre-line">{{ $item->description }}</flux:text>
+                                        @endif
+                                    </div>
+                                    <span class="shrink-0 text-end font-medium tabular-nums text-ink" data-test="line-item-price-{{ $item->id }}">
+                                        {{ Money::format($priced->lineItems[$index]->priceCents) }}
+                                        @if (! $priced->lineItems[$index]->isCounted)
+                                            <span class="block text-sm font-normal text-zinc-600">{{ __('Optional, not in the price') }}</span>
+                                        @endif
+                                    </span>
                                 </li>
                             @endforeach
                         </ul>
                     </div>
+                @endif
+
+                {{-- How the rooms add up to the price, when a discount or tax comes between them. --}}
+                @if ($priced->discountCents > 0 || $priced->taxCents > 0)
+                    <dl class="grid grid-cols-[1fr_auto] gap-x-6 gap-y-1 border-t border-zinc-200 pt-4 text-sm" data-test="sums-{{ $option->id }}">
+                        <dt class="text-zinc-600">{{ __('Rooms and details') }}</dt><dd class="text-end tabular-nums">{{ Money::format($priced->subtotalCents) }}</dd>
+                        @foreach (array_filter($priced->discounts, fn (array $discount): bool => $discount['cents'] > 0) as $discount)
+                            <dt class="text-wall-teal">{{ $discount['discount']->name }}</dt><dd class="text-end tabular-nums text-wall-teal">&minus;{{ Money::format($discount['cents']) }}</dd>
+                        @endforeach
+                        @if ($priced->taxCents > 0)
+                            <dt class="text-zinc-600">{{ __('Tax') }}</dt><dd class="text-end tabular-nums">{{ Money::format($priced->taxCents) }}</dd>
+                        @endif
+                        <dt class="font-medium text-ink">{{ __('Price') }}</dt><dd class="text-end font-semibold tabular-nums text-ink">{{ Money::format($priced->totalCents) }}</dd>
+                    </dl>
                 @endif
             </section>
         @endforeach
