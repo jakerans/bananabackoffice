@@ -69,7 +69,7 @@
                                     @if ($details['tax_cents'] > 0)
                                         <p style="{{ $small }}">{{ __('Tax included') }}</p>
                                     @endif
-                                    <p style="margin:12px 0 0;padding:12px;background:#f4f4f5;border-radius:8px;font-size:15px;color:#18181b;">{{ __('Deposit due on acceptance: :amount (:percent% of the price).', ['amount' => $deposit, 'percent' => $details['deposit_percent']]) }}</p>
+                                    <p style="margin:12px 0 0;padding:12px;background:#f4f4f5;border-radius:8px;font-size:15px;color:#18181b;">{{ \App\Support\Agreements\AgreementDetails::depositLine($details) }}</p>
                                 </td>
                             </tr>
                         </table>

@@ -77,6 +77,7 @@ enum AuditAction: string
     case LeadEstimateDiscountsChanged = 'lead.estimate_discounts_changed';
     case LeadEstimateRepriced = 'lead.estimate_repriced';
     case LeadEstimateTaxFromQuickbooks = 'lead.estimate_tax_from_quickbooks';
+    case LeadEstimateDepositChanged = 'lead.estimate_deposit_changed';
     case LeadMarkedLost = 'lead.marked_lost';
     case LeadLostUndone = 'lead.lost_undone';
     case ProjectCreated = 'project.created';

@@ -67,6 +67,6 @@
     @endif
 
     <div class="rounded-xl bg-zinc-100 px-4 py-3 text-base text-ink" data-test="agreement-deposit">
-        {{ __('Deposit due on acceptance: :amount (:percent% of the price).', ['amount' => $money($details['deposit_cents']), 'percent' => $details['deposit_percent']]) }}
+        {{ \App\Support\Agreements\AgreementDetails::depositLine($details) }}
     </div>
 </section>

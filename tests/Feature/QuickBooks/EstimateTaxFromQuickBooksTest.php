@@ -1,15 +1,19 @@
 <?php
 
+use App\Actions\Agreements\SignAgreement;
+use App\Actions\Estimates\ChangeEstimateDeposit;
 use App\Actions\Estimates\ChangeEstimateDiscounts;
 use App\Actions\Estimates\RepriceEstimate;
 use App\Actions\Estimates\SaveEstimateArea;
 use App\Actions\Estimates\SaveEstimateOption;
 use App\Actions\Estimates\SaveEstimateSurface;
 use App\Actions\Estimates\StartEstimate;
+use App\Actions\QuickBooks\FinalizeSaleInQuickBooks;
 use App\Actions\QuickBooks\SyncEstimateToQuickBooks;
 use App\Enums\AuditAction;
 use App\Enums\EstimateType;
 use App\Enums\Role;
+use App\Models\Agreement;
 use App\Models\AgreementWording;
 use App\Models\AuditEvent;
 use App\Models\Estimate;
@@ -17,14 +21,20 @@ use App\Models\Location;
 use App\Models\PaintProduct;
 use App\Models\PriceBook;
 use App\Models\ProductionRate;
+use App\Models\Project;
+use App\Models\ProjectInvoice;
 use App\Models\QuickBooksConnection;
 use App\Models\RateCategory;
 use App\Models\TaxRate;
 use App\Models\User;
+use App\Support\Agreements\AgreementDetails;
+use App\Support\Projects\Payments;
+use App\Support\Queue\CallingHours;
 use App\Support\QuickBooks\QuickBooksUnavailable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
 /*
@@ -78,7 +88,7 @@ beforeEach(function () {
  */
 function fakeQuickBooksCompany(): ArrayObject
 {
-    $company = new ArrayObject(['estimates' => [], 'customers' => [], 'deleted' => [], 'down' => false, 'next' => 100, 'requests' => 0, 'existingEmail' => null]);
+    $company = new ArrayObject(['estimates' => [], 'customers' => [], 'deleted' => [], 'down' => false, 'next' => 100, 'requests' => 0, 'existingEmail' => null, 'invoices' => [], 'emailed' => [], 'added' => [], 'hasDepositItem' => true]);
 
     Http::preventStrayRequests();
     Http::fake(['sandbox-quickbooks.api.intuit.com/*' => function (Request $request) use ($company) {
@@ -94,6 +104,7 @@ function fakeQuickBooksCompany(): ArrayObject
         if (str_ends_with($path, '/query')) {
             return match (true) {
                 str_contains($query['query'], 'from Item') => Http::response(['QueryResponse' => ['Item' => [
+                    ...($company['hasDepositItem'] ? [['Id' => '5', 'Name' => 'Deposit for Painting', 'Type' => 'Service', 'Taxable' => false]] : []),
                     ['Id' => '1', 'Name' => 'Services', 'Type' => 'Service', 'Taxable' => false],
                     ['Id' => '4', 'Name' => 'Change orders', 'Type' => 'Service', 'Taxable' => true],
                     ['Id' => '3', 'Name' => 'Painting services', 'Type' => 'Service', 'Taxable' => true],
@@ -108,6 +119,27 @@ function fakeQuickBooksCompany(): ArrayObject
             $company['customers'][$id] = $request->data();
 
             return Http::response(['Customer' => ['Id' => $id, ...$request->data()]]);
+        }
+
+        if (preg_match('#/(invoice|estimate)/(\d+)/send$#', $path, $found) === 1) {
+            $company['emailed'][] = [$found[1], $found[2], $query['sendTo'] ?? null];
+
+            return Http::response([ucfirst($found[1]) => ['Id' => $found[2], 'EmailStatus' => 'EmailSent']]);
+        }
+
+        if (str_ends_with($path, '/invoice')) {
+            $id = (string) $company['next']++;
+            $company['invoices'][$id] = [...$request->data(), 'Id' => $id, 'DocNumber' => '10'.$id, 'TotalAmt' => collect($request['Line'])->sum('Amount')];
+
+            return Http::response(['Invoice' => $company['invoices'][$id]]);
+        }
+
+        if (str_ends_with($path, '/account') || str_ends_with($path, '/item')) {
+            $kind = str_ends_with($path, '/account') ? 'Account' : 'Item';
+            $id = (string) $company['next']++;
+            $company['added'][] = [$kind, $request['Name']];
+
+            return Http::response([$kind => ['Id' => $id, ...$request->data()]]);
         }
 
         if (preg_match('#/estimate/(\d+)$#', $path, $found) === 1) {
@@ -125,8 +157,10 @@ function fakeQuickBooksCompany(): ArrayObject
 
         if (str_ends_with($path, '/estimate')) {
             $id = (string) ($request['Id'] ?? $company['next']++);
-            $taxable = collect($request['Line'])->where('SalesItemLineDetail.TaxCodeRef.value', 'TAX')->sum('Amount');
-            $net = collect($request['Line'])->sum('Amount');
+            // A change of status alone keeps the lines QuickBooks already has.
+            $data = ['TxnStatus' => 'Pending', ...($company['estimates'][$id] ?? []), ...$request->data()];
+            $taxable = collect($data['Line'])->where('SalesItemLineDetail.TaxCodeRef.value', 'TAX')->sum('Amount');
+            $net = collect($data['Line'])->sum('Amount');
             $parts = array_map(fn (float $percent): array => [
                 'Amount' => round($taxable * $percent / 100, 2),
                 'DetailType' => 'TaxLineDetail',
@@ -135,8 +169,7 @@ function fakeQuickBooksCompany(): ArrayObject
             $tax = array_sum(array_column($parts, 'Amount'));
 
             $company['estimates'][$id] = [
-                ...($company['estimates'][$id] ?? []),
-                ...$request->data(),
+                ...$data,
                 'Id' => $id,
                 'SyncToken' => (string) ((int) ($company['estimates'][$id]['SyncToken'] ?? -1) + 1),
                 'TotalAmt' => round($net + $tax, 2),
@@ -344,4 +377,167 @@ test('before signing, QuickBooks sees the estimate as it is now, and signing wai
         ->assertNoRedirect();
 
     expect($this->lead->refresh()->agreements()->count())->toBe(0);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Step 38c: the deposit, and the sale settled in QuickBooks
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * The customer signs for the estimate's first option, at the appointment.
+ */
+function signAtTheAppointment(Estimate $estimate): Agreement
+{
+    AgreementWording::factory()->create();
+    test()->travelTo(now()->timezone(CallingHours::timezoneFor(test()->farmington))->addDay()->setTime(15, 30));
+    // A day on, the connection's key is renewed in real use; here it is simply still good.
+    test()->connection->forceFill(['access_token_expires_at' => now()->addHour()])->save();
+
+    return app(SignAgreement::class)->handle(
+        test()->lead->fresh(),
+        $estimate,
+        $estimate->options()->firstOrFail(),
+        'Pat Painter',
+        true,
+        [array_map(fn (int $step): array => [round(0.1 + $step * 0.05, 2), round(0.5 + ($step % 2) * 0.1, 2)], range(0, 9)), [[0.7, 0.4], [0.8, 0.6]]],
+        test()->sam,
+    );
+}
+
+test('the salesperson chooses another percent, a flat deposit or none, on the price before tax', function () {
+    $estimate = pricedEstimate();
+    app(SyncEstimateToQuickBooks::class)->handle($estimate, $this->sam);
+    $estimate->refresh();
+    $option = $estimate->options()->sole();
+    $details = fn (): array => app(AgreementDetails::class)->for($this->lead, $estimate->refresh(), $option->refresh(), null);
+
+    // The Location's 50% of $352, not of the $380.82 with tax.
+    expect($details())->toMatchArray(['total_cents' => 38082, 'price_before_tax_cents' => 35200, 'deposit_cents' => 17600, 'deposit_percent' => 50])
+        ->and(AgreementDetails::depositLine($details()))->toBe('Deposit due on acceptance: $176 (50% of the price before tax).');
+
+    $change = app(ChangeEstimateDeposit::class);
+
+    $change->handle($estimate, 'percent', '30', $this->sam);
+    expect($details())->toMatchArray(['deposit_cents' => 10560, 'deposit_percent' => 30]);
+
+    $change->handle($estimate, 'flat', '100', $this->sam);
+    expect($details())->toMatchArray(['deposit_cents' => 10000, 'deposit_percent' => null])
+        ->and(AgreementDetails::depositLine($details()))->toBe('Deposit due on acceptance: $100.');
+
+    $change->handle($estimate, 'none', null, $this->sam);
+    expect($details())->toMatchArray(['deposit_cents' => 0])
+        ->and(AgreementDetails::depositLine($details()))->toBe('No deposit is due on acceptance.');
+
+    $change->handle($estimate, 'policy', null, $this->sam);
+    expect($estimate->refresh()->depositIsChosen())->toBeFalse()
+        ->and(AuditEvent::query()->where('action', AuditAction::LeadEstimateDepositChanged)->count())->toBe(4)
+        ->and(fn () => $change->handle($estimate, 'percent', '0', $this->sam))->toThrow(ValidationException::class)
+        ->and(fn () => $change->handle($estimate, 'flat', 'lots', $this->sam))->toThrow(ValidationException::class)
+        ->and(fn () => $change->handle($estimate, 'percent', '30', $this->riley))->toThrow(AuthorizationException::class);
+});
+
+test('the deposit form on the estimate warns that a small deposit pays no commission advance', function () {
+    $estimate = pricedEstimate();
+
+    Livewire::actingAs($this->sam)->test('pages::leads.estimate', ['lead' => $this->lead, 'estimate' => $estimate])
+        ->assertSeeHtml('data-test="estimate-deposit"')
+        ->assertDontSeeHtml('data-test="deposit-no-advance"')
+        ->set('depositKind', 'percent')
+        ->set('depositValue', '20')
+        ->call('saveDeposit')
+        ->assertHasNoErrors()
+        ->assertSeeHtml('data-test="deposit-no-advance"')
+        ->set('depositValue', 'half')
+        ->call('saveDeposit')
+        ->assertHasErrors('depositValue');
+
+    expect($estimate->refresh()->deposit_percent)->toBe(20);
+});
+
+test('signing sells the price before tax, accepts the chosen option in QuickBooks, removes the other, and QuickBooks emails a deposit invoice with no tax', function () {
+    $estimate = pricedEstimate();
+    $other = app(SaveEstimateOption::class)->copy($estimate, $estimate->options()->sole(), $this->sam);
+    app(ChangeEstimateDeposit::class)->handle($estimate->refresh(), 'percent', '30', $this->sam);
+    app(SyncEstimateToQuickBooks::class)->handle($estimate->refresh(), $this->sam);
+    $chosen = $estimate->options()->firstOrFail();
+    $otherQuickBooksId = $other->refresh()->quickbooks_estimate_id;
+
+    $agreement = signAtTheAppointment($estimate->refresh());
+
+    $project = Project::query()->where('lead_id', $this->lead->id)->sole();
+    $invoice = $project->invoices()->sole();
+    $kept = collect($this->quickBooks['invoices'])->sole();
+
+    // Sold for $352, the price before tax; the customer signed for $380.82 with it.
+    expect($project->sold_cents)->toBe(35200)
+        ->and($agreement->total_cents)->toBe(38082)
+        ->and($agreement->deposit_cents)->toBe(10560)
+        ->and(Payments::for($project)->requiredDepositCents())->toBe(10560)
+        ->and($this->quickBooks['estimates'][$chosen->quickbooks_estimate_id]['TxnStatus'])->toBe('Accepted')
+        ->and($this->quickBooks['deleted'])->toBe([$otherQuickBooksId])
+        ->and($other->refresh()->quickbooks_estimate_id)->toBeNull()
+        // The deposit invoice: $105.60 on the company's own deposit item, not taxed, payable online.
+        ->and($kept['Line'][0]['Amount'])->toEqual(105.6)
+        ->and($kept['Line'][0]['SalesItemLineDetail'])->toMatchArray(['ItemRef' => ['value' => '5'], 'TaxCodeRef' => ['value' => 'NON']])
+        ->and($kept)->toMatchArray(['AllowOnlineCreditCardPayment' => true, 'AllowOnlineACHPayment' => true, 'CustomerRef' => ['value' => '100']])
+        ->and($this->quickBooks['emailed'])->toBe([['invoice', $kept['Id'], 'pat@example.test']])
+        ->and($this->quickBooks['added'])->toBeEmpty()
+        ->and($invoice)->kind->toBe(ProjectInvoice::KIND_DEPOSIT)->number->toBe($kept['DocNumber'])->amount_cents->toBe(10560)->quickbooks_invoice_id->toBe($kept['Id'])
+        ->and($invoice->quickbooks_emailed_at)->not->toBeNull()
+        ->and($this->connection->refresh()->deposit_item_name)->toBe('Deposit for Painting');
+
+    // Asked again, nothing is made or sent twice.
+    app(FinalizeSaleInQuickBooks::class)->handle($project, $this->manager);
+
+    expect($this->quickBooks['invoices'])->toHaveCount(1)
+        ->and($this->quickBooks['emailed'])->toHaveCount(1);
+});
+
+test('a sale stands when QuickBooks does not answer, and the deposit invoice is sent later from the Project', function () {
+    $estimate = pricedEstimate();
+    app(SyncEstimateToQuickBooks::class)->handle($estimate, $this->sam);
+    $this->quickBooks['hasDepositItem'] = false;
+    $this->quickBooks['down'] = true;
+
+    // Nothing changed since QuickBooks last saw it, so signing does not wait for it.
+    signAtTheAppointment($estimate->refresh());
+
+    $project = Project::query()->where('lead_id', $this->lead->id)->sole();
+
+    expect($project->invoices()->count())->toBe(0);
+
+    $page = Livewire::actingAs($this->manager)->test('pages::projects.payments', ['project' => $project])
+        ->assertSeeHtml('data-test="quickbooks-deposit"')
+        ->call('sendDepositInvoice')
+        ->assertHasErrors('quickBooksDeposit');
+
+    $this->quickBooks['down'] = false;
+
+    $page->call('sendDepositInvoice')
+        ->assertHasNoErrors()
+        ->assertDontSeeHtml('data-test="quickbooks-deposit"');
+
+    // A company with no deposit item gets one, on a liability account, so a deposit is not income.
+    expect($project->invoices()->sole()->amount_cents)->toBe(17600)
+        ->and($this->quickBooks['added'])->toBe([['Account', 'Customer Deposits'], ['Item', 'Customer deposit']])
+        ->and($this->quickBooks['emailed'])->toHaveCount(1);
+
+    // The salesperson does not record payments, so may not ask for it there.
+    expect(fn () => app(FinalizeSaleInQuickBooks::class)->handle($project, $this->sam))->toThrow(AuthorizationException::class);
+});
+
+test('no deposit invoice is made when the deposit is waived', function () {
+    $estimate = pricedEstimate();
+    app(ChangeEstimateDeposit::class)->handle($estimate, 'none', null, $this->sam);
+    app(SyncEstimateToQuickBooks::class)->handle($estimate->refresh(), $this->sam);
+
+    signAtTheAppointment($estimate->refresh());
+
+    $project = Project::query()->where('lead_id', $this->lead->id)->sole();
+
+    expect($this->quickBooks['invoices'])->toBeEmpty()
+        ->and(Payments::for($project)->requiredDepositCents())->toBe(0)
+        ->and(Payments::for($project)->depositEarnsAdvance())->toBeFalse();
 });

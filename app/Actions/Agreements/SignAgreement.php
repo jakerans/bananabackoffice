@@ -8,6 +8,7 @@ use App\Actions\Leads\ChangeLeadLifecycle;
 use App\Actions\Proposals\PresentEstimate;
 use App\Actions\Proposals\PresentProposalAgain;
 use App\Actions\Proposals\RecordProposalResult;
+use App\Actions\QuickBooks\FinalizeSaleInQuickBooks;
 use App\Enums\AppointmentState;
 use App\Enums\AuditAction;
 use App\Enums\ProposalResult;
@@ -17,6 +18,7 @@ use App\Models\Appointment;
 use App\Models\Estimate;
 use App\Models\EstimateOption;
 use App\Models\Lead;
+use App\Models\Project;
 use App\Models\Proposal;
 use App\Models\User;
 use App\Support\Agreements\AgreementDetails;
@@ -62,6 +64,7 @@ class SignAgreement
         private RecordAuditEvent $recordAuditEvent,
         private AgreementDetails $agreementDetails,
         private EmailAgreementCopy $emailAgreementCopy,
+        private FinalizeSaleInQuickBooks $finalizeSaleInQuickBooks,
     ) {}
 
     /**
@@ -192,6 +195,13 @@ class SignAgreement
         }, retryWhenBusy: true);
 
         $this->emailAgreementCopy->afterSigning($agreement, $actor);
+
+        // The chosen option is accepted in QuickBooks and its deposit invoiced there (slice 38, step 38c).
+        $project = Project::query()->with(['location', 'proposal', 'lead', 'contact'])->where('proposal_id', $agreement->proposal_id)->first();
+
+        if ($project !== null) {
+            $this->finalizeSaleInQuickBooks->afterSale($project, $actor);
+        }
 
         return $agreement;
     }

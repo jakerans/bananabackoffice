@@ -121,7 +121,7 @@ test('the signed agreement shows what was signed, the wording and the signature,
     AgreementWording::factory()->create(['title' => 'A NEWER AGREEMENT']);
 
     $this->actingAs($this->sam)->get(route('leads.agreement', [$this->lead, $agreement]))->assertOk()
-        ->assertSeeInOrder(['CUSTOMER AGREEMENT', 'Signed by Pat Customer on Oct 8, 2026 at 3:30 PM EDT. Presented by Sam Sales.', 'Front only', '$3,200', 'Deposit due on acceptance: $1,600 (50% of the price).', '1. SCOPE OF WORK', 'Accepted and signed'])
+        ->assertSeeInOrder(['CUSTOMER AGREEMENT', 'Signed by Pat Customer on Oct 8, 2026 at 3:30 PM EDT. Presented by Sam Sales.', 'Front only', '$3,200', 'Deposit due on acceptance: $1,600 (50% of the price before tax).', '1. SCOPE OF WORK', 'Accepted and signed'])
         ->assertSee('d="M60.0 100.0 L90.0 120.0', false)
         ->assertSee('version 1 of the wording')
         ->assertDontSee('A NEWER AGREEMENT')

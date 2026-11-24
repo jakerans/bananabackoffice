@@ -1,12 +1,14 @@
 <?php
 
 use App\Actions\Projects\RecordPayments;
+use App\Actions\QuickBooks\FinalizeSaleInQuickBooks;
 use App\Models\Project;
 use App\Models\ProjectInvoice;
 use App\Models\ProjectPayment;
 use App\Support\Money;
 use App\Support\Projects\Payments;
 use App\Support\Projects\RoughTimeframe;
+use App\Support\QuickBooks\QuickBooksUnavailable;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -203,6 +205,42 @@ new class extends Component {
         $this->done('project-invoice', __('Invoice recorded.'));
     }
 
+    /**
+     * Whether the deposit invoice can be made and emailed by QuickBooks from here (slice 38, step 38c).
+     */
+    #[Computed]
+    public function quickBooksDeposit(): bool
+    {
+        $deposit = $this->standing->deposit();
+
+        return Gate::allows('recordPayments', $this->project)
+            && FinalizeSaleInQuickBooks::isAvailableFor($this->project)
+            && ($deposit === null ? $this->standing->requiredDepositCents() > 0 : ($deposit->quickbooks_invoice_id !== null && $deposit->quickbooks_emailed_at === null));
+    }
+
+    /**
+     * Have QuickBooks make the deposit invoice, if it is not made yet, and email it to the customer.
+     */
+    public function sendDepositInvoice(FinalizeSaleInQuickBooks $finalizeSaleInQuickBooks): void
+    {
+        $this->resetValidation();
+
+        try {
+            $invoice = $finalizeSaleInQuickBooks->handle($this->project, Auth::user());
+        } catch (QuickBooksUnavailable $unavailable) {
+            $this->addError('quickBooksDeposit', $unavailable->getMessage());
+
+            return;
+        }
+
+        unset($this->project, $this->standing, $this->invoices, $this->quickBooksDeposit);
+        $this->dispatch('project-payments-changed');
+
+        Flux::toast(variant: 'success', text: $invoice?->quickbooks_emailed_at !== null
+            ? __('QuickBooks emailed deposit invoice :number to the customer.', ['number' => $invoice->number])
+            : __('The deposit invoice is in QuickBooks. The customer has no email address to send it to.'));
+    }
+
     public function openVoid(int $invoiceId): void
     {
         $this->authorize('recordPayments', $this->project);
@@ -339,7 +377,7 @@ new class extends Component {
                 @elseif ($change->required_cents === 0)
                     {{ __('No deposit: waived by :name.', ['name' => $change->set_by_name ?? __('Unknown')]) }}
                 @else
-                    {{ __('Deposit asked for: :amount, lowered from :policy by :name.', ['amount' => $change->amount(), 'policy' => Money::format($standing->policyDepositCents()), 'name' => $change->set_by_name ?? __('Unknown')]) }}
+                    {{ $change->required_cents < $standing->policyDepositCents() ? __('Deposit asked for: :amount, lowered from :policy by :name.', ['amount' => $change->amount(), 'policy' => Money::format($standing->policyDepositCents()), 'name' => $change->set_by_name ?? __('Unknown')]) : __('Deposit asked for: :amount, set by :name.', ['amount' => $change->amount(), 'name' => $change->set_by_name ?? __('Unknown')]) }}
                 @endif
             </span>
             @if ($change !== null)
@@ -357,6 +395,16 @@ new class extends Component {
             <flux:button size="sm" variant="ghost" wire:click="openDeposit" data-test="change-deposit">{{ __('Change the deposit') }}</flux:button>
         @endif
     </div>
+
+    @if ($this->quickBooksDeposit)
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3" data-test="quickbooks-deposit">
+            <div class="min-w-56 flex-1 text-sm text-ink">
+                {{ $standing->deposit() === null ? __('The deposit invoice has not been made yet. QuickBooks makes it, with no tax on it, and emails it to the customer to pay online.') : __('The deposit invoice is in QuickBooks but has not been emailed to the customer.') }}
+                <flux:error name="quickBooksDeposit" />
+            </div>
+            <flux:button size="sm" variant="primary" icon="paper-airplane" wire:click="sendDepositInvoice" data-test="send-deposit-invoice">{{ __('Send the deposit invoice') }}</flux:button>
+        </div>
+    @endif
 
     <dl class="grid grid-cols-3 gap-3" data-test="payment-totals">
         <div>

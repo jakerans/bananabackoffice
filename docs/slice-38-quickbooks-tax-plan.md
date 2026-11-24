@@ -1,7 +1,7 @@
 # Slice 38: Estimates, tax and payment through QuickBooks (plan, not approved)
 
 **Status:** approved 2026-11-12 with every recommendation (decision 230).
-38a is complete and 38b is built; 38c and 38d are next.
+38a is complete; 38b and 38c are built; 38d is next.
 
 ## Why
 
@@ -196,6 +196,44 @@ Known limits: QuickBooks rounds each part of the tax by itself, so its own
 figure can differ from Backoffice's by a cent; the final invoice (38d) is
 QuickBooks' figure. Which item the work is priced on is chosen by itself,
 not yet in Settings > Integrations.
+
+## Step 38c as built (2026-11-23)
+
+- **The deposit is chosen on the estimate,** by whoever builds it, its
+  salesperson included: the Location's percent, another percent, a flat
+  amount, or none. It is worked out on the **price before tax**, so it
+  carries no tax. The agreement the customer signs says it that way. Once
+  sold, it is the deposit the Project asks for.
+- **A sale is recorded at its price before tax.** *Found while building:*
+  an estimate sold with tax on it was being recorded at the price with tax,
+  so the job's revenue, the commission projected on it and the deposit all
+  included the tax. From now on the Project's sold price is before tax; the
+  agreement still shows the customer the total with tax. Sales already
+  recorded are not changed.
+- **The commission advance** (decision 235) is paid when the deposit asked
+  for is at least 25% of the sold price and is collected in full. A waived
+  deposit, or one under 25%, pays none; the estimate says so before it is
+  saved. Before, any deposit under the Location's policy paid none.
+- **At signing, in QuickBooks:** the chosen option's estimate is marked
+  accepted, the other options' estimates are deleted, and a **deposit
+  invoice** is made on the company's own non-taxable deposit item ("Deposit
+  for Painting" in Four Corners'; where a company has none, a "Customer
+  deposit" item on a "Customer Deposits" liability account is added),
+  payable online by card or bank transfer, and **emailed to the customer by
+  QuickBooks**. It is recorded on the Project as its deposit invoice, with
+  QuickBooks' number. Nobody signs in to QuickBooks.
+- **QuickBooks not answering never undoes a sale.** What was not done is
+  done from the Project's Payments, **Send the deposit invoice**, by whoever
+  records its payments; asked twice, nothing is made or sent twice.
+- Code: `App\Actions\QuickBooks\FinalizeSaleInQuickBooks`,
+  `App\Actions\Estimates\ChangeEstimateDeposit`; tests in
+  `tests/Feature/QuickBooks/EstimateTaxFromQuickBooksTest.php` and
+  `tests/Feature/Compensation/CommissionTest.php`.
+
+Left for 38d: a lost lead's QuickBooks estimates marked rejected; payments
+read back from QuickBooks and payments taken another way sent to it; the
+final invoice. A sale marked on the Lead's Estimates card, not signed on the
+tablet, is settled in QuickBooks from the Project's Payments.
 
 ## Questions for Jacob
 

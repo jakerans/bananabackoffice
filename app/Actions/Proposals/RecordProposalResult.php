@@ -17,6 +17,7 @@ use App\Models\Proposal;
 use App\Models\User;
 use App\Notifications\AppointmentChanged;
 use App\Support\Money;
+use App\Support\Pricing\EstimatePricing;
 use App\Support\Projects\AmbassadorPackage;
 use App\Support\Proposals\ProposalInput;
 use App\Support\Proposals\ResultDetails;
@@ -33,6 +34,7 @@ class RecordProposalResult
         private CreateProjectForSoldProposal $createProjectForSoldProposal,
         private RecordSaleEntry $recordSaleEntry,
         private RecordAmbassadorPackage $recordAmbassadorPackage,
+        private EstimatePricing $estimatePricing,
     ) {}
 
     /**
@@ -132,7 +134,8 @@ class RecordProposalResult
 
             $typed = trim((string) ($details['soldAmount'] ?? ''));
             $cents = match (true) {
-                $option !== null => $option->total_cents,
+                // The price before tax: tax is collected for the state, and is never the job's revenue (slice 38, step 38c).
+                $option !== null => $this->estimatePricing->priceBeforeTaxCents($option->estimate, $option),
                 $typed === '' => $proposal->price_cents,
                 default => ProposalInput::cents($typed, $prefix.'soldAmount', __('Enter the sold amount in dollars, like 8450 or 8,450.50.')),
             };

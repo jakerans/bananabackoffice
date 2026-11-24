@@ -70,7 +70,7 @@ test('signing emails the customer their copy from the Location, with replies to 
         $mail->assertFrom('hello@email.bananapainting.com', 'Banana Painting Lakeview')
             ->assertHasReplyTo('sam@bananapainting.com', 'Sam Sales')
             ->assertHasSubject('Your signed agreement with Banana Painting')
-            ->assertSeeInOrderInHtml(['Hello Pat Customer,', 'Oct', 'Front only', '$3,200', 'Deposit due on acceptance: $1,600 (50% of the price).', '1. SCOPE OF WORK', 'Signed electronically by Pat Customer on October 8, 2026 at 3:30 PM EDT, version 1 of the wording. Presented by Sam Sales.'])
+            ->assertSeeInOrderInHtml(['Hello Pat Customer,', 'Oct', 'Front only', '$3,200', 'Deposit due on acceptance: $1,600 (50% of the price before tax).', '1. SCOPE OF WORK', 'Signed electronically by Pat Customer on October 8, 2026 at 3:30 PM EDT, version 1 of the wording. Presented by Sam Sales.'])
             ->assertSeeInText('1. SCOPE OF WORK');
 
         return $mail->mailer === 'customers' && $mail->hasTo('pat.customer@bananapainting.com') && $mail->agreement->is($agreement);

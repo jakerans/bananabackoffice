@@ -36,7 +36,7 @@
 @if ($details['tax_cents'] > 0)
 {!! __('Tax included') !!}
 @endif
-{!! __('Deposit due on acceptance: :amount (:percent% of the price).', ['amount' => $deposit, 'percent' => $details['deposit_percent']]) !!}
+{!! \App\Support\Agreements\AgreementDetails::depositLine($details) !!}
 
 {!! $wording->title !!}
 

@@ -37,6 +37,16 @@ class EstimatePricing
     }
 
     /**
+     * What an option costs before tax, after its discounts: what is sold.
+     */
+    public function priceBeforeTaxCents(Estimate $estimate, EstimateOption $option): int
+    {
+        $priced = $this->price($estimate, $option);
+
+        return $priced->subtotalCents - $priced->discountCents;
+    }
+
+    /**
      * Price every option again and keep each one's total, for lists.
      */
     public function refreshTotals(Estimate $estimate): void
