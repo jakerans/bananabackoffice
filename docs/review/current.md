@@ -3,7 +3,7 @@
 How this file is used: [../collaboration.md](../collaboration.md), "Review handoff".
 No secrets or customer information belong here.
 
-**Updated:** 2026-11-12 · **Branch:** `main`
+**Updated:** 2026-11-23 · **Branch:** `main`
 
 **State:** production is deployed (2026-11-03) and first use goes ahead now;
 the restore drill waits until later (decision 217). The plan:
@@ -69,6 +69,10 @@ Pricing Settings), Albuquerque through its checklist, people invited.
 Inbox (Messenger and text accounts, and what the AI may answer), Campaigns
 and the ad platform connections (built last, decision 183), Color Studio,
 and what Production and Company Reports hold.
+
+**The first walkthrough on production (decision 233)** is sorted in
+[../walkthrough-2026-11-23.md](../walkthrough-2026-11-23.md): one bug fixed,
+the rest proposed as slices 39 to 45, waiting for Jacob's answers there.
 
 ## Also waiting for Jacob
 

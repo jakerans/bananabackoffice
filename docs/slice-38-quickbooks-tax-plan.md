@@ -59,6 +59,10 @@ balance.
 
 Sales reps never sign in to QuickBooks; Backoffice drives it (decision 232).
 
+**Added from the first walkthrough (decision 233):** before the customer
+signs, the salesperson may change the estimate's deposit to another percent
+or a flat amount; the deposit invoice is made for that.
+
 ## Steps
 
 | Step | Delivers |

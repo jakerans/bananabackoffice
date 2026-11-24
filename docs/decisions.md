@@ -4647,6 +4647,19 @@ QuickBooks is basically the backend."
 3. **Tried on Intuit's test company** (slice 38, "38a results"); to be
    confirmed with Banana's accountant before production.
 
+## 233. The first walkthrough on production: notes sorted, the access error fixed (2026-11-23)
+
+**From Jacob:** his notes from the first walkthrough of the production app.
+
+1. **Fixed:** granting access failed with "The location field is required"
+   when the Location wanted was the one the box already showed.
+2. **Everything else is sorted** in
+   [walkthrough-2026-11-23.md](walkthrough-2026-11-23.md): what slice 38
+   already covers, and new work proposed as slices 39 to 45. None of it is
+   approved until Jacob answers its questions.
+3. **Added to slice 38:** a salesperson may change an estimate's deposit to
+   another percent or a flat amount.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
