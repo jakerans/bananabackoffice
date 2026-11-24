@@ -62,7 +62,7 @@ use Livewire\Component;
 new #[Title('Estimate')] class extends Component {
     private const array NO_AREA = ['id' => null, 'area_template_id' => '', 'name' => '', 'shape' => 'room', 'width' => '', 'length' => '', 'height' => ''];
 
-    private const array NO_SURFACE = ['id' => null, 'area_id' => null, 'category_id' => '', 'production_rate_id' => '', 'coats' => '1', 'quantity' => '', 'paint_product_id' => '', 'prep_hours' => ''];
+    private const array NO_SURFACE = ['id' => null, 'area_id' => null, 'category_id' => '', 'production_rate_id' => '', 'coats' => '1', 'quantity' => '', 'paint_product_id' => '', 'prep_hours' => '', 'also_area_ids' => []];
 
     private const array NO_LINE_ITEM = ['id' => null, 'line_item_template_id' => '', 'name' => '', 'description' => '', 'pricing' => 'hours', 'hours' => '', 'price' => '', 'hourly_rate' => '', 'quantity' => '', 'hours_each' => '', 'price_each' => ''];
 
@@ -103,6 +103,9 @@ new #[Title('Estimate')] class extends Component {
     /** @var array{kind: string, id: int}|null What the open remove dialog is about. */
     #[Locked]
     public ?array $removing = null;
+
+    /** Removing a piece of work: from every room of the option that has it (slice 40). */
+    public bool $removeEverywhere = false;
 
     public function mount(Lead $lead, Estimate $estimate): void
     {
@@ -385,12 +388,36 @@ new #[Title('Estimate')] class extends Component {
         }
     }
 
+    /**
+     * Tick every other room of the option, to add the work to all of them at once (slice 40).
+     */
+    public function alsoEveryArea(): void
+    {
+        $this->surfaceForm['also_area_ids'] = $this->option->areas
+            ->where('id', '!=', (int) $this->surfaceForm['area_id'])
+            ->map(fn (EstimateArea $area): string => (string) $area->id)
+            ->values()
+            ->all();
+    }
+
     public function saveSurface(SaveEstimateSurface $saveEstimateSurface): void
     {
         $area = $this->area((int) $this->surfaceForm['area_id']);
         $surface = $this->surfaceForm['id'] === null ? null : $this->surface((int) $this->surfaceForm['id']);
+        // New work can go into other rooms of the same option in one go; each is measured by itself,
+        // and a room that already has this work is left as it is (slice 40).
+        $also = $surface !== null ? collect() : $this->option->areas
+            ->where('id', '!=', $area->id)
+            ->whereIn('id', array_map(intval(...), (array) ($this->surfaceForm['also_area_ids'] ?? [])))
+            ->reject(fn (EstimateArea $other): bool => $other->surfaces->contains('production_rate_id', (int) $this->surfaceForm['production_rate_id']));
 
-        $this->asForm('surfaceForm', fn () => $saveEstimateSurface->handle($this->estimate, $area, $surface, $this->surfaceForm, $this->user()));
+        $this->asForm('surfaceForm', function () use ($saveEstimateSurface, $area, $surface, $also): void {
+            $saveEstimateSurface->handle($this->estimate, $area, $surface, $this->surfaceForm, $this->user());
+
+            foreach ($also as $other) {
+                $saveEstimateSurface->handle($this->estimate, $this->area($other->id), null, $this->surfaceForm, $this->user());
+            }
+        });
         $this->changed();
         Flux::modal('estimate-surface')->close();
     }
@@ -466,6 +493,7 @@ new #[Title('Estimate')] class extends Component {
     {
         $this->part($kind, $id);
         $this->removing = ['kind' => $kind, 'id' => $id];
+        $this->removeEverywhere = false;
         Flux::modal('estimate-remove')->show();
     }
 
@@ -477,6 +505,11 @@ new #[Title('Estimate')] class extends Component {
 
         // Resolved again on confirmation, and authorized by the action.
         $part = $this->part($this->removing['kind'], $this->removing['id']);
+
+        foreach ($part instanceof EstimateSurface && $this->removeEverywhere ? $this->sameWorkElsewhere($part) : [] as $same) {
+            $removeFromEstimate->handle($this->estimate, $same, $this->user());
+        }
+
         $removeFromEstimate->handle($this->estimate, $part, $this->user());
 
         if ($part instanceof EstimateOption) {
@@ -486,8 +519,37 @@ new #[Title('Estimate')] class extends Component {
         }
 
         $this->removing = null;
+        $this->removeEverywhere = false;
+        unset($this->removingElsewhere);
         $this->changed();
         Flux::modal('estimate-remove')->close();
+    }
+
+    /**
+     * The same work in the option's other rooms: the surfaces priced on the same rate.
+     *
+     * @return Collection<int, EstimateSurface>
+     */
+    private function sameWorkElsewhere(EstimateSurface $surface): Collection
+    {
+        return EstimateSurface::query()
+            ->whereKeyNot($surface->id)
+            ->where('production_rate_id', $surface->production_rate_id)
+            ->whereHas('area', fn ($query) => $query->where('estimate_option_id', $surface->area()->value('estimate_option_id')))
+            ->get();
+    }
+
+    /**
+     * In how many other rooms the work being removed is too.
+     */
+    #[Computed]
+    public function removingElsewhere(): int
+    {
+        if ($this->removing === null || $this->removing['kind'] !== 'surface') {
+            return 0;
+        }
+
+        return $this->sameWorkElsewhere($this->surface($this->removing['id']))->count();
     }
 
     #[Computed]
@@ -1046,6 +1108,24 @@ new #[Title('Estimate')] class extends Component {
                     <flux:error name="surfaceForm.prep_hours" />
                 @endif
 
+                @if ($surfaceForm['id'] === null && $this->option->areas->count() > 1)
+                    <div class="flex flex-col gap-2 rounded-lg bg-zinc-50 p-3" data-test="surface-also">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <flux:label>{{ __('Add it to other rooms too') }}</flux:label>
+                            <div class="flex gap-1">
+                                <flux:button type="button" size="xs" wire:click="alsoEveryArea" data-test="surface-also-all">{{ __('All rooms') }}</flux:button>
+                                <flux:button type="button" size="xs" variant="ghost" wire:click="$set('surfaceForm.also_area_ids', [])" data-test="surface-also-none">{{ __('None') }}</flux:button>
+                            </div>
+                        </div>
+                        <div class="grid gap-2 sm:grid-cols-2">
+                            @foreach ($this->option->areas->where('id', '!=', (int) $surfaceForm['area_id']) as $other)
+                                <flux:checkbox wire:model="surfaceForm.also_area_ids" :value="(string) $other->id" :label="$other->name" wire:key="also-area-{{ $other->id }}" />
+                            @endforeach
+                        </div>
+                        <flux:text size="sm">{{ __('Each room is measured by itself. A room that already has this work is left as it is.') }}</flux:text>
+                    </div>
+                @endif
+
                 <div class="flex justify-end gap-2">
                     <flux:modal.close><flux:button variant="ghost">{{ __('Cancel') }}</flux:button></flux:modal.close>
                     <flux:button type="submit" variant="primary" data-test="save-surface">{{ __('Save') }}</flux:button>
@@ -1098,6 +1178,9 @@ new #[Title('Estimate')] class extends Component {
                     <flux:heading size="lg">{{ __('Remove :name?', ['name' => $this->removingName]) }}</flux:heading>
                     <flux:text class="mt-2">{{ ($removing['kind'] ?? null) === 'area' ? __('Its work comes out with it.') : __('It comes out of this estimate.') }}</flux:text>
                 </div>
+                @if ($this->removingElsewhere > 0)
+                    <flux:checkbox wire:model="removeEverywhere" :label="trans_choice('Remove it from the :count other room that has it too|Remove it from the :count other rooms that have it too', $this->removingElsewhere)" data-test="remove-everywhere" />
+                @endif
                 <flux:error name="option" />
                 <div class="flex justify-end gap-2">
                     <flux:modal.close><flux:button variant="ghost" autofocus>{{ __('Cancel') }}</flux:button></flux:modal.close>

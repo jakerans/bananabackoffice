@@ -102,6 +102,15 @@ carried over; the job's page shows **Where this job is**. To look at it on
 staging, as the Owner: open any job (Production > Workspace): the line of
 steps is at the top, and **Next** jumps down the page.
 
+**Slice 40, the estimate and its presentation, is on staging** (not
+production; decision 238,
+[../slice-40-estimate-and-presentation-plan.md](../slice-40-estimate-and-presentation-plan.md)):
+each room's price on the presentation; on the estimate, **Add work** has
+**Add it to other rooms too**, and removing work offers every room that has
+it; the customer agreement has **I have read and agree to the terms below**
+at the top. **To look at on a tablet:** that top button, on a real signing,
+ticks the box by the signature and scrolls down to it.
+
 **The first walkthrough on production (decision 233)** is sorted in
 [../walkthrough-2026-11-23.md](../walkthrough-2026-11-23.md): one bug fixed,
 the rest proposed as slices 39 to 45, waiting for Jacob's answers there.
