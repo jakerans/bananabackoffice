@@ -74,7 +74,15 @@ and what Production and Company Reports hold.
 production): where a Location has QuickBooks connected, the estimate's tax
 box shows QuickBooks' rate in place of the town list. Staging's Intuit test
 company has no automated sales tax, so it answers "no tax" there; Four
-Corners' real company answered 8.1875% (decision 234). 38c is next.
+Corners' real company answered 8.1875% (decision 234).
+
+**Slice 38c is on staging too** (not production): the deposit chosen on
+the estimate (percent, flat or none, before tax); a sale recorded at its
+price before tax; the commission advance only for a deposit of 25% or more;
+and at signing the deposit invoice made and emailed by QuickBooks. **For
+Jacob to know:** sales with tax were being recorded with the tax in the
+sold price; that is corrected from now on, and earlier sales are unchanged.
+38d is next.
 
 **The first walkthrough on production (decision 233)** is sorted in
 [../walkthrough-2026-11-23.md](../walkthrough-2026-11-23.md): one bug fixed,

@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Estimates\ChangeEstimateDeposit;
 use App\Actions\Estimates\ChangeEstimateDiscounts;
 use App\Actions\Estimates\ChangeEstimateHourlyRate;
 use App\Actions\Estimates\RemoveFromEstimate;
@@ -91,6 +92,11 @@ new #[Title('Estimate')] class extends Component {
     public array $discountIds = [];
 
     public string $taxRateId = '';
+
+    /** How the deposit is set, and its percent or dollars (slice 38, step 38c). */
+    public string $depositKind = ChangeEstimateDeposit::POLICY;
+
+    public string $depositValue = '';
 
     public string $hourlyRate = '';
 
@@ -538,6 +544,13 @@ new #[Title('Estimate')] class extends Component {
         Flux::toast(variant: 'success', text: __('Tax from QuickBooks: :percent%.', ['percent' => Decimal::plain($this->estimate->tax_percent ?? '0')]));
     }
 
+    public function saveDeposit(ChangeEstimateDeposit $changeEstimateDeposit): void
+    {
+        $changeEstimateDeposit->handle($this->estimate, $this->depositKind, $this->depositValue, $this->user());
+        $this->changed();
+        Flux::toast(__('Deposit saved.'));
+    }
+
     public function saveHourlyRate(ChangeEstimateHourlyRate $changeEstimateHourlyRate): void
     {
         $changeEstimateHourlyRate->handle($this->estimate, $this->hourlyRate, $this->user());
@@ -562,6 +575,12 @@ new #[Title('Estimate')] class extends Component {
         $this->discountIds = $estimate->discounts->pluck('discount_id')->filter()->map(fn (int $id): string => (string) $id)->values()->all();
         $this->taxRateId = (string) (TaxRate::query()->where('price_book_id', $estimate->price_book_id)->where('name', $estimate->tax_name)->value('id') ?? '');
         $this->hourlyRate = number_format($estimate->hourly_rate_cents / 100, 2, '.', '');
+        [$this->depositKind, $this->depositValue] = match (true) {
+            $estimate->deposit_flat_cents === 0 => [ChangeEstimateDeposit::NONE, ''],
+            $estimate->deposit_flat_cents !== null => [ChangeEstimateDeposit::FLAT, number_format($estimate->deposit_flat_cents / 100, 2, '.', '')],
+            $estimate->deposit_percent !== null => [ChangeEstimateDeposit::PERCENT, (string) $estimate->deposit_percent],
+            default => [ChangeEstimateDeposit::POLICY, ''],
+        };
     }
 
     /**
@@ -891,6 +910,33 @@ new #[Title('Estimate')] class extends Component {
                 @if ($editable)
                     <div class="flex justify-end">
                         <flux:button type="submit" size="sm" variant="primary" data-test="save-discounts">{{ __('Save') }}</flux:button>
+                    </div>
+                @endif
+            </form>
+
+            @php($priceBeforeTax = $priced->subtotalCents - $priced->discountCents)
+            @php($depositNow = $estimate->depositCentsOn($priceBeforeTax))
+            <form wire:submit="saveDeposit" class="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-card p-4" data-test="estimate-deposit">
+                <flux:heading level="3">{{ __('Deposit') }}</flux:heading>
+                <flux:text class="text-xs" data-test="estimate-deposit-now">{{ __('For every option. On this one: :amount, with no tax on it.', ['amount' => Money::format($depositNow)]) }}</flux:text>
+                <flux:select wire:model.live="depositKind" :label="__('Deposit')" :disabled="! $editable" data-test="deposit-kind">
+                    <flux:select.option :value="ChangeEstimateDeposit::POLICY">{{ __(':percent% (the usual here)', ['percent' => (int) $estimate->location->deposit_percent]) }}</flux:select.option>
+                    <flux:select.option :value="ChangeEstimateDeposit::PERCENT">{{ __('Another percent') }}</flux:select.option>
+                    <flux:select.option :value="ChangeEstimateDeposit::FLAT">{{ __('A flat amount') }}</flux:select.option>
+                    <flux:select.option :value="ChangeEstimateDeposit::NONE">{{ __('No deposit') }}</flux:select.option>
+                </flux:select>
+                @if ($depositKind === ChangeEstimateDeposit::PERCENT)
+                    <flux:input wire:model="depositValue" :label="__('Percent of the price before tax')" inputmode="numeric" :disabled="! $editable" data-test="deposit-value" />
+                @elseif ($depositKind === ChangeEstimateDeposit::FLAT)
+                    <flux:input wire:model="depositValue" :label="__('Deposit ($)')" inputmode="decimal" :disabled="! $editable" data-test="deposit-value" />
+                @endif
+                <flux:error name="depositKind" />
+                @if ($priceBeforeTax > 0 && $depositNow * 100 < $priceBeforeTax * Estimate::ADVANCE_DEPOSIT_PERCENT)
+                    <flux:text class="text-xs text-amber-700" data-test="deposit-no-advance">{{ __('No deposit, or one under :percent% of the price, pays no commission advance on this job.', ['percent' => Estimate::ADVANCE_DEPOSIT_PERCENT]) }}</flux:text>
+                @endif
+                @if ($editable)
+                    <div class="flex justify-end">
+                        <flux:button type="submit" size="sm" variant="primary" data-test="save-deposit">{{ __('Save') }}</flux:button>
                     </div>
                 @endif
             </form>

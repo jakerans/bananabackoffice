@@ -25,6 +25,8 @@ use LogicException;
  * @property Carbon $sent_on
  * @property int|null $recorded_by
  * @property string|null $recorded_by_name
+ * @property string|null $quickbooks_invoice_id The invoice in QuickBooks, when Backoffice made it there (slice 38, step 38c).
+ * @property Carbon|null $quickbooks_emailed_at When QuickBooks emailed it to the customer.
  * @property Carbon|null $voided_at
  * @property int|null $voided_by
  * @property string|null $voided_by_name
@@ -55,7 +57,7 @@ class ProjectInvoice extends Model
     protected static function booted(): void
     {
         static::updating(function (self $invoice): void {
-            $allowed = ['voided_at', 'voided_by', 'voided_by_name', 'voided_reason', 'updated_at'];
+            $allowed = ['voided_at', 'voided_by', 'voided_by_name', 'voided_reason', 'quickbooks_emailed_at', 'updated_at'];
 
             if (array_diff(array_keys($invoice->getDirty()), $allowed) !== [] || $invoice->getOriginal('voided_at') !== null) {
                 throw new LogicException('An invoice is kept as it was. Void it and record it again.');
@@ -78,6 +80,7 @@ class ProjectInvoice extends Model
             'amount_cents' => 'integer',
             'sent_on' => 'date',
             'voided_at' => 'datetime',
+            'quickbooks_emailed_at' => 'datetime',
         ];
     }
 

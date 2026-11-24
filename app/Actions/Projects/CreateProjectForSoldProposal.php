@@ -5,8 +5,10 @@ namespace App\Actions\Projects;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Compensation\RecordCommission;
 use App\Enums\AuditAction;
+use App\Models\Estimate;
 use App\Models\Lead;
 use App\Models\Project;
+use App\Models\ProjectDepositChange;
 use App\Models\Proposal;
 use App\Models\Service;
 use App\Models\User;
@@ -76,9 +78,32 @@ class CreateProjectForSoldProposal
             location: $lead->location,
         );
 
+        $this->keepChosenDeposit($project, $proposal, $actor);
         $this->recordCommission->sold($project, $actor);
 
         return $project;
+    }
+
+    /**
+     * The deposit chosen on the estimate, when it is not the Location's
+     * policy, is the deposit this job asks for (slice 38, step 38c).
+     */
+    private function keepChosenDeposit(Project $project, Proposal $proposal, User $actor): void
+    {
+        $estimate = $proposal->estimate_id === null ? null : Estimate::query()->with('location')->find($proposal->estimate_id);
+
+        if ($estimate === null || ! $estimate->depositIsChosen()) {
+            return;
+        }
+
+        $change = new ProjectDepositChange;
+        $change->forceFill([
+            'project_id' => $project->id,
+            'required_cents' => $estimate->depositCentsOn($project->sold_cents),
+            'reason' => __('Chosen on the estimate: :deposit.', ['deposit' => $estimate->depositWords()]),
+            'set_by' => $actor->id,
+            'set_by_name' => $actor->name,
+        ])->save();
     }
 
     /**

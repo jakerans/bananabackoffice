@@ -134,16 +134,36 @@ test('the deposit can come before the handoff; either order makes one advance', 
     expect(collect(ledgerOf($this->sam))->where('kind', 'advance'))->toHaveCount(1);
 });
 
-test('a smaller deposit than the policy asks for earns no advance', function () {
+test('a deposit under a quarter of the price, or none, earns no advance at all (decision 235)', function (string $deposit) {
     planFor($this, $this->sam, 'sales_straight');
     sellOakSt($this);
     completeHandoff($this->project, $this->sam);
 
-    // 49% is not 50% (5.7).
-    app(RecordPayments::class)->changeDeposit($this->project, '4,140', 'The customer asked.', User::factory()->withRoleAt(Role::LocationManager, $this->lakeview)->create());
-    depositPaid($this, '4,140');
+    app(RecordPayments::class)->changeDeposit($this->project, $deposit, 'The customer asked.', User::factory()->withRoleAt(Role::LocationManager, $this->lakeview)->create());
+
+    if ($deposit !== '0') {
+        depositPaid($this, $deposit);
+    }
 
     expect(collect(ledgerOf($this->sam))->where('kind', 'advance'))->toBeEmpty();
+})->with([
+    // A quarter of $8,450 is $2,112.50.
+    'just under a quarter' => ['2,112'],
+    'waived' => ['0'],
+]);
+
+test('a smaller deposit of at least a quarter of the price still earns the advance, once collected', function () {
+    planFor($this, $this->sam, 'sales_straight');
+    sellOakSt($this);
+    completeHandoff($this->project, $this->sam);
+
+    app(RecordPayments::class)->changeDeposit($this->project, '2,113', 'The customer asked.', User::factory()->withRoleAt(Role::LocationManager, $this->lakeview)->create());
+
+    expect(collect(ledgerOf($this->sam))->where('kind', 'advance'))->toBeEmpty();
+
+    depositPaid($this, '2,113');
+
+    expect(ledgerOf($this->sam)[1])->toBe(['kind' => 'advance', 'amount' => 31688, 'period' => '2026-10']);
 });
 
 test('the financial close pays the final commission from the final gross margin, less the advance', function () {

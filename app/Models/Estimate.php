@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\EstimateType;
 use App\Enums\ProposalResult;
+use App\Support\Money;
 use Database\Factories\EstimateFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,6 +34,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $tax_name
  * @property string|null $tax_percent Null for no tax.
  * @property Carbon $priced_at When its prices were last taken from the price book.
+ * @property int|null $deposit_percent The deposit the salesperson chose, as a percent of the price before tax; null for the Location's policy (slice 38, step 38c).
+ * @property int|null $deposit_flat_cents A flat deposit instead; 0 for none.
  * @property Carbon|null $quickbooks_tax_at When its tax rate was last taken from QuickBooks (slice 38).
  * @property int|null $created_by
  * @property string $created_by_name
@@ -74,8 +77,47 @@ class Estimate extends Model
             'hourly_rate_cents' => 'integer',
             'tax_percent' => 'decimal:4',
             'priced_at' => 'datetime',
+            'deposit_percent' => 'integer',
+            'deposit_flat_cents' => 'integer',
             'quickbooks_tax_at' => 'datetime',
         ];
+    }
+
+    /** A deposit under this share of the price, or none, pays no commission advance (decision 235). */
+    public const int ADVANCE_DEPOSIT_PERCENT = 25;
+
+    /**
+     * The deposit asked for on a price before tax, in cents: the flat amount
+     * or percent chosen for this estimate, or else the Location's policy.
+     */
+    public function depositCentsOn(int $priceCents): int
+    {
+        if ($this->deposit_flat_cents !== null) {
+            return min($this->deposit_flat_cents, max(0, $priceCents));
+        }
+
+        return intdiv(max(0, $priceCents) * ($this->deposit_percent ?? (int) $this->location->deposit_percent), 100);
+    }
+
+    /**
+     * Whether the deposit was chosen for this estimate, not left to the Location's policy.
+     */
+    public function depositIsChosen(): bool
+    {
+        return $this->deposit_percent !== null || $this->deposit_flat_cents !== null;
+    }
+
+    /**
+     * How the deposit is set, in words: "50% (the Location's)", "30%", "$2,000", "None".
+     */
+    public function depositWords(): string
+    {
+        return match (true) {
+            $this->deposit_flat_cents === 0 => __('None'),
+            $this->deposit_flat_cents !== null => Money::format($this->deposit_flat_cents),
+            $this->deposit_percent !== null => $this->deposit_percent.'%',
+            default => __(':percent% (the Location\'s)', ['percent' => (int) $this->location->deposit_percent]),
+        };
     }
 
     /**

@@ -29,7 +29,7 @@ use LogicException;
  * @property int $proposal_id
  * @property int $appointment_id
  * @property int $agreement_wording_id
- * @property array{customer: string|null, property: string|null, location: string, estimate_type: string, option: array{name: string, description: string|null}, areas: list<string>, line_items: list<array{name: string, description: string|null}>, discounts: list<array{name: string, cents: int}>, tax_cents: int, total_cents: int, deposit_percent: int, deposit_cents: int} $details What the customer saw.
+ * @property array{customer: string|null, property: string|null, location: string, estimate_type: string, option: array{name: string, description: string|null}, areas: list<string>, line_items: list<array{name: string, description: string|null}>, discounts: list<array{name: string, cents: int}>, tax_cents: int, total_cents: int, price_before_tax_cents?: int, deposit_percent: int|null, deposit_cents: int} $details What the customer saw.
  * @property int $total_cents
  * @property int $deposit_cents The deposit due under the Location's policy when it was signed.
  * @property string $signer_name The name the customer typed.

@@ -196,7 +196,7 @@ class SyncEstimateToQuickBooks
      *
      * @throws QuickBooksUnavailable
      */
-    private function address(Lead $lead): array
+    public function address(Lead $lead): array
     {
         if (blank($lead->address_line1) || blank($lead->address_city) || blank($lead->address_state) || blank($lead->address_postal_code)) {
             throw new QuickBooksUnavailable(__('Give the lead\'s full address first: QuickBooks works out the tax from where the job is.'));

@@ -2,6 +2,7 @@
 
 namespace App\Support\Projects;
 
+use App\Models\Estimate;
 use App\Models\Project;
 use App\Models\ProjectBalanceAdjustment;
 use App\Models\ProjectChangeOrder;
@@ -249,9 +250,21 @@ final class Payments
     public function fullDepositCollected(): bool
     {
         $deposit = $this->deposit();
-        $policy = $this->policyDepositCents();
+        $required = $this->requiredDepositCents();
 
-        return $deposit !== null && $policy > 0 && $this->paidOnCents($deposit) >= $policy;
+        return $deposit !== null && $this->depositEarnsAdvance() && $this->paidOnCents($deposit) >= $required;
+    }
+
+    /**
+     * Whether the deposit asked for is enough for a commission advance: at
+     * least a quarter of the price sold. A waived or smaller deposit pays
+     * none at all (decision 235).
+     */
+    public function depositEarnsAdvance(): bool
+    {
+        $required = $this->requiredDepositCents();
+
+        return $required > 0 && $required * 100 >= $this->project->sold_cents * Estimate::ADVANCE_DEPOSIT_PERCENT;
     }
 
     public function deposit(): ?ProjectInvoice

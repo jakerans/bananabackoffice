@@ -141,6 +141,19 @@ final class QuickBooksClient
     }
 
     /**
+     * Have QuickBooks email an invoice or an estimate to the customer, from
+     * the company's own address (slice 38, step 38c): "invoice/12".
+     *
+     * @return array<string, mixed>
+     *
+     * @throws QuickBooksUnavailable
+     */
+    public function email(QuickBooksConnection $connection, string $path, string $to): array
+    {
+        return $this->send($connection, 'email', $path.'/send', ['sendTo' => $to]);
+    }
+
+    /**
      * @param  array<string, string>  $query
      * @param  array<string, mixed>|null  $body
      * @return array<string, mixed>
@@ -171,7 +184,7 @@ final class QuickBooksClient
         if (! $response->successful() || ! is_array($response->json())) {
             $detail = $response->json('Fault.Error.0.Detail') ?? $response->json('Fault.Error.0.Message');
 
-            throw new QuickBooksUnavailable(is_string($detail) && $body !== null
+            throw new QuickBooksUnavailable(is_string($detail) && $method !== 'get'
                 ? __('QuickBooks refused that for :location: :detail', ['location' => $connection->location->name, 'detail' => $detail])
                 : __('QuickBooks did not answer for :location (:status).', ['location' => $connection->location->name, 'status' => $response->status()]));
         }
@@ -267,9 +280,12 @@ final class QuickBooksClient
         $query = [...$query, 'minorversion' => (string) self::MINOR_VERSION];
 
         try {
-            return $method === 'post'
-                ? $this->api()->withToken($connection->access_token)->asJson()->post($url.'?'.http_build_query($query), $body ?? [])
-                : $this->api()->withToken($connection->access_token)->get($url, $query);
+            return match ($method) {
+                'post' => $this->api()->withToken($connection->access_token)->asJson()->post($url.'?'.http_build_query($query), $body ?? []),
+                // Sending takes no body at all, and QuickBooks refuses an empty JSON one.
+                'email' => $this->api()->withToken($connection->access_token)->withBody('', 'application/octet-stream')->post($url.'?'.http_build_query($query)),
+                default => $this->api()->withToken($connection->access_token)->get($url, $query),
+            };
         } catch (ConnectionException) {
             throw new QuickBooksUnavailable(__('QuickBooks could not be reached for :location. Try again in a moment.', ['location' => $connection->location->name]));
         }
