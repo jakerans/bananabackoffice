@@ -230,10 +230,65 @@ not yet in Settings > Integrations.
   `tests/Feature/QuickBooks/EstimateTaxFromQuickBooksTest.php` and
   `tests/Feature/Compensation/CommissionTest.php`.
 
-Left for 38d: a lost lead's QuickBooks estimates marked rejected; payments
-read back from QuickBooks and payments taken another way sent to it; the
-final invoice. A sale marked on the Lead's Estimates card, not signed on the
-tablet, is settled in QuickBooks from the Project's Payments.
+## Step 38d as built (2026-11-23)
+
+- **Paid in QuickBooks, read back.** A payment the customer makes on a
+  QuickBooks invoice Backoffice made (online by card or bank transfer, or
+  entered in QuickBooks) is read onto the Project's Payments every fifteen
+  minutes, and at once with **Check QuickBooks** on the Project's Payments.
+  It is in the books already, so it counts at once, with no receipt or
+  approval; the deposit is settled and the Production Manager told as for any
+  payment. Its method is taken from the QuickBooks payment method's name; one
+  that cannot be placed shows as "Paid in QuickBooks".
+- **Removed in QuickBooks, reversed here.** A payment read from QuickBooks
+  that QuickBooks no longer has against the invoice is reversed in Backoffice
+  by itself ("Removed in QuickBooks."). Finance does not reverse such a
+  payment in Backoffice: it is removed in QuickBooks, and Backoffice follows.
+- **Taken another way, sent to QuickBooks.** A payment recorded in
+  Backoffice against an invoice Backoffice made in QuickBooks (a card through
+  Square with Square's reference, financing, a bank transfer, a check, cash)
+  is recorded in QuickBooks against that invoice once it counts: card, bank
+  and financing at once; **cash and check when Finance approves them**
+  (decision 133 stands: receipt photo, then approval). Reversed in
+  Backoffice, it is taken out of QuickBooks. QuickBooks not answering never
+  undoes any of it: it shows "not in QuickBooks yet" and goes the next time
+  QuickBooks is checked.
+- **The final invoice, made by QuickBooks.** On the Project's Payments,
+  **Make the final invoice**, by whoever records its payments, with a
+  confirmation: the price sold and each signed change order on the company's
+  work item, **all the tax worked out by QuickBooks** from the job's address,
+  the deposit invoiced taken off as a line of the deposit item with no tax,
+  due in seven days, payable online, linked to the accepted estimate so
+  QuickBooks shows it converted, and emailed by QuickBooks. It is recorded on
+  the Project at QuickBooks' own total and number. Credits, refunds and
+  write-offs stay as they were (slice 24): recorded in Backoffice, the credit
+  memo made in QuickBooks by Finance.
+- **Only where the deposit invoice was made by Backoffice too** (or there is
+  none). A job whose deposit invoice was typed in by hand keeps **Record the
+  final invoice**, by hand, since Backoffice cannot know how that deposit was
+  entered in QuickBooks.
+- **Voiding** an invoice Backoffice made in QuickBooks voids it there first;
+  if QuickBooks cannot, it is not voided in Backoffice either.
+- **Lost, rejected.** When a Lead is marked lost, or one estimate is, its
+  QuickBooks estimates are marked **Rejected**, never deleted; taken back,
+  they are Pending again.
+- **A sale marked on the Lead's Estimates card** is settled in QuickBooks as
+  a signed one is: accepted, the others removed, the deposit invoice made and
+  emailed. A customer not yet in QuickBooks is matched or added then.
+- Code: `App\Actions\QuickBooks\ReadPaymentsFromQuickBooks`,
+  `SendPaymentToQuickBooks`, `MakeFinalInvoiceInQuickBooks`; the command
+  `backoffice:quickbooks-payments`; tests in
+  `tests/Feature/QuickBooks/EstimateTaxFromQuickBooksTest.php`.
+
+Known limits: a payment Backoffice sent that someone later deletes inside
+QuickBooks is not noticed (Backoffice still counts it; Finance reverses it
+here). A QuickBooks payment goes to "Undeposited funds", as QuickBooks does
+by default. A sale given in the after-action report, not on the card or the
+tablet, is settled from the Project's Payments, **Send the deposit invoice**.
+Slice 38 has not yet been run end to end against a real company: that is
+the first Four Corners estimate after it is deployed to production.
+
+**Slice 38 is complete.**
 
 ## Questions for Jacob
 

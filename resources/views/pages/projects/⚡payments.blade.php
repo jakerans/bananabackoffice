@@ -2,6 +2,8 @@
 
 use App\Actions\Projects\RecordPayments;
 use App\Actions\QuickBooks\FinalizeSaleInQuickBooks;
+use App\Actions\QuickBooks\MakeFinalInvoiceInQuickBooks;
+use App\Actions\QuickBooks\ReadPaymentsFromQuickBooks;
 use App\Models\Project;
 use App\Models\ProjectInvoice;
 use App\Models\ProjectPayment;
@@ -241,6 +243,103 @@ new class extends Component {
             : __('The deposit invoice is in QuickBooks. The customer has no email address to send it to.'));
     }
 
+    /**
+     * Whether the final invoice can be made and emailed by QuickBooks from here (slice 38, step 38d).
+     */
+    #[Computed]
+    public function quickBooksFinal(): bool
+    {
+        return Gate::allows('recordPayments', $this->project) && MakeFinalInvoiceInQuickBooks::isAvailableFor($this->project, $this->standing);
+    }
+
+    /**
+     * Whether QuickBooks holds an invoice of this job that Backoffice made there, so its payments can be checked.
+     */
+    #[Computed]
+    public function checksQuickBooks(): bool
+    {
+        return Gate::allows('recordPayments', $this->project)
+            && FinalizeSaleInQuickBooks::isAvailableFor($this->project)
+            && $this->standing->invoices->contains(fn (ProjectInvoice $invoice): bool => $invoice->quickbooks_invoice_id !== null);
+    }
+
+    public function openFinal(): void
+    {
+        $this->authorize('recordPayments', $this->project);
+        $this->resetValidation();
+
+        Flux::modal('make-final-invoice')->show();
+    }
+
+    /**
+     * Have QuickBooks make the final invoice, work out its tax, and email it to the customer.
+     */
+    public function makeFinalInvoice(MakeFinalInvoiceInQuickBooks $makeFinalInvoiceInQuickBooks): void
+    {
+        $this->resetValidation();
+
+        try {
+            $invoice = $makeFinalInvoiceInQuickBooks->handle($this->project, Auth::user());
+        } catch (QuickBooksUnavailable $unavailable) {
+            $this->addError('quickBooksFinal', $unavailable->getMessage());
+
+            return;
+        }
+
+        unset($this->quickBooksFinal, $this->checksQuickBooks);
+
+        $this->done('make-final-invoice', $invoice->quickbooks_emailed_at !== null
+            ? __('QuickBooks emailed final invoice :number, :amount with tax, to the customer.', ['number' => $invoice->number, 'amount' => $invoice->amount()])
+            : __('Final invoice :number, :amount with tax, is in QuickBooks. It has not been emailed to the customer.', ['number' => $invoice->number, 'amount' => $invoice->amount()]));
+    }
+
+    /**
+     * Have QuickBooks email an invoice it has not emailed yet.
+     */
+    public function emailInvoice(int $invoiceId, MakeFinalInvoiceInQuickBooks $makeFinalInvoiceInQuickBooks): void
+    {
+        $this->resetValidation();
+
+        $invoice = $this->standing->invoices->firstWhere('id', $invoiceId) ?? abort(409, __('This invoice was changed since. Reload the page.'));
+
+        try {
+            $sent = $makeFinalInvoiceInQuickBooks->email($this->project, $invoice, Auth::user());
+        } catch (QuickBooksUnavailable $unavailable) {
+            $this->addError('quickBooksCheck', $unavailable->getMessage());
+
+            return;
+        }
+
+        unset($this->project, $this->standing, $this->invoices);
+
+        Flux::toast(variant: $sent ? 'success' : 'warning', text: $sent
+            ? __('QuickBooks emailed invoice :number to the customer.', ['number' => $invoice->number])
+            : __('The customer has no email address to send it to.'));
+    }
+
+    /**
+     * Read the payments made in QuickBooks, and send it what was recorded here.
+     */
+    public function checkQuickBooks(ReadPaymentsFromQuickBooks $readPaymentsFromQuickBooks): void
+    {
+        $this->resetValidation();
+
+        try {
+            $found = $readPaymentsFromQuickBooks->handle($this->project, Auth::user());
+        } catch (QuickBooksUnavailable $unavailable) {
+            $this->addError('quickBooksCheck', $unavailable->getMessage());
+
+            return;
+        }
+
+        unset($this->project, $this->standing, $this->invoices);
+        $this->dispatch('project-payments-changed');
+
+        Flux::toast(variant: 'success', text: $found['read'] + $found['removed'] + $found['sent'] === 0
+            ? __('Nothing new in QuickBooks.')
+            : __('QuickBooks checked: :read read from it, :removed removed, :sent sent to it.', $found));
+    }
+
     public function openVoid(int $invoiceId): void
     {
         $this->authorize('recordPayments', $this->project);
@@ -359,7 +458,7 @@ new class extends Component {
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
             <flux:heading size="lg" level="2">{{ __('Payments') }}</flux:heading>
-            <flux:subheading>{{ __('The deposit and final invoices as QuickBooks sent them, and what the customer paid against each.') }}</flux:subheading>
+            <flux:subheading>{{ __('The deposit and final invoices as QuickBooks sent them, and what the customer paid against each, in QuickBooks or another way.') }}</flux:subheading>
         </div>
 
         <flux:badge :color="match ($state) { Payments::PAID_IN_FULL => 'emerald', Payments::DEPOSIT_PAID, Payments::NO_DEPOSIT => 'sky', default => 'amber' }" data-test="payment-state">{{ __(Payments::STATES[$state]) }}</flux:badge>
@@ -421,6 +520,16 @@ new class extends Component {
         </div>
     </dl>
 
+    @if ($this->checksQuickBooks)
+        <div class="flex flex-wrap items-center justify-between gap-3 text-sm" data-test="quickbooks-check">
+            <span class="min-w-56 flex-1 text-zinc-500">
+                {{ __('Payments made in QuickBooks are read every fifteen minutes; a payment recorded here goes to QuickBooks once it counts.') }}
+                <flux:error name="quickBooksCheck" />
+            </span>
+            <flux:button size="sm" variant="ghost" icon="arrow-path" wire:click="checkQuickBooks" data-test="check-quickbooks">{{ __('Check QuickBooks') }}</flux:button>
+        </div>
+    @endif
+
     {{-- The final balance: when it is due, whether it is late or with Collections, and who contacted the customer (step 17c). --}}
     @if ($standing->hasOpenBalance())
         <div class="flex flex-wrap items-start justify-between gap-3 rounded-lg p-3 {{ $standing->isLate() ? 'bg-rose-50' : 'bg-zinc-50' }}" data-test="balance-due">
@@ -472,7 +581,7 @@ new class extends Component {
                                 {{ __(':invoice #:number', ['invoice' => __($invoice->label()), 'number' => $invoice->number]) }} &middot; {{ $invoice->amount() }}
                             </span>
                             <span class="text-sm text-zinc-500">
-                                {{ __('Sent :day', ['day' => $invoice->sent_on->format('M j, Y')]) }} &middot; {{ __('recorded by :name', ['name' => $invoice->recorded_by_name ?? __('Unknown')]) }}
+                                {{ __('Sent :day', ['day' => $invoice->sent_on->format('M j, Y')]) }} &middot; {{ __('recorded by :name', ['name' => $invoice->recorded_by_name ?? __('Unknown')]) }}@if ($invoice->quickbooks_invoice_id !== null) &middot; {{ $invoice->quickbooks_emailed_at === null ? __('made in QuickBooks, not emailed') : __('made and emailed by QuickBooks') }}@endif
                             </span>
                             @if ($invoice->isVoided())
                                 <span class="text-sm text-zinc-600" data-test="invoice-voided">{{ __('Voided by :name: ":reason"', ['name' => $invoice->voided_by_name ?? __('Unknown'), 'reason' => $invoice->voided_reason]) }}</span>
@@ -483,6 +592,9 @@ new class extends Component {
                             <div class="flex shrink-0 flex-wrap gap-1">
                                 @if ($owed > 0)
                                     <flux:button size="sm" variant="primary" wire:click="openPayment({{ $invoice->id }})" data-test="record-payment">{{ __('Record a payment') }}</flux:button>
+                                @endif
+                                @if ($invoice->kind === ProjectInvoice::KIND_FINAL && $invoice->quickbooks_invoice_id !== null && $invoice->quickbooks_emailed_at === null && $this->checksQuickBooks)
+                                    <flux:button size="sm" icon="paper-airplane" wire:click="emailInvoice({{ $invoice->id }})" data-test="email-invoice">{{ __('Email it') }}</flux:button>
                                 @endif
                                 @if ($invoice->payments->every(fn (ProjectPayment $payment): bool => $payment->isReversed()))
                                     <flux:button size="sm" variant="ghost" wire:click="openVoid({{ $invoice->id }})" data-test="void-invoice">{{ __('Void') }}</flux:button>
@@ -499,7 +611,9 @@ new class extends Component {
                                         <span class="{{ $payment->isReversed() ? 'text-zinc-500 line-through' : 'text-ink' }}">
                                             {{ $payment->amount() }} &middot; {{ __($payment->methodLabel()) }} &middot; {{ $payment->received_on->format('M j, Y') }}@if ($payment->reference !== null) &middot; {{ $payment->reference }}@endif
                                         </span>
-                                        <span class="text-zinc-500">{{ __('Recorded by :name', ['name' => $payment->recorded_by_name ?? __('Unknown')]) }}</span>
+                                        <span class="text-zinc-500">
+                                            {{ $payment->from_quickbooks ? __('Paid in QuickBooks, read from it') : __('Recorded by :name', ['name' => $payment->recorded_by_name ?? __('Unknown')]) }}@if (! $payment->from_quickbooks && $invoice->quickbooks_invoice_id !== null && ! $payment->isReversed() && $payment->counts()) &middot; <span data-test="payment-in-quickbooks">{{ $payment->quickbooks_payment_id !== null ? __('in QuickBooks') : __('not in QuickBooks yet') }}</span>@endif
+                                        </span>
                                         @if ($payment->isReversed())
                                             <span class="text-zinc-600" data-test="payment-reversed">{{ __('Reversed by :name: ":reason"', ['name' => $payment->reversed_by_name ?? __('Unknown'), 'reason' => $payment->reversed_reason]) }}</span>
                                         @elseif ($payment->isAwaitingApproval())
@@ -517,7 +631,9 @@ new class extends Component {
                                             @if ($payment->isAwaitingApproval())
                                                 <flux:button size="sm" variant="primary" wire:click="openApprove({{ $payment->id }})" data-test="approve-payment">{{ __('Approve') }}</flux:button>
                                             @endif
-                                            <flux:button size="sm" variant="ghost" wire:click="openReverse({{ $payment->id }})" data-test="reverse-payment">{{ __('Reverse') }}</flux:button>
+                                            @if (! $payment->from_quickbooks)
+                                                <flux:button size="sm" variant="ghost" wire:click="openReverse({{ $payment->id }})" data-test="reverse-payment">{{ __('Reverse') }}</flux:button>
+                                            @endif
                                         </div>
                                     @endif
                                 </li>
@@ -529,12 +645,21 @@ new class extends Component {
         </ul>
     @endif
 
-    @if ($mayRecord && ($standing->deposit() === null || $standing->final() === null))
+    @if ($this->quickBooksFinal)
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-zinc-50 p-3" data-test="quickbooks-final">
+            <div class="min-w-56 flex-1 text-sm text-ink">
+                {{ __('When the job is done, QuickBooks makes the final invoice: the work with its tax, less the deposit invoiced, and emails it to the customer to pay online.') }}
+            </div>
+            <flux:button size="sm" variant="primary" icon="document-text" wire:click="openFinal" data-test="make-final-invoice">{{ __('Make the final invoice') }}</flux:button>
+        </div>
+    @endif
+
+    @if ($mayRecord && ($standing->deposit() === null || ($standing->final() === null && ! $this->quickBooksFinal)))
         <div class="flex flex-wrap gap-2">
             @if ($standing->deposit() === null)
                 <flux:button size="sm" icon="plus" wire:click="openInvoice('deposit')" data-test="record-deposit-invoice">{{ __('Record the deposit invoice') }}</flux:button>
             @endif
-            @if ($standing->final() === null)
+            @if ($standing->final() === null && ! $this->quickBooksFinal)
                 <flux:button size="sm" icon="plus" wire:click="openInvoice('final')" data-test="record-final-invoice">{{ __('Record the final invoice') }}</flux:button>
             @endif
         </div>
@@ -567,9 +692,19 @@ new class extends Component {
         </flux:modal>
 
         <x-confirmation-modal
+            name="make-final-invoice"
+            :title="__('Make and send the final invoice?')"
+            :description="__('QuickBooks makes it for :work of work before tax, works out the tax, takes off the :deposit deposit invoiced, and emails it to the customer. Do this once the job is done and every change order is signed.', ['work' => Money::format($standing->contractCents() + $standing->creditedCents()), 'deposit' => Money::format($standing->deposit()?->amount_cents ?? 0)])"
+            action="makeFinalInvoice"
+            :confirm-label="__('Make and send it')"
+            confirm-variant="primary"
+            :error="['quickBooksFinal']"
+        />
+
+        <x-confirmation-modal
             name="void-invoice"
             :title="__('Void this invoice?')"
-            :description="__('It stays on record, crossed out, with why. Record it again if it was wrong.')"
+            :description="__('It stays on record, crossed out, with why. One made in QuickBooks is voided there too. Record it again if it was wrong.')"
             action="voidInvoice"
             :confirm-label="__('Void')"
             :error="['invoice', 'invoiceReason']"
@@ -597,7 +732,7 @@ new class extends Component {
                     <flux:input wire:model="paymentReceivedOn" type="date" :label="__('Day received')" data-test="payment-received-on" />
                 </div>
 
-                <flux:input wire:model="paymentReference" maxlength="{{ ProjectPayment::REFERENCE_LENGTH }}" :label="in_array($paymentMethod, ProjectPayment::NEEDS_APPROVAL, true) ? __('Check number or note (optional)') : __('Reference from the processor or QuickBooks')" data-test="payment-reference" />
+                <flux:input wire:model="paymentReference" maxlength="{{ ProjectPayment::REFERENCE_LENGTH }}" :label="in_array($paymentMethod, ProjectPayment::NEEDS_APPROVAL, true) ? __('Check number or note (optional)') : __('Reference from the processor: Square, the lender, the bank')" data-test="payment-reference" />
 
                 @if (in_array($paymentMethod, ProjectPayment::NEEDS_APPROVAL, true))
                     <div class="flex flex-col gap-2">

@@ -4696,6 +4696,32 @@ area. 4: completed".
 4. **The Company Cam link is required to complete a handoff** (slice 41),
    as "completed" is read; to be confirmed with Jacob.
 
+## 236. Slice 38d as built: payments both ways and the final invoice (2026-11-23)
+
+**Decided by Jacob:** "Carry on until all slices are done." Built as
+approved in decisions 229, 230 and 232; the choices below were made while
+building, each the plainest reading of those.
+
+1. **A payment read from QuickBooks counts at once,** cash and check
+   included: it is in the books already, entered there by whoever has
+   QuickBooks. Decision 133 (receipt, then Finance's approval) stands for
+   cash and check recorded in Backoffice, which go to QuickBooks only once
+   approved.
+2. **QuickBooks is read every fifteen minutes,** and when asked on a
+   Project's Payments.
+3. **A payment that came from QuickBooks is removed in QuickBooks,** not
+   reversed in Backoffice; Backoffice follows.
+4. **The final invoice takes off the deposit invoiced,** not the deposit
+   paid: a deposit invoice still unpaid stays owed in QuickBooks on its own.
+5. **Backoffice makes the final invoice only where it made the deposit
+   invoice** (or there is none); otherwise it is recorded by hand as before.
+6. **Credits, refunds and write-offs are unchanged** (slice 24).
+7. **A lost estimate is marked Rejected in QuickBooks,** Pending again if
+   taken back (question 4 of the plan).
+
+The detail: [slice-38-quickbooks-tax-plan.md](slice-38-quickbooks-tax-plan.md),
+"Step 38d as built".
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

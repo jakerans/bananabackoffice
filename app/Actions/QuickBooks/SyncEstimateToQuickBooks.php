@@ -5,6 +5,7 @@ namespace App\Actions\QuickBooks;
 use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Estimates\ChangeEstimate;
 use App\Enums\AuditAction;
+use App\Enums\ProposalResult;
 use App\Models\Estimate;
 use App\Models\EstimateOption;
 use App\Models\Lead;
@@ -189,6 +190,62 @@ class SyncEstimateToQuickBooks
     }
 
     /**
+     * Bring a Lead's QuickBooks estimates in step with what became of them
+     * (step 38d; question 4): one that was lost is marked rejected, never
+     * deleted, so it stays in QuickBooks' history; one pending again, after
+     * a lost Lead is taken back, is pending there again. One sold is left
+     * as it is. QuickBooks not answering never stops the Lead.
+     */
+    public function followResults(Lead $lead): void
+    {
+        if (! QuickBooksClient::isConfigured()) {
+            return;
+        }
+
+        $options = EstimateOption::query()
+            ->with('estimate.proposal')
+            ->whereNotNull('quickbooks_estimate_id')
+            ->whereHas('estimate', fn ($query) => $query->where('lead_id', $lead->id))
+            ->get();
+
+        if ($options->isEmpty()) {
+            return;
+        }
+
+        try {
+            $connection = QuickBooksConnection::query()->with('location')->where('location_id', $lead->location_id)->whereNull('failed_at')->first();
+
+            if ($connection === null) {
+                return;
+            }
+
+            foreach ($options as $option) {
+                $wanted = match ($option->estimate->proposal?->result) {
+                    ProposalResult::Lost => 'Rejected',
+                    ProposalResult::Pending => 'Pending',
+                    default => null,
+                };
+
+                if ($wanted === null || $option->estimate->proposal->isAddedInError()) {
+                    continue;
+                }
+
+                try {
+                    $kept = $this->client->get($connection, 'estimate/'.$option->quickbooks_estimate_id)['Estimate'] ?? null;
+                } catch (QuickBooksNotFound) {
+                    continue;
+                }
+
+                if (is_array($kept) && in_array($kept['TxnStatus'] ?? null, ['Pending', 'Rejected'], true) && $kept['TxnStatus'] !== $wanted) {
+                    $this->client->post($connection, 'estimate', ['sparse' => true, 'Id' => $kept['Id'], 'SyncToken' => $kept['SyncToken'], 'TxnStatus' => $wanted]);
+                }
+            }
+        } catch (QuickBooksUnavailable $unavailable) {
+            report($unavailable);
+        }
+    }
+
+    /**
      * The job's address, as QuickBooks takes it. Without one QuickBooks
      * cannot tell which town's tax applies.
      *
@@ -219,7 +276,7 @@ class SyncEstimateToQuickBooks
      *
      * @throws QuickBooksUnavailable
      */
-    private function customer(QuickBooksConnection $connection, Lead $lead, array $address): string
+    public function customer(QuickBooksConnection $connection, Lead $lead, array $address): string
     {
         if ($lead->quickbooks_customer_id !== null) {
             return $lead->quickbooks_customer_id;
@@ -264,7 +321,7 @@ class SyncEstimateToQuickBooks
      *
      * @throws QuickBooksUnavailable
      */
-    private function workItem(QuickBooksConnection $connection): string
+    public function workItem(QuickBooksConnection $connection): string
     {
         if ($connection->work_item_id !== null) {
             return $connection->work_item_id;
