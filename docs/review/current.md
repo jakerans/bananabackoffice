@@ -92,6 +92,16 @@ lead's QuickBooks estimates are marked rejected. **Not yet run end to end
 against a real QuickBooks company:** the first Four Corners estimate after a
 production deploy is that test, and needs Jacob's word.
 
+**Slice 39, production from the accepted estimate, is on staging** (not
+production; decision 237,
+[../slice-39-production-from-estimate-plan.md](../slice-39-production-from-estimate-plan.md)):
+a sold job is held out of Production's lists until its deposit is paid or
+waived; the first work package starts from the signed estimate; a window's
+last day fills in from its working days; the Brand Ambassador package is
+carried over; the job's page shows **Where this job is**. To look at it on
+staging, as the Owner: open any job (Production > Workspace): the line of
+steps is at the top, and **Next** jumps down the page.
+
 **The first walkthrough on production (decision 233)** is sorted in
 [../walkthrough-2026-11-23.md](../walkthrough-2026-11-23.md): one bug fixed,
 the rest proposed as slices 39 to 45, waiting for Jacob's answers there.

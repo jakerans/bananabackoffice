@@ -241,12 +241,14 @@ class ProjectPolicy
     /**
      * Determine whether the user can take the Project as its Production
      * Manager: someone with that role at the Project's own Location, when the
-     * handoff is complete and nobody has it yet.
+     * handoff is complete, its deposit is collected or waived (slice 39),
+     * and nobody has it yet.
      */
     public function take(User $user, Project $project): bool
     {
         return $this->view($user, $project)
             && ! $project->isCancelled()
+            && ! $project->awaiting_deposit
             && $project->production_manager_id === null
             && $project->hasHandoff()
             && $user->holdsRoleAt(Role::ProductionManager, $project->location);

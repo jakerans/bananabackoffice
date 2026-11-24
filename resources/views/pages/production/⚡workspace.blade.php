@@ -100,8 +100,34 @@ new #[Title('Workspace')] class extends Component {
     {
         return Project::query()
             ->standing()
+            // A job still waiting for its deposit is not Production's yet (slice 39).
+            ->releasedToProduction()
             ->where('location_id', $this->location?->id ?? 0)
             ->with(['account', 'property', 'proposal']);
+    }
+
+    /**
+     * Sold, and waiting for the deposit: not in any list below until it is
+     * collected or waived. Shown to who can waive it, the longest-waiting first.
+     *
+     * @return Collection<int, Project>
+     */
+    #[Computed]
+    public function awaitingDeposit(): Collection
+    {
+        if (! $this->manages) {
+            return new Collection;
+        }
+
+        return Project::query()
+            ->standing()
+            ->where('awaiting_deposit', true)
+            ->where('location_id', $this->location?->id ?? 0)
+            ->with('location')
+            ->orderBy('sold_at')
+            ->orderBy('id')
+            ->limit(self::LIMIT)
+            ->get();
     }
 
     /**
@@ -394,7 +420,7 @@ new #[Title('Workspace')] class extends Component {
 
     private function changed(): void
     {
-        unset($this->location, $this->toChase, $this->awaitingHandoff, $this->newFromSales, $this->gettingReady, $this->readyToSchedule, $this->scheduled, $this->inProgress, $this->workComplete, $this->inPreProductionSince, $this->productionManagers, $this->manages, $this->takes);
+        unset($this->location, $this->toChase, $this->awaitingDeposit, $this->awaitingHandoff, $this->newFromSales, $this->gettingReady, $this->readyToSchedule, $this->scheduled, $this->inProgress, $this->workComplete, $this->inPreProductionSince, $this->productionManagers, $this->manages, $this->takes);
     }
 }; ?>
 
@@ -469,6 +495,28 @@ new #[Title('Workspace')] class extends Component {
         @endif
 
         <flux:error name="productionManagerId" />
+
+        {{-- Sold jobs held back until the deposit (slice 39). Shown to managers, only when there are some. --}}
+        @if ($this->awaitingDeposit->isNotEmpty())
+            <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="workspace-awaiting-deposit">
+                <div>
+                    <flux:heading size="lg" level="2">{{ __('Waiting for the deposit') }}</flux:heading>
+                    <flux:subheading>{{ __('Sold, and not in Production\'s lists until the deposit is collected or you waive it on the job. Only managers see these here.') }}</flux:subheading>
+                </div>
+
+                <ul class="flex flex-col divide-y divide-zinc-200">
+                    @foreach ($this->awaitingDeposit as $held)
+                        <li wire:key="workspace-awaiting-deposit-{{ $held->id }}" class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0" data-test="workspace-awaiting-deposit-project">
+                            <div class="flex min-w-0 flex-1 flex-col">
+                                <flux:link :href="route('projects.show', $held)" wire:navigate class="font-semibold">{{ $held->title }}</flux:link>
+                                <span class="text-sm text-zinc-700">{{ __(':amount deposit asked for; sold :ago ago.', ['amount' => \App\Support\Money::format(Payments::for($held)->requiredDepositCents()), 'ago' => $waited($held)]) }}</span>
+                                <span class="text-sm text-zinc-500">{{ $held->salesperson_name ?? __('No salesperson') }}</span>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         {{-- Final balances to chase today (slice 17, step 17c). Shown only when there are some. --}}
         @if ($this->toChase->isNotEmpty())

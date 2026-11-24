@@ -83,6 +83,31 @@ class WorkPackageWindow extends Model
     }
 
     /**
+     * The last day of work that starts on a day and takes so many working
+     * days, Monday to Friday (decision 235): five days from a Monday end that
+     * Friday, from a Wednesday the Tuesday after. A weekend start is counted
+     * from the Monday.
+     */
+    public static function lastDayFor(CarbonInterface $first, int $workingDays): CarbonInterface
+    {
+        $day = $first->copy()->startOfDay();
+
+        while ($day->isWeekend()) {
+            $day = $day->addDay();
+        }
+
+        for ($left = max(1, $workingDays) - 1; $left > 0; $left--) {
+            $day = $day->addDay();
+
+            while ($day->isWeekend()) {
+                $day = $day->addDay();
+            }
+        }
+
+        return $day;
+    }
+
+    /**
      * The working days from one day to another, both counted, Monday to Friday.
      */
     public static function workingDaysBetween(CarbonInterface $first, CarbonInterface $last): int

@@ -16,7 +16,7 @@ use App\Support\Addresses\AddressKey;
 
 class CreateProjectForSoldProposal
 {
-    public function __construct(private RecordAuditEvent $recordAuditEvent, private RecordCommission $recordCommission) {}
+    public function __construct(private RecordAuditEvent $recordAuditEvent, private RecordCommission $recordCommission, private ReleaseToProduction $releaseToProduction) {}
 
     /**
      * Make the Project for a proposal that has just been marked Sold
@@ -79,6 +79,8 @@ class CreateProjectForSoldProposal
         );
 
         $this->keepChosenDeposit($project, $proposal, $actor);
+        // Production does not see it until the deposit is collected or waived (slice 39).
+        $this->releaseToProduction->holdIfDepositIsDue($project);
         $this->recordCommission->sold($project, $actor);
 
         return $project;

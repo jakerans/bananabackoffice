@@ -149,7 +149,7 @@ class AppointmentChanged extends Notification
     private function rescheduledInApp(): string
     {
         $lead = Lead::query()->with('account')->find($this->leadId);
-        $who = $lead?->account?->display_name ?? $lead?->displayName();
+        $who = $lead?->account->display_name ?? $lead?->displayName();
         $where = $lead === null ? '' : trim(implode(', ', array_filter([$lead->address_line1, $lead->address_city])));
 
         return match (true) {

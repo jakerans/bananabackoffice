@@ -124,7 +124,7 @@ class ProjectNotice extends Notification
     private function rescheduledInApp(): string
     {
         $lead = Project::query()->with('lead.account')->find($this->projectId)?->lead;
-        $who = $lead?->account?->display_name ?? $lead?->displayName();
+        $who = $lead?->account->display_name ?? $lead?->displayName();
         $where = $lead === null ? '' : trim(implode(', ', array_filter([$lead->address_line1, $lead->address_city])));
 
         return match (true) {

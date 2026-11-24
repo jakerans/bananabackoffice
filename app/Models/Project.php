@@ -41,6 +41,7 @@ use LogicException;
  * @property string $title
  * @property string|null $description
  * @property int|null $project_size_id
+ * @property bool $awaiting_deposit Kept out of Production's lists until its deposit is collected or waived (slice 39).
  * @property int|null $project_size_min_value
  * @property int|null $project_size_max_value
  * @property int $sold_cents What the proposal sold for, kept as it was at the sale.
@@ -133,6 +134,7 @@ class Project extends Model implements HasPhotos
             'timeframe_earliest' => 'date',
             'timeframe_latest' => 'date',
             'deposit_paid_at' => 'datetime',
+            'awaiting_deposit' => 'boolean',
             'ambassador_discount_percent' => 'integer',
             'ambassador_items' => 'array',
             'ambassador_max_discount_percent' => 'integer',
@@ -363,6 +365,18 @@ class Project extends Model implements HasPhotos
     protected function standing(Builder $query): void
     {
         $query->whereNull('projects.cancelled_at');
+    }
+
+    /**
+     * Projects Production works on: not one still waiting for its deposit
+     * (slice 39; decision 237).
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function releasedToProduction(Builder $query): void
+    {
+        $query->where('projects.awaiting_deposit', false);
     }
 
     /**
