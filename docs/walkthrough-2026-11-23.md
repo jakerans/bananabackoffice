@@ -41,7 +41,12 @@ Small, any time:
   notice leaves the customer out on purpose, so this changes an earlier
   decision.
 
-## Questions for Jacob
+## Answered
+
+Decisions 234 and 235: slices 38 to 41 are built back to back; the answers
+for each are in [decisions.md](decisions.md).
+
+## Questions for Jacob, as they were asked
 
 1. **The order.** *Recommended:* slice 38 (QuickBooks) first, since two of
    the notes are it; then 39, 40, 41, then the rest.

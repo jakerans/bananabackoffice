@@ -4682,6 +4682,20 @@ is yes".
    app only;** the email still leaves them out.
 5. **Calendars are Google's** (slice 43).
 
+## 235. Answers for slices 39 to 41 (2026-11-23)
+
+**Decided by Jacob:** "1: sales person can waive deposit, but if they do
+this they do not get paid an advance on commission at all. this is also the
+case for any deposit under 25%. 2: working days only m-f. 3: yes prices per
+area. 4: completed".
+
+1. **A salesperson may waive the deposit** (slices 38 and 39). A waived
+   deposit, or one under 25% of the price, pays **no commission advance**.
+2. **A job's end date counts working days,** Monday to Friday (slice 39).
+3. **The presentation shows each area's price** (slice 40).
+4. **The Company Cam link is required to complete a handoff** (slice 41),
+   as "completed" is read; to be confirmed with Jacob.
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
