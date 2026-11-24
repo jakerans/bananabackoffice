@@ -70,6 +70,12 @@ Inbox (Messenger and text accounts, and what the AI may answer), Campaigns
 and the ad platform connections (built last, decision 183), Color Studio,
 and what Production and Company Reports hold.
 
+**Slice 38b, an estimate's tax from QuickBooks, is on staging** (not
+production): where a Location has QuickBooks connected, the estimate's tax
+box shows QuickBooks' rate in place of the town list. Staging's Intuit test
+company has no automated sales tax, so it answers "no tax" there; Four
+Corners' real company answered 8.1875% (decision 234). 38c is next.
+
 **The first walkthrough on production (decision 233)** is sorted in
 [../walkthrough-2026-11-23.md](../walkthrough-2026-11-23.md): one bug fixed,
 the rest proposed as slices 39 to 45, waiting for Jacob's answers there.
