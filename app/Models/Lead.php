@@ -100,6 +100,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $account_id
  * @property int|null $contact_id
  * @property int|null $property_id
+ * @property string|null $quickbooks_customer_id Their customer in the Location's QuickBooks company (slice 38).
  * @property-read Account|null $account
  * @property-read Contact|null $contact
  * @property-read Property|null $property

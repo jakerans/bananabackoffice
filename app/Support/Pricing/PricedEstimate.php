@@ -25,6 +25,7 @@ final readonly class PricedEstimate
         public int $subtotalCents,
         public array $discounts,
         public int $discountCents,
+        public int $taxableCents,
         public int $taxCents,
         public int $totalCents,
         public int $optionalCents,

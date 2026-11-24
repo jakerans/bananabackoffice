@@ -24,6 +24,8 @@ use Illuminate\Support\Carbon;
  * @property int|null $connected_by
  * @property string|null $connected_by_name
  * @property Carbon $connected_at
+ * @property string|null $work_item_id The company's item estimates are priced on (slice 38).
+ * @property string|null $work_item_name
  * @property Carbon|null $failed_at When QuickBooks last refused to renew it: it needs connecting again.
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at

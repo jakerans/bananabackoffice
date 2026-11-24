@@ -33,6 +33,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $tax_name
  * @property string|null $tax_percent Null for no tax.
  * @property Carbon $priced_at When its prices were last taken from the price book.
+ * @property Carbon|null $quickbooks_tax_at When its tax rate was last taken from QuickBooks (slice 38).
  * @property int|null $created_by
  * @property string $created_by_name
  * @property Carbon|null $created_at
@@ -46,6 +47,9 @@ class Estimate extends Model
 {
     /** @use HasFactory<EstimateFactory> */
     use HasFactory;
+
+    /** What the tax is called when QuickBooks worked out its rate from the job's address (slice 38, step 38b). */
+    public const string QUICKBOOKS_TAX_NAME = 'Sales tax';
 
     /**
      * The estimate types an estimate can be started for. Commercial
@@ -70,7 +74,16 @@ class Estimate extends Model
             'hourly_rate_cents' => 'integer',
             'tax_percent' => 'decimal:4',
             'priced_at' => 'datetime',
+            'quickbooks_tax_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Whether its tax rate came from QuickBooks, not the price book's list.
+     */
+    public function taxIsFromQuickBooks(): bool
+    {
+        return $this->quickbooks_tax_at !== null;
     }
 
     /**

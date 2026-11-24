@@ -68,11 +68,14 @@ class ChangeEstimateDiscounts
                 }
             }
 
-            if ($tax?->name !== $estimate->tax_name) {
-                $estimate->forceFill(['tax_name' => $tax?->name, 'tax_percent' => $tax?->percent])->save();
+            // A rate QuickBooks worked out stays until one is chosen from the list instead (slice 38).
+            $keepsQuickBooksTax = $estimate->taxIsFromQuickBooks() && ! filled($taxRateId);
+
+            if (! $keepsQuickBooksTax && $tax?->name !== $estimate->tax_name) {
+                $estimate->forceFill(['tax_name' => $tax?->name, 'tax_percent' => $tax?->percent, 'quickbooks_tax_at' => null])->save();
             }
 
-            $after = ['discounts' => $chosen->pluck('name')->all(), 'tax' => $tax?->name];
+            $after = ['discounts' => $chosen->pluck('name')->all(), 'tax' => $keepsQuickBooksTax ? $estimate->tax_name : $tax?->name];
 
             if ($before !== $after) {
                 $this->recordAuditEvent->handle(

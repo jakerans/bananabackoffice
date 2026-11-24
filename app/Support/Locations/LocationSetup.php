@@ -15,6 +15,7 @@ use App\Models\QuickBooksConnection;
 use App\Models\Subcontractor;
 use App\Models\User;
 use App\Support\Queue\LocationTimezones;
+use App\Support\QuickBooks\QuickBooksClient;
 use Illuminate\Support\Collection;
 
 /**
@@ -108,7 +109,8 @@ class LocationSetup
             new SetupStep(
                 'quickbooks',
                 __('Its QuickBooks company'),
-                false,
+                // Needed once this server has QuickBooks' keys: estimates take their tax from it (slice 38; decision 230).
+                QuickBooksClient::isConfigured(),
                 QuickBooksConnection::query()->where('location_id', $location->id)->exists(),
                 QuickBooksConnection::query()->where('location_id', $location->id)->exists() ? __('Connected.') : __('Not connected.'),
                 route('settings.integrations'),

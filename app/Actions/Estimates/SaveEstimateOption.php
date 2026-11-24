@@ -55,7 +55,8 @@ class SaveEstimateOption
         return $this->changeEstimate->handle($estimate, $actor, function (Estimate $estimate) use ($option): EstimateOption {
             ChangeEstimate::ensureBelongs($estimate, $option);
 
-            $copy = $option->replicate(['total_cents']);
+            // A copy gets a QuickBooks estimate of its own when it is next sent (slice 38), never the original's.
+            $copy = $option->replicate(['total_cents', 'quickbooks_estimate_id', 'quickbooks_sync_token', 'quickbooks_tax_cents', 'quickbooks_total_cents', 'quickbooks_synced_at']);
             $copy->forceFill([
                 'name' => __(':name (copy)', ['name' => $option->name]),
                 'sort_order' => (int) EstimateOption::query()->where('estimate_id', $estimate->id)->max('sort_order') + 1,

@@ -75,7 +75,8 @@ class PricingEngine
         }
         $discountCents = min($subtotalCents, array_sum(array_column($discounts, 'cents')));
 
-        $taxCents = $this->taxCents($estimate->taxPercent, $subtotalCents, $discountCents, $counted);
+        $taxableCents = $this->taxableCents($subtotalCents, $discountCents, $counted);
+        $taxCents = (int) round($taxableCents * (float) ($estimate->taxPercent ?? 0) / 100);
 
         $optionalCents = array_sum(array_map(fn (PricedArea $area): int => $area->optionalCents, $areas))
             + array_sum(array_map(fn (PricedLineItem $item): int => $item->isCounted ? 0 : $item->priceCents, $lineItems));
@@ -91,6 +92,7 @@ class PricingEngine
             subtotalCents: $subtotalCents,
             discounts: $discounts,
             discountCents: $discountCents,
+            taxableCents: $taxableCents,
             taxCents: $taxCents,
             totalCents: $subtotalCents - $discountCents + $taxCents,
             optionalCents: $optionalCents,
@@ -216,22 +218,18 @@ class PricingEngine
     }
 
     /**
+     * What tax is charged on: the price after discounts, less the surfaces
+     * whose rate is left out of tax.
+     *
      * @param  list<PricedSurface>  $counted
      */
-    private function taxCents(?string $percent, int $subtotalCents, int $discountCents, array $counted): int
+    private function taxableCents(int $subtotalCents, int $discountCents, array $counted): int
     {
-        $percent = (float) ($percent ?? 0);
-
-        if ($percent == 0.0) {
-            return 0;
-        }
-
         $untaxedCents = array_sum(array_map(
             fn (PricedSurface $surface): int => $surface->input->rate->excludedFromTax ? $surface->totalCents() : 0,
             $counted,
         ));
-        $taxableCents = max(0, $subtotalCents - $discountCents - $untaxedCents);
 
-        return (int) round($taxableCents * $percent / 100);
+        return max(0, $subtotalCents - $discountCents - $untaxedCents);
     }
 }
