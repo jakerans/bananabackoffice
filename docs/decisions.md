@@ -4660,6 +4660,28 @@ QuickBooks is basically the backend."
 3. **Added to slice 38:** a salesperson may change an estimate's deposit to
    another percent or a flat amount.
 
+## 234. Slices 38 to 41 are built back to back; the tax check passed in Four Corners' QuickBooks (2026-11-23)
+
+**Decided by Jacob:** business email is Google; only Four Corners'
+QuickBooks is connected so far; "can we do multiple slices at once?"; then,
+to the tax check on Four Corners instead of Albuquerque, the batch, the
+production deploy and the reschedule notice: "1: yes [...] everything else
+is yes".
+
+1. **Slices 38, 39, 40 and 41 are built back to back,** each tested, checked
+   on both GitHub jobs and merged to staging, with a report as each lands;
+   their questions are asked together before each starts. Production
+   deploys only on Jacob's word.
+2. **The tax check ran in Four Corners' real QuickBooks:** one $1,000 test
+   estimate at a Farmington address came back with $81.88 of tax, 8.1875%,
+   the state's published Farmington rate, in three parts (state, county,
+   city). The estimate was deleted and the "Backoffice Tax Test" customer
+   made inactive. Slice 38a is complete.
+3. **Production deployed** at 62df64e, with the access fix (decision 233).
+4. **The reschedule notice names the customer and the address inside the
+   app only;** the email still leaves them out.
+5. **Calendars are Google's** (slice 43).
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

@@ -133,6 +133,16 @@ Nobody uses QuickBooks' own screens for any of it. To confirm with
 Banana's accountant before production: deposits held in a liability account
 until the final invoice, and the gross receipts tax all on the final invoice.
 
+**The tax, seen for real (decision 234), 2026-11-23:** in Four Corners'
+own QuickBooks, which uses automated sales tax, a $1,000 test estimate at a
+Farmington address, made as Backoffice would with the tax left to
+QuickBooks, came back with $81.88 of tax: 8.1875%, in three parts (state
+4.875%, county 1.25%, city 2.0625%), the state's published Farmington rate.
+Deleted straight after. That company already has a taxable "Painting
+services" item and a non-taxable "Deposit for Painting" item; 38b uses a
+company's own items where they exist, chosen in Settings > Integrations,
+before making any. **38a is complete.**
+
 **Answered by Jacob (decision 231):** the tax is proved with one test
 estimate in Albuquerque's real QuickBooks, deleted straight after; deposits
 are taken both ways. Waiting for Albuquerque's QuickBooks company to be
