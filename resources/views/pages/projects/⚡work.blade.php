@@ -17,6 +17,8 @@ use App\Models\WorkPackageSchedule;
 use App\Models\WorkPackageWindow;
 use App\Support\Projects\Readiness;
 use App\Support\Projects\RoughTimeframe;
+use App\Support\Projects\WorkFromEstimate;
+use Carbon\CarbonImmutable;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -330,19 +332,55 @@ new class extends Component {
         unset($this->project, $this->readiness, $this->mayChange);
     }
 
+    /**
+     * What the signed estimate gives the first package to start from, if the job was sold from one.
+     */
+    #[Computed]
+    public function fromEstimate(): ?WorkFromEstimate
+    {
+        return WorkFromEstimate::for($this->project);
+    }
+
+    /**
+     * The first day chosen: the last day follows from the package's working
+     * days, Monday to Friday (slice 39; decision 235). It can still be changed.
+     */
+    public function updatedWindowFirstDay(): void
+    {
+        $this->windowLastDay = $this->lastDayFrom($this->windowFirstDay) ?? $this->windowLastDay;
+    }
+
+    public function updatedScheduleFirstDay(): void
+    {
+        $this->scheduleLastDay = $this->lastDayFrom($this->scheduleFirstDay) ?? $this->scheduleLastDay;
+    }
+
+    private function lastDayFrom(string $firstDay): ?string
+    {
+        $package = $this->packageId === null ? null : $this->project->workPackages->firstWhere('id', $this->packageId);
+
+        if ($package === null || preg_match('/^\d{4}-\d{2}-\d{2}$/', $firstDay) !== 1) {
+            return null;
+        }
+
+        return WorkPackageWindow::lastDayFor(CarbonImmutable::parse($firstDay), $package->working_days)->toDateString();
+    }
+
     public function openAdd(): void
     {
         $this->authorize('managePreProduction', $this->project);
 
         $first = $this->project->workPackages->isEmpty();
+        $estimated = $first ? $this->fromEstimate : null;
 
-        // The first package is the whole job, so it starts from what was sold and handed over.
+        // The first package is the whole job, so it starts from what was sold and handed over,
+        // and from the hours the signed estimate priced (slice 39).
         $this->packageId = null;
         $this->package = [
-            'name' => $first ? $this->project->proposal->name : '',
-            'scope' => $first ? (string) $this->project->handoff?->included_scope : '',
-            'workingDays' => '',
-            'minimumCrew' => '',
+            'name' => $first ? ($estimated->name ?? $this->project->proposal->name) : '',
+            'scope' => $first ? (filled($this->project->handoff?->included_scope) ? (string) $this->project->handoff->included_scope : (string) $estimated?->scope) : '',
+            'workingDays' => $estimated === null ? '' : (string) min(WorkPackage::MAX_WORKING_DAYS, $estimated->workingDays),
+            'minimumCrew' => $estimated === null ? '' : (string) $estimated->crew,
             'revisionReason' => '',
             'changeOrderId' => '',
         ];
@@ -996,6 +1034,12 @@ new class extends Component {
                     @endif
                 @endif
 
+                @if ($packageId === null && $packages->isEmpty() && $this->fromEstimate !== null)
+                    <flux:text size="sm" data-test="work-package-from-estimate">
+                        {{ __('From the signed estimate: :hours hours of work, about :days for a crew of :crew at :each hours a day. Change either if the crew differs.', ['hours' => $this->fromEstimate->hoursWords(), 'days' => trans_choice(':count working day|:count working days', $this->fromEstimate->workingDays), 'crew' => $this->fromEstimate->crew, 'each' => WorkFromEstimate::HOURS_A_DAY]) }}
+                    </flux:text>
+                @endif
+
                 <div class="grid gap-4 sm:grid-cols-2">
                     <flux:input wire:model="package.workingDays" type="number" min="1" max="{{ WorkPackage::MAX_WORKING_DAYS }}" :label="__('Working days it takes')" data-test="work-package-days-input" />
                     <flux:input wire:model="package.minimumCrew" type="number" min="1" max="{{ WorkPackage::MAX_CREW }}" :label="__('Smallest crew (people)')" data-test="work-package-crew-input" />
@@ -1213,7 +1257,7 @@ new class extends Component {
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <flux:input wire:model="windowFirstDay" type="date" :label="__('First day')" data-test="work-window-first" />
+                    <flux:input wire:model.live="windowFirstDay" type="date" :label="__('First day')" :description="__('The last day fills in from the working days, Monday to Friday.')" data-test="work-window-first" />
                     <flux:input wire:model="windowLastDay" type="date" :label="__('Last day')" data-test="work-window-last" />
                 </div>
 
@@ -1368,7 +1412,7 @@ new class extends Component {
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <flux:input wire:model="scheduleFirstDay" type="date" :label="__('First day')" data-test="reschedule-first" />
+                    <flux:input wire:model.live="scheduleFirstDay" type="date" :label="__('First day')" data-test="reschedule-first" />
                     <flux:input wire:model="scheduleLastDay" type="date" :label="__('Last day')" data-test="reschedule-last" />
                 </div>
 

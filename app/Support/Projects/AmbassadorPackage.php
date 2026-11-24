@@ -2,6 +2,8 @@
 
 namespace App\Support\Projects;
 
+use App\Enums\DiscountKind;
+use App\Models\Estimate;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -104,6 +106,32 @@ final readonly class AmbassadorPackage
         }
 
         return new self(self::CUSTOM, (int) $discount, $items, $reason);
+    }
+
+    /**
+     * The package an estimate was sold with, told from its Brand Ambassador
+     * discount (slice 39; decision 237): a discount named for the programme,
+     * and for its tier ("Brand Ambassador Gold") or at a tier's percent.
+     * Nothing when the estimate has no such discount, or its tier cannot be
+     * told; the package is then recorded on the Project by hand.
+     */
+    public static function fromEstimate(Estimate $estimate): ?self
+    {
+        foreach ($estimate->discounts()->get() as $discount) {
+            $name = mb_strtolower($discount->name);
+
+            if (! str_contains($name, 'ambassador')) {
+                continue;
+            }
+
+            foreach (['gold', 'silver', 'bronze'] as $tier) {
+                if (str_contains($name, $tier) || ($discount->kind === DiscountKind::Percentage && (float) $discount->value === (float) self::TIERS[$tier]['discount'])) {
+                    return new self($tier, self::TIERS[$tier]['discount'], self::TIERS[$tier]['items']);
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

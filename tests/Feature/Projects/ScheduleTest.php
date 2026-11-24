@@ -246,7 +246,12 @@ test('rescheduling needs a reason, keeps the dates it had and tells the salesper
     expect(CustomerActivity::label(AuditAction::ProjectRescheduled))->toBe('Rescheduled');
 
     expect($this->project->fresh()->production_state)->toBe(ProjectProductionState::Scheduled);
-    expect(noticesOf($this->sam, ProjectNotice::RESCHEDULED)[0]['message'])->toBe('A job you sold was rescheduled: it is now Mon, Nov 30 – Fri, Dec 4, 2026.');
+    // Inside the app the notice names the customer and the address (decision 234).
+    $lead = $this->project->lead()->with('account')->firstOrFail();
+
+    expect(noticesOf($this->sam, ProjectNotice::RESCHEDULED)[0]['message'])
+        ->toStartWith('The job you sold for '.($lead->account->display_name ?? $lead->displayName()))
+        ->toEndWith(' was rescheduled: it is now Mon, Nov 30 – Fri, Dec 4, 2026.');
 });
 
 test('a reschedule that cannot be made is refused, and nothing changes', function (array $with, string $field, string $message) {

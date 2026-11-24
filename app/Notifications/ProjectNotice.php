@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Project;
 use App\Models\User;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -66,7 +67,8 @@ class ProjectNotice extends Notification
      * owner).
      *
      * Nothing here says anything about the customer, and the Project's title
-     * is left out because it carries the street address. It says what
+     * is left out because it carries the street address; the one exception
+     * is a rescheduled job inside the app, which names both (decision 234). It says what
      * happened and links to the Project, which the person must be signed in
      * and allowed to open.
      *
@@ -109,10 +111,27 @@ class ProjectNotice extends Notification
     {
         return [
             'kind' => $this->kind,
-            'message' => $this->message(),
+            'message' => $this->kind === self::RESCHEDULED ? $this->rescheduledInApp() : $this->message(),
             'url' => $this->url(),
             'project_id' => $this->projectId,
         ];
+    }
+
+    /**
+     * A rescheduled job, as the bell says it: whose and where (decision 234).
+     * Inside the app only, where the salesperson is signed in.
+     */
+    private function rescheduledInApp(): string
+    {
+        $lead = Project::query()->with('lead.account')->find($this->projectId)?->lead;
+        $who = $lead?->account->display_name ?? $lead?->displayName();
+        $where = $lead === null ? '' : trim(implode(', ', array_filter([$lead->address_line1, $lead->address_city])));
+
+        return match (true) {
+            filled($who) && $where !== '' => __('The job you sold for :who at :where was rescheduled: it is now :days.', ['who' => $who, 'where' => $where, 'days' => (string) $this->name]),
+            filled($who) => __('The job you sold for :who was rescheduled: it is now :days.', ['who' => $who, 'days' => (string) $this->name]),
+            default => $this->message(),
+        };
     }
 
     private function message(): string

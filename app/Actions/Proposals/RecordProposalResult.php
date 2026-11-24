@@ -158,6 +158,11 @@ class RecordProposalResult
             };
             $with = ResultDetails::forSold($details);
             $package = AmbassadorPackage::fromInput($details, $prefix);
+
+            // An estimate sold with a Brand Ambassador discount carries its package into the job (slice 39).
+            if ($option !== null && ($package === null || $package->tier === AmbassadorPackage::NONE)) {
+                $package = AmbassadorPackage::fromEstimate($option->estimate) ?? $package;
+            }
             $presentedPrice = $proposal->price();
 
             $proposal->forceFill([...$recorded, 'result' => ProposalResult::Sold, 'sold_cents' => $cents, 'estimate_option_id' => $option?->id, 'result_note' => $with->note])->save();

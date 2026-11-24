@@ -6,7 +6,6 @@ use App\Actions\Audit\RecordAuditEvent;
 use App\Actions\Compensation\RecordCommission;
 use App\Enums\AuditAction;
 use App\Enums\HandoffColors;
-use App\Enums\Role;
 use App\Models\Project;
 use App\Models\ProjectHandoff;
 use App\Models\User;
@@ -18,7 +17,7 @@ use Illuminate\Validation\ValidationException;
 
 class CompleteProjectHandoff
 {
-    public function __construct(private RecordAuditEvent $recordAuditEvent, private RecordCommission $recordCommission) {}
+    public function __construct(private RecordAuditEvent $recordAuditEvent, private RecordCommission $recordCommission, private ReleaseToProduction $releaseToProduction) {}
 
     /**
      * Save the salesperson's answers to the handoff questions for a Project
@@ -79,7 +78,11 @@ class CompleteProjectHandoff
             );
 
             if ($first) {
-                $this->tellProduction($project, $actor);
+                // A job still waiting for its deposit is announced when the deposit comes in (slice 39).
+                if (! $project->awaiting_deposit) {
+                    $this->releaseToProduction->tellProduction($project, $actor);
+                }
+
                 // A completed handoff is one of the advance's conditions (slice 20, step 20a).
                 $this->recordCommission->considerAdvance($project, $actor);
             } elseif ($project->production_manager_id !== null && $project->production_manager_id !== $actor->id) {
@@ -149,23 +152,5 @@ class CompleteProjectHandoff
     private function forAudit(array $values): array
     {
         return array_map(fn (mixed $value): mixed => $value instanceof HandoffColors ? $value->value : $value, $values);
-    }
-
-    /**
-     * Tell the Production Managers at the Project's Location that a sold job
-     * is ready to be taken (product-architecture.md, 20). If it already has a
-     * Production Manager, only they are told.
-     */
-    private function tellProduction(Project $project, User $actor): void
-    {
-        $location = $project->location;
-
-        $people = $project->production_manager_id !== null
-            ? User::query()->whereKey($project->production_manager_id)->get()
-            : User::query()->where('is_active', true)->with('accessGrants')->get()->filter(fn (User $user): bool => $user->holdsRoleAt(Role::ProductionManager, $location));
-
-        foreach ($people->where('id', '!=', $actor->id) as $person) {
-            $person->notify(new ProjectNotice($project->id, ProjectNotice::READY_FOR_PRODUCTION, name: $location->name));
-        }
     }
 }

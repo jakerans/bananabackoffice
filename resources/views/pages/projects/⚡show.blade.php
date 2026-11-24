@@ -487,12 +487,22 @@ new #[Title('Project')] class extends Component {
     @endif
 
     @unless ($project->isCancelled())
+        @if ($project->awaiting_deposit)
+            <flux:callout icon="clock" data-test="project-awaiting-deposit">
+                <flux:callout.heading>{{ __('Waiting for the deposit') }}</flux:callout.heading>
+                <flux:callout.text>{{ __('Production does not see this job in its lists until the deposit is collected, or a manager waives it under Payments, "Change the deposit". The salesperson can complete the handoff meanwhile.') }}</flux:callout.text>
+            </flux:callout>
+        @endif
+
+        {{-- The whole way through, in order, with what is next (slice 39). --}}
+        <x-project.path :path="\App\Support\Projects\ProductionPath::for($project)" />
+
         {{-- Ready to schedule? Worked out from what is recorded; nobody ticks it (slice 10, step 10c). --}}
         @php
             $readiness = Readiness::for($project);
         @endphp
 
-        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-readiness">
+        <div id="project-step-readiness" class="flex scroll-mt-20 flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-readiness">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <flux:heading size="lg" level="2">{{ __('Ready to schedule?') }}</flux:heading>
@@ -537,7 +547,7 @@ new #[Title('Project')] class extends Component {
             </div>
         </div>
 
-        <div class="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-handoff">
+        <div id="project-step-handoff" class="flex scroll-mt-20 flex-col gap-4 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-handoff">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <flux:heading size="lg" level="2">{{ __('Handoff from Sales') }}</flux:heading>
@@ -601,7 +611,7 @@ new #[Title('Project')] class extends Component {
                 $callIsBehind = RoughTimeframe::welcomeCallIsBehind($project);
             @endphp
 
-            <div class="flex flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-pre-production">
+            <div id="project-step-pre-production" class="flex scroll-mt-20 flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-5" data-test="project-pre-production">
                 <div>
                     <flux:heading size="lg" level="2">{{ __('Pre-production') }}</flux:heading>
                     <flux:subheading>{{ __('What this job has and still needs before it is scheduled.') }}</flux:subheading>
@@ -686,23 +696,31 @@ new #[Title('Project')] class extends Component {
             </div>
 
             {{-- The Color Specification (slice 10, step 10b). --}}
-            <livewire:pages::projects.colors :project="$project" :key="'colors-'.$project->id" />
+            <div id="project-step-colors" class="scroll-mt-20">
+                <livewire:pages::projects.colors :project="$project" :key="'colors-'.$project->id" />
+            </div>
 
             {{-- The walkthrough, punch list and signoff (slice 14, step 14b): once all the work has finished. --}}
-            @if (in_array($project->production_state, [\App\Enums\ProjectProductionState::WorkComplete, \App\Enums\ProjectProductionState::SignedOff], true))
-                <livewire:pages::projects.completion :project="$project" :key="'completion-'.$project->id" />
-            @endif
+            <div id="project-step-completion" class="scroll-mt-20">
+                @if (in_array($project->production_state, [\App\Enums\ProjectProductionState::WorkComplete, \App\Enums\ProjectProductionState::SignedOff], true))
+                    <livewire:pages::projects.completion :project="$project" :key="'completion-'.$project->id" />
+                @endif
+            </div>
 
             {{-- Work Packages and the dates offered to the customer (slice 11, step 11a): once the job is ready to schedule, and kept in view after. --}}
-            @if ($readiness->isReadyToSchedule() || $project->workPackages()->exists())
-                <livewire:pages::projects.work :project="$project" :key="'work-'.$project->id" />
-            @endif
+            <div id="project-step-work" class="scroll-mt-20">
+                @if ($readiness->isReadyToSchedule() || $project->workPackages()->exists())
+                    <livewire:pages::projects.work :project="$project" :key="'work-'.$project->id" />
+                @endif
+            </div>
         @endif
     @endunless
 
     {{-- The customer's change orders (slice 18, step 18a), and their invoices and payments (slice 17), kept in view on a cancelled job too. --}}
     <livewire:pages::projects.change-orders :project="$project" :key="'change-orders-'.$project->id" />
-    <livewire:pages::projects.payments :project="$project" :key="'payments-'.$project->id" />
+    <div id="project-step-payments" class="scroll-mt-20">
+        <livewire:pages::projects.payments :project="$project" :key="'payments-'.$project->id" />
+    </div>
 
     {{-- Credits, refunds and write-offs (slice 24). --}}
     <livewire:pages::projects.adjustments :project="$project" :key="'adjustments-'.$project->id" />

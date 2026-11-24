@@ -46,6 +46,7 @@ class RecordPayments
         private AttachFile $attachFile,
         private RecordCommission $recordCommission,
         private SendPaymentToQuickBooks $sendPaymentToQuickBooks,
+        private ReleaseToProduction $releaseToProduction,
     ) {}
 
     /**
@@ -251,6 +252,9 @@ class RecordPayments
                 reason: $reason,
             );
 
+            // A waived deposit lets the job through to Production (slice 39).
+            $this->releaseToProduction->consider($project, $actor);
+
             return $change;
         });
     }
@@ -446,6 +450,11 @@ class RecordPayments
         if ($paid) {
             // The full deposit collected is one of the advance's conditions (slice 20, step 20a).
             $this->recordCommission->considerAdvance($project, $actor);
+        }
+
+        if ($paid) {
+            // Paid, it goes through to Production (slice 39).
+            $this->releaseToProduction->consider($project, $actor);
         }
 
         if ($paid && $project->deposit_paid_at === null) {

@@ -4722,6 +4722,29 @@ building, each the plainest reading of those.
 The detail: [slice-38-quickbooks-tax-plan.md](slice-38-quickbooks-tax-plan.md),
 "Step 38d as built".
 
+## 237. Slice 39 as built: production from the accepted estimate (2026-11-23)
+
+**Decided by Jacob:** the batch of decision 234 and the answers of decision
+235; "Carry on until all slices are done." The choices below were made
+while building.
+
+1. **A sold job is held out of Production's lists until its deposit invoice
+   is paid in full or a manager waives the deposit.** Released once, it stays
+   released. Jobs sold before this are not held. Managers see what is held in
+   the Workspace, **Waiting for the deposit**.
+2. **The first work package starts from the signed estimate:** its hours for
+   a crew of two at eight hours a day give the working days.
+3. **A window's last day fills in from its first day and the working days,**
+   Monday to Friday.
+4. **The Brand Ambassador package is told from the estimate's discount,** by
+   its name or its percent, and recorded on the job at the sale.
+5. **The job's page shows one line of steps through Production,** with what
+   is next. It changes no rule.
+6. **The reschedule notice inside the app names the customer and the
+   address** (decision 234), for a moved appointment and a rescheduled job.
+
+The detail: [slice-39-production-from-estimate-plan.md](slice-39-production-from-estimate-plan.md).
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.

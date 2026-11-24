@@ -73,7 +73,9 @@ class AppointmentChanged extends Notification
      *
      * Like the booking notice, nothing here says anything about the customer:
      * only what happened, when the appointment is, and a link the salesperson
-     * must be signed in and allowed to open.
+     * must be signed in and allowed to open. The one exception is a moved
+     * appointment inside the app, which names the customer and the address
+     * (decision 234); its email does not.
      *
      * @param  self::RESCHEDULED|self::MOVED_TO_YOU|self::MOVED_AWAY|self::CANCELLED|self::LEAD_RETURNED|self::LEAD_RELEASED|self::RELEASE_WARNING|self::PENDING_RELEASE_WARNING|self::PENDING_LEAD_RELEASED|self::REHASH_LEAD_LOST|self::CLOSE_OUT_REMINDER|self::MARKED_RUN|self::MARKED_NO_SHOW|self::CLOSE_OUT_CORRECTED|self::BOOKED_IN_ERROR|self::PROPOSAL_RECORDED|self::SALES_RECORD_CHANGED  $kind
      * @param  self::IN_APP|self::EMAIL  $channel
@@ -133,10 +135,28 @@ class AppointmentChanged extends Notification
     {
         return [
             'kind' => $this->kind,
-            'message' => $this->message(),
+            'message' => $this->kind === self::RESCHEDULED ? $this->rescheduledInApp() : $this->message(),
             'url' => $this->url(),
             'appointment_id' => $this->appointment?->id,
         ];
+    }
+
+    /**
+     * A moved appointment, as the bell says it: with whom and where
+     * (decision 234). Inside the app only, where the salesperson is signed
+     * in and may open the Lead; the email still leaves both out.
+     */
+    private function rescheduledInApp(): string
+    {
+        $lead = Lead::query()->with('account')->find($this->leadId);
+        $who = $lead?->account->display_name ?? $lead?->displayName();
+        $where = $lead === null ? '' : trim(implode(', ', array_filter([$lead->address_line1, $lead->address_city])));
+
+        return match (true) {
+            filled($who) && $where !== '' => __('Your appointment with :who at :where was moved to :when.', ['who' => $who, 'where' => $where, 'when' => $this->when()]),
+            filled($who) => __('Your appointment with :who was moved to :when.', ['who' => $who, 'when' => $this->when()]),
+            default => $this->message(),
+        };
     }
 
     private function message(): string
