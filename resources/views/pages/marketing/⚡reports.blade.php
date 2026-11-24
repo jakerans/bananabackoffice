@@ -168,7 +168,7 @@ new #[Title('Marketing reports')] class extends ReportPage {
             @unless ($bySpend)
                 <flux:text class="text-sm">{{ __('Marketing Source is what the customer says brought them. Spend is entered by Lead Source, so it is not split this way.') }}</flux:text>
             @endunless
-            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                 <flux:table data-test="marketing-by-source">
                     <flux:table.columns>
                         <flux:table.column>{{ $bySpend ? __('Lead Source') : __('Marketing Source') }}</flux:table.column>
@@ -179,18 +179,18 @@ new #[Title('Marketing reports')] class extends ReportPage {
                     <flux:table.rows>
                         @forelse ($this->rows as $row)
                             <flux:table.row :key="'source-'.$loop->index" data-test="source-row">
-                                <flux:table.cell class="ps-3 font-medium text-ink">{{ $row->source }}</flux:table.cell>
+                                <flux:table.cell class="font-medium text-ink">{{ $row->source }}</flux:table.cell>
                                 @foreach ($columns as $key => $column)
                                     <flux:table.cell align="end" class="tabular-nums" data-test="cell-{{ $key }}">{{ ($column['show'])($row) }}</flux:table.cell>
                                 @endforeach
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell :colspan="count($columns) + 1" class="ps-3">{{ __('No spend, leads or sales in these days.') }}</flux:table.cell>
+                                <flux:table.cell :colspan="count($columns) + 1">{{ __('No spend, leads or sales in these days.') }}</flux:table.cell>
                             </flux:table.row>
                         @endforelse
                         <flux:table.row data-test="marketing-total">
-                            <flux:table.cell class="ps-3 font-semibold text-ink">{{ __('Total') }}</flux:table.cell>
+                            <flux:table.cell class="font-semibold text-ink">{{ __('Total') }}</flux:table.cell>
                             @foreach ($columns as $key => $column)
                                 <flux:table.cell align="end" class="font-semibold tabular-nums text-ink" data-test="cell-{{ $key }}">{{ ($column['show'])($total) }}</flux:table.cell>
                             @endforeach
@@ -206,7 +206,7 @@ new #[Title('Marketing reports')] class extends ReportPage {
                     <flux:heading size="lg" level="2">{{ __('Month by month') }}</flux:heading>
                     <flux:button size="sm" icon="arrow-down-tray" wire:click="download('months')" data-test="download-months">{{ __('Download') }}</flux:button>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                     <flux:table data-test="marketing-by-month">
                         <flux:table.columns>
                             <flux:table.column>{{ __('Month') }}</flux:table.column>
@@ -217,7 +217,7 @@ new #[Title('Marketing reports')] class extends ReportPage {
                         <flux:table.rows>
                             @foreach ($this->byMonth as $month => $figures)
                                 <flux:table.row :key="'month-'.$month" data-test="marketing-month-{{ $month }}">
-                                    <flux:table.cell class="ps-3 font-medium text-ink">{{ \Carbon\CarbonImmutable::createFromFormat('!Y-m', $month)->format('M Y') }}</flux:table.cell>
+                                    <flux:table.cell class="font-medium text-ink">{{ \Carbon\CarbonImmutable::createFromFormat('!Y-m', $month)->format('M Y') }}</flux:table.cell>
                                     @foreach ($allColumns as $key => $column)
                                         <flux:table.cell align="end" class="tabular-nums" data-test="cell-{{ $key }}">{{ ($column['show'])($figures) }}</flux:table.cell>
                                     @endforeach
