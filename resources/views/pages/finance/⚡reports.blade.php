@@ -152,7 +152,7 @@ new #[Title('Finance reports')] class extends ReportPage {
             @if ($missing->isNotEmpty())
                 <flux:text class="text-sm text-amber-800" data-test="pl-missing">{{ __('Not read from QuickBooks yet for some months: :locations. Connect each location\'s QuickBooks in Settings > Integrations; it is read each night.', ['locations' => $missing->pluck('location')->join(', ')]) }}</flux:text>
             @endif
-            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                 <flux:table data-test="profit-and-loss">
                     <flux:table.columns>
                         <flux:table.column></flux:table.column>
@@ -166,22 +166,22 @@ new #[Title('Finance reports')] class extends ReportPage {
                     <flux:table.rows>
                         @foreach ($this->lines() as $key => $line)
                             <flux:table.row :key="'pl-'.$key" data-test="pl-{{ $key }}">
-                                <flux:table.cell class="ps-3 {{ in_array($key, ['gross', 'net'], true) ? 'font-semibold text-ink' : 'text-zinc-700' }}">{{ $line['label'] }}</flux:table.cell>
+                                <flux:table.cell class="{{ in_array($key, ['gross', 'net'], true) ? 'font-semibold text-ink' : 'text-zinc-700' }}">{{ $line['label'] }}</flux:table.cell>
                                 @foreach ($pl as $locationId => $row)
                                     <flux:table.cell align="end" class="tabular-nums {{ in_array($key, ['gross', 'net'], true) ? 'font-semibold text-ink' : '' }}">{{ Money::format(($line['value'])($row)) }}</flux:table.cell>
                                 @endforeach
                                 @if ($several)
-                                    <flux:table.cell align="end" class="pe-3 font-semibold tabular-nums text-ink">{{ Money::format(($line['value'])($total)) }}</flux:table.cell>
+                                    <flux:table.cell align="end" class="font-semibold tabular-nums text-ink">{{ Money::format(($line['value'])($total)) }}</flux:table.cell>
                                 @endif
                             </flux:table.row>
                         @endforeach
                         <flux:table.row data-test="pl-percent">
-                            <flux:table.cell class="ps-3 text-zinc-700">{{ __('Net profit %') }}</flux:table.cell>
+                            <flux:table.cell class="text-zinc-700">{{ __('Net profit %') }}</flux:table.cell>
                             @foreach ($pl as $row)
                                 <flux:table.cell align="end" class="tabular-nums">{{ self::netPercent($row['income'], $row['net']) }}</flux:table.cell>
                             @endforeach
                             @if ($several)
-                                <flux:table.cell align="end" class="pe-3 font-semibold tabular-nums text-ink">{{ self::netPercent($total['income'], $total['net']) }}</flux:table.cell>
+                                <flux:table.cell align="end" class="font-semibold tabular-nums text-ink">{{ self::netPercent($total['income'], $total['net']) }}</flux:table.cell>
                             @endif
                         </flux:table.row>
                     </flux:table.rows>
@@ -199,7 +199,7 @@ new #[Title('Finance reports')] class extends ReportPage {
                     </div>
                     <flux:button size="sm" icon="arrow-down-tray" wire:click="download('aging')" data-test="download-aging">{{ __('Download') }}</flux:button>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                     <flux:table data-test="ar-aging">
                         <flux:table.columns>
                             <flux:table.column>{{ __('Location') }}</flux:table.column>
@@ -211,11 +211,11 @@ new #[Title('Finance reports')] class extends ReportPage {
                         <flux:table.rows>
                             @foreach ($report->aging() as $locationId => $row)
                                 <flux:table.row :key="'aging-'.$locationId">
-                                    <flux:table.cell class="ps-3 font-medium text-ink">{{ $row['location'] }}</flux:table.cell>
+                                    <flux:table.cell class="font-medium text-ink">{{ $row['location'] }}</flux:table.cell>
                                     <flux:table.cell align="end" class="tabular-nums">{{ Money::format($row['notDue']) }}</flux:table.cell>
                                     <flux:table.cell align="end" class="tabular-nums">{{ Money::format($row['late']) }}</flux:table.cell>
                                     <flux:table.cell align="end" class="tabular-nums">{{ Money::format($row['collections']) }}</flux:table.cell>
-                                    <flux:table.cell align="end" class="pe-3 font-semibold tabular-nums text-ink">{{ Money::format($row['total']) }}</flux:table.cell>
+                                    <flux:table.cell align="end" class="font-semibold tabular-nums text-ink">{{ Money::format($row['total']) }}</flux:table.cell>
                                 </flux:table.row>
                             @endforeach
                         </flux:table.rows>
@@ -232,7 +232,7 @@ new #[Title('Finance reports')] class extends ReportPage {
                     </div>
                     <flux:button size="sm" icon="arrow-down-tray" wire:click="download('cash')" data-test="download-cash">{{ __('Download') }}</flux:button>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                     <flux:table data-test="cash-collected">
                         <flux:table.columns>
                             <flux:table.column>{{ __('Month') }}</flux:table.column>
@@ -242,9 +242,9 @@ new #[Title('Finance reports')] class extends ReportPage {
                         <flux:table.rows>
                             @foreach ($report->cashByMonth() as $month => $cash)
                                 <flux:table.row :key="'cash-'.$month" data-test="cash-{{ $month }}">
-                                    <flux:table.cell class="ps-3 font-medium text-ink">{{ CarbonImmutable::createFromFormat('!Y-m', $month)->format('M Y') }}</flux:table.cell>
+                                    <flux:table.cell class="font-medium text-ink">{{ CarbonImmutable::createFromFormat('!Y-m', $month)->format('M Y') }}</flux:table.cell>
                                     <flux:table.cell align="end" class="tabular-nums">{{ $cash['payments'] }}</flux:table.cell>
-                                    <flux:table.cell align="end" class="pe-3 tabular-nums">{{ Money::format($cash['cents']) }}</flux:table.cell>
+                                    <flux:table.cell align="end" class="tabular-nums">{{ Money::format($cash['cents']) }}</flux:table.cell>
                                 </flux:table.row>
                             @endforeach
                         </flux:table.rows>
@@ -262,7 +262,7 @@ new #[Title('Finance reports')] class extends ReportPage {
                 </div>
                 <flux:button size="sm" icon="arrow-down-tray" wire:click="download('jobs')" data-test="download-jobs">{{ __('Download') }}</flux:button>
             </div>
-            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                 <flux:table data-test="job-costing">
                     <flux:table.columns>
                         <flux:table.column>{{ __('Location') }}</flux:table.column>
@@ -278,7 +278,7 @@ new #[Title('Finance reports')] class extends ReportPage {
                     <flux:table.rows>
                         @foreach ($report->jobCosts() as $locationId => $row)
                             <flux:table.row :key="'jobs-'.$locationId" data-test="jobs-{{ $locationId }}">
-                                <flux:table.cell class="ps-3 font-medium text-ink">{{ $row['location'] }}</flux:table.cell>
+                                <flux:table.cell class="font-medium text-ink">{{ $row['location'] }}</flux:table.cell>
                                 <flux:table.cell align="end" class="tabular-nums">{{ $row['jobs'] }}</flux:table.cell>
                                 <flux:table.cell align="end" class="tabular-nums">{{ Money::format($row['revenue']) }}</flux:table.cell>
                                 <flux:table.cell align="end" class="tabular-nums">{{ Money::format($row['budget']) }}</flux:table.cell>
@@ -286,7 +286,7 @@ new #[Title('Finance reports')] class extends ReportPage {
                                 <flux:table.cell align="end" class="tabular-nums">{{ Money::format($row['profit']) }}</flux:table.cell>
                                 <flux:table.cell align="end" class="tabular-nums">{{ self::netPercent($row['revenue'], $row['profit']) }}</flux:table.cell>
                                 <flux:table.cell align="end" class="tabular-nums {{ $row['variance'] < 0 ? 'text-red-700' : '' }}">{{ $row['variance'] < 0 ? '('.Money::format(-$row['variance']).')' : Money::format($row['variance']) }}</flux:table.cell>
-                                <flux:table.cell align="end" class="pe-3 tabular-nums">{{ $row['overBudget'] }}</flux:table.cell>
+                                <flux:table.cell align="end" class="tabular-nums">{{ $row['overBudget'] }}</flux:table.cell>
                             </flux:table.row>
                         @endforeach
                     </flux:table.rows>
@@ -306,7 +306,7 @@ new #[Title('Finance reports')] class extends ReportPage {
                     </div>
                     <flux:button size="sm" icon="arrow-down-tray" wire:click="download('pay')" data-test="download-pay">{{ __('Download') }}</flux:button>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                     <flux:table data-test="pay-owed">
                         <flux:table.columns>
                             <flux:table.column>{{ __('Person') }}</flux:table.column>
@@ -316,20 +316,20 @@ new #[Title('Finance reports')] class extends ReportPage {
                         <flux:table.rows>
                             @forelse ($owed as $userId => $person)
                                 <flux:table.row :key="'pay-'.$userId">
-                                    <flux:table.cell class="ps-3 font-medium text-ink">{{ $person['name'] }}</flux:table.cell>
+                                    <flux:table.cell class="font-medium text-ink">{{ $person['name'] }}</flux:table.cell>
                                     <flux:table.cell align="end" class="tabular-nums">{{ Money::format($person['open']) }}</flux:table.cell>
-                                    <flux:table.cell align="end" class="pe-3 tabular-nums">{{ Money::format($person['scheduled']) }}</flux:table.cell>
+                                    <flux:table.cell align="end" class="tabular-nums">{{ Money::format($person['scheduled']) }}</flux:table.cell>
                                 </flux:table.row>
                             @empty
                                 <flux:table.row>
-                                    <flux:table.cell colspan="3" class="ps-3">{{ __('Nothing is owed.') }}</flux:table.cell>
+                                    <flux:table.cell colspan="3">{{ __('Nothing is owed.') }}</flux:table.cell>
                                 </flux:table.row>
                             @endforelse
                             @if ($owed->count() > 1)
                                 <flux:table.row>
-                                    <flux:table.cell class="ps-3 font-semibold text-ink">{{ __('Total') }}</flux:table.cell>
+                                    <flux:table.cell class="font-semibold text-ink">{{ __('Total') }}</flux:table.cell>
                                     <flux:table.cell align="end" class="font-semibold tabular-nums text-ink">{{ Money::format($owed->sum('open')) }}</flux:table.cell>
-                                    <flux:table.cell align="end" class="pe-3 font-semibold tabular-nums text-ink">{{ Money::format($owed->sum('scheduled')) }}</flux:table.cell>
+                                    <flux:table.cell align="end" class="font-semibold tabular-nums text-ink">{{ Money::format($owed->sum('scheduled')) }}</flux:table.cell>
                                 </flux:table.row>
                             @endif
                         </flux:table.rows>

@@ -237,7 +237,7 @@ new #[Title('Reports')] class extends ReportPage {
             @php
                 $columns = [AppointmentsReport::SET, AppointmentsReport::CALENDAR, AppointmentsReport::RAN, AppointmentsReport::NO_SHOW, AppointmentsReport::CANCELLED, AppointmentsReport::REPORT_DUE, AppointmentsReport::SOLD, AppointmentsReport::PENDING, AppointmentsReport::LOST, AppointmentsReport::NO_DEMO];
             @endphp
-            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                 <flux:table data-test="by-salesperson">
                     <flux:table.columns>
                         <flux:table.column>{{ __('Salesperson') }}</flux:table.column>
@@ -249,7 +249,7 @@ new #[Title('Reports')] class extends ReportPage {
                     <flux:table.rows>
                         @forelse ($report->bySalesperson() as $key => $row)
                             <flux:table.row :key="'salesperson-'.$key" data-test="salesperson-row-{{ $key }}">
-                                <flux:table.cell class="ps-3 font-medium text-ink">{{ $row['name'] }}</flux:table.cell>
+                                <flux:table.cell class="font-medium text-ink">{{ $row['name'] }}</flux:table.cell>
                                 @foreach ($columns as $column)
                                     <flux:table.cell align="end" class="tabular-nums" data-test="cell-{{ $column }}">
                                         @if ($row['counts'][$column] > 0)
@@ -259,20 +259,20 @@ new #[Title('Reports')] class extends ReportPage {
                                         @endif
                                     </flux:table.cell>
                                 @endforeach
-                                <flux:table.cell align="end" class="pe-3 tabular-nums">{{ Money::format($row['counts']['sold_cents']) }}</flux:table.cell>
+                                <flux:table.cell align="end" class="tabular-nums">{{ Money::format($row['counts']['sold_cents']) }}</flux:table.cell>
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell :colspan="count($columns) + 2" class="ps-3">{{ __('No appointments were set or on the calendar in these days.') }}</flux:table.cell>
+                                <flux:table.cell :colspan="count($columns) + 2">{{ __('No appointments were set or on the calendar in these days.') }}</flux:table.cell>
                             </flux:table.row>
                         @endforelse
                         @if ($report->bySalesperson()->count() > 1)
                             <flux:table.row data-test="salesperson-total">
-                                <flux:table.cell class="ps-3 font-semibold text-ink">{{ __('Total') }}</flux:table.cell>
+                                <flux:table.cell class="font-semibold text-ink">{{ __('Total') }}</flux:table.cell>
                                 @foreach ($columns as $column)
                                     <flux:table.cell align="end" class="font-semibold tabular-nums text-ink">{{ $totals[$column] }}</flux:table.cell>
                                 @endforeach
-                                <flux:table.cell align="end" class="pe-3 font-semibold tabular-nums text-ink">{{ Money::format($totals['sold_cents']) }}</flux:table.cell>
+                                <flux:table.cell align="end" class="font-semibold tabular-nums text-ink">{{ Money::format($totals['sold_cents']) }}</flux:table.cell>
                             </flux:table.row>
                         @endif
                     </flux:table.rows>
@@ -286,7 +286,7 @@ new #[Title('Reports')] class extends ReportPage {
                     <flux:heading size="lg" level="2">{{ __('Set, by who booked them') }}</flux:heading>
                     <flux:button size="sm" icon="arrow-down-tray" wire:click="download('setters')" data-test="download-setters">{{ __('Download') }}</flux:button>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                     <flux:table data-test="by-setter">
                         <flux:table.columns>
                             <flux:table.column>{{ __('Set by') }}</flux:table.column>
@@ -296,13 +296,13 @@ new #[Title('Reports')] class extends ReportPage {
                         <flux:table.rows>
                             @forelse ($report->bySetter() as $name => $row)
                                 <flux:table.row :key="'setter-'.$loop->index">
-                                    <flux:table.cell class="ps-3 font-medium text-ink">{{ $name }}</flux:table.cell>
+                                    <flux:table.cell class="font-medium text-ink">{{ $name }}</flux:table.cell>
                                     <flux:table.cell align="end" class="tabular-nums">{{ $row['set'] }}</flux:table.cell>
-                                    <flux:table.cell align="end" class="pe-3 tabular-nums">{{ $row['rebookings'] }}</flux:table.cell>
+                                    <flux:table.cell align="end" class="tabular-nums">{{ $row['rebookings'] }}</flux:table.cell>
                                 </flux:table.row>
                             @empty
                                 <flux:table.row>
-                                    <flux:table.cell colspan="3" class="ps-3">{{ __('None set in these days.') }}</flux:table.cell>
+                                    <flux:table.cell colspan="3">{{ __('None set in these days.') }}</flux:table.cell>
                                 </flux:table.row>
                             @endforelse
                         </flux:table.rows>
@@ -315,7 +315,7 @@ new #[Title('Reports')] class extends ReportPage {
                     <flux:heading size="lg" level="2">{{ __('Set, by Lead Source') }}</flux:heading>
                     <flux:button size="sm" icon="arrow-down-tray" wire:click="download('sources')" data-test="download-sources">{{ __('Download') }}</flux:button>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                     <flux:table data-test="by-source">
                         <flux:table.columns>
                             <flux:table.column>{{ __('Lead Source') }}</flux:table.column>
@@ -324,12 +324,12 @@ new #[Title('Reports')] class extends ReportPage {
                         <flux:table.rows>
                             @forelse ($report->bySource() as $name => $set)
                                 <flux:table.row :key="'source-'.$loop->index">
-                                    <flux:table.cell class="ps-3 font-medium text-ink">{{ $name }}</flux:table.cell>
-                                    <flux:table.cell align="end" class="pe-3 tabular-nums">{{ $set }}</flux:table.cell>
+                                    <flux:table.cell class="font-medium text-ink">{{ $name }}</flux:table.cell>
+                                    <flux:table.cell align="end" class="tabular-nums">{{ $set }}</flux:table.cell>
                                 </flux:table.row>
                             @empty
                                 <flux:table.row>
-                                    <flux:table.cell colspan="2" class="ps-3">{{ __('None set in these days.') }}</flux:table.cell>
+                                    <flux:table.cell colspan="2">{{ __('None set in these days.') }}</flux:table.cell>
                                 </flux:table.row>
                             @endforelse
                         </flux:table.rows>
@@ -352,7 +352,7 @@ new #[Title('Reports')] class extends ReportPage {
                 @endif
             </div>
 
-            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column>{{ __('When') }}</flux:table.column>
@@ -370,7 +370,7 @@ new #[Title('Reports')] class extends ReportPage {
                                 $work = $lead?->services->map(fn (Service $service): string => $service->name)->implode(', ');
                             @endphp
                             <flux:table.row :key="'listed-'.$appointment->id" data-test="listed-{{ $appointment->id }}">
-                                <flux:table.cell class="ps-3 align-top">
+                                <flux:table.cell class="align-top">
                                     <span class="block tabular-nums text-ink">{{ $appointment->starts_at->copy()->timezone($appointment->timezone)->format('D, M j, g:i A') }}</span>
                                     @if ($several)
                                         <span class="block text-xs text-zinc-500">{{ $appointment->location?->name }}</span>
@@ -394,13 +394,13 @@ new #[Title('Reports')] class extends ReportPage {
                                     </span>
                                     <span class="block text-xs text-zinc-500">{{ $lead?->leadSource?->name }}</span>
                                 </flux:table.cell>
-                                <flux:table.cell class="pe-3 align-top">
+                                <flux:table.cell class="align-top">
                                     <flux:badge size="sm" :color="$resultColor" data-test="listed-result">{{ $result }}</flux:badge>
                                 </flux:table.cell>
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell colspan="6" class="ps-3" data-test="listed-none">{{ __('No appointments here.') }}</flux:table.cell>
+                                <flux:table.cell colspan="6" data-test="listed-none">{{ __('No appointments here.') }}</flux:table.cell>
                             </flux:table.row>
                         @endforelse
                     </flux:table.rows>

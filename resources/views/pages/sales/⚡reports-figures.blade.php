@@ -167,7 +167,7 @@ new #[Title('Sales figures')] class extends ReportPage {
                 <flux:heading size="lg" level="2">{{ __('By salesperson') }}</flux:heading>
                 <flux:button size="sm" icon="arrow-down-tray" wire:click="download('salespeople')" data-test="download-salespeople">{{ __('Download') }}</flux:button>
             </div>
-            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                 <flux:table data-test="figures-by-salesperson">
                     <flux:table.columns>
                         <flux:table.column>{{ __('Salesperson') }}</flux:table.column>
@@ -178,18 +178,18 @@ new #[Title('Sales figures')] class extends ReportPage {
                     <flux:table.rows>
                         @forelse ($this->report->bySalesperson() as $id => $person)
                             <flux:table.row :key="'person-'.$id" data-test="figures-person-{{ $id }}">
-                                <flux:table.cell class="ps-3 font-medium text-ink">{{ $person['name'] }}</flux:table.cell>
+                                <flux:table.cell class="font-medium text-ink">{{ $person['name'] }}</flux:table.cell>
                                 @foreach ($columns as $key => $column)
                                     <flux:table.cell align="end" class="tabular-nums" data-test="cell-{{ $key }}">{{ ($column['show'])($person['figures']) }}</flux:table.cell>
                                 @endforeach
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell :colspan="count($columns) + 1" class="ps-3">{{ __('Nothing was counted for anyone in these days.') }}</flux:table.cell>
+                                <flux:table.cell :colspan="count($columns) + 1">{{ __('Nothing was counted for anyone in these days.') }}</flux:table.cell>
                             </flux:table.row>
                         @endforelse
                         <flux:table.row data-test="figures-total">
-                            <flux:table.cell class="ps-3 font-semibold text-ink">{{ __('Total') }}</flux:table.cell>
+                            <flux:table.cell class="font-semibold text-ink">{{ __('Total') }}</flux:table.cell>
                             @foreach ($columns as $key => $column)
                                 <flux:table.cell align="end" class="font-semibold tabular-nums text-ink" data-test="cell-{{ $key }}">{{ ($column['show'])($totals) }}</flux:table.cell>
                             @endforeach
@@ -205,7 +205,7 @@ new #[Title('Sales figures')] class extends ReportPage {
                     <flux:heading size="lg" level="2">{{ __('Month by month') }}</flux:heading>
                     <flux:button size="sm" icon="arrow-down-tray" wire:click="download('months')" data-test="download-months">{{ __('Download') }}</flux:button>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+                <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                     <flux:table data-test="figures-by-month">
                         <flux:table.columns>
                             <flux:table.column>{{ __('Month') }}</flux:table.column>
@@ -216,7 +216,7 @@ new #[Title('Sales figures')] class extends ReportPage {
                         <flux:table.rows>
                             @foreach ($this->byMonth as $month => $figures)
                                 <flux:table.row :key="'month-'.$month" data-test="figures-month-{{ $month }}">
-                                    <flux:table.cell class="ps-3 font-medium text-ink">{{ \Carbon\CarbonImmutable::createFromFormat('!Y-m', $month)->format('M Y') }}</flux:table.cell>
+                                    <flux:table.cell class="font-medium text-ink">{{ \Carbon\CarbonImmutable::createFromFormat('!Y-m', $month)->format('M Y') }}</flux:table.cell>
                                     @foreach ($columns as $key => $column)
                                         <flux:table.cell align="end" class="tabular-nums" data-test="cell-{{ $key }}">{{ ($column['show'])($figures) }}</flux:table.cell>
                                     @endforeach
@@ -237,7 +237,7 @@ new #[Title('Sales figures')] class extends ReportPage {
                 <flux:heading size="lg" level="2">{{ __('Sold revenue by month') }}</flux:heading>
                 <flux:button size="sm" icon="arrow-down-tray" wire:click="download('leaderboard')" data-test="download-leaderboard">{{ __('Download') }}</flux:button>
             </div>
-            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                 <flux:table data-test="sold-by-month">
                     <flux:table.columns>
                         <flux:table.column>{{ __('Salesperson') }}</flux:table.column>
@@ -251,7 +251,7 @@ new #[Title('Sales figures')] class extends ReportPage {
                     <flux:table.rows>
                         @forelse ($leaderboard as $id => $person)
                             <flux:table.row :key="'sold-'.$id">
-                                <flux:table.cell class="ps-3 font-medium text-ink">{{ $loop->iteration }}. {{ $person['name'] }}</flux:table.cell>
+                                <flux:table.cell class="font-medium text-ink">{{ $loop->iteration }}. {{ $person['name'] }}</flux:table.cell>
                                 @foreach ($person['months'] as $month => $cents)
                                     @php
                                         $best = $leaderboard->max(fn (array $other): int => $other['months'][$month]);
@@ -259,12 +259,12 @@ new #[Title('Sales figures')] class extends ReportPage {
                                     <flux:table.cell align="end" class="tabular-nums {{ $cents > 0 && $cents === $best ? 'font-semibold text-ink' : '' }}">{{ Money::format($cents) }}@if ($cents > 0 && $cents === $best && $severalMonths) <flux:icon.trophy variant="micro" class="inline size-3.5 text-amber-600" />@endif</flux:table.cell>
                                 @endforeach
                                 @if ($severalMonths)
-                                    <flux:table.cell align="end" class="pe-3 font-semibold tabular-nums text-ink">{{ Money::format($person['total']) }}</flux:table.cell>
+                                    <flux:table.cell align="end" class="font-semibold tabular-nums text-ink">{{ Money::format($person['total']) }}</flux:table.cell>
                                 @endif
                             </flux:table.row>
                         @empty
                             <flux:table.row>
-                                <flux:table.cell :colspan="count($this->monthBounds) + 2" class="ps-3">{{ __('Nothing sold in these days.') }}</flux:table.cell>
+                                <flux:table.cell :colspan="count($this->monthBounds) + 2">{{ __('Nothing sold in these days.') }}</flux:table.cell>
                             </flux:table.row>
                         @endforelse
                     </flux:table.rows>
@@ -282,7 +282,7 @@ new #[Title('Sales figures')] class extends ReportPage {
                         <flux:heading size="lg" level="2">{{ $heading }}</flux:heading>
                         <flux:button size="sm" icon="arrow-down-tray" wire:click="download('{{ $table }}')" data-test="download-{{ $table }}">{{ __('Download') }}</flux:button>
                     </div>
-                    <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card">
+                    <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-card px-4">
                         <flux:table data-test="{{ $table }}-table">
                             <flux:table.columns>
                                 <flux:table.column>{{ $name }}</flux:table.column>
@@ -292,13 +292,13 @@ new #[Title('Sales figures')] class extends ReportPage {
                             <flux:table.rows>
                                 @forelse ($counts as $label => $count)
                                     <flux:table.row :key="$table.'-'.$loop->index">
-                                        <flux:table.cell class="ps-3 font-medium text-ink whitespace-normal">{{ $label }}</flux:table.cell>
+                                        <flux:table.cell class="font-medium text-ink whitespace-normal">{{ $label }}</flux:table.cell>
                                         <flux:table.cell align="end" class="tabular-nums">{{ $count }}</flux:table.cell>
-                                        <flux:table.cell align="end" class="pe-3 tabular-nums">{{ (int) round($count * 100 / $all) }}%</flux:table.cell>
+                                        <flux:table.cell align="end" class="tabular-nums">{{ (int) round($count * 100 / $all) }}%</flux:table.cell>
                                     </flux:table.row>
                                 @empty
                                     <flux:table.row>
-                                        <flux:table.cell colspan="3" class="ps-3">{{ $none }}</flux:table.cell>
+                                        <flux:table.cell colspan="3">{{ $none }}</flux:table.cell>
                                     </flux:table.row>
                                 @endforelse
                             </flux:table.rows>
