@@ -8,6 +8,7 @@ use App\Actions\Estimates\SaveEstimateArea;
 use App\Actions\Estimates\SaveEstimateLineItem;
 use App\Actions\Estimates\SaveEstimateOption;
 use App\Actions\Estimates\SaveEstimateSurface;
+use App\Actions\QuickBooks\SyncEstimateToQuickBooks;
 use App\Enums\AreaShape;
 use App\Enums\EstimateType;
 use App\Enums\LineItemPricing;
@@ -32,6 +33,7 @@ use App\Support\Money;
 use App\Support\Pricing\Decimal;
 use App\Support\Pricing\EstimatePricing;
 use App\Support\Pricing\PricedEstimate;
+use App\Support\QuickBooks\QuickBooksUnavailable;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
@@ -472,6 +474,8 @@ new #[Title('Estimate')] class extends Component {
         $removeFromEstimate->handle($this->estimate, $part, $this->user());
 
         if ($part instanceof EstimateOption) {
+            // Its QuickBooks estimate goes with it (slice 38).
+            app(SyncEstimateToQuickBooks::class)->forget($part);
             $this->optionId = $this->estimate->options()->value('id');
         }
 
@@ -506,6 +510,34 @@ new #[Title('Estimate')] class extends Component {
         Flux::toast(__('Discounts and tax saved.'));
     }
 
+    /**
+     * Whether this estimate's tax comes from its Location's QuickBooks company (slice 38, step 38b).
+     */
+    #[Computed]
+    public function usesQuickBooksTax(): bool
+    {
+        return SyncEstimateToQuickBooks::isAvailableFor($this->estimate);
+    }
+
+    /**
+     * Send the options to QuickBooks and bring back the tax it works out from the job's address.
+     */
+    public function fetchTax(SyncEstimateToQuickBooks $syncEstimateToQuickBooks): void
+    {
+        $this->resetValidation();
+
+        try {
+            $syncEstimateToQuickBooks->handle($this->estimate, $this->user());
+        } catch (QuickBooksUnavailable $unavailable) {
+            $this->addError('quickBooksTax', $unavailable->getMessage());
+
+            return;
+        }
+
+        $this->changed(fetchTax: false);
+        Flux::toast(variant: 'success', text: __('Tax from QuickBooks: :percent%.', ['percent' => Decimal::plain($this->estimate->tax_percent ?? '0')]));
+    }
+
     public function saveHourlyRate(ChangeEstimateHourlyRate $changeEstimateHourlyRate): void
     {
         $changeEstimateHourlyRate->handle($this->estimate, $this->hourlyRate, $this->user());
@@ -535,9 +567,21 @@ new #[Title('Estimate')] class extends Component {
     /**
      * Forget what was read, so the page shows the estimate as it is now.
      */
-    private function changed(): void
+    private function changed(bool $fetchTax = true): void
     {
         unset($this->estimate, $this->options, $this->option, $this->priced, $this->removingName);
+
+        // The first time there is something priced, its tax rate is fetched from QuickBooks by itself;
+        // after that the rate is kept and every change is priced with it at once (slice 38, step 38b).
+        if ($fetchTax && $this->usesQuickBooksTax && ! $this->estimate->taxIsFromQuickBooks() && ! $this->estimate->isSettled()) {
+            try {
+                app(SyncEstimateToQuickBooks::class)->handle($this->estimate, $this->user());
+                unset($this->estimate, $this->options, $this->option, $this->priced);
+            } catch (QuickBooksUnavailable) {
+                // Nothing priced yet, no address, or QuickBooks not answering: asked for again with the button.
+            }
+        }
+
         $this->fillTerms();
     }
 
@@ -820,13 +864,30 @@ new #[Title('Estimate')] class extends Component {
                     <flux:text class="text-sm">{{ __('No named discounts in this price book.') }}</flux:text>
                 @endforelse
                 <flux:error name="discountIds" />
-                <flux:select wire:model="taxRateId" :label="__('Tax')" :disabled="! $editable" data-test="tax-rate">
-                    <flux:select.option value="">{{ __('No tax') }}</flux:select.option>
-                    @foreach ($this->taxRates as $taxRate)
-                        <flux:select.option :value="(string) $taxRate->id" wire:key="tax-{{ $taxRate->id }}">{{ $taxRate->name }} ({{ Decimal::plain($taxRate->percent) }}%){{ $taxRate->is_active ? '' : ' · '.__('retired') }}</flux:select.option>
-                    @endforeach
-                </flux:select>
-                <flux:error name="taxRateId" />
+                @if ($this->usesQuickBooksTax)
+                    <div class="flex flex-col gap-2 rounded-lg bg-zinc-50 p-3" data-test="quickbooks-tax">
+                        <div class="text-sm font-medium text-ink">{{ __('Tax') }}</div>
+                        @if ($estimate->taxIsFromQuickBooks())
+                            <flux:text class="text-sm" data-test="quickbooks-tax-rate">{{ $estimate->tax_percent === null ? __('QuickBooks charges no tax at this address.') : __(':percent%, worked out by QuickBooks from the job\'s address.', ['percent' => Decimal::plain($estimate->tax_percent)]) }}</flux:text>
+                        @else
+                            <flux:text class="text-sm">{{ __('QuickBooks works it out from the job\'s address, once something is priced.') }}</flux:text>
+                        @endif
+                        <flux:error name="quickBooksTax" />
+                        @if ($editable)
+                            <div>
+                                <flux:button type="button" size="sm" icon="arrow-path" wire:click="fetchTax" data-test="fetch-quickbooks-tax">{{ $estimate->taxIsFromQuickBooks() ? __('Check with QuickBooks again') : __('Get tax from QuickBooks') }}</flux:button>
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <flux:select wire:model="taxRateId" :label="__('Tax')" :disabled="! $editable" data-test="tax-rate">
+                        <flux:select.option value="">{{ __('No tax') }}</flux:select.option>
+                        @foreach ($this->taxRates as $taxRate)
+                            <flux:select.option :value="(string) $taxRate->id" wire:key="tax-{{ $taxRate->id }}">{{ $taxRate->name }} ({{ Decimal::plain($taxRate->percent) }}%){{ $taxRate->is_active ? '' : ' · '.__('retired') }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:error name="taxRateId" />
+                @endif
                 @if ($editable)
                     <div class="flex justify-end">
                         <flux:button type="submit" size="sm" variant="primary" data-test="save-discounts">{{ __('Save') }}</flux:button>

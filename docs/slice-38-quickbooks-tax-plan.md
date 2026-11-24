@@ -1,7 +1,7 @@
 # Slice 38: Estimates, tax and payment through QuickBooks (plan, not approved)
 
 **Status:** approved 2026-11-12 with every recommendation (decision 230).
-38a, the test, is under way; nothing in Backoffice is built yet.
+38a is complete and 38b is built; 38c and 38d are next.
 
 ## Why
 
@@ -161,6 +161,41 @@ The two questions, as they were asked:
    for a deposit paid online, someone opens the estimate in QuickBooks, adds
    the deposit request and sends it, and Backoffice reads the payment back;
    or both.
+
+## Step 38b as built (2026-11-23)
+
+- **Where a Location has QuickBooks connected,** its estimates take their
+  tax from QuickBooks: the tax box on the estimate shows the rate QuickBooks
+  worked out, with **Get tax from QuickBooks** / **Check with QuickBooks
+  again**, in place of the town list. A Location without QuickBooks keeps
+  the list.
+- **What is sent:** the Lead's customer, matched in QuickBooks by email or
+  added (one that exists is never changed), and each priced option as a
+  QuickBooks estimate at the job's address, on the company's own "Painting
+  services" item (or its first taxable service), the tax left for QuickBooks
+  to work out. An option keeps its one QuickBooks estimate and is brought in
+  step, never made twice; a copied option gets its own; a removed option's
+  is deleted.
+- **The rate, not each figure, is what comes back.** The estimate then
+  charges QuickBooks' rate (all its parts added: state, county, city), so
+  every later change is priced at once without asking QuickBooks again.
+  *Decided while building,* since the rate depends only on the address.
+- **When it is asked:** by itself the first time something is priced; when
+  the button is pressed; and before the customer signs, if anything changed
+  since QuickBooks last saw it. If QuickBooks cannot answer then, signing
+  waits, with **Try again**.
+- **It needs the Lead's full address;** without one it says so.
+- **Recorded** in the Audit Log when the rate is set or changes ("Lead ·
+  Estimate tax from quickbooks").
+- **Connecting QuickBooks is a ✱ step** on a Location's checklist, on a
+  server that has QuickBooks' keys.
+- Code: `App\Actions\QuickBooks\SyncEstimateToQuickBooks`; tests:
+  `tests/Feature/QuickBooks/EstimateTaxFromQuickBooksTest.php`.
+
+Known limits: QuickBooks rounds each part of the tax by itself, so its own
+figure can differ from Backoffice's by a cent; the final invoice (38d) is
+QuickBooks' figure. Which item the work is priced on is chosen by itself,
+not yet in Settings > Integrations.
 
 ## Questions for Jacob
 

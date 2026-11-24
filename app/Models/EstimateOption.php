@@ -20,6 +20,11 @@ use Illuminate\Support\Carbon;
  * @property string|null $description For the customer.
  * @property int $sort_order
  * @property int $total_cents Its total as last priced, kept for lists.
+ * @property string|null $quickbooks_estimate_id Its estimate in the Location's QuickBooks company (slice 38).
+ * @property string|null $quickbooks_sync_token
+ * @property int|null $quickbooks_tax_cents The tax QuickBooks worked out when it was last sent.
+ * @property int|null $quickbooks_total_cents
+ * @property Carbon|null $quickbooks_synced_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Estimate $estimate
@@ -39,6 +44,9 @@ class EstimateOption extends Model
         return [
             'sort_order' => 'integer',
             'total_cents' => 'integer',
+            'quickbooks_tax_cents' => 'integer',
+            'quickbooks_total_cents' => 'integer',
+            'quickbooks_synced_at' => 'datetime',
         ];
     }
 

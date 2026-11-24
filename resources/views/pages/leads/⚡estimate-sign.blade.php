@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Agreements\SignAgreement;
+use App\Actions\QuickBooks\SyncEstimateToQuickBooks;
 use App\Models\AgreementWording;
 use App\Models\Appointment;
 use App\Models\Estimate;
@@ -45,12 +46,31 @@ new #[Title('Customer agreement')] #[Layout('layouts::presentation')] class exte
 
     public bool $agreed = false;
 
+    /** Why the tax could not be checked with QuickBooks, when it could not (slice 38, step 38b). */
+    public ?string $taxWaiting = null;
+
     public function mount(Lead $lead, Estimate $estimate, EstimateOption $option): void
     {
         $this->leadId = $lead->id;
         $this->estimateId = $estimate->id;
         $this->optionId = $option->id;
         $this->knownLifecycleVersion = (int) $lead->lifecycle_version;
+
+        $this->checkTax();
+    }
+
+    /**
+     * Before the customer signs, QuickBooks sees the estimate as it is now, so the tax signed for is QuickBooks'.
+     */
+    public function checkTax(): void
+    {
+        if (Auth::user()?->can('update', $this->estimate) !== true) {
+            return;
+        }
+
+        $this->taxWaiting = app(SyncEstimateToQuickBooks::class)->bringUpToDate($this->estimate, $this->user());
+
+        unset($this->estimate, $this->option, $this->details, $this->unavailable);
     }
 
     #[Computed]
@@ -94,6 +114,7 @@ new #[Title('Customer agreement')] #[Layout('layouts::presentation')] class exte
             $this->wording === null => __('There is no agreement wording yet. The Owner adds it in Pricing Settings.'),
             $this->appointment === null => __('The customer signs during the appointment, on its day. Otherwise mark the sale on the Lead\'s Estimates card.'),
             $this->option->total_cents <= 0 => __('This option has no price yet.'),
+            $this->taxWaiting !== null => __('The tax has to come back from QuickBooks before signing. :why', ['why' => $this->taxWaiting]),
             default => null,
         };
     }
@@ -115,6 +136,11 @@ new #[Title('Customer agreement')] #[Layout('layouts::presentation')] class exte
     public function sign(mixed $signature, SignAgreement $signAgreement): void
     {
         $this->resetValidation();
+        $this->checkTax();
+
+        if ($this->taxWaiting !== null) {
+            return;
+        }
 
         $agreement = $signAgreement->handle(
             $this->lead,
@@ -161,6 +187,11 @@ new #[Title('Customer agreement')] #[Layout('layouts::presentation')] class exte
         @if ($this->unavailable !== null)
             <flux:callout icon="information-circle" color="amber" data-test="sign-unavailable">
                 <flux:callout.text>{{ $this->unavailable }}</flux:callout.text>
+                @if ($taxWaiting !== null)
+                    <x-slot name="actions">
+                        <flux:button size="sm" wire:click="checkTax" data-test="retry-quickbooks-tax">{{ __('Try again') }}</flux:button>
+                    </x-slot>
+                @endif
             </flux:callout>
         @endif
 

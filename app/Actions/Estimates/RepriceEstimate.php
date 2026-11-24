@@ -111,7 +111,7 @@ class RepriceEstimate
                 }
             }
 
-            if ($estimate->tax_name !== null) {
+            if ($estimate->tax_name !== null && ! $estimate->taxIsFromQuickBooks()) {
                 $tax = TaxRate::query()->where('price_book_id', $book->id)->where('name', $estimate->tax_name)->first();
 
                 if ($tax === null) {

@@ -107,6 +107,48 @@ final class QuickBooksClient
      */
     public function get(QuickBooksConnection $connection, string $path, array $query = []): array
     {
+        return $this->send($connection, 'get', $path, $query);
+    }
+
+    /**
+     * Rows of one kind from a connection's company, asked for in QuickBooks'
+     * own query language: "select * from Item where Active = true".
+     *
+     * @return list<array<string, mixed>>
+     *
+     * @throws QuickBooksUnavailable
+     */
+    public function query(QuickBooksConnection $connection, string $entity, string $query): array
+    {
+        $rows = $this->send($connection, 'get', 'query', ['query' => $query])['QueryResponse'][$entity] ?? [];
+
+        return is_array($rows) ? array_values($rows) : [];
+    }
+
+    /**
+     * Make or change something in a connection's company (slice 38): a
+     * customer, an estimate. Returns it as QuickBooks keeps it.
+     *
+     * @param  array<string, mixed>  $body
+     * @param  array<string, string>  $query
+     * @return array<string, mixed>
+     *
+     * @throws QuickBooksUnavailable
+     */
+    public function post(QuickBooksConnection $connection, string $path, array $body, array $query = []): array
+    {
+        return $this->send($connection, 'post', $path, $query, $body);
+    }
+
+    /**
+     * @param  array<string, string>  $query
+     * @param  array<string, mixed>|null  $body
+     * @return array<string, mixed>
+     *
+     * @throws QuickBooksUnavailable
+     */
+    private function send(QuickBooksConnection $connection, string $method, string $path, array $query = [], ?array $body = null): array
+    {
         if ($connection->failed_at !== null) {
             throw new QuickBooksUnavailable(__('QuickBooks needs connecting again for :location.', ['location' => $connection->location->name]));
         }
@@ -115,15 +157,23 @@ final class QuickBooksClient
             $this->renew($connection);
         }
 
-        $response = $this->read($connection, $path, $query);
+        $response = $this->read($connection, $method, $path, $query, $body);
 
         if ($response->status() === 401) {
             $this->renew($connection);
-            $response = $this->read($connection, $path, $query);
+            $response = $this->read($connection, $method, $path, $query, $body);
+        }
+
+        if ($method === 'get' && in_array($response->status(), [400, 404], true)) {
+            throw new QuickBooksNotFound(__('QuickBooks no longer has that for :location.', ['location' => $connection->location->name]));
         }
 
         if (! $response->successful() || ! is_array($response->json())) {
-            throw new QuickBooksUnavailable(__('QuickBooks did not answer for :location (:status).', ['location' => $connection->location->name, 'status' => $response->status()]));
+            $detail = $response->json('Fault.Error.0.Detail') ?? $response->json('Fault.Error.0.Message');
+
+            throw new QuickBooksUnavailable(is_string($detail) && $body !== null
+                ? __('QuickBooks refused that for :location: :detail', ['location' => $connection->location->name, 'detail' => $detail])
+                : __('QuickBooks did not answer for :location (:status).', ['location' => $connection->location->name, 'status' => $response->status()]));
         }
 
         return $response->json();
@@ -207,16 +257,19 @@ final class QuickBooksClient
 
     /**
      * @param  array<string, string>  $query
+     * @param  array<string, mixed>|null  $body
      *
      * @throws QuickBooksUnavailable
      */
-    private function read(QuickBooksConnection $connection, string $path, array $query): Response
+    private function read(QuickBooksConnection $connection, string $method, string $path, array $query, ?array $body = null): Response
     {
+        $url = $this->apiBase().'/v3/company/'.$connection->realm_id.'/'.$path;
+        $query = [...$query, 'minorversion' => (string) self::MINOR_VERSION];
+
         try {
-            return $this->api()->withToken($connection->access_token)->get(
-                $this->apiBase().'/v3/company/'.$connection->realm_id.'/'.$path,
-                [...$query, 'minorversion' => (string) self::MINOR_VERSION],
-            );
+            return $method === 'post'
+                ? $this->api()->withToken($connection->access_token)->asJson()->post($url.'?'.http_build_query($query), $body ?? [])
+                : $this->api()->withToken($connection->access_token)->get($url, $query);
         } catch (ConnectionException) {
             throw new QuickBooksUnavailable(__('QuickBooks could not be reached for :location. Try again in a moment.', ['location' => $connection->location->name]));
         }
