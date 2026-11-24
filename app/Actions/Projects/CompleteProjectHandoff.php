@@ -48,9 +48,9 @@ class CompleteProjectHandoff
 
             Gate::forUser($actor)->authorize('completeHandoff', $project);
 
-            $values = $this->checked($answers);
             $handoff = $project->handoff()->first();
             $first = $handoff === null;
+            $values = $this->checked($answers, $first);
             $before = $first ? [] : $handoff->only(array_keys($values));
 
             $handoff ??= new ProjectHandoff;
@@ -67,6 +67,11 @@ class CompleteProjectHandoff
             }
 
             $handoff->save();
+
+            if ($first) {
+                // The draft kept while it was typed has done its work (slice 41).
+                $project->forceFill(['handoff_draft' => null, 'handoff_draft_saved_at' => null])->save();
+            }
 
             $this->recordAuditEvent->handle(
                 $first ? AuditAction::ProjectHandoffCompleted : AuditAction::ProjectHandoffChanged,
@@ -98,11 +103,12 @@ class CompleteProjectHandoff
      * still missing its answer.
      *
      * @param  array<string, mixed>  $answers
+     * @param  bool  $first  Whether the handoff is being completed, not corrected.
      * @return array<string, mixed>
      *
      * @throws ValidationException
      */
-    private function checked(array $answers): array
+    private function checked(array $answers, bool $first): array
     {
         $text = fn (string $key): string => is_string($answers[$key] ?? null) ? trim($answers[$key]) : '';
         $values = [];
@@ -133,12 +139,23 @@ class CompleteProjectHandoff
             }
         }
 
+        // The job's Company Cam link (slice 41; decision 239): needed to complete a handoff.
+        // One completed before it was asked for can still be corrected without it.
+        $link = $text('companyCamUrl');
+
+        if ($link === '' && $first) {
+            $refused['handoff.companyCamUrl'] = __('Paste the Company Cam link for this job.');
+        } elseif ($link !== '' && (mb_strlen($link) > ProjectHandoff::URL_LENGTH || filter_var($link, FILTER_VALIDATE_URL) === false || ! str_starts_with(mb_strtolower($link), 'https://'))) {
+            $refused['handoff.companyCamUrl'] = __('Give the whole link, starting with https://, as Company Cam shares it.');
+        }
+
         if ($refused !== []) {
             throw ValidationException::withMessages($refused);
         }
 
         return [
             ...$values,
+            'company_cam_url' => $link === '' ? null : $link,
             'colors_status' => $colors,
             'colors_details' => $details === '' ? null : $details,
             'other_notes' => $text('otherNotes') === '' ? null : $text('otherNotes'),

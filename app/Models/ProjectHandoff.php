@@ -28,6 +28,7 @@ use LogicException;
  * @property string $condition_prep Existing condition and preparation risks.
  * @property string $customer_priorities Priorities and expectations learned in discovery.
  * @property string|null $other_notes
+ * @property string|null $company_cam_url The job's Company Cam project or video; asked for from slice 41 on.
  * @property int|null $completed_by
  * @property string|null $completed_by_name
  * @property Carbon $completed_at
@@ -41,6 +42,9 @@ class ProjectHandoff extends Model
 {
     /** The longest answer to one question. */
     public const int ANSWER_LENGTH = 2000;
+
+    /** The longest link kept. */
+    public const int URL_LENGTH = 500;
 
     /**
      * The questions answered in words, in the order they are asked, with the

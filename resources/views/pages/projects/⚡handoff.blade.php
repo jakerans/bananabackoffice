@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Projects\CompleteProjectHandoff;
+use App\Actions\Projects\SaveHandoffDraft;
 use App\Enums\HandoffColors;
 use App\Models\Project;
 use App\Models\ProjectHandoff;
@@ -37,6 +38,7 @@ new #[Title('Handoff to Production')] class extends Component {
         'conditionPrep' => '',
         'customerPriorities' => '',
         'otherNotes' => '',
+        'companyCamUrl' => '',
     ];
 
     /** @var list<string> The answers started from the estimate and discovery, to be checked. */
@@ -56,6 +58,12 @@ new #[Title('Handoff to Production')] class extends Component {
             $draft = HandoffDraft::for($project);
             $this->handoff = [...$this->handoff, ...$draft];
             $this->prefilled = array_keys(array_filter($draft, fn (string $answer): bool => $answer !== ''));
+
+            // Picked up where it was left: what was typed before is kept as it was typed (slice 41).
+            if ($project->handoff_draft !== null) {
+                $this->handoff = [...$this->handoff, ...array_intersect_key(array_map(strval(...), $project->handoff_draft), $this->handoff)];
+                $this->prefilled = [];
+            }
         }
 
         if ($saved !== null) {
@@ -66,16 +74,22 @@ new #[Title('Handoff to Production')] class extends Component {
             $this->handoff['colorsStatus'] = $saved->colors_status->value;
             $this->handoff['colorsDetails'] = (string) $saved->colors_details;
             $this->handoff['otherNotes'] = (string) $saved->other_notes;
+            $this->handoff['companyCamUrl'] = (string) $saved->company_cam_url;
         }
     }
 
     /**
      * An answer that was refused and has since been changed no longer shows
-     * its refusal.
+     * its refusal. Before the handoff is complete, every change is kept.
      */
     public function updated(string $property): void
     {
         $this->resetValidation($property);
+
+        // Kept as it is typed, until the handoff is complete (slice 41).
+        if (str_starts_with($property, 'handoff.') && app(SaveHandoffDraft::class)->handle($this->project, $this->handoff, Auth::user())) {
+            unset($this->project);
+        }
     }
 
     #[Computed]
@@ -154,7 +168,7 @@ new #[Title('Handoff to Production')] class extends Component {
     <form wire:submit="save" class="flex flex-col gap-6">
         <div class="flex flex-col gap-5 rounded-xl border border-zinc-200 bg-card p-5">
             @foreach ($questions as $name => [$label, $hint])
-                <flux:textarea wire:model="handoff.{{ $name }}" rows="3" :label="$label" :description="$hint" wire:key="handoff-{{ $name }}" data-test="handoff-{{ $name }}" />
+                <flux:textarea wire:model.live.debounce.800ms="handoff.{{ $name }}" rows="3" :label="$label" :description="$hint" wire:key="handoff-{{ $name }}" data-test="handoff-{{ $name }}" />
             @endforeach
 
             <div class="flex flex-col gap-3" data-test="handoff-colors">
@@ -165,16 +179,37 @@ new #[Title('Handoff to Production')] class extends Component {
                 </flux:radio.group>
 
                 @if ($handoff['colorsStatus'] === HandoffColors::Chosen->value)
-                    <flux:textarea wire:model="handoff.colorsDetails" rows="2" :label="__('Which colors?')" :description="__('By area, with the brand and sheen if you have them.')" data-test="handoff-colorsDetails" />
+                    <flux:textarea wire:model.live.debounce.800ms="handoff.colorsDetails" rows="2" :label="__('Which colors?')" :description="__('By area, with the brand and sheen if you have them.')" data-test="handoff-colorsDetails" />
                 @endif
             </div>
 
             @foreach ($later as $name => [$label, $hint])
-                <flux:textarea wire:model="handoff.{{ $name }}" rows="3" :label="$label" :description="$hint" wire:key="handoff-{{ $name }}" data-test="handoff-{{ $name }}" />
+                <flux:textarea wire:model.live.debounce.800ms="handoff.{{ $name }}" rows="3" :label="$label" :description="$hint" wire:key="handoff-{{ $name }}" data-test="handoff-{{ $name }}" />
             @endforeach
 
-            <flux:textarea wire:model="handoff.otherNotes" rows="3" :label="__('9. Anything else Production should know? (optional)')" data-test="handoff-otherNotes" />
+            <flux:textarea wire:model.live.debounce.800ms="handoff.otherNotes" rows="3" :label="__('9. Anything else Production should know? (optional)')" data-test="handoff-otherNotes" />
+
+            <flux:input
+                wire:model.live.debounce.800ms="handoff.companyCamUrl"
+                type="url"
+                inputmode="url"
+                maxlength="{{ ProjectHandoff::URL_LENGTH }}"
+                :label="$project->handoff === null || $project->handoff->company_cam_url !== null ? __('10. Company Cam link') : __('10. Company Cam link (optional for a handoff completed before it was asked for)')"
+                :description="__('The link Company Cam shares for this job\'s project or walkthrough video. Production opens it from the job.')"
+                placeholder="https://app.companycam.com/..."
+                data-test="handoff-companyCamUrl"
+            />
         </div>
+
+        @if ($project->handoff === null)
+            <flux:text size="sm" class="text-end" data-test="handoff-draft-saved">
+                @if ($project->handoff_draft_saved_at === null)
+                    {{ __('Your answers are saved as you type. You can leave and come back.') }}
+                @else
+                    {{ __('Saved as you type. Last saved') }} <x-local-time :at="$project->handoff_draft_saved_at" />
+                @endif
+            </flux:text>
+        @endif
 
         <div class="flex flex-wrap justify-end gap-2">
             <flux:button :href="route('projects.show', $project)" wire:navigate variant="ghost">{{ __('Cancel') }}</flux:button>

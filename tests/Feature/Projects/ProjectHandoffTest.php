@@ -3,6 +3,7 @@
 use App\Actions\Projects\AssignProductionManager;
 use App\Actions\Projects\CancelProjectForCorrectedSale;
 use App\Actions\Projects\CompleteProjectHandoff;
+use App\Actions\Projects\SaveHandoffDraft;
 use App\Actions\Queue\RunQueueTick;
 use App\Enums\AuditAction;
 use App\Enums\HandoffColors;
@@ -140,7 +141,7 @@ test('a refusal names every question still missing its answer at once', function
     } catch (ValidationException $refusal) {
         expect(array_keys($refusal->errors()))->toBe([
             'handoff.includedScope', 'handoff.exclusions', 'handoff.promises', 'handoff.timing', 'handoff.access',
-            'handoff.conditionPrep', 'handoff.customerPriorities', 'handoff.colorsStatus',
+            'handoff.conditionPrep', 'handoff.customerPriorities', 'handoff.colorsStatus', 'handoff.companyCamUrl',
         ]);
     }
 });
@@ -363,6 +364,14 @@ test('the salesperson answers the questions on the page and is taken to the proj
         ->call('save')
         ->assertHasErrors('handoff.colorsDetails')
         ->set('handoff.colorsDetails', 'SW 7005 Pure White')
+        // The job's Company Cam link is the last thing asked for (slice 41).
+        ->call('save')
+        ->assertHasErrors('handoff.companyCamUrl')
+        ->assertSee('Paste the Company Cam link for this job.')
+        ->set('handoff.companyCamUrl', 'app.companycam.com/projects/4411')
+        ->call('save')
+        ->assertHasErrors('handoff.companyCamUrl')
+        ->set('handoff.companyCamUrl', 'https://app.companycam.com/projects/4411')
         ->call('save')
         ->assertHasNoErrors()
         ->assertRedirect(route('projects.show', $this->project));
@@ -424,4 +433,78 @@ test('the lead\'s proposals card says the handoff is needed, with a link for who
     completeHandoff($this->project, $this->sam);
 
     proposalsCard($this->sam, $lead->fresh())->assertDontSeeHtml('data-test="proposal-handoff-needed"');
+});
+
+/*
+ * Slice 41 (docs/slice-41-handoff-plan.md; decision 239): the answers are
+ * kept as they are typed, and the handoff carries the job's Company Cam link.
+ */
+
+test('the answers are kept as they are typed, and are there again when the salesperson comes back', function () {
+    handoffPage($this->sam, $this->project)
+        ->assertSee('Your answers are saved as you type.')
+        ->set('handoff.includedScope', 'All four sides.')
+        ->set('handoff.colorsStatus', 'chosen')
+        ->set('handoff.companyCamUrl', 'https://app.companycam.com/projects/4411')
+        ->assertSee('Saved as you type. Last saved');
+
+    $project = $this->project->fresh();
+
+    expect($project->handoff_draft)->toMatchArray(['includedScope' => 'All four sides.', 'colorsStatus' => 'chosen', 'exclusions' => '', 'companyCamUrl' => 'https://app.companycam.com/projects/4411'])
+        ->and($project->handoff_draft_saved_at)->not->toBeNull()
+        // A draft is nobody's record: no handoff, nothing in the history, and the job is as it was.
+        ->and($project->hasHandoff())->toBeFalse()
+        ->and(AuditEvent::query()->whereIn('action', [AuditAction::ProjectHandoffCompleted, AuditAction::ProjectHandoffChanged])->count())->toBe(0)
+        ->and($project->updated_at->equalTo($this->project->updated_at))->toBeTrue();
+
+    // Another day, another device.
+    handoffPage($this->sam, $project)
+        ->assertSet('handoff.includedScope', 'All four sides.')
+        ->assertSet('handoff.colorsStatus', 'chosen')
+        ->assertSet('handoff.companyCamUrl', 'https://app.companycam.com/projects/4411')
+        ->assertDontSeeHtml('data-test="handoff-prefilled"');
+});
+
+test('completing the handoff keeps the Company Cam link, shows it on the job, and clears the draft', function () {
+    handoffPage($this->sam, $this->project)->set('handoff.includedScope', 'All four sides.');
+
+    $handoff = completeHandoff($this->project->fresh(), $this->sam, ['companyCamUrl' => 'https://app.companycam.com/projects/4411']);
+
+    expect($handoff->company_cam_url)->toBe('https://app.companycam.com/projects/4411')
+        ->and($this->project->fresh())->handoff_draft->toBeNull()->handoff_draft_saved_at->toBeNull();
+
+    Livewire::actingAs($this->pat)->test('pages::projects.show', ['project' => $this->project->fresh()])
+        ->assertSeeHtml('data-test="project-handoff-company-cam"')
+        ->assertSeeHtml('href="https://app.companycam.com/projects/4411"');
+
+    // Once complete, typing on the page keeps no draft: a correction is saved with Save.
+    handoffPage($this->sam, $this->project->fresh())
+        ->assertDontSeeHtml('data-test="handoff-draft-saved"')
+        ->set('handoff.access', 'Gate code is 7788 now.');
+
+    expect($this->project->fresh()->handoff_draft)->toBeNull()
+        ->and($handoff->fresh()->access)->toBe('Gate code 4411. Dog in the yard.');
+});
+
+test('the Company Cam link is a whole https link, and a handoff completed before it was asked for can still be corrected', function (string $link) {
+    expect(fn () => completeHandoff($this->project, $this->sam, ['companyCamUrl' => $link]))->toThrow(ValidationException::class);
+})->with([
+    'none' => [''],
+    'not a link' => ['see Company Cam'],
+    'no https' => ['http://app.companycam.com/projects/4411'],
+    'too long' => ['https://app.companycam.com/'.str_repeat('a', 500)],
+]);
+
+test('a handoff completed before the Company Cam link was asked for is corrected without one', function () {
+    completeHandoff($this->project, $this->sam);
+    $this->project->handoff->forceFill(['company_cam_url' => null])->save();
+
+    $handoff = completeHandoff($this->project->fresh(), $this->manager, ['access' => 'Gate code is 7788 now.', 'companyCamUrl' => '']);
+
+    expect($handoff)->access->toBe('Gate code is 7788 now.')->company_cam_url->toBeNull();
+});
+
+test('only who may complete a handoff keeps a draft of it', function () {
+    expect(fn () => app(SaveHandoffDraft::class)->handle($this->project, ['includedScope' => 'Everything'], $this->riley))->toThrow(AuthorizationException::class)
+        ->and($this->project->fresh()->handoff_draft)->toBeNull();
 });

@@ -111,6 +111,15 @@ it; the customer agreement has **I have read and agree to the terms below**
 at the top. **To look at on a tablet:** that top button, on a real signing,
 ticks the box by the signature and scrolls down to it.
 
+**Slice 41, the handoff, is on staging** (not production; decision 239,
+[../slice-41-handoff-plan.md](../slice-41-handoff-plan.md)): the answers are
+saved as they are typed until the handoff is complete, and question 10 asks
+for the job's Company Cam link, shown on the job's page. **For Jacob to
+confirm:** that the link is required, as "completed" was read.
+
+**Slices 38 to 41 are all built** (decision 234's batch). Not on production:
+38b to 38d, 39, 40 and 41 wait for Jacob's word to deploy.
+
 **The first walkthrough on production (decision 233)** is sorted in
 [../walkthrough-2026-11-23.md](../walkthrough-2026-11-23.md): one bug fixed,
 the rest proposed as slices 39 to 45, waiting for Jacob's answers there.

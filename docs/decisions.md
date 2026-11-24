@@ -4763,6 +4763,20 @@ The detail: [slice-39-production-from-estimate-plan.md](slice-39-production-from
 
 The detail: [slice-40-estimate-and-presentation-plan.md](slice-40-estimate-and-presentation-plan.md).
 
+## 239. Slice 41 as built: the handoff saved as it is typed, with a Company Cam link (2026-11-23)
+
+**Decided by Jacob:** the batch of decision 234; "completed" (decision 235),
+read as: the Company Cam link is needed to complete a handoff. To confirm.
+
+1. **A handoff not yet complete is kept as it is typed,** and opens as it
+   was left. A draft is not a record: nothing is checked, nobody is told.
+2. **A complete handoff is corrected with Save,** as before.
+3. **The Company Cam link is question 10,** needed to complete a handoff, a
+   whole https link; shown on the job's page. A handoff completed before it
+   was asked for is corrected without it.
+
+The detail: [slice-41-handoff-plan.md](slice-41-handoff-plan.md).
+
 ## Future decisions already constrained by the brief
 
 - Estimates hold any number of named, ordered options. No fixed tiers.
